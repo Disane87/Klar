@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: denaro
+      POSTGRES_USER: denaro
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-denaro}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U denaro"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # NestJS Backend
+  backend:
+    build: ./backend
+    image: ghcr.io/${GITHUB_REPOSITORY:-denaro}/backend:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: denaro
+      DB_PASSWORD: ${DB_PASSWORD:-denaro}
+      DB_NAME: denaro
+      DB_SYNC: "true"
+      OIDC_AUTHORITY: ${OIDC_AUTHORITY:-http://localhost:8080/realms/denaro}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-denaro}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-http://localhost:4200/auth/callback}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+    ports:
+      - "3000:3000"
+
+  # Angular Frontend (Nginx)
+  frontend:
+    build: ./frontend
+    image: ghcr.io/${GITHUB_REPOSITORY:-denaro}/frontend:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
