@@ -1,0 +1,30 @@
+<div class="wrapper">
+  @if (label()) {
+    <label [for]="inputId" class="klar-label">{{ label() }}</label>
+  }
+  <div class="field" [class.has-error]="error()">
+    @if (iconName()) {
+      <klar-icon [name]="iconName()!" [size]="14" class="icon" />
+    }
+    @if (prefix()) {
+      <span class="affix klar-mono">{{ prefix() }}</span>
+    }
+    <input
+      [id]="inputId"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled"
+      [value]="value"
+      (input)="onInput($event)"
+      (blur)="onTouched()"
+    />
+    @if (suffix()) {
+      <span class="affix suffix klar-label-2">{{ suffix() }}</span>
+    }
+  </div>
+  @if (error()) {
+    <span class="hint error">{{ error() }}</span>
+  } @else if (hint()) {
+    <span class="hint">{{ hint() }}</span>
+  }
+</div>

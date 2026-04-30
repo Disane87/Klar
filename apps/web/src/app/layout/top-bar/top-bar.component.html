@@ -1,0 +1,21 @@
+<header class="topbar">
+  <div class="title-area">
+    <span class="title">{{ title() }}</span>
+    @if (subtitle()) {
+      <span class="subtitle klar-label">{{ subtitle() }}</span>
+    }
+  </div>
+
+  <div class="actions">
+    <div class="month-chip">
+      <klar-icon name="calendar" [size]="12" class="chip-icon" />
+      <span class="klar-mono">{{ monthChip() }}</span>
+    </div>
+    @if (showPlanspiel()) {
+      <klar-button variant="ghost" size="sm" iconName="planspiel" label="Planspiel" />
+    }
+    @if (showAdd()) {
+      <klar-button variant="primary" size="sm" iconName="plus" [label]="addLabel()" />
+    }
+  </div>
+</header>

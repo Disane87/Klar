@@ -1,0 +1,16 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.wordmark-text {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}

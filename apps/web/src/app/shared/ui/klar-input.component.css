@@ -1,0 +1,72 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  transition: border-color 120ms;
+}
+
+.field:focus-within {
+  border-color: var(--indigo-400);
+}
+
+.field.has-error {
+  border-color: var(--color-expense);
+}
+
+.icon {
+  color: var(--text-muted);
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.affix {
+  color: var(--text-muted);
+  margin-right: 6px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--body-sm);
+}
+
+.suffix {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1rem; /* iOS: must be >= 16px to prevent auto-zoom */
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-width: 0;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  font-size: var(--label-2);
+  color: var(--text-muted);
+}
+
+.hint.error {
+  color: var(--color-expense);
+}

@@ -1,0 +1,32 @@
+<div class="shell">
+  <!-- Desktop sidebar — hidden on mobile -->
+  <klar-side-nav class="desktop-only" />
+
+  <!-- Main content -->
+  <div class="main">
+    <router-outlet />
+  </div>
+</div>
+
+<!-- Mobile bottom nav — hidden on desktop -->
+<nav class="bottom-nav mobile-only">
+  @for (tab of tabs; track tab.id) {
+    <a [routerLink]="tab.route" routerLinkActive="active" class="tab-item"
+       [class.primary]="tab.primary">
+      @if (tab.primary) {
+        <div class="primary-btn">
+          <klar-icon [name]="tab.icon" [size]="18" [stroke]="2" />
+        </div>
+      } @else {
+        <klar-icon [name]="tab.icon" [size]="18" [stroke]="1.6" />
+      }
+      <span class="tab-label">{{ tab.label }}</span>
+    </a>
+  }
+</nav>
+
+<!-- Spacer prevents content from being obscured by bottom nav -->
+<div class="bottom-spacer mobile-only"></div>
+
+<!-- Global toast container -->
+<klar-toast-container />

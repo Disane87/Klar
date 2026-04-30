@@ -1,0 +1,29 @@
+<aside class="sidenav">
+  <div class="wordmark-wrap">
+    <klar-wordmark [size]="22" />
+  </div>
+
+  <div class="section-label klar-label">Übersicht</div>
+  @for (item of mainItems; track item.id) {
+    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+      <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+
+  <div class="section-label klar-label" style="margin-top: 16px;">System</div>
+  @for (item of sysItems; track item.id) {
+    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+      <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+
+  <div class="household">
+    <div class="hh-avatar">{{ householdInitials() }}</div>
+    <div class="hh-info">
+      <div class="hh-name">{{ householdName() }}</div>
+      <div class="klar-label-2" style="color: var(--text-muted);">{{ memberCount() }} Mitglieder</div>
+    </div>
+  </div>
+</aside>

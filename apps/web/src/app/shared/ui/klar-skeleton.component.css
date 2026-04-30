@@ -1,0 +1,6 @@
+:host {
+  display: block;
+  background: var(--surface-2);
+  border-radius: 2px;
+  animation: klar-pulse 1.4s ease-in-out infinite;
+}

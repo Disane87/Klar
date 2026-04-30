@@ -1,0 +1,93 @@
+<div class="page">
+  <!-- Left: brand pane -->
+  <div class="brand-pane">
+    <div class="brand-top">
+      <klar-wordmark [size]="28" />
+    </div>
+
+    <div class="brand-center">
+      <div class="klar-label" style="margin-bottom: 18px;">EIN HAUSHALT — KEINE WOLKE</div>
+      <div class="headline">
+        Privatfinanzen,<br/>
+        <span class="klar-serif accent-text">klar genug</span>
+        {{ ' ' }}für<br/>zwei Erwachsene.
+      </div>
+      <div class="tagline">
+        Selbstgehostet auf deinem NAS oder Mini-PC. Keine Telemetrie, keine Bank-API,
+        kein Algorithmus, der für dich denkt.
+      </div>
+    </div>
+
+    <div class="trust-badges">
+      <span class="badge-item">
+        <klar-icon name="shield" [size]="12" />
+        ARGON2ID
+      </span>
+      <span class="badge-item">
+        <klar-icon name="lock" [size]="12" />
+        100% LOKAL
+      </span>
+      <span class="badge-item">
+        <klar-icon name="key" [size]="12" />
+        RS256 JWT
+      </span>
+    </div>
+  </div>
+
+  <!-- Right: form pane -->
+  <div class="form-pane">
+    <div class="form-inner">
+      <div class="klar-label" style="margin-bottom: 6px;">SESSION · NEU</div>
+      <div class="form-title">Anmelden</div>
+      <div class="form-subtitle">Klar · Dein privates Haushaltsbuch</div>
+
+      <form class="form" (submit)="$event.preventDefault()">
+        <klar-input
+          label="E-MAIL"
+          type="email"
+          placeholder="anna@beispiel.de"
+          iconName="eye"
+        />
+        <klar-input
+          label="PASSWORT"
+          type="password"
+          placeholder="••••••••••••"
+          iconName="lock"
+          hint="Argon2id · 12+ Zeichen empfohlen"
+        />
+
+        <div class="remember-row">
+          <div class="checkbox">
+            <klar-icon name="check" [size]="10" class="check-icon" />
+          </div>
+          <span class="remember-label">Diesen Browser für 30 Tage merken</span>
+        </div>
+
+        <klar-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          label="Anmelden →"
+          [fullWidth]="true"
+        />
+
+        <div class="oidc-divider">
+          <span>oder</span>
+        </div>
+
+        <klar-button
+          variant="ghost"
+          size="md"
+          iconName="shield"
+          label="Mit SSO anmelden"
+          [fullWidth]="true"
+        />
+      </form>
+
+      <div class="form-footer">
+        <span>Kein Konto?</span>
+        <a href="/register" class="link">Registrieren ↗</a>
+      </div>
+    </div>
+  </div>
+</div>

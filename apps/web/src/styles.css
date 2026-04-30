@@ -1,32 +1,209 @@
-/* TODO Task 10: Zard UI / UI component library not yet installed.
-   @zardui/components — not found on npm (package name unverified).
-   @spartan-ng/ui-core — available but requires tailwindcss@^3.4.13 (incompatible with Tailwind 4).
-   Resolution: verify correct package name / wait for Tailwind 4 compatible release.
-   Try: pnpm add @zardui/components OR check https://github.com/goetzrobin/spartan */
-
 @import "tailwindcss";
 
-/* Class-based dark mode — add class="dark" to <html> to activate */
+/* Class-based dark mode — add class="dark" or data-theme="light" to <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Semantic color tokens */
-@theme {
-  --color-success: oklch(0.7 0.17 145);
-  --color-success-foreground: oklch(0.98 0.01 145);
-  --color-danger: oklch(0.65 0.2 25);
-  --color-danger-foreground: oklch(0.98 0.01 25);
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-}
-
-/* iOS Safe Area insets */
+/* ============================================================
+   KLAR — Design Tokens (dark default)
+   ============================================================ */
 :root {
+  /* Zinc palette */
+  --zinc-50:  #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  /* Semantic palette */
+  --emerald-400: #34d399;
+  --emerald-600: #059669;
+  --rose-400:    #fb7185;
+  --rose-600:    #e11d48;
+  --sky-400:     #38bdf8;
+  --sky-600:     #0284c7;
+  --amber-400:   #fbbf24;
+  --amber-600:   #d97706;
+  --indigo-400:  #818cf8;
+  --indigo-600:  #4f46e5;
+
+  /* Theme: dark (default) */
+  --bg:          var(--zinc-950);
+  --surface:     var(--zinc-900);
+  --surface-2:   #1f1f23;
+  --border:      var(--zinc-800);
+  --border-soft: #1d1d20;
+  --text:        var(--zinc-50);
+  --text-2:      var(--zinc-400);
+  --text-muted:  var(--zinc-600);
+
+  --color-income:   var(--emerald-400);
+  --color-expense:  var(--rose-400);
+  --color-surplus:  var(--sky-400);
+  --color-variable: var(--amber-400);
+  --color-accent:   var(--indigo-400);
+
+  --color-income-tint:   color-mix(in oklab, var(--emerald-400) 8%, transparent);
+  --color-expense-tint:  color-mix(in oklab, var(--rose-400)    8%, transparent);
+  --color-surplus-tint:  color-mix(in oklab, var(--sky-400)    10%, transparent);
+  --color-variable-tint: color-mix(in oklab, var(--amber-400)   8%, transparent);
+
+  /* Fonts */
+  --font-sans:  'Geist', 'Outfit', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', 'Iowan Old Style', serif;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --spacing-table-row: 28px;
+
+  /* Radius */
+  --radius-sm: 2px;
+  --radius:    4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Type ramps */
+  --label:    9px;
+  --label-2:  11px;
+  --body-sm:  12px;
+  --body:     13px;
+  --body-lg:  14px;
+  --num-sm:   12px;
+  --num:      13px;
+  --num-md:   14px;
+  --num-lg:   18px;
+  --num-card: 20px;
+  --num-hero: 30px;
+
+  /* Focus ring */
+  --ring: 0 0 0 1px var(--indigo-400);
+
+  /* iOS Safe Area insets */
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left:   env(safe-area-inset-left, 0px);
   --safe-right:  env(safe-area-inset-right, 0px);
 }
 
-/* Prevent iOS Safari auto-zoom on focus — HARD RULE from CLAUDE.md */
+[data-theme="light"] {
+  --bg:          #ffffff;
+  --surface:     var(--zinc-50);
+  --surface-2:   #f0f0f1;
+  --border:      var(--zinc-200);
+  --border-soft: var(--zinc-100);
+  --text:        var(--zinc-900);
+  --text-2:      var(--zinc-600);
+  --text-muted:  var(--zinc-400);
+
+  --color-income:   var(--emerald-600);
+  --color-expense:  var(--rose-600);
+  --color-surplus:  var(--sky-600);
+  --color-variable: var(--amber-600);
+  --color-accent:   var(--indigo-600);
+
+  --color-income-tint:   color-mix(in oklab, var(--emerald-600) 6%, transparent);
+  --color-expense-tint:  color-mix(in oklab, var(--rose-600)    6%, transparent);
+  --color-surplus-tint:  color-mix(in oklab, var(--sky-600)     8%, transparent);
+  --color-variable-tint: color-mix(in oklab, var(--amber-600)   6%, transparent);
+}
+
+/* Tailwind theme — expose semantic colors as utilities */
+@theme {
+  --color-income:   #34d399;
+  --color-expense:  #fb7185;
+  --color-surplus:  #38bdf8;
+  --color-variable: #fbbf24;
+  --color-accent:   #818cf8;
+  --color-bg:       #09090b;
+  --color-surface:  #18181b;
+  --color-border:   #27272a;
+  --font-sans:  'Geist', 'Outfit', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', 'Iowan Old Style', serif;
+}
+
+/* ============================================================
+   Base styles
+   ============================================================ */
+html {
+  font-family: var(--font-sans);
+  font-size: var(--body);
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Prevent iOS Safari auto-zoom on focus — HARD RULE */
 input, select, textarea {
   font-size: 1rem;
 }
+
+/* ============================================================
+   Klar utility classes
+   ============================================================ */
+.klar-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.klar-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+.klar-label {
+  font-size: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.klar-label-2 {
+  font-size: var(--label-2);
+  color: var(--text-2);
+}
+
+.klar-num-pos     { color: var(--color-income); }
+.klar-num-neg     { color: var(--color-expense); }
+.klar-num-surplus { color: var(--color-surplus); }
+.klar-num-var     { color: var(--color-variable); }
+
+.klar-hairline { border-top: 1px solid var(--border); }
+
+/* Skeleton animation */
+@keyframes klar-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes klar-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card base */
+.klar-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Scrollbar — minimal, themed */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--zinc-600); }

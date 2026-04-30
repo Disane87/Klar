@@ -1,0 +1,10 @@
+:host {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+:host.compact { padding: 12px; }
+:host.flush   { padding: 0; }

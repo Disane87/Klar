@@ -1,0 +1,18 @@
+<div class="container">
+  @for (toast of service.toasts(); track toast.id) {
+    <div class="toast" [class]="'tone-' + toast.tone">
+      <span class="icon-wrap">
+        <klar-icon [name]="toneIcon(toast)" [size]="14" />
+      </span>
+      <div class="body">
+        <div class="title">{{ toast.title }}</div>
+        @if (toast.body) {
+          <div class="sub">{{ toast.body }}</div>
+        }
+      </div>
+      <button class="close" (click)="service.dismiss(toast.id)" aria-label="Schließen">
+        <klar-icon name="x" [size]="14" />
+      </button>
+    </div>
+  }
+</div>
