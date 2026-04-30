@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tell Tailwind v4 where to scan for utility classes */
+@source "../**/*.{html,ts}";
+
 /* Class-based dark mode — add class="dark" or data-theme="light" to <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -138,7 +141,7 @@
   --color-foreground:       #fafafa;
   --color-card:             #18181b;
   --color-muted:            #27272a;
-  --color-muted-foreground: #52525b;
+  --color-muted-foreground: #71717a;
   --color-primary:          #818cf8;
   --color-success:          #34d399;
   --color-danger:           #fb7185;

@@ -37,6 +37,15 @@ button.variant-accent {
   color: var(--zinc-950);
   border-color: var(--indigo-400);
 }
+button.variant-outline {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--zinc-700);
+}
+button.variant-outline:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
 button.variant-ghost {
   background: transparent;
   color: var(--text);

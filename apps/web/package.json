@@ -33,6 +33,7 @@
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
     "@angular/pwa": "^21.0.0",
+    "@tailwindcss/postcss": "^4.2.4",
     "@vitest/coverage-v8": "^4.0.0",
     "jsdom": "^25.0.0",
     "rimraf": "^6.0.0",

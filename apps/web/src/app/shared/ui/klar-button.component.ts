@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { KlarIconComponent } from '../icons/klar-icon.component';
 
-export type ButtonVariant = 'primary' | 'accent' | 'ghost' | 'subtle' | 'danger';
+export type ButtonVariant = 'primary' | 'accent' | 'outline' | 'ghost' | 'subtle' | 'danger';
 export type ButtonSize    = 'sm' | 'md' | 'lg';
 
 @Component({
