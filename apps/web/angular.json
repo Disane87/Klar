@@ -25,10 +25,23 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               { "glob": "**/*", "input": "src/assets" },
-              "src/favicon.ico"
+              "src/favicon.ico",
+              "src/manifest.webmanifest",
+              { "glob": "**/*", "input": "src/icons", "output": "icons" },
+              {
+                "glob": "ngsw-worker.js",
+                "input": "node_modules/@angular/service-worker",
+                "output": "."
+              },
+              {
+                "glob": "safety-worker.js",
+                "input": "node_modules/@angular/service-worker",
+                "output": "."
+              }
             ],
             "styles": ["src/styles.css"],
-            "scripts": []
+            "scripts": [],
+            "serviceWorker": "ngsw-config.json"
           },
           "configurations": {
             "production": {

@@ -4,10 +4,32 @@
     <meta charset="utf-8" />
     <title>Haushaltsbuch</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- viewport-fit=cover enables safe-area-inset-* on iOS — REQUIRED -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- PWA / iOS -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Haushaltsbuch" />
+    <meta name="theme-color" content="#09090b" />
+
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Apple touch icons (required for iOS add-to-homescreen) -->
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png" />
+
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-startup-image" href="icons/splash-1179x2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="icons/splash-1290x2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
   </head>
   <body>
     <app-root></app-root>
+    <noscript>Diese App benötigt JavaScript.</noscript>
   </body>
 </html>
