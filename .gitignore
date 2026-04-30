@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.turbo/
+coverage/
+
+# Angular
+apps/web/.angular/
+apps/web/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# JWT Keys (generated via pnpm --filter @haushaltsbuch/api keys:generate)
+apps/api/keys/
+
+# IDE (keep shared settings, ignore personal workspace file)
+.vscode/*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma test DB
+*.db
+*.db-journal
+
+# Ruflo / swarm state
+ruvector.db
+.swarm/
+.claude-flow/

@@ -1,0 +1,24 @@
+{
+  "name": "haushaltsbuch",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:integration": "pnpm --filter @haushaltsbuch/api test:integration",
+    "test:e2e": "pnpm --filter @haushaltsbuch/api test:e2e",
+    "clean": "turbo run clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "^5.7.0",
+    "rimraf": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.9.0"
+}
