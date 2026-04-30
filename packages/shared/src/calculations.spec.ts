@@ -43,6 +43,10 @@ describe('toMonthlyEquivalent', () => {
   it('YEARLY: rounds to nearest cent', () => {
     expect(toMonthlyEquivalent(10000, 'YEARLY')).toBe(833);
   });
+
+  it('CUSTOM_DAYS: returns amount unchanged (used as-is)', () => {
+    expect(toMonthlyEquivalent(5000, 'CUSTOM_DAYS')).toBe(5000);
+  });
 });
 
 describe('sumByCents', () => {
