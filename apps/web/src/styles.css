@@ -1,3 +1,9 @@
+/* TODO Task 10: Zard UI / UI component library not yet installed.
+   @zardui/components — not found on npm (package name unverified).
+   @spartan-ng/ui-core — available but requires tailwindcss@^3.4.13 (incompatible with Tailwind 4).
+   Resolution: verify correct package name / wait for Tailwind 4 compatible release.
+   Try: pnpm add @zardui/components OR check https://github.com/goetzrobin/spartan */
+
 @import "tailwindcss";
 
 /* Class-based dark mode — add class="dark" to <html> to activate */
