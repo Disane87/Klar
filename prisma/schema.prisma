@@ -1,0 +1,392 @@
+// prisma/schema.prisma
+// Haushaltsbuch — Datenmodell v1
+// Alle Beträge in Cent (amountCents: Int, signed: positiv=Einnahme, negativ=Ausgabe)
+// Alle Datumsfelder ohne Uhrzeit (@db.Date) um Timezone-Drift zu vermeiden
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum AppRole {
+  USER
+  ADMIN
+}
+
+enum HouseholdRole {
+  OWNER
+  MEMBER
+}
+
+enum CategoryType {
+  EXPENSE
+  INCOME
+  FIXED_INCOME
+}
+
+enum RecurringFrequency {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM_DAYS
+}
+
+enum Visibility {
+  PRIVATE
+  SHARED
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+// ─────────────────────────────────────────────
+// AUTH & USER
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique  // IMMER lowercase gespeichert
+  emailVerified Boolean   @default(false)
+  displayName   String
+  passwordHash  String?             // null bei reinen OIDC-Usern
+  appRole       AppRole   @default(USER)
+  isDeleted     Boolean   @default(false)  // soft-delete bei Account-Löschung
+  createdAt     DateTime  @default(now())
+  lastLoginAt   DateTime?
+
+  memberships    HouseholdMembership[]
+  oidcIdentities OidcIdentity[]
+  refreshTokens  RefreshToken[]
+  // Keine direkte Relation zu Transactions/RecurringTransactions/etc.
+  // da createdByUserId nullable ist (Account-Delete anonymisiert)
+
+  @@index([email])
+  @@index([isDeleted])
+}
+
+model OidcIdentity {
+  id           String    @id @default(cuid())
+  userId       String
+  providerName String    // z.B. "pocketid", "github"
+  oidcSub      String    // Subject-Claim vom IdP
+  email        String    // snapshot der E-Mail vom IdP zum Zeitpunkt des Logins
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerName, oidcSub])
+  @@index([userId])
+}
+
+// Kurzlebig: State + PKCE für OIDC Authorization Code Flow
+// TTL: 10 Minuten. Cleanup-Job löscht abgelaufene Einträge.
+model OidcLoginState {
+  id                 String    @id @default(cuid())
+  providerName       String
+  state              String    @unique
+  codeVerifier       String    // PKCE Code-Verifier
+  redirectAfterLogin String?   // optionaler Redirect nach erfolgreichem Login
+  expiresAt          DateTime
+  createdAt          DateTime  @default(now())
+}
+
+// Kurzlebig: One-Time-Code für Token-Übergabe an SPA nach OIDC-Callback
+// TTL: 60 Sekunden, single-use (usedAt wird gesetzt)
+model OneTimeHandoverCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique  // Argon2id-Hash des tatsächlichen Tokens
+  expiresAt DateTime
+  revokedAt DateTime?          // null = noch gültig
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])  // für Cleanup
+}
+
+// ─────────────────────────────────────────────
+// HAUSHALT & MITGLIEDER
+// ─────────────────────────────────────────────
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  memberships           HouseholdMembership[]
+  inviteCodes           InviteCode[]
+  categories            Category[]
+  projects              Project[]
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  apiKeys               ApiKey[]
+}
+
+model HouseholdMembership {
+  id          String        @id @default(cuid())
+  userId      String
+  householdId String
+  role        HouseholdRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, householdId])
+  @@index([householdId])
+  @@index([userId])
+}
+
+model InviteCode {
+  id              String    @id @default(cuid())
+  householdId     String
+  code            String    @unique
+  createdByUserId String?   // nullable (Account-Delete)
+  expiresAt       DateTime?
+  usesRemaining   Int?      // null = unbegrenzt
+  createdAt       DateTime  @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@index([code])
+}
+
+// ─────────────────────────────────────────────
+// KATEGORIEN
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String       @id @default(cuid())
+  householdId String
+  name        String
+  type        CategoryType
+  color       String       // hex, z.B. "#22c55e"
+  icon        String?      // Icon-Name aus Zard UI / lucide
+  isArchived  Boolean      @default(false)
+  sortOrder   Int          @default(0)  // für manuelle Sortierung in der Übersicht
+  isDefault   Boolean      @default(false)  // vom System angelegt beim Haushalt-Setup
+  createdAt   DateTime     @default(now())
+
+  household             Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+  budgets               Budget[]
+
+  @@index([householdId])
+  @@index([householdId, type])
+  @@index([householdId, isArchived])
+}
+
+// ─────────────────────────────────────────────
+// PROJEKTE
+// ─────────────────────────────────────────────
+
+model Project {
+  id               String        @id @default(cuid())
+  householdId      String
+  createdByUserId  String?       // nullable (Account-Delete)
+  name             String
+  description      String?
+  status           ProjectStatus @default(ACTIVE)
+  totalBudgetCents Int?          // null = kein Gesamtbudget definiert
+  startDate        DateTime?     @db.Date
+  endDate          DateTime?     @db.Date
+  color            String        // hex
+  visibility       Visibility    @default(SHARED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  household             Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+
+  @@index([householdId])
+  @@index([householdId, status])
+  @@index([householdId, visibility])
+  @@index([createdByUserId])
+}
+
+// ─────────────────────────────────────────────
+// RECURRING TRANSACTIONS (Fixkosten / Fix-Einnahmen)
+// ─────────────────────────────────────────────
+// WICHTIG: Werden NICHT in Transaction-Tabelle materialisiert.
+// Overview-Endpoints berechnen alles on-the-fly mit toMonthlyEquivalent().
+// Festgehalt = RecurringTransaction mit CategoryType=FIXED_INCOME, isVariable=false
+
+model RecurringTransaction {
+  id              String             @id @default(cuid())
+  householdId     String
+  createdByUserId String?            // nullable (Account-Delete)
+  name            String
+  // amountCents: Schätzwert wenn isVariable=true (in Übersicht mit "~" markiert)
+  // Vorzeichen: positiv=Einnahme (INCOME/FIXED_INCOME), negativ=Ausgabe (EXPENSE)
+  amountCents     Int
+  categoryId      String
+  projectId       String?
+  frequency       RecurringFrequency
+  customDays      Int?               // nur bei frequency=CUSTOM_DAYS
+  // dayOfMonth: 1–31, wird zur Laufzeit via safeDayOfMonth() geclampt
+  // z.B. dayOfMonth=31 im Februar → 28/29
+  dayOfMonth      Int?
+  startDate       DateTime           @db.Date
+  endDate         DateTime?          @db.Date   // null = läuft unbegrenzt
+  visibility      Visibility         @default(SHARED)
+  isVariable      Boolean            @default(false)
+  note            String?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  household    Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id])
+  // Referenz auf ggf. daraus erstellte manuelle Transaktionen (z.B. wenn User Ist-Wert nachträgt)
+  transactions Transaction[]
+
+  @@index([householdId])
+  @@index([householdId, isActive])
+  @@index([householdId, categoryId])
+  @@index([householdId, projectId])
+  @@index([createdByUserId])
+}
+
+// ─────────────────────────────────────────────
+// TRANSAKTIONEN (manuelle + ad-hoc Buchungen)
+// ─────────────────────────────────────────────
+// Variable Eingänge (Provision, Boni, Steuerrückerstattung) werden hier
+// mit CategoryType=INCOME eingetragen.
+// amountCents: positiv=Einnahme, negativ=Ausgabe
+
+model Transaction {
+  id                     String     @id @default(cuid())
+  householdId            String
+  createdByUserId        String?    // nullable (Account-Delete)
+  // positiv = Einnahme (INCOME), negativ = Ausgabe (EXPENSE)
+  amountCents            Int
+  categoryId             String
+  projectId              String?
+  date                   DateTime   @db.Date
+  description            String?
+  visibility             Visibility @default(SHARED)
+  // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
+  // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
+  recurringTransactionId String?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  household            Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category             Category              @relation(fields: [categoryId], references: [id])
+  project              Project?              @relation(fields: [projectId], references: [id])
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+
+  @@index([householdId, date])
+  @@index([householdId, categoryId])
+  @@index([householdId, projectId])
+  @@index([householdId, visibility])
+  @@index([createdByUserId])
+  @@index([recurringTransactionId])
+}
+
+// ─────────────────────────────────────────────
+// BUDGETS
+// ─────────────────────────────────────────────
+
+model Budget {
+  id          String   @id @default(cuid())
+  householdId String
+  categoryId  String
+  // IMMER als YYYY-MM-01 gespeichert (Monatserster)
+  month       DateTime @db.Date
+  amountCents Int      // Soll-Betrag für den Monat (positiv)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id])
+
+  @@unique([householdId, categoryId, month])
+  @@index([householdId, month])
+}
+
+// ─────────────────────────────────────────────
+// API-KEYS (für Public API)
+// ─────────────────────────────────────────────
+
+model ApiKey {
+  id              String    @id @default(cuid())
+  householdId     String
+  createdByUserId String?   // nullable (Account-Delete)
+  name            String    // z.B. "n8n Automation" oder "Home Assistant"
+  // Prefix: erste 8 Zeichen nach "bgb_live_", für Anzeige + DB-Lookup
+  // Beispiel: vollständiger Key = bgb_live_aBcDeFgH[weitere 24 chars]
+  //           prefix = "aBcDeFgH" (für Lookup), hashedSecret = Argon2(rest)
+  prefix          String
+  hashedSecret    String    // Argon2id-Hash des Rest-Tokens
+  scopes          String[]  // z.B. ["transactions:read", "overview:read"]
+  expiresAt       DateTime?
+  lastUsedAt      DateTime?
+  lastUsedIp      String?
+  rateLimitPerMin Int       @default(60)
+  isRevoked       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([prefix])         // für schnellen Lookup bei jedem API-Request
+  @@index([householdId])
+  @@index([isRevoked])
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  // null bei System-Events
+  householdId String?
+  // Aktions-Format: "resource.action", z.B.:
+  // user.login, user.login.failed, user.register, user.delete
+  // oidc.login, oidc.link, oidc.unlink
+  // apikey.created, apikey.revoked, apikey.used
+  // household.created, member.invited, member.joined, member.removed
+  // admin.role_changed
+  action      String
+  metadata    Json?    // zusätzliche Kontext-Daten (keine Passwörter!)
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([householdId])
+  @@index([action])
+  @@index([createdAt])
+}
