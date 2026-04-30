@@ -64,7 +64,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     const body: ProblemDetail = {
-      type: `https://haushaltsbuch.app/errors/${STATUS_SLUGS[status] ?? 'error'}`,
+      type: `https://klar.app/errors/${STATUS_SLUGS[status] ?? 'error'}`,
       title: STATUS_TITLES[status] ?? 'Fehler',
       status,
       detail,

@@ -12,14 +12,14 @@
     {
       "label": "Dev: API only",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api dev",
+      "command": "pnpm --filter @klar/api dev",
       "group": "build",
       "presentation": { "reveal": "always", "panel": "new" }
     },
     {
       "label": "Dev: Web only",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/web dev",
+      "command": "pnpm --filter @klar/web dev",
       "group": "build",
       "presentation": { "reveal": "always", "panel": "new" }
     },
@@ -33,13 +33,13 @@
     {
       "label": "Test: API",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api test",
+      "command": "pnpm --filter @klar/api test",
       "group": "test"
     },
     {
       "label": "Test: Web",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/web test",
+      "command": "pnpm --filter @klar/web test",
       "group": "test"
     },
     {
@@ -57,7 +57,7 @@
     {
       "label": "Generate JWT Keys",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api keys:generate"
+      "command": "pnpm --filter @klar/api keys:generate"
     }
   ]
 }

@@ -16,7 +16,7 @@ apps/web/dist/
 .env.local
 .env.*.local
 
-# JWT Keys (generated via pnpm --filter @haushaltsbuch/api keys:generate)
+# JWT Keys (generated via pnpm --filter @klar/api keys:generate)
 apps/api/keys/
 
 # IDE (keep shared settings, ignore personal workspace file)

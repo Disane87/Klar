@@ -1,5 +1,5 @@
 {
-  "name": "@haushaltsbuch/shared-frontend",
+  "name": "@klar/shared-frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
     "@angular/core": "^21.0.0"
   },
   "dependencies": {
-    "@haushaltsbuch/shared": "workspace:*",
+    "@klar/shared": "workspace:*",
     "zod": "^3.24.0",
     "rxjs": "^7.8.0"
   },

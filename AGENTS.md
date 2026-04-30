@@ -1,6 +1,6 @@
-# AGENTS.md — Haushaltsbuch Dev Team
+# AGENTS.md — Klar Dev Team
 
-> Ruflo/claude-flow Agent-Konfiguration für das Haushaltsbuch-Projekt.
+> Ruflo/claude-flow Agent-Konfiguration für das Klar-Projekt.
 > Lies SPEC.md + CLAUDE.md bevor du irgendetwas tust.
 
 ---
@@ -21,9 +21,9 @@ claude-flow führt KEINEN Code aus. Subagents (via Superpowers `dispatching-para
 **Vor jeder Session — immer zuerst:**
 
 ```
-memory_search(query="haushaltsbuch completed phases decisions")
-memory_search(query="haushaltsbuch patterns that worked")
-memory_search(query="haushaltsbuch known issues blockers")
+memory_search(query="klar completed phases decisions")
+memory_search(query="klar patterns that worked")
+memory_search(query="klar known issues blockers")
 ```
 
 Ergebnisse mit Score > 0.7 sind verbindlich — nicht neu entscheiden was bereits entschieden wurde.
@@ -41,7 +41,7 @@ Ergebnisse mit Score > 0.7 sind verbindlich — nicht neu entscheiden was bereit
 
 **Trigger vor jeder Phase:**
 ```
-memory_search(query="phase [N] haushaltsbuch")
+memory_search(query="phase [N] klar")
 swarm_init(topology="hierarchical", maxAgents=8)
 ```
 
@@ -67,7 +67,7 @@ swarm_init(topology="hierarchical", maxAgents=8)
 
 **Pflicht vor jeder Datei:**
 ```
-memory_search(query="nestjs [module-name] haushaltsbuch pattern")
+memory_search(query="nestjs [module-name] klar pattern")
 ```
 
 **Pflicht nach Erfolg:**
@@ -235,7 +235,7 @@ npx claude-flow agent spawn --type reviewer --name review
 memory_store(
   key="phase-[N]-complete",
   value="[was gebaut wurde, wichtige Entscheidungen, bekannte Gotchas]",
-  namespace="haushaltsbuch"
+  namespace="klar"
 )
 ```
 
@@ -261,7 +261,7 @@ memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="i
 1. Agent implementiert Modul
    ↓
 2. Agent stored Ergebnis:
-   memory_store(key="impl-[module]", value="fertig, Pfade: ...", namespace="haushaltsbuch")
+   memory_store(key="impl-[module]", value="fertig, Pfade: ...", namespace="klar")
    ↓
 3. Reviewer-Agent sucht:
    memory_search(query="impl-[module]")
@@ -295,4 +295,4 @@ memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="i
 - Spec: `SPEC.md`
 - Konventionen: `CLAUDE.md`
 - Datenmodell: `prisma/schema.prisma`
-- Memory search: `memory_search(query="haushaltsbuch [Stichwort]")`
+- Memory search: `memory_search(query="klar [Stichwort]")`

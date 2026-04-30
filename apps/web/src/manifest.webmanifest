@@ -1,7 +1,7 @@
 {
-  "name": "Haushaltsbuch",
-  "short_name": "Haushaltsbuch",
-  "description": "Privates Haushaltsbuch — selbst gehostet",
+  "name": "Klar",
+  "short_name": "Klar",
+  "description": "Self-hosted, privacy-first household budget tracker",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",

@@ -1,5 +1,5 @@
 // prisma/schema.prisma
-// Haushaltsbuch — Datenmodell v1
+// Klar — Datenmodell v1
 // Alle Beträge in Cent (amountCents: Int, signed: positiv=Einnahme, negativ=Ausgabe)
 // Alle Datumsfelder ohne Uhrzeit (@db.Date) um Timezone-Drift zu vermeiden
 

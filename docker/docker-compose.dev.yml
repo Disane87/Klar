@@ -5,15 +5,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: haushaltsbuch
-      POSTGRES_PASSWORD: haushaltsbuch
-      POSTGRES_DB: haushaltsbuch
+      POSTGRES_USER: klar
+      POSTGRES_PASSWORD: klar
+      POSTGRES_DB: klar
     ports:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U haushaltsbuch -d haushaltsbuch"]
+      test: ["CMD-SHELL", "pg_isready -U klar -d klar"]
       interval: 5s
       timeout: 5s
       retries: 5

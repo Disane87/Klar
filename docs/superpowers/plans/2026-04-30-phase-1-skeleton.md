@@ -25,7 +25,7 @@
 ### packages/shared
 | File | Responsibility |
 |---|---|
-| `package.json` | `@haushaltsbuch/shared`, exports src/index.ts |
+| `package.json` | `@klar/shared`, exports src/index.ts |
 | `tsconfig.json` | strict TS, NodeNext modules |
 | `src/index.ts` | re-exports types, schemas, calculations |
 | `src/types.ts` | ServerManaged, CreateDto<T>, UpdateDto<T>, PaginatedResponse<T> |
@@ -35,7 +35,7 @@
 ### packages/shared-frontend
 | File | Responsibility |
 |---|---|
-| `package.json` | `@haushaltsbuch/shared-frontend`, peer deps: Angular |
+| `package.json` | `@klar/shared-frontend`, peer deps: Angular |
 | `tsconfig.json` | strict TS, bundler module resolution |
 | `src/index.ts` | re-exports helpers, api-client stub, resource-store stub |
 | `src/helpers.ts` | `toHttpParams(obj)` → HttpParams |
@@ -124,7 +124,7 @@ packages:
 
 ```json
 {
-  "name": "haushaltsbuch",
+  "name": "klar",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -132,8 +132,8 @@ packages:
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:integration": "pnpm --filter @haushaltsbuch/api test:integration",
-    "test:e2e": "pnpm --filter @haushaltsbuch/api test:e2e",
+    "test:integration": "pnpm --filter @klar/api test:integration",
+    "test:e2e": "pnpm --filter @klar/api test:e2e",
     "clean": "turbo run clean && rimraf node_modules"
   },
   "devDependencies": {
@@ -211,7 +211,7 @@ apps/web/dist/
 .env.local
 .env.*.local
 
-# JWT Keys (generated via pnpm --filter @haushaltsbuch/api keys:generate)
+# JWT Keys (generated via pnpm --filter @klar/api keys:generate)
 apps/api/keys/
 
 # IDE (keep shared settings, ignore personal workspace file)
@@ -232,10 +232,10 @@ Thumbs.db
 # Copy to .env and fill in values
 
 # PostgreSQL (dev: started via docker/docker-compose.dev.yml)
-DATABASE_URL=postgresql://haushaltsbuch:haushaltsbuch@localhost:5432/haushaltsbuch
-DATABASE_TEST_URL=postgresql://haushaltsbuch:haushaltsbuch@localhost:5432/haushaltsbuch_test
+DATABASE_URL=postgresql://klar:klar@localhost:5432/klar
+DATABASE_TEST_URL=postgresql://klar:klar@localhost:5432/klar_test
 
-# JWT RS256 Key Pair (generate with: pnpm --filter @haushaltsbuch/api keys:generate)
+# JWT RS256 Key Pair (generate with: pnpm --filter @klar/api keys:generate)
 JWT_PRIVATE_KEY_PATH=keys/private.pem
 JWT_PUBLIC_KEY_PATH=keys/public.pem
 JWT_ACCESS_EXPIRES_IN=15m
@@ -280,7 +280,7 @@ git commit -m "chore: init pnpm 10 Turborepo monorepo root"
 
 ```json
 {
-  "name": "@haushaltsbuch/shared",
+  "name": "@klar/shared",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -402,7 +402,7 @@ export * from './schemas.js';
 
 ```bash
 pnpm install
-pnpm --filter @haushaltsbuch/shared lint
+pnpm --filter @klar/shared lint
 ```
 
 Expected: no TypeScript errors.
@@ -467,7 +467,7 @@ describe('currentYearMonth', () => {
 - [ ] **Step 9: Run tests — expect PASS**
 
 ```bash
-pnpm --filter @haushaltsbuch/shared test
+pnpm --filter @klar/shared test
 ```
 
 Expected: `✓ 8 tests passed`.
@@ -495,7 +495,7 @@ git commit -m "feat(shared): bootstrap shared package with types and calculation
 
 ```json
 {
-  "name": "@haushaltsbuch/shared-frontend",
+  "name": "@klar/shared-frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -513,7 +513,7 @@ git commit -m "feat(shared): bootstrap shared package with types and calculation
     "@angular/core": "^21.0.0"
   },
   "dependencies": {
-    "@haushaltsbuch/shared": "workspace:*",
+    "@klar/shared": "workspace:*",
     "zod": "^3.24.0",
     "rxjs": "^7.8.0"
   },
@@ -618,7 +618,7 @@ export { ResourceStore } from './resource-store.js';
 
 ```bash
 pnpm install
-pnpm --filter @haushaltsbuch/shared-frontend lint
+pnpm --filter @klar/shared-frontend lint
 ```
 
 Expected: no errors.
@@ -648,7 +648,7 @@ git commit -m "feat(shared-frontend): bootstrap shared-frontend with ApiClient a
 
 ```json
 {
-  "name": "@haushaltsbuch/api",
+  "name": "@klar/api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -674,7 +674,7 @@ git commit -m "feat(shared-frontend): bootstrap shared-frontend with ApiClient a
     "pino-http": "^10.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "@haushaltsbuch/shared": "workspace:*"
+    "@klar/shared": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -744,8 +744,8 @@ git commit -m "feat(shared-frontend): bootstrap shared-frontend with ApiClient a
 - [ ] **Step 5: Create `apps/api/.env.example`** (identical to root, kept for IDE convenience)
 
 ```dotenv
-DATABASE_URL=postgresql://haushaltsbuch:haushaltsbuch@localhost:5432/haushaltsbuch
-DATABASE_TEST_URL=postgresql://haushaltsbuch:haushaltsbuch@localhost:5432/haushaltsbuch_test
+DATABASE_URL=postgresql://klar:klar@localhost:5432/klar
+DATABASE_TEST_URL=postgresql://klar:klar@localhost:5432/klar_test
 JWT_PRIVATE_KEY_PATH=keys/private.pem
 JWT_PUBLIC_KEY_PATH=keys/public.pem
 JWT_ACCESS_EXPIRES_IN=15m
@@ -863,7 +863,7 @@ Expected: packages installed without errors.
 - [ ] **Step 10: Verify TypeScript compiles**
 
 ```bash
-pnpm --filter @haushaltsbuch/api lint
+pnpm --filter @klar/api lint
 ```
 
 Expected: no errors (health module will fail until created in Task 5 — acceptable at this point since health module is created next).
@@ -914,7 +914,7 @@ describe('HealthController', () => {
 - [ ] **Step 2: Run — expect FAIL**
 
 ```bash
-pnpm --filter @haushaltsbuch/api test
+pnpm --filter @klar/api test
 ```
 
 Expected: `Error: Cannot find module './health.controller'` or similar import failure.
@@ -951,7 +951,7 @@ export class HealthModule {}
 - [ ] **Step 5: Run tests — expect PASS**
 
 ```bash
-pnpm --filter @haushaltsbuch/api test
+pnpm --filter @klar/api test
 ```
 
 Expected: `✓ health.controller.spec.ts (1 test) — returns status ok with ISO timestamp`.
@@ -1008,7 +1008,7 @@ describe('GlobalExceptionFilter', () => {
     expect(mockCode).toHaveBeenCalledWith(404);
     expect(mockHeader).toHaveBeenCalledWith('Content-Type', 'application/problem+json');
     expect(mockSend).toHaveBeenCalledWith({
-      type: 'https://haushaltsbuch.app/errors/not-found',
+      type: 'https://klar.app/errors/not-found',
       title: 'Ressource nicht gefunden',
       status: 404,
       detail: 'User not found',
@@ -1021,7 +1021,7 @@ describe('GlobalExceptionFilter', () => {
 
     expect(mockCode).toHaveBeenCalledWith(400);
     expect(mockSend).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 400, type: 'https://haushaltsbuch.app/errors/bad-request' }),
+      expect.objectContaining({ status: 400, type: 'https://klar.app/errors/bad-request' }),
     );
   });
 
@@ -1030,7 +1030,7 @@ describe('GlobalExceptionFilter', () => {
 
     expect(mockCode).toHaveBeenCalledWith(500);
     expect(mockSend).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 500, type: 'https://haushaltsbuch.app/errors/internal-server-error' }),
+      expect.objectContaining({ status: 500, type: 'https://klar.app/errors/internal-server-error' }),
     );
   });
 
@@ -1044,7 +1044,7 @@ describe('GlobalExceptionFilter', () => {
 - [ ] **Step 2: Run — expect FAIL**
 
 ```bash
-pnpm --filter @haushaltsbuch/api test
+pnpm --filter @klar/api test
 ```
 
 Expected: import resolution failure for `global-exception.filter`.
@@ -1120,7 +1120,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     const body: ProblemDetail = {
-      type: `https://haushaltsbuch.app/errors/${STATUS_SLUGS[status] ?? 'error'}`,
+      type: `https://klar.app/errors/${STATUS_SLUGS[status] ?? 'error'}`,
       title: STATUS_TITLES[status] ?? 'Fehler',
       status,
       detail,
@@ -1138,7 +1138,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 - [ ] **Step 4: Run tests — expect PASS**
 
 ```bash
-pnpm --filter @haushaltsbuch/api test
+pnpm --filter @klar/api test
 ```
 
 Expected: `✓ 5 tests passed` (4 filter tests + 1 health test).
@@ -1213,7 +1213,7 @@ Expected output:
 - [ ] **Step 3: Verify idempotency (run again)**
 
 ```bash
-pnpm --filter @haushaltsbuch/api keys:generate
+pnpm --filter @klar/api keys:generate
 ```
 
 Expected: `Keys already exist … skipping generation.`
@@ -1297,7 +1297,7 @@ describe('AppComponent', () => {
 
 ```json
 {
-  "name": "@haushaltsbuch/web",
+  "name": "@klar/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -1318,8 +1318,8 @@ describe('AppComponent', () => {
     "@angular/platform-browser": "^21.0.0",
     "@angular/router": "^21.0.0",
     "@angular/service-worker": "^21.0.0",
-    "@haushaltsbuch/shared": "workspace:*",
-    "@haushaltsbuch/shared-frontend": "workspace:*",
+    "@klar/shared": "workspace:*",
+    "@klar/shared-frontend": "workspace:*",
     "rxjs": "^7.8.0",
     "tslib": "^2.8.0"
   },
@@ -1554,7 +1554,7 @@ bootstrapApplication(AppComponent, appConfig).catch(console.error);
 <html lang="de" class="">
   <head>
     <meta charset="utf-8" />
-    <title>Haushaltsbuch</title>
+    <title>Klar</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -1581,7 +1581,7 @@ mkdir -p apps/web/src/assets && touch apps/web/src/assets/.gitkeep
 
 ```bash
 pnpm install
-pnpm --filter @haushaltsbuch/web test
+pnpm --filter @klar/web test
 ```
 
 Expected: `✓ 2 tests passed` (both AppComponent tests).
@@ -1604,7 +1604,7 @@ git commit -m "feat(web): Angular 21 zoneless bootstrap with Vitest smoke test"
 - [ ] **Step 1: Verify Tailwind 4 is installed**
 
 ```bash
-pnpm --filter @haushaltsbuch/web add tailwindcss@^4.0.0
+pnpm --filter @klar/web add tailwindcss@^4.0.0
 ```
 
 - [ ] **Step 2: Replace `apps/web/src/styles.css`**
@@ -1633,7 +1633,7 @@ pnpm --filter @haushaltsbuch/web add tailwindcss@^4.0.0
   --safe-right:  env(safe-area-inset-right, 0px);
 }
 
-/* Base — enforce Haushaltsbuch hard rules from day 1 */
+/* Base — enforce Klar hard rules from day 1 */
 input, select, textarea {
   font-size: 1rem; /* Minimum 16px — prevents iOS Safari auto-zoom */
 }
@@ -1642,7 +1642,7 @@ input, select, textarea {
 - [ ] **Step 3: Verify build compiles with Tailwind 4**
 
 ```bash
-pnpm --filter @haushaltsbuch/web build
+pnpm --filter @klar/web build
 ```
 
 Expected: builds without errors. Check `dist/web/` is created.
@@ -1672,10 +1672,10 @@ git commit -m "feat(web): Tailwind 4 with class-based dark mode and semantic col
 
 ```bash
 # Replace <exact-version> with the specific beta version found — do NOT use "latest" or "^"
-pnpm --filter @haushaltsbuch/web add @zardui/components@<exact-version>
+pnpm --filter @klar/web add @zardui/components@<exact-version>
 ```
 
-Example: if version is `0.4.2-beta.1`, run: `pnpm --filter @haushaltsbuch/web add @zardui/components@0.4.2-beta.1`
+Example: if version is `0.4.2-beta.1`, run: `pnpm --filter @klar/web add @zardui/components@0.4.2-beta.1`
 
 - [ ] **Step 2: Run Zard UI init schematics (if available)**
 
@@ -1724,7 +1724,7 @@ input, select, textarea {
 - [ ] **Step 4: Verify build still works**
 
 ```bash
-pnpm --filter @haushaltsbuch/web build
+pnpm --filter @klar/web build
 ```
 
 Expected: no errors.
@@ -1732,7 +1732,7 @@ Expected: no errors.
 - [ ] **Step 5: Run tests — expect still pass**
 
 ```bash
-pnpm --filter @haushaltsbuch/web test
+pnpm --filter @klar/web test
 ```
 
 Expected: `✓ 2 tests passed`.
@@ -1767,9 +1767,9 @@ This generates `manifest.webmanifest`, `ngsw-config.json`, and modifies `angular
 
 ```json
 {
-  "name": "Haushaltsbuch",
-  "short_name": "Haushaltsbuch",
-  "description": "Privates Haushaltsbuch — selbst gehostet",
+  "name": "Klar",
+  "short_name": "Klar",
+  "description": "Privates Klar — selbst gehostet",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
@@ -1899,7 +1899,7 @@ This generates `manifest.webmanifest`, `ngsw-config.json`, and modifies `angular
 <html lang="de" class="">
   <head>
     <meta charset="utf-8" />
-    <title>Haushaltsbuch</title>
+    <title>Klar</title>
     <base href="/" />
 
     <!-- Critical: viewport-fit=cover enables safe-area-inset-* on iOS -->
@@ -1909,7 +1909,7 @@ This generates `manifest.webmanifest`, `ngsw-config.json`, and modifies `angular
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Haushaltsbuch" />
+    <meta name="apple-mobile-web-app-title" content="Klar" />
     <meta name="theme-color" content="#09090b" />
 
     <!-- Favicon + manifest -->
@@ -1995,7 +1995,7 @@ In `apps/web/angular.json`, under `projects.web.architect.build.options`, ensure
 - [ ] **Step 7: Verify build**
 
 ```bash
-pnpm --filter @haushaltsbuch/web build
+pnpm --filter @klar/web build
 ```
 
 Expected: no errors. `dist/web/ngsw.json` and `dist/web/manifest.webmanifest` present.
@@ -2003,7 +2003,7 @@ Expected: no errors. `dist/web/ngsw.json` and `dist/web/manifest.webmanifest` pr
 - [ ] **Step 8: Run tests — still pass**
 
 ```bash
-pnpm --filter @haushaltsbuch/web test
+pnpm --filter @klar/web test
 ```
 
 Expected: `✓ 2 tests passed`.
@@ -2034,15 +2034,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: haushaltsbuch
-      POSTGRES_PASSWORD: haushaltsbuch
-      POSTGRES_DB: haushaltsbuch
+      POSTGRES_USER: klar
+      POSTGRES_PASSWORD: klar
+      POSTGRES_DB: klar
     ports:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U haushaltsbuch -d haushaltsbuch"]
+      test: ["CMD-SHELL", "pg_isready -U klar -d klar"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -2096,7 +2096,7 @@ Expected: `postgres` container in state `healthy` or `running`.
 
 ```bash
 docker compose -f docker/docker-compose.dev.yml exec postgres \
-  psql -U haushaltsbuch -d haushaltsbuch -c "SELECT version();"
+  psql -U klar -d klar -c "SELECT version();"
 ```
 
 Expected: PostgreSQL 16.x version string.
@@ -2145,7 +2145,7 @@ git commit -m "feat(docker): docker-compose.dev.yml with Postgres 16 + health ch
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@haushaltsbuch/api", "run", "dev"],
+      "runtimeArgs": ["--filter", "@klar/api", "run", "dev"],
       "cwd": "${workspaceFolder}",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal"
@@ -2184,14 +2184,14 @@ git commit -m "feat(docker): docker-compose.dev.yml with Postgres 16 + health ch
     {
       "label": "Dev: API only",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api dev",
+      "command": "pnpm --filter @klar/api dev",
       "group": "build",
       "presentation": { "reveal": "always", "panel": "new" }
     },
     {
       "label": "Dev: Web only",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/web dev",
+      "command": "pnpm --filter @klar/web dev",
       "group": "build",
       "presentation": { "reveal": "always", "panel": "new" }
     },
@@ -2205,13 +2205,13 @@ git commit -m "feat(docker): docker-compose.dev.yml with Postgres 16 + health ch
     {
       "label": "Test: API",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api test",
+      "command": "pnpm --filter @klar/api test",
       "group": "test"
     },
     {
       "label": "Test: Web",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/web test",
+      "command": "pnpm --filter @klar/web test",
       "group": "test"
     },
     {
@@ -2229,7 +2229,7 @@ git commit -m "feat(docker): docker-compose.dev.yml with Postgres 16 + health ch
     {
       "label": "Generate JWT Keys",
       "type": "shell",
-      "command": "pnpm --filter @haushaltsbuch/api keys:generate"
+      "command": "pnpm --filter @klar/api keys:generate"
     }
   ]
 }
@@ -2456,7 +2456,7 @@ curl -s http://localhost:3000/api/v1/nonexistent | jq .
 Expected:
 ```json
 {
-  "type": "https://haushaltsbuch.app/errors/not-found",
+  "type": "https://klar.app/errors/not-found",
   "title": "Ressource nicht gefunden",
   "status": 404,
   "detail": "...",
@@ -2466,12 +2466,12 @@ Expected:
 
 - [ ] **Step 7: Verify Angular app loads in browser**
 
-Open `http://localhost:4200`. Expected: blank page (no routes yet) with no console errors. Check DevTools → Application → Manifest shows `Haushaltsbuch`.
+Open `http://localhost:4200`. Expected: blank page (no routes yet) with no console errors. Check DevTools → Application → Manifest shows `Klar`.
 
 - [ ] **Step 8: Generate JWT keys (one-time)**
 
 ```bash
-pnpm --filter @haushaltsbuch/api keys:generate
+pnpm --filter @klar/api keys:generate
 ```
 
 Expected: `keys/private.pem` and `keys/public.pem` created in `apps/api/keys/`.

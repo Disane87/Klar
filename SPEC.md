@@ -1,4 +1,4 @@
-# Haushaltsbuch — Spec
+# Klar — Spec
 
 > **Status:** Draft v0.4 — FINAL für v1
 > **Owner:** Marco
@@ -9,7 +9,7 @@
 
 ## 1. Ziel
 
-Ein selbst-gehostetes, privacy-first Haushaltsbuch für Einzelpersonen und Paare/WGs. Kein Cloud-Vendor, alle Daten bleiben auf eigener Infrastruktur. Drei Kern-Werkzeuge:
+Ein selbst-gehostetes, privacy-first Klar für Einzelpersonen und Paare/WGs. Kein Cloud-Vendor, alle Daten bleiben auf eigener Infrastruktur. Drei Kern-Werkzeuge:
 
 1. **Fixkosten-Übersicht mit Überschuss-Berechnung** (Hauptbild der Vorlage)
 2. **Monats-Cashflow mit Budgets**

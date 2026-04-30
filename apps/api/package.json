@@ -1,5 +1,5 @@
 {
-  "name": "@haushaltsbuch/api",
+  "name": "@klar/api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -25,7 +25,7 @@
     "pino-http": "^10.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "@haushaltsbuch/shared": "workspace:*"
+    "@klar/shared": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",

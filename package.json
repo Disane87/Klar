@@ -1,5 +1,5 @@
 {
-  "name": "haushaltsbuch",
+  "name": "klar",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,8 +7,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:integration": "pnpm --filter @haushaltsbuch/api test:integration",
-    "test:e2e": "pnpm --filter @haushaltsbuch/api test:e2e",
+    "test:integration": "pnpm --filter @klar/api test:integration",
+    "test:e2e": "pnpm --filter @klar/api test:e2e",
     "clean": "turbo run clean && rimraf node_modules"
   },
   "devDependencies": {

@@ -16,7 +16,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@haushaltsbuch/api", "run", "dev"],
+      "runtimeArgs": ["--filter", "@klar/api", "run", "dev"],
       "cwd": "${workspaceFolder}",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal"

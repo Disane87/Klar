@@ -30,7 +30,7 @@ describe('GlobalExceptionFilter', () => {
     expect(mockCode).toHaveBeenCalledWith(404);
     expect(mockHeader).toHaveBeenCalledWith('Content-Type', 'application/problem+json');
     expect(mockSend).toHaveBeenCalledWith({
-      type: 'https://haushaltsbuch.app/errors/not-found',
+      type: 'https://klar.app/errors/not-found',
       title: 'Ressource nicht gefunden',
       status: 404,
       detail: 'User not found',
@@ -45,7 +45,7 @@ describe('GlobalExceptionFilter', () => {
     expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 400,
-        type: 'https://haushaltsbuch.app/errors/bad-request',
+        type: 'https://klar.app/errors/bad-request',
       }),
     );
   });
@@ -57,7 +57,7 @@ describe('GlobalExceptionFilter', () => {
     expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 500,
-        type: 'https://haushaltsbuch.app/errors/internal-server-error',
+        type: 'https://klar.app/errors/internal-server-error',
       }),
     );
   });

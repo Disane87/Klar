@@ -20,7 +20,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@haushaltsbuch/shared':
+      '@klar/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@nestjs/common':
@@ -114,10 +114,10 @@ importers:
       '@angular/service-worker':
         specifier: ^21.0.0
         version: 21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
-      '@haushaltsbuch/shared':
+      '@klar/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@haushaltsbuch/shared-frontend':
+      '@klar/shared-frontend':
         specifier: workspace:*
         version: link:../../packages/shared-frontend
       rxjs:
@@ -182,7 +182,7 @@ importers:
 
   packages/shared-frontend:
     dependencies:
-      '@haushaltsbuch/shared':
+      '@klar/shared':
         specifier: workspace:*
         version: link:../shared
       rxjs:

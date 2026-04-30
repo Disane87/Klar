@@ -469,8 +469,8 @@ Mobile Card-Group: Kategorie-Header mit Zwischensumme, ausklappbare Einzelposten
 
 ```json
 {
-  "name": "Haushaltsbuch",
-  "short_name": "Haushaltsbuch",
+  "name": "Klar",
+  "short_name": "Klar",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
@@ -490,7 +490,7 @@ Mobile Card-Group: Kategorie-Header mit Zwischensumme, ausklappbare Einzelposten
 ```html
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Haushaltsbuch">
+<meta name="apple-mobile-web-app-title" content="Klar">
 <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover">
 
@@ -660,7 +660,7 @@ abstract class BaseRepository<T> {
 ```ts
 // Jede Exception wird zu diesem Format gemappt (GlobalExceptionFilter)
 {
-  type: 'https://haushaltsbuch.app/errors/not-found',
+  type: 'https://klar.app/errors/not-found',
   title: 'Ressource nicht gefunden',
   status: 404,
   detail: 'Transaction abc123 nicht gefunden',
