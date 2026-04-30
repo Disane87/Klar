@@ -1,0 +1,29 @@
+{
+  "name": "@haushaltsbuch/shared-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0"
+  },
+  "dependencies": {
+    "@haushaltsbuch/shared": "workspace:*",
+    "zod": "^3.24.0",
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "typescript": "^5.7.0"
+  }
+}
