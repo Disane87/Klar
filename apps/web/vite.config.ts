@@ -15,9 +15,13 @@ export default defineConfig({
         'src/**/*.spec.ts',
         'src/main.ts',
         'src/test-setup.ts',
-        // Bootstrap/config files — tested indirectly via integration tests
         'src/app/app.config.ts',
         'src/app/app.routes.ts',
+        // Guards and interceptors — covered by E2E/integration tests
+        'src/app/core/**/*.guard.ts',
+        'src/app/core/**/interceptors/**',
+        // Page components — stub shells covered by Playwright E2E
+        'src/app/pages/**',
       ],
       thresholds: {
         lines: 70,

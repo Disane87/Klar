@@ -1,8 +1,17 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { AppConfigModule } from './config/config.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { MailModule } from './mail/mail.module';
+import { AuditModule } from './audit/audit.module';
+import { UsersModule } from './users/users.module';
+import { HouseholdsModule } from './households/households.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -20,15 +29,35 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
           'req.body.apiKey',
           'req.body.secret',
           'req.body.hashedSecret',
+          'req.body.token',
+          'req.body.accessToken',
+          'req.body.refreshToken',
+          'req.body.tokenHash',
+          'req.body.code',
+          'req.body.codeVerifier',
+          'req.body.state',
+          'req.body.clientSecret',
         ],
       },
     }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    AppConfigModule,
+    PrismaModule,
+    MailModule,
+    AuditModule,
+    UsersModule,
+    HouseholdsModule,
+    AuthModule,
     HealthModule,
   ],
   providers: [
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
     },
   ],
 })

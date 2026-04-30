@@ -66,14 +66,30 @@ model User {
   createdAt     DateTime  @default(now())
   lastLoginAt   DateTime?
 
-  memberships    HouseholdMembership[]
-  oidcIdentities OidcIdentity[]
-  refreshTokens  RefreshToken[]
+  memberships         HouseholdMembership[]
+  oidcIdentities      OidcIdentity[]
+  refreshTokens       RefreshToken[]
+  emailVerifications  EmailVerification[]
   // Keine direkte Relation zu Transactions/RecurringTransactions/etc.
   // da createdByUserId nullable ist (Account-Delete anonymisiert)
 
   @@index([email])
   @@index([isDeleted])
+}
+
+// Ephemeral: E-Mail-Verifikations-Token (TTL: 24h)
+// Cleanup-Job löscht abgelaufene Einträge.
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique  // kryptografisch zufällig, 32 Bytes hex
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model OidcIdentity {

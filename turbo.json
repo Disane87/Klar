@@ -9,9 +9,15 @@
     "JWT_PUBLIC_KEY_PATH",
     "JWT_ACCESS_EXPIRES_IN",
     "JWT_REFRESH_EXPIRES_IN",
+    "JWT_REFRESH_EXPIRES_IN_LONG",
     "REGISTRATION_ENABLED",
     "APP_URL",
-    "FRONTEND_URL"
+    "FRONTEND_URL",
+    "MAIL_HOST",
+    "MAIL_PORT",
+    "MAIL_SECURE",
+    "MAIL_FROM",
+    "MAIL_FROM_NAME"
   ],
   "tasks": {
     "build": {

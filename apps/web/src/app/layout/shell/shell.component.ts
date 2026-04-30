@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { SideNavComponent } from '../side-nav/side-nav.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
+import { HouseholdStore } from '../../core/household/household.store';
 
 interface BottomTab {
   id: string;
@@ -17,7 +18,7 @@ const BOTTOM_TABS: BottomTab[] = [
   { id: 'fixkosten', label: 'Fixkosten', icon: 'fixkosten', route: '/app/fixkosten' },
   { id: 'buchen',    label: 'Buchen',    icon: 'plus',      route: '/app/buchungen', primary: true },
   { id: 'projekte',  label: 'Projekte',  icon: 'folder',    route: '/app/projekte' },
-  { id: 'mehr',      label: 'Mehr',      icon: 'haushalt',  route: '/app/settings' },
+  { id: 'mehr',      label: 'Mehr',      icon: 'haushalt',  route: '/app/haushalt' },
 ];
 
 @Component({
@@ -32,4 +33,5 @@ const BOTTOM_TABS: BottomTab[] = [
 })
 export class ShellComponent {
   protected tabs = BOTTOM_TABS;
+  protected householdStore = inject(HouseholdStore);
 }

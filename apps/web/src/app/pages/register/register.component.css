@@ -1,0 +1,133 @@
+.page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+@media (max-width: 767px) {
+  .page { grid-template-columns: 1fr; }
+  .brand-pane { display: none; }
+}
+
+/* Brand pane */
+.brand-pane {
+  border-right: 1px solid var(--border);
+  padding: 60px 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface);
+}
+
+.headline {
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-top: 6px;
+}
+
+.accent-text {
+  color: var(--color-surplus);
+  font-style: italic;
+  font-weight: 400;
+  font-family: var(--font-serif);
+}
+
+.tagline {
+  margin-top: 22px;
+  font-size: 14px;
+  color: var(--text-2);
+  max-width: 360px;
+  line-height: 1.55;
+}
+
+.trust-badges {
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.badge-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Form pane */
+.form-pane {
+  padding: 60px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (max-width: 767px) {
+  .form-pane { padding: 40px 24px; }
+}
+
+.form-inner {
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form-title { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+.form-subtitle { font-size: 13px; color: var(--text-2); margin-bottom: 24px; }
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.link { color: var(--color-accent); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+
+/* Server error */
+.server-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--color-expense);
+  background: color-mix(in srgb, var(--color-expense) 10%, transparent);
+  font-size: 13px;
+  color: var(--color-expense);
+}
+
+/* Success state */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-surplus) 12%, transparent);
+  color: var(--color-surplus);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.success-message {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin: 8px 0 20px;
+}
+
+.success-message strong { color: var(--text); }

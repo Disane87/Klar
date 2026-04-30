@@ -1,0 +1,60 @@
+<div class="verify-page">
+  <div class="verify-card">
+    <klar-icon name="shield" [size]="24" class="brand-icon" />
+
+    @if (loading()) {
+      <div class="state-icon loading-icon">
+        <div class="spinner"></div>
+      </div>
+      <div class="klar-label">E-MAIL · BESTÄTIGEN</div>
+      <p class="message">Verifizierung läuft…</p>
+    }
+
+    @if (!loading() && success()) {
+      <div class="state-icon success-icon">
+        <klar-icon name="check" [size]="28" />
+      </div>
+      <div class="klar-label">E-MAIL · BESTÄTIGT</div>
+      <h1 class="title">Alles bereit.</h1>
+      <p class="message">
+        Deine E-Mail-Adresse wurde erfolgreich bestätigt.
+        Du kannst dich jetzt anmelden.
+      </p>
+      <klar-button
+        variant="primary"
+        size="lg"
+        label="Zur Anmeldung →"
+        routerLink="/login"
+      />
+    }
+
+    @if (!loading() && errorMessage()) {
+      <div class="state-icon error-icon">
+        <klar-icon name="x-circle" [size]="28" />
+      </div>
+      <div class="klar-label">E-MAIL · FEHLER</div>
+      <h1 class="title">Bestätigung fehlgeschlagen</h1>
+      <p class="message">{{ errorMessage() }}</p>
+
+      @if (emailFromQuery()) {
+        @if (resendDone()) {
+          <p class="resend-done">
+            <klar-icon name="check" [size]="12" />
+            Bestätigungsmail wurde erneut gesendet.
+          </p>
+        } @else {
+          <klar-button
+            variant="ghost"
+            size="md"
+            label="Bestätigungsmail erneut senden"
+            [loading]="resendLoading()"
+            [disabled]="resendLoading()"
+            (clicked)="resendVerification()"
+          />
+        }
+      }
+
+      <a routerLink="/login" class="back-link">← Zurück zur Anmeldung</a>
+    }
+  </div>
+</div>

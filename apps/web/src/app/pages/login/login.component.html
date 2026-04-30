@@ -41,12 +41,27 @@
       <div class="form-title">Anmelden</div>
       <div class="form-subtitle">Klar · Dein privates Haushaltsbuch</div>
 
-      <form class="form" (submit)="$event.preventDefault()">
+      @if (serverError()) {
+        <div class="server-error">
+          <klar-icon name="alert-triangle" [size]="14" />
+          <span>{{ serverError() }}</span>
+          @if (showResend()) {
+            <button class="resend-link" type="button" (click)="resendVerification()">
+              Bestätigungsmail erneut senden
+            </button>
+          }
+        </div>
+      }
+
+      <form class="form" (submit)="$event.preventDefault(); submit()">
         <klar-input
           label="E-MAIL"
           type="email"
           placeholder="anna@beispiel.de"
-          iconName="eye"
+          iconName="mail"
+          [(ngModel)]="email"
+          name="email"
+          [error]="submitted() && emailError() ? emailError()! : ''"
         />
         <klar-input
           label="PASSWORT"
@@ -54,11 +69,17 @@
           placeholder="••••••••••••"
           iconName="lock"
           hint="Argon2id · 12+ Zeichen empfohlen"
+          [(ngModel)]="password"
+          name="password"
+          [error]="submitted() && passwordError() ? passwordError()! : ''"
         />
 
-        <div class="remember-row">
-          <div class="checkbox">
-            <klar-icon name="check" [size]="10" class="check-icon" />
+        <div class="remember-row" (click)="toggleRememberMe()" tabindex="0"
+             (keydown.space)="$event.preventDefault(); toggleRememberMe()">
+          <div class="checkbox" [class.checked]="rememberMe()">
+            @if (rememberMe()) {
+              <klar-icon name="check" [size]="10" class="check-icon" />
+            }
           </div>
           <span class="remember-label">Diesen Browser für 30 Tage merken</span>
         </div>
@@ -69,6 +90,9 @@
           type="submit"
           label="Anmelden →"
           [fullWidth]="true"
+          [loading]="loading()"
+          [disabled]="loading()"
+          (clicked)="submit()"
         />
 
         <div class="oidc-divider">
@@ -86,7 +110,7 @@
 
       <div class="form-footer">
         <span>Kein Konto?</span>
-        <a href="/register" class="link">Registrieren ↗</a>
+        <a routerLink="/register" class="link">Registrieren ↗</a>
       </div>
     </div>
   </div>

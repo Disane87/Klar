@@ -11,7 +11,7 @@
     </a>
   }
 
-  <div class="section-label klar-label" style="margin-top: 16px;">System</div>
+  <div class="section-label klar-label section-sys">System</div>
   @for (item of sysItems; track item.id) {
     <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
       <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
@@ -19,11 +19,15 @@
     </a>
   }
 
-  <div class="household">
-    <div class="hh-avatar">{{ householdInitials() }}</div>
-    <div class="hh-info">
-      <div class="hh-name">{{ householdName() }}</div>
-      <div class="klar-label-2" style="color: var(--text-muted);">{{ memberCount() }} Mitglieder</div>
-    </div>
-  </div>
+  @if (householdStore.activeHousehold(); as active) {
+    <a routerLink="/app/haushalt" class="household" title="Haushalt verwalten">
+      <div class="hh-avatar">
+        {{ active.household.name.slice(0, 2).toUpperCase() }}
+      </div>
+      <div class="hh-info">
+        <div class="hh-name">{{ active.household.name }}</div>
+        <div class="klar-label-2 hh-role">{{ active.role }}</div>
+      </div>
+    </a>
+  }
 </aside>

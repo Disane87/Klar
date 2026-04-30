@@ -5,6 +5,56 @@ Vollständige Produktanforderungen: `SPEC.md`
 
 ---
 
+## ⚡ PFLICHT-TOOLS — IMMER AKTIV
+
+Diese Tools sind bei JEDER Session und JEDEM Task zu verwenden. Keine Ausnahmen.
+
+### Session-Start (jedes Mal zuerst)
+```
+memory_search(query="klar app completed phases decisions")
+memory_search(query="klar app patterns that worked")
+memory_search(query="klar app current phase status")
+```
+Ergebnisse mit Score > 0.7 sind verbindlich — nicht neu entscheiden was bereits entschieden wurde.
+
+### Vor jedem Task
+```
+memory_search(query="[task-spezifisches Stichwort] klar app")
+```
+
+### Superpowers Skills (triggern automatisch, aber explizit nutzen)
+- `writing-plans` — vor jeder Phase, Tasks à 5–15 Min aufbrechen
+- `subagent-driven-development` — für die eigentliche Implementierung
+- `test-driven-development` — RED → GREEN → REFACTOR, kein Code vor Tests
+- `requesting-code-review` — nach jedem Modul vor Freigabe
+- `dispatching-parallel-agents` — Frontend + Backend parallel wenn möglich
+
+### Ruflo Swarm (jede Phase)
+Swarm-Konfiguration aus `AGENTS.md` verwenden.
+Einfache Phasen: 4 Agents. Standard: 6. Komplex: 8.
+
+### Nach jedem erfolgreichen Task
+```
+memory_store(
+  key="klar-[phase]-[modul]",
+  value="[was gebaut, Entscheidungen, Gotchas]",
+  namespace="klar-app"
+)
+```
+
+### Nach jedem Pattern das funktioniert hat
+```
+memory_store(
+  key="pattern-[beschreibung]",
+  value="[konkreter Code/Ansatz]",
+  namespace="patterns"
+)
+```
+
+---
+
+---
+
 ## Stack
 
 | Schicht | Technologie | Version |
@@ -469,8 +519,8 @@ Mobile Card-Group: Kategorie-Header mit Zwischensumme, ausklappbare Einzelposten
 
 ```json
 {
-  "name": "Klar",
-  "short_name": "Klar",
+  "name": "Haushaltsbuch",
+  "short_name": "Haushaltsbuch",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
@@ -490,7 +540,7 @@ Mobile Card-Group: Kategorie-Header mit Zwischensumme, ausklappbare Einzelposten
 ```html
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Klar">
+<meta name="apple-mobile-web-app-title" content="Haushaltsbuch">
 <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover">
 
@@ -660,7 +710,7 @@ abstract class BaseRepository<T> {
 ```ts
 // Jede Exception wird zu diesem Format gemappt (GlobalExceptionFilter)
 {
-  type: 'https://klar.app/errors/not-found',
+  type: 'https://haushaltsbuch.app/errors/not-found',
   title: 'Ressource nicht gefunden',
   status: 404,
   detail: 'Transaction abc123 nicht gefunden',
@@ -936,45 +986,174 @@ Phase 1 erstellt eine vollständige VS Code Entwicklungsumgebung. Alle Dateien g
 
 **Prisma Studio** läuft via Task "db: studio" auf `http://localhost:5555` — Browser-UI für die DB, kein extra Tool nötig.
 
+### VS Code Problems Panel — Pflicht
+
+**Nach jeder Datei die geschrieben oder geändert wird:**
+- TypeScript-Fehler im Problems Panel (`Ctrl+Shift+M`) müssen auf 0 sein
+- ESLint-Warnings die auf Code-Qualität hinweisen müssen behoben werden (nicht suppressed)
+- Tailwind-Klassen-Warnungen (unbekannte Utility) müssen aufgelöst werden
+
+**Nie akzeptabel:**
+- `// @ts-ignore` oder `// @ts-expect-error` ohne Kommentar warum
+- `// eslint-disable` ohne Begründung
+- Rote Unterwellungen ignorieren und weitermachen
+
+**Workflow:**
+```
+1. Datei schreiben
+2. Problems Panel prüfen → alle Fehler beheben
+3. Erst dann nächste Datei
+```
+
+Wenn ein Problem nicht lösbar erscheint: `// TODO(problem): <Beschreibung>` + an Marco melden — niemals stillschweigend supprimieren.
+
 ---
 
-## TDD-Workflow
+## Test-Pyramide — Pflicht nach jeder Phase
 
-**Red → Green → Refactor — Pflicht pro Feature.**
+**Keine Phase ist fertig ohne grüne Tests auf allen Ebenen.**
+CI schlägt fehl wenn Coverage-Thresholds unterschritten werden.
 
+### 1. Unit Tests (Vitest, schnell, isoliert)
+
+Für jeden Service mit gemockten Repositories:
+```ts
+// Berechnungs-Funktionen gegen bekannte Fixtures — Cent-Präzision
+describe('toMonthlyEquivalent', () => {
+  it('quarterly: teilt durch 3', () =>
+    expect(toMonthlyEquivalent(-18000, 'QUARTERLY')).toBe(-6000));
+  it('yearly: teilt durch 12', () =>
+    expect(toMonthlyEquivalent(-120000, 'YEARLY')).toBe(-10000));
+});
+
+// zod-Schema-Validierung
+describe('CreateTransactionSchema', () => {
+  it('lehnt Float ab', () =>
+    expect(() => schema.parse({ amountCents: 9.99 })).toThrow());
+});
+
+// Guard-Logik isoliert
+// Service-Methoden mit gemocktem Repository
 ```
-1. Unit-Test für Service schreiben (mockte Repository) → schlägt fehl
-2. Service implementieren → grün
-3. Integration-Test für Repository (echte Test-DB, Transaction-Rollback pro Test)
-4. E2E-Test für kritische Flows (Auth, Cross-Tenant, API-Key-Scopes)
-5. Playwright Smoke-Test für die neue UI-Route
+
+### 2. Integration Tests (Vitest + echte Test-DB)
+
+Transaction-Rollback nach jedem Test — kein State-Drift.
+```ts
+beforeEach(async () => { await prisma.$executeRaw`BEGIN` });
+afterEach(async ()  => { await prisma.$executeRaw`ROLLBACK` });
 ```
 
-### Test-Factories
+- Repository-Layer echte Postgres-Queries
+- Prisma Migrations korrekt angewendet
+- **RLS-Policies**: `SET LOCAL app.household_id` gesetzt → andere Haushalts-Daten unsichtbar
+
+### 3. Security Tests (Supertest, nach jeder Auth-nahen Phase)
 
 ```ts
-// tests/factories/transaction.factory.ts
-export const createTransaction = (
-  overrides: Partial<Transaction> = {}
-): Transaction => ({
+describe('Cross-Tenant Security', () => {
+  it('User A kann Haushalt B nicht lesen → 403')
+  it('householdId im Body wird ignoriert → eigener Haushalt bleibt aktiv')
+  it('API-Key read-only: POST → 403')
+  it('API-Key revoked → 401')
+  it('Expired JWT → 401')
+  it('Rate-Limit Login: 11 Versuche → 429')
+  it('OIDC-Linking ohne email_verified → kein Linking')
+})
+```
+
+### 4. Contract Tests (zod-Schema Validation)
+
+API-Response wird gegen zod-Schema aus shared package validiert:
+```ts
+it('GET /transactions response entspricht TransactionSchema', async () => {
+  const res = await request(app).get('/api/v1/households/h1/transactions')
+  z.array(TransactionSchema).parse(res.body) // wirft wenn Kontrakt bricht
+})
+```
+
+### 5. Snapshot Tests (Berechnungs-Logik)
+
+```ts
+it('Fixkosten-Übersicht mit bekannten Fixtures', () => {
+  const result = calculateMonthlyOverview(FIXTURE_APRIL_2026)
+  expect(result).toMatchSnapshot() // schlägt fehl bei unbeabsichtigter Änderung
+})
+// Quartals-Umlegung, Jahres-Umlegung, Ø-Berechnung je eigener Snapshot
+```
+
+### 6. Performance Tests (Vitest bench)
+
+```ts
+bench('Overview-Endpoint unter Last', async () => {
+  await request(app).get('/api/v1/households/h1/overview/fixed')
+}, { time: 1000, iterations: 50 })
+// Schlägt fehl wenn p95 > 200ms
+```
+
+### 7. Playwright Smoke Tests (nach Phasen mit UI)
+
+```ts
+test('Happy Path: Login → Übersicht laden', ...)
+test('Mobile 375px: Bottom Nav sichtbar, Touch-Targets ≥ 44px', ...)
+test('Dark Mode: kein Element mit weißem Hintergrund in dark:', ...)
+test('PWA: App installierbar, Manifest valide', ...)
+```
+
+### 8. Accessibility Tests (axe-playwright, kostenlos)
+
+```ts
+test('Übersicht: keine axe-Violations', async ({ page }) => {
+  const results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations).toEqual([])
+})
+// Prüft: Kontrast-Ratios, ARIA-Labels, Touch-Target-Größen
+```
+
+### Test-Gate nach jeder Phase
+
+```
+[ ] Unit Tests grün, Coverage ≥ 80% Backend / ≥ 70% Frontend
+[ ] Integration Tests grün, RLS-Test explizit bestanden
+[ ] Security Tests grün (nach Auth-Phasen: alle Cross-Tenant-Tests)
+[ ] Contract Tests grün (kein Kontrakt-Bruch)
+[ ] Snapshot Tests grün oder bewusst aktualisiert
+[ ] Performance: p95 < 200ms für Overview-Endpoint
+[ ] Playwright Smoke grün auf 375px + 1280px
+[ ] Accessibility: 0 axe-Violations
+[ ] CI Pipeline grün
+```
+
+**Phase ist erst abgeschlossen wenn alle Checkboxen gesetzt sind.**
+
+### Test-Factories (packages/shared)
+
+```ts
+export const createTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id:              randomId(),
   householdId:     'test-household',
   createdByUserId: 'test-user',
   amountCents:     -5000,
   categoryId:      'test-category',
-  date:            new Temporal.PlainDate(2026, 4, 1).toString(),
+  date:            Temporal.PlainDate.from('2026-04-01').toString(),
   description:     'Test-Buchung',
   visibility:      'SHARED',
   createdAt:       new Date(),
   updatedAt:       new Date(),
   ...overrides,
 });
+
+export const FIXTURE_APRIL_2026 = {
+  fixedIncome:    [createTransaction({ amountCents: 345870, /* Festgehalt */ })],
+  variableIncome: [createTransaction({ amountCents: 108111, /* Provision */ })],
+  expenses: [
+    createTransaction({ amountCents: -60000, /* Haushaltsgeld */ }),
+    createTransaction({ amountCents: -29897, /* Strom */ }),
+    // ... alle Posten aus dem Referenzbild
+  ],
+  expectedSurplus: 176510, // 1.765,10 € in Cent
+};
 ```
-
-### Coverage-Thresholds (CI schlägt fehl wenn unterschritten)
-
-- Backend: 80 % Lines
-- Frontend: 70 % Lines
 
 ---
 

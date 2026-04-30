@@ -11,14 +11,21 @@
     "test:e2e": "pnpm --filter @klar/api test:e2e",
     "clean": "turbo run clean && rimraf node_modules"
   },
+  "dependencies": {
+    "@prisma/client": "^6.0.0"
+  },
   "devDependencies": {
     "turbo": "latest",
     "typescript": "^5.9.0",
-    "rimraf": "^6.0.0"
+    "rimraf": "^6.0.0",
+    "prisma": "^6.0.0"
   },
   "engines": {
     "node": ">=22.0.0",
     "pnpm": ">=10.0.0"
   },
-  "packageManager": "pnpm@10.9.0"
+  "packageManager": "pnpm@10.9.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "argon2", "prisma"]
+  }
 }

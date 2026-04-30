@@ -46,7 +46,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  transition: background 100ms;
 }
+
+.household:hover {
+  background: var(--surface-2);
+}
+
+.section-sys { margin-top: 16px; }
 
 .hh-avatar {
   width: 24px;
@@ -75,4 +83,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hh-role {
+  color: var(--text-muted);
 }

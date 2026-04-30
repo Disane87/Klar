@@ -1,7 +1,8 @@
-import { Component, input } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
+import { HouseholdStore } from '../../core/household/household.store';
 
 interface NavItem {
   id: string;
@@ -32,10 +33,7 @@ const SYS_ITEMS: NavItem[] = [
   styleUrl: './side-nav.component.css',
 })
 export class SideNavComponent {
-  householdName     = input('Haushalt');
-  householdInitials = input('HH');
-  memberCount       = input(1);
-
+  protected householdStore = inject(HouseholdStore);
   protected mainItems = MAIN_ITEMS;
   protected sysItems  = SYS_ITEMS;
 }

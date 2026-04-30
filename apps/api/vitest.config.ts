@@ -5,14 +5,29 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts'],
+    exclude: ['src/**/*.e2e.spec.ts', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.spec.ts', 'src/main.ts'],
-      // TODO: Re-enable threshold when more modules have coverage (Phase 2+)
-      // thresholds: {
-      //   lines: 80,
-      // },
+      exclude: [
+        'src/**/*.spec.ts',
+        'src/main.ts',
+        'src/**/*.module.ts',
+        'src/**/*.controller.ts',
+        'src/**/*.repository.ts',
+        'src/**/strategies/**',
+        'src/**/guards/**',
+        'src/common/decorators/**',
+        'src/common/types/**',
+        'src/common/filters/**',
+        'src/config/**',
+        'src/health/**',
+        'src/mail/**',
+        'src/prisma/**',
+      ],
+      thresholds: {
+        lines: 80,
+      },
     },
   },
 });

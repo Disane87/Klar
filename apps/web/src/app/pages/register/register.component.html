@@ -1,0 +1,127 @@
+<div class="page">
+  <!-- Left: brand pane -->
+  <div class="brand-pane">
+    <div class="brand-top">
+      <klar-wordmark [size]="28" />
+    </div>
+
+    <div class="brand-center">
+      <div class="klar-label" style="margin-bottom: 18px;">EIN HAUSHALT — KEINE WOLKE</div>
+      <div class="headline">
+        Privatfinanzen,<br/>
+        <span class="klar-serif accent-text">klar genug</span>
+        {{ ' ' }}für<br/>zwei Erwachsene.
+      </div>
+      <div class="tagline">
+        Selbstgehostet auf deinem NAS oder Mini-PC. Keine Telemetrie, keine Bank-API,
+        kein Algorithmus, der für dich denkt.
+      </div>
+    </div>
+
+    <div class="trust-badges">
+      <span class="badge-item">
+        <klar-icon name="shield" [size]="12" />
+        ARGON2ID
+      </span>
+      <span class="badge-item">
+        <klar-icon name="lock" [size]="12" />
+        100% LOKAL
+      </span>
+      <span class="badge-item">
+        <klar-icon name="key" [size]="12" />
+        RS256 JWT
+      </span>
+    </div>
+  </div>
+
+  <!-- Right: form pane -->
+  <div class="form-pane">
+    <div class="form-inner">
+
+      @if (success()) {
+        <!-- Success state -->
+        <div class="success-state">
+          <div class="success-icon">
+            <klar-icon name="mail" [size]="32" />
+          </div>
+          <div class="klar-label" style="margin-bottom: 8px;">E-MAIL BESTÄTIGEN</div>
+          <div class="form-title">Fast geschafft!</div>
+          <p class="success-message">
+            Wir haben dir eine Bestätigungsmail an
+            <strong>{{ email() }}</strong> geschickt.
+            Bitte prüfe dein Postfach und klicke auf den Link.
+          </p>
+          <a routerLink="/login" class="link">← Zurück zur Anmeldung</a>
+        </div>
+      } @else {
+        <!-- Register form -->
+        <div class="klar-label" style="margin-bottom: 6px;">KONTO · NEU</div>
+        <div class="form-title">Konto erstellen</div>
+        <div class="form-subtitle">Klar · Dein privates Haushaltsbuch</div>
+
+        @if (serverError()) {
+          <div class="server-error">
+            <klar-icon name="alert-triangle" [size]="14" />
+            <span>{{ serverError() }}</span>
+          </div>
+        }
+
+        <form class="form" (submit)="$event.preventDefault(); submit()">
+          <klar-input
+            label="ANZEIGENAME"
+            type="text"
+            placeholder="Anna Müller"
+            iconName="user"
+            [(ngModel)]="displayName"
+            name="displayName"
+            [error]="submitted() && displayNameError() ? displayNameError()! : ''"
+          />
+          <klar-input
+            label="E-MAIL"
+            type="email"
+            placeholder="anna@beispiel.de"
+            iconName="mail"
+            [(ngModel)]="email"
+            name="email"
+            [error]="submitted() && emailError() ? emailError()! : ''"
+          />
+          <klar-input
+            label="PASSWORT"
+            type="password"
+            placeholder="••••••••••••"
+            iconName="lock"
+            hint="Mindestens 8 Zeichen"
+            [(ngModel)]="password"
+            name="password"
+            [error]="submitted() && passwordError() ? passwordError()! : ''"
+          />
+          <klar-input
+            label="PASSWORT BESTÄTIGEN"
+            type="password"
+            placeholder="••••••••••••"
+            iconName="lock"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            [error]="submitted() && confirmPasswordError() ? confirmPasswordError()! : ''"
+          />
+
+          <klar-button
+            variant="primary"
+            size="lg"
+            type="submit"
+            label="Registrieren →"
+            [fullWidth]="true"
+            [loading]="loading()"
+            [disabled]="loading()"
+            (clicked)="submit()"
+          />
+        </form>
+
+        <div class="form-footer">
+          <span>Bereits registriert?</span>
+          <a routerLink="/login" class="link">Anmelden ↗</a>
+        </div>
+      }
+    </div>
+  </div>
+</div>
