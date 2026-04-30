@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev: All",
+      "type": "shell",
+      "command": "pnpm dev",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: API only",
+      "type": "shell",
+      "command": "pnpm --filter @haushaltsbuch/api dev",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Dev: Web only",
+      "type": "shell",
+      "command": "pnpm --filter @haushaltsbuch/web dev",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Test: All",
+      "type": "shell",
+      "command": "pnpm test",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Test: API",
+      "type": "shell",
+      "command": "pnpm --filter @haushaltsbuch/api test",
+      "group": "test"
+    },
+    {
+      "label": "Test: Web",
+      "type": "shell",
+      "command": "pnpm --filter @haushaltsbuch/web test",
+      "group": "test"
+    },
+    {
+      "label": "Docker: Postgres up",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.dev.yml up -d",
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "Docker: Postgres down",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.dev.yml down",
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "Generate JWT Keys",
+      "type": "shell",
+      "command": "pnpm --filter @haushaltsbuch/api keys:generate"
+    }
+  ]
+}

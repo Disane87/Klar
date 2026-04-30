@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "angular.ng-template",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "prisma.prisma",
+    "eamodio.gitlens",
+    "humao.rest-client",
+    "ms-vscode.vscode-typescript-next",
+    "streetsidesoftware.code-spell-checker",
+    "vitest.explorer",
+    "usernamehw.errorlens"
+  ]
+}
