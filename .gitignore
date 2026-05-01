@@ -34,3 +34,9 @@ Thumbs.db
 ruvector.db
 .swarm/
 .claude-flow/
+.playwright*/
+screen-*
+
+# Playwright
+apps/web/test-results/
+apps/web/e2e/.auth/
