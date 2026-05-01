@@ -1,3 +1,3 @@
-export * from './types.js';
-export * from './calculations.js';
-export * from './schemas.js';
+export * from './types';
+export * from './calculations';
+export * from './schemas';
