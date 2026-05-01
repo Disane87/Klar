@@ -1,0 +1,447 @@
+Pages: 13
+
+=== PAGE 1 ===
+klar
+DESIGN SYSTEM · v1.0
+April 2026 · Müller-Berg
+SELBSTGEHOSTET · 2 ERWACHSENE · 1 HAUSHALT
+Privatfinanzen,klar genug für zw ei.
+Ein präzises System für Fixkosten, Projekte und Monatsplanung — ohne
+Bank-API, ohne Cloud, ohne Telemetrie.
+INHALT
+01 Brand & Logo 02 Tokens & Tipographie
+03 Komponenten 04 Desktop · Fixkosten
+05 Desktop · Monatsansicht 06 Desktop · Projekt
+07 Desktop · Haushalt-Verwaltung 08 Auth · Login
+09 Auth · Onboarding 10 Mobile · alle Hauptansichten
+
+=== PAGE 2 ===
+klar 01 · BRAND Logo & Wordmark — MARKE
+LEDGER · PRIMÄR DIAMOND · ALTERNATIV
+ INVERSE
+APP-ICON
+klar
+WORDMARK · GEIST 500 · -3.5% TRACKING
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+
+=== PAGE 3 ===
+klar 02 · TOKENS Farben · Typografie · Spacing
+SEMANTISCHE FARBEN
+Income
+#34d399 · emerald-400
+Expense
+#fb7185 · rose-400
+Surplus
+#38bdf8 · sky-400
+Variable
+#fbbf24 · amber-400
+Accent
+#818cf8 · indigo-400
+OBERFLÄCHEN — DARK
+bg
+#09090b
+surface
+#18181b
+surface-2
+#27272a
+border
+#3f3f46
+TYPOGRAFIE
+Geist Sans · 500 UI · Display
+Instrum ent Serif Akzent · Italic
+JetBrains Mono Zahlen · Codes
+SCALE
+TOKEN GRÖSSE VERWENDUNG
+display 32–80px Cover · Heroes
+h1 24px Screen Titel
+h2 22px Big N umbers
+body 14px Standard
+label 11px / 0.1em Uppercase Caps
+label-2 10px Hint · Sub
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+
+=== PAGE 4 ===
+klar 03 · KOMPONENTEN Buttons · Inputs · Badges · Cards
+BUTTONS
+Primary Accent Ghost Subtle Danger
+INPUTS
+E-MAIL
+hanna@haushalt.lan
+BETRAG
+1.380,00 EUR
+BADGES
+INCOME
+ EXPENSE
+ SURPLUS
+ VARIABLE
+ ACCENT NEUTRAL
+TOASTS
+Buchung gespeichert
+42,18 € · Edeka Kreuzberg
+Sync läuft
+haushalt.lan · 18:42
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+
+=== PAGE 5 ===
+klar 04 · DESKTOP Fixkosten — WIEDERKEHRENDE EIN- UND AUSGABEN
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+k la r
+ÜBERSICHT
+DASHBOARD
+FIXKOSTEN
+MONAT
+P ROJEKTE
+BUCHUNGEN
+WIEDERKEHREND
+SYSTEM
+HAUSHALT
+TRESOR
+EINSTELLUNGEN
+HM
+Haushalt Müller
+3 Mitglieder
+Fixk o sten WIEDERKEHRENDE EIN- UND AUSGABEN A p r i l  2 0 2 6 P la n s p ie l B u c h u n g
+EINNAHMEN
+6 . 4 2 0 , 0 0   €
+5 Q uellen
+AUSGABEN
+− 3 . 8 1 2 , 4 2   €
+12 Katego rien
+ÜBERSCHUSS
+2 . 6 0 7 , 5 8   €
+Q uo te 40 ,6  %
+APRIL · 20 26
+Kl a r h e i t über dein e fixen  Po sten .
+↑ ↓  STAFFEL EXPORT
+
+
+EINKOMMEN 6 . 4 2 0 , 0 0   €
+G eh alt — An n a 0 1 . 3 . 8 5 0 , 0 0   €
+G eh alt — Marius 2 8 . 2 . 2 0 0 , 0 0   €
+Mietein n ah m e 0 5 . 3 2 0 , 0 0   €
+Kin dergeld 1 5 . 5 0 , 0 0   €
+WOHNEN − 1 . 6 8 5 , 0 0   €
+↳ Miete 0 1 . − 1 . 3 8 0 , 0 0   €
+↳ Stro m  (Stadtwerk e) 0 5 . ~  − 9 8 , 0 0   €
+↳ In tern et — 1&1 0 8 . − 3 9 , 9 9   €
+↳ Hausrat 1 2 . − 1 6 , 2 0   €
+↳ G E Z 1 5 . − 5 5 , 0 8   €
+↳ Wasser 2 8 . ~  − 9 5 , 7 3   €
+MOBILITÄT − 3 1 2 , 5 0   €
+↳ Leasin g — VW ID .4 0 3 . − 2 4 5 , 0 0   €
+↳ KFZ-Versic h erun g 1 4 . − 6 7 , 5 0   €
+VARIABLE ~  − 1 . 2 9 4 , 9 2   €
+↳ Leben sm ittel — ~  − 7 8 0 , 0 0   €
+↳ Restauran t / Café — ~  − 2 1 0 , 0 0   €
+↳ D ro gerie — ~  − 8 4 , 9 2   €
+↳ Tan k en 2 2 0 0 0 €
+
+=== PAGE 6 ===
+klar 05 · DESKTOP Monatsansicht— WAS DIESER MONAT GEKOSTET HAT
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+k la r
+ÜBERSICHT
+DASHBOARD
+FIXKOSTEN
+MONAT
+P ROJEKTE
+BUCHUNGEN
+WIEDERKEHREND
+SYSTEM
+HAUSHALT
+TRESOR
+EINSTELLUNGEN
+HM
+Haushalt Müller
+3 Mitglieder
+Mo n atsan sich t WAS DIESER MONAT GEKOSTET HAT A p r i l  2 0 2 6 P la n s p ie l B u c h u n g
+STAND 18 .0 4 . — 18 :4 2
+V i e r  T a g e bis du im Plus oder Min us lan dest. ↻  SYNC 18 :4 2
+ ●  TREND POSITIV
+EINGEGANGEN
++ 4 . 1 8 0 , 0 0   €
+2 vo n  5 Q uellen  · Rest am 28 .
+↗ + 2  %  v s .  Ø
+AUSGEGEBEN
+− 2 . 1 4 8 , 3 0   €
+56  Buc h un gen  · Ø 38 ,36  €/Tag
+↘ - 4  %  v s .  Ø
+VARIABEL VERFÜGBAR
++ 4 8 6 , 2 0   €
+vo n  1.294 ,92 € · 12 Tage
+PROGNOSE ÜBERSCHUSS
++ 2 . 7 8 4 , 1 0   €
+auf Basis 12-Mo -Mittel
+APRIL — TAGESANSICHT E in n ah me Ausgabe P ro jek t
+MO DI MI DO FR SA SO
+TAGESSUMME — 30  TAGE
+PROJEKTBUDGETS
+Ho c h z eit Jun i 1 . 8 4 0  /  4 . 5 0 0  €
+Küc h e Ren o v ierun g 2 . 6 8 0  /  2 . 5 0 0  €
+Urlaub Bretagne 4 2 0  /  2 . 2 0 0  €
+N o tgro sc h en 5 0 0  /  5 0 0  €
+LETZTE BUCHUNGEN
+1 8 . E dek a Kreuz berg Leben smittel − 4 2 , 1 8   €
+1 8 . D B Fern v erk eh r Mo bilität − 8 9 , 5 0   €
+1 7 . E rstattun g KK So n stiges + 4 8 , 2 0   €
+1 7 . Späti Wien er Str. Variabel − 8 , 4 0   €
+1 6 . Ro ssm an n D ro gerie − 1 8 , 9 2   €
+0 1 0 2 0 3 0 4 0 5
+0 6 0 7 0 8 0 9 1 0 1 1 1 2
+1 3 1 4 1 5 1 6 1 7 1 8 1 9
+2 0 2 1 2 2 2 3 2 4 2 5 2 6
+2 7 2 8 2 9 3 0
+
+=== PAGE 7 ===
+klar 06 · DESKTOP Projekt-Detail— HOCHZEIT JUNI
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+k la r
+ÜBERSICHT
+DASHBOARD
+FIXKOSTEN
+MONAT
+P ROJEKTE
+BUCHUNGEN
+WIEDERKEHREND
+SYSTEM
+HAUSHALT
+TRESOR
+EINSTELLUNGEN
+HM
+Haushalt Müller
+3 Mitglieder
+PROJEKTE HOCHZEIT JUNI 20 26 A r c h iv ie r e n B u d g e t  a n p a s s e n B u c h u n g
+●  A K T I V E S  P R O J E K T e r s t e l l t  1 2 . 0 1 . 2 0 2 6  ·  3  M i t w i r k e n d e  ·  2 6  B u c h u n g e n
+H o c h z e it  J u n i j e d e r  P o s t e n  z ä h l t .
+4 1 %
+V E R B R A U C H T
+BEITRÄ GE NACH MITWIRKENDEN
+An n a Klausen 4 8 % − 8 9 2 , 4 0   €
+Marius Sc h m idt 3 7 % − 6 8 0 , 1 0   €
+Fam ilie / G äste 1 5 % + 2 7 0 , 0 0   €
+SUMME − 1 . 3 0 2 , 5 0   €
+BUDGET
+4 . 5 0 0 , 0 0  €
+VERBRAUCHT
+− 1 . 8 4 0 , 5 0   €
+VERBLEIBEND
++ 2 . 6 5 9 , 5 0   €
+74  Tage bis zum Termin
+BUCHUNGEN — 7 VON 26 ↳  alle an z eigen
+TAG BUCHUNG WER BETRAG
+1 8 . 0 4 Caterin g — An z ah lun g · Verträge An n a − 4 8 0 , 0 0   €
+1 7 . 0 4 Sav e-th e-date D ruc k · P apeterie Marius − 6 8 , 4 0   €
+1 4 . 0 4 Brautsc h uh e· O utfit An n a − 1 4 9 , 0 0   €
+1 2 . 0 4 P ro bedin n er Restauran t · Verpflegun g Marius − 9 4 , 2 0   €
+8 . 0 4 Rin ge (G o ldsc h m ied)· Sc h muc k G emein sam − 1 . 2 8 0 , 0 0   €
+4 . 0 4 G esc h en k beitrag Marie· Beitrag Familie + 2 0 0 , 0 0   €
+2 . 0 4 Webdo m ain  Ein ladun g · D igital An n a − 1 2 , 0 0   €
+
+=== PAGE 8 ===
+klar 07 · DESKTOP Haushalt · Verwaltung— MITGLIEDER · EINLADUNGEN · ZUGANG
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+k la r
+ÜBERSICHT
+DASHBOARD
+FIXKOSTEN
+MONAT
+P ROJEKTE
+BUCHUNGEN
+WIEDERKEHREND
+SYSTEM
+HAUSHALT
+TRESOR
+EINSTELLUNGEN
+HM
+Haushalt Müller
+3 Mitglieder
+Haush alt · Verwaltun g MITGLIEDER · EINLADUNGEN · ZUGANG
+
+
+EINSTELLUNGEN · HAUSHALT
+Verwaltun g —  w e r  h i e r  w o h n t .
+NAME B e a r b e it e n
+Müller-Berg
+H a u s h a l t - I D  h h _ 8 f 2 a  ·  s e i t  M ä r z  2 0 2 4
+MITGLIEDER
+H M
+Han n a Müller-Berg
+h a n n a @ h a u s h a lt .la n
+OWNER
+M B
+Marius Berg
+m a r iu s @ h a u s h a lt .la n
+MEMBER
+A M
+An n a Müller
+a n n a @ h a u s h a lt .la n
+MEMBER
+EINLADUNGEN C o d e  e r s t e lle n
+K 7 X Q - 3 9 M B A b la u f : 0 8 . 0 5 . 2 0 2 6
+P 2 W D - M A 8 4 A b la u f : 2 2 . 0 5 . 2 0 2 6
+Co des laufen  nac h  30  Tagen  auto matisc h  ab un d kön n en  nur ein mal ein gelöst w erden .
+BEITRETEN
+X X X X - X X X X B e it r e t e n
+D u bek o mmst den  Co de vo n  ein em O w n er dein es Haush alts.
+
+=== PAGE 9 ===
+klar 08 · AUTH Login — ANMELDEN — BRIEF-SPEC
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+SESSION · NEU
+A n m e ld e n
+Auf h a u s h a l t . l a n — willk o m m en  zurüc k , Han n a.
+E-MAIL
+han n a@haushalt.lan
+PASSWORT
+••••••••••••••••
+Argo n 2id · 12+  Zeic h en
+D ie s e n B r o w s e r  f ü r  3 0  T a g e  m e r k e n Vergessen ?
+An melden  →
+ODER
+Mit SSO  an melden
+N e u  h ie r ? H a u s h a lt  e r s t e lle n ↗
+k la r
+EIN HAUSHALT — KEINE WOLKE
+P r iv a t f in a n z e n ,
+k l a r  g e n u g f ü r
+z w e i.
+Selbstgeh o stet auf dein em  N AS oder Min i-P C. Kein
+Algo rith m us, der für dic h  den k t — nur ein  Werk z eug, das zäh lt.
+SICHERHEIT — DREI EBENEN
+ARGO N 2ID 10 0 %  LO KAL RS25 6  JWT
+haushalt.lan · online · 18:42 · ping 4ms
+v1. 4. 2 · BUILD 26 0 4
+
+=== PAGE 10 ===
+klar 08 · AUTH Login (Tresor)— ALTERNATIVE VARIANTE
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+SESSION · NEU
+Treso r en tsperren
+Auf h a u s h a l t . l a n  · zuletz t on lin e vo r 2 Min .
+HAUSHALT-PFAD
+s s h : / / haushalt.lan  / muller-berg
+MASTER-PASSPHRASE
+••••••••••••••••
+Argo n 2id · 12+  Zeic h en
+D ie s e n B r o w s e r  f ü r  3 0  T a g e  m e r k e n
+E n tsperren  →
+Verbin dun g en d-to -en d versc h lüsselt · Fin gerprin t 7 a : 4 2 : c 1
+Rec o very-Sc h lüssel verlo ren ? N euen  Haush alt an legen  ↗
+k la r
+EIN HAUSHALT — KEINE WOLKE
+P r iv a t f in a n z e n ,
+k l a r  g e n u g f ü r
+z w e i E r w a c h s e n e .
+Selbstgeho stet auf dein em N AS oder Min i-P C. Kein e
+Telemetrie, kein e Ban k -AP I, kein  Algo rithmus, der für
+dich den k t.
+AG E -VE RSCHLÜSSE LT 10 0 %  LO KAL ARG O N 2ID
+
+=== PAGE 11 ===
+klar 09 · AUTH Onboarding · Schritt 1— HAUSHALTSNAME
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+SCHRITT 1/2
+Deinen Haushalt einrichten
+Ein Name, an dem ihr euch erkennt. Du kannst ihn später ändern— niemand außerhalb sieht ihn.
+HAUSHALTSNAME
+Müller-Berg
+2–32 Zeichen · sichtbar nur für Mitglieder
+Dein Haushalt wird lokal angelegt — aufhaushalt.lan. Es werdenkeine Daten an Dritte übertragen.
+Schritt 1 von 2 Weiter →
+self-hosted · keine Telemetrie · Daten bleiben auf deinem Gerätv1.4.2
+k la r EINRICHTUNG · NEUER HAUSHALT Abbrec h en
+
+=== PAGE 12 ===
+klar 09 · AUTH Onboarding · Schritt 2— EINLADUNGSCODE
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+SCHRITT 2/2
+Lade deine Partner ein
+Teile diesen Code mit den anderen Mitgliedern deines Haushalts. Erist 30 Tage gültig und kann nur einmal eingelöst werden.
+EINLADUNGSCODE
+K7XQ-39MB
+Ablauf: 30.05.2026 · 23:59 Kopiert
+ODER PER LINK
+https://haushalt.lan/join#K7XQ-39MB Kopieren
+Überspringen Fertig — zum Haushalt →
+self-hosted · keine Telemetrie · Daten bleiben auf deinem Gerätv1.4.2
+k la r EINRICHTUNG · NEUER HAUSHALT Abbrec h en
+
+=== PAGE 13 ===
+klar 10 · MOBILE Alle Hauptansichten — IPHONE · 390×844 · DARK
+MOBILE · MONAT (DASHBOARD) MOBILE · FIXKOSTEN MOBILE · HAUSHALT
+Klar · Design System v1.0 · Müller-Berg CONFIDENTIAL · APR 2026
+HAUSHALT MÜLLER · APR 2026Monatim Lot. HM
+ÜBERSCHUSS · STAND 18.04
++ 2.232,58 €+ 4.180 eingegangen · − 2.148 ausgegeben
+KATEGORIEN — APRIL
+Wohnen 1685 / 1685 €
+Lebensmittel 412 / 780 €
+Mobilität 312 / 312 €
+Restaurants 138 / 210 €
+Abos 53 / 53 €
+MONATFIXKOSTENBUCHENPROJEKTEMEHR
+Klar
+9:41
+HAUSHALT MÜLLER · APR 2026Fixkostenim Lot.
+Einnahmen
++6.420
+Ausgaben
+−3.812
+Übersch.
++2.607
+April 2026 ↑↓ STAFFEL
+
+
+EINKOMMEN +6.420,00 €
+Gehalt — Anna 01.+3.850,00 €
+Gehalt — Marius 28.+2.200,00 €
+Mieteinnahme 05.+320,00 €
+Kindergeld 15. +50,00 €
+WOHNEN −1.685,00 €
+Miete 01 138000€
+MONATFIXKOSTENBUCHENPROJEKTEMEHR
+ €
+ €
+ €
+Klar
+9:41
+‹ Mehr VERWALTUNG
+EINSTELLUNGEN · HAUSHALTVerwaltung— wer hier wohnt.
+NAME Bearb
+MITGLIEDER · 3
+HMHanna Müller-Berg O
+EINLADUNGEN
+BEITRETEN
+GEFAHRENZONE
+Klar v1.4.2 · haushalt.lan
+MONATFIXKOSTENBUCHENPROJEKTE
+Klar
+9:41
+
+klar haushalt.lan
+EIN HAUSHALT — KEINE WOLKE
+Privatfinanzen,klar genugfür zwei.
+ARGON2ID 100% LOKAL RS256 JWT
+SESSION · NEUAnmeldenE-MAILhanna@haushalt.lan
+PASSWORT
+Klar
+9:41
+‹ Zurück
+ klar Abbrechen
+SCHRITT 1/2
+Deinen Haushalt einrichtenEin Name, an dem ihr euch erkennt. Du kannst ihn späterändern.
+HAUSHALTSNAMEMüller-Berg
+2–32 Zeichen · sichtbar nur für Mitglieder
+Lokal angelegt auf haushalt.lan. Keine Übertragung anDritte.
+Klar
+9:41
+‹ Zurück
+ klar Übers
+SCHRITT 2/2
+Lade deine Partner einTeile diesen Code. 30 Tage gültig, einmalig einlösba
+EINLADUNGSCODE
+K7XQ-39MB
+Ablauf 30.05.2026 Kop
+ODER PER LINKhaushalt.lan/join#K7XQ-39MB
+Klar
+9:41
