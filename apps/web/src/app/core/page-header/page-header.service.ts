@@ -6,6 +6,8 @@ export interface PageHeaderConfig {
   showAdd?:       boolean;
   showPlanspiel?: boolean;
   addLabel?:      string;
+  onAdd?:         () => void;
+  onPlanspiel?:   () => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +17,8 @@ export class PageHeaderService {
   readonly showAdd       = signal(false);
   readonly showPlanspiel = signal(false);
   readonly addLabel      = signal('Buchung');
+  readonly onAdd         = signal<(() => void) | null>(null);
+  readonly onPlanspiel   = signal<(() => void) | null>(null);
 
   set(config: PageHeaderConfig): void {
     this.title.set(config.title);
@@ -22,5 +26,7 @@ export class PageHeaderService {
     this.showAdd.set(config.showAdd ?? false);
     this.showPlanspiel.set(config.showPlanspiel ?? false);
     this.addLabel.set(config.addLabel ?? 'Buchung');
+    this.onAdd.set(config.onAdd ?? null);
+    this.onPlanspiel.set(config.onPlanspiel ?? null);
   }
 }

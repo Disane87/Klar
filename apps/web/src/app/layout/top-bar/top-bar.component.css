@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .topbar {
   height: 52px;
   border-bottom: 1px solid var(--border);

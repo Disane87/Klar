@@ -1,5 +1,6 @@
 import { Component, computed, inject, effect } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { OverviewStore } from '../../core/overview/overview.store';
@@ -17,12 +18,15 @@ export class FixkostenPageComponent {
   protected store = inject(OverviewStore);
 
   constructor() {
+    const router = inject(Router);
     inject(PageHeaderService).set({
       title:          'Fixkosten',
       subtitle:       'WIEDERKEHRENDE EIN- UND AUSGABEN',
       showPlanspiel:  true,
       showAdd:        true,
       addLabel:       'Buchung',
+      onPlanspiel:    () => router.navigate(['/app/planspiel']),
+      onAdd:          () => router.navigate(['/app/buchungen']),
     });
   }
 

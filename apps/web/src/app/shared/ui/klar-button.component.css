@@ -23,7 +23,7 @@ button:focus-visible {
   box-shadow: var(--ring);
 }
 
-button.size-sm { height: 26px; font-size: 12px; padding: 0 10px; }
+button.size-sm { height: 28px; font-size: 12px; padding: 0 10px; }
 button.size-md { height: 32px; font-size: 13px; padding: 0 14px; }
 button.size-lg { height: 38px; font-size: 14px; padding: 0 18px; }
 

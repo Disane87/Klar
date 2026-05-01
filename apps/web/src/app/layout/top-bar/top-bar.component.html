@@ -12,10 +12,12 @@
       <span class="klar-mono">{{ monthChip() }}</span>
     </div>
     @if (showPlanspiel()) {
-      <klar-button variant="ghost" size="sm" iconName="planspiel" label="Planspiel" />
+      <klar-button variant="ghost" size="sm" iconName="planspiel" label="Planspiel"
+                   (clicked)="planspielClick.emit()" />
     }
     @if (showAdd()) {
-      <klar-button variant="primary" size="sm" iconName="plus" [label]="addLabel()" />
+      <klar-button variant="primary" size="sm" iconName="plus" [label]="addLabel()"
+                   (clicked)="addClick.emit()" />
     }
   </div>
 </header>

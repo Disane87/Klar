@@ -8,6 +8,7 @@ import { KlarCardComponent } from '../../shared/ui/klar-card.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
 import type { InviteCode } from '@klar/shared';
 
 @Component({
@@ -43,6 +44,13 @@ export class HaushaltPageComponent implements OnInit {
   readonly activeApiKeys = computed(() =>
     (this.apiKeysStore.keys() ?? []).filter(k => !k.isRevoked)
   );
+
+  constructor() {
+    inject(PageHeaderService).set({
+      title:    'Haushalt',
+      subtitle: 'VERWALTUNG & EINSTELLUNGEN',
+    });
+  }
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.store.loadMembers(), this.store.loadInvites()]);

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 
@@ -16,4 +16,7 @@ export class TopBarComponent {
   showPlanspiel = input(true);
   showAdd       = input(true);
   addLabel      = input('Buchung');
+
+  addClick        = output<void>();
+  planspielClick  = output<void>();
 }

@@ -1,8 +1,10 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
 import type { RecurringFrequency } from '@klar/shared';
 import { toMonthlyEquivalent } from '@klar/shared';
 
@@ -36,6 +38,16 @@ export class PlanspielPageComponent {
   protected showForm = signal(false);
 
   constructor() {
+    const router = inject(Router);
+    inject(PageHeaderService).set({
+      title:       'Planspiel',
+      subtitle:    'SIMULATION — REIN LOKAL',
+      showAdd:     true,
+      addLabel:    'Eintrag',
+      onAdd:       () => this.showForm.set(true),
+      onPlanspiel: () => router.navigate(['/app/fixkosten']),
+    });
+
     effect(() => {
       if (this.store.isEmpty()) {
         this.showForm.set(false);

@@ -14,6 +14,8 @@
         [showPlanspiel]="pageHeader.showPlanspiel()"
         [showAdd]="pageHeader.showAdd()"
         [addLabel]="pageHeader.addLabel()"
+        (addClick)="pageHeader.onAdd()?.()"
+        (planspielClick)="pageHeader.onPlanspiel()?.()"
       />
     }
     <router-outlet />

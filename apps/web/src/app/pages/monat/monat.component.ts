@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { OverviewStore } from '../../core/overview/overview.store';
@@ -15,12 +16,15 @@ export class MonatPageComponent {
   protected store = inject(OverviewStore);
 
   constructor() {
+    const router = inject(Router);
     inject(PageHeaderService).set({
       title:         'Monatsansicht',
       subtitle:      'WAS DIESER MONAT GEKOSTET HAT',
       showPlanspiel: true,
       showAdd:       true,
       addLabel:      'Buchung',
+      onPlanspiel:   () => router.navigate(['/app/planspiel']),
+      onAdd:         () => router.navigate(['/app/buchungen']),
     });
   }
 

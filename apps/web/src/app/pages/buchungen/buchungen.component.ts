@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
@@ -12,15 +12,17 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
   styleUrl: './buchungen.component.css',
 })
 export class BuchungenPageComponent {
-  protected store = inject(TransactionsStore);
+  protected store        = inject(TransactionsStore);
+  readonly showCreateForm = signal(false);
 
   constructor() {
     inject(PageHeaderService).set({
-      title: 'Buchungen',
-      subtitle: 'MONATLICHE AUSGABEN & EINNAHMEN',
+      title:         'Buchungen',
+      subtitle:      'MONATLICHE AUSGABEN & EINNAHMEN',
       showPlanspiel: false,
-      showAdd: true,
-      addLabel: 'Buchung',
+      showAdd:       true,
+      addLabel:      'Buchung',
+      onAdd:         () => this.showCreateForm.set(true),
     });
   }
 
