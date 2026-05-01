@@ -1,5 +1,17 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(npm show *)",
+      "Bash(pnpm --filter @klar/api exec prisma generate)",
+      "Bash(npx prisma *)",
+      "Bash(node_modules/.bin/prisma generate *)",
+      "Bash(apps/api/node_modules/.bin/prisma generate *)",
+      "Bash(xargs grep *)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
+      "WebFetch(domain:api.anthropic.com)",
+      "mcp__plugin_playwright_playwright__browser_tabs",
+      "mcp__ruflo__memory_search"
+    ],
     "additionalDirectories": [
       "C:\\Workspace\\denaro"
     ]

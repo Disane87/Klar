@@ -16,7 +16,8 @@ import {
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { RegisterResponse, AuthUser, RefreshResponse } from '@klar/shared';
-import { AuthService, type RegisterInput } from './auth.service';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
 import { OidcService } from '../oidc/oidc.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
@@ -49,7 +50,7 @@ export class AuthController {
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   async register(
-    @Body() dto: RegisterInput,
+    @Body() dto: RegisterDto,
     @Req() req: FastifyRequest,
   ): Promise<RegisterResponse> {
     return this.authService.register(dto, {

@@ -11,7 +11,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { RequestMethod } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppModule } from '../app.module';
 
@@ -73,6 +73,7 @@ beforeAll(async () => {
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   await app.init();
   await app.getHttpAdapter().getInstance().ready();

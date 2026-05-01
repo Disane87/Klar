@@ -47,7 +47,12 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
         ],
       },
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+      // Skip throttling in test environment so E2E tests can register/login freely
+      skipIf: () => process.env['NODE_ENV'] === 'test',
+    }]),
     AppConfigModule,
     PrismaModule,
     MailModule,
