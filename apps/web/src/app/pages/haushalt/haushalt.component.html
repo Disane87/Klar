@@ -227,11 +227,11 @@
     <!-- Bestehende Schlüssel -->
     @if (apiKeysStore.loading()) {
       <p class="status-text">Wird geladen…</p>
-    } @else if (apiKeysStore.isEmpty()) {
+    } @else if (activeApiKeys().length === 0) {
       <p class="status-text">Noch keine API-Schlüssel erstellt.</p>
     } @else {
       <div class="api-key-list">
-        @for (key of apiKeysStore.keys()!; track key.id) {
+        @for (key of activeApiKeys(); track key.id) {
           <div class="api-key-row" [style.opacity]="key.isRevoked ? '0.5' : '1'">
             <div class="key-info">
               <p class="key-name" [style.text-decoration]="key.isRevoked ? 'line-through' : 'none'">

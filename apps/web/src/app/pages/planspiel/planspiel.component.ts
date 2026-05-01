@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -35,6 +35,14 @@ export class PlanspielPageComponent {
   // ── Add-entry form state ───────────────────────────────────────────────────
   protected showForm = signal(false);
 
+  constructor() {
+    effect(() => {
+      if (this.store.isEmpty()) {
+        this.showForm.set(false);
+      }
+    });
+  }
+
   protected form = signal<AddForm>({
     label: '',
     amountEuro: '',
@@ -45,7 +53,7 @@ export class PlanspielPageComponent {
 
   protected readonly formValid = computed(() => {
     const f = this.form();
-    const amount = parseFloat(f.amountEuro.replace(',', '.'));
+    const amount = parseFloat(String(f.amountEuro ?? '').replace(',', '.'));
     return f.label.trim().length > 0 && !isNaN(amount) && amount > 0;
   });
 
@@ -81,7 +89,7 @@ export class PlanspielPageComponent {
     if (!this.formValid()) return;
     const f = this.form();
     const absAmount = Math.round(
-      parseFloat(f.amountEuro.replace(',', '.')) * 100
+      parseFloat(String(f.amountEuro ?? '').replace(',', '.')) * 100
     );
     const amountCents = f.type === 'income' ? absAmount : -absAmount;
 

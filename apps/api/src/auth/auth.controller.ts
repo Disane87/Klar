@@ -105,7 +105,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Throttle({ default: { limit: 200, ttl: 60000 } })
   async refresh(
     @Req() req: FastifyRequest & { cookies?: Record<string, string> },
     @Res({ passthrough: true }) reply: FastifyReply,

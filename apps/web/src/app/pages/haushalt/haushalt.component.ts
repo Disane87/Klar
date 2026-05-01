@@ -40,6 +40,9 @@ export class HaushaltPageComponent implements OnInit {
   readonly joining = signal(false);
 
   readonly canManage = computed(() => this.store.isOwner());
+  readonly activeApiKeys = computed(() =>
+    (this.apiKeysStore.keys() ?? []).filter(k => !k.isRevoked)
+  );
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.store.loadMembers(), this.store.loadInvites()]);

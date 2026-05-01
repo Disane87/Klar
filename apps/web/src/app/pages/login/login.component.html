@@ -68,7 +68,8 @@
           type="email"
           placeholder="anna@beispiel.de"
           iconName="mail"
-          [(ngModel)]="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
           name="email"
           [error]="submitted() && emailError() ? emailError()! : ''"
         />
@@ -78,7 +79,8 @@
           placeholder="••••••••••••"
           iconName="lock"
           hint="Argon2id · 12+ Zeichen empfohlen"
-          [(ngModel)]="password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
           name="password"
           [error]="submitted() && passwordError() ? passwordError()! : ''"
         />

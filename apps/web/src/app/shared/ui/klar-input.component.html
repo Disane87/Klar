@@ -16,6 +16,7 @@
       [disabled]="isDisabled"
       [value]="value"
       (input)="onInput($event)"
+      (change)="onInput($event)"
       (blur)="onTouched()"
     />
     @if (suffix()) {
