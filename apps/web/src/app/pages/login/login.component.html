@@ -32,6 +32,15 @@
         RS256 JWT
       </span>
     </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span class="status-left">
+        <span class="status-dot online"></span>
+        haushalt.lan · online · <span class="status-time klar-mono">{{ statusTime() }}</span>
+      </span>
+      <span class="status-version">v1.4.2</span>
+    </div>
   </div>
 
   <!-- Right: form pane -->
@@ -95,17 +104,22 @@
           (clicked)="submit()"
         />
 
-        <div class="oidc-divider">
-          <span>oder</span>
-        </div>
+        @if (oidc.enabled()) {
+          <div class="oidc-divider">
+            <span>oder</span>
+          </div>
 
-        <klar-button
-          variant="ghost"
-          size="md"
-          iconName="shield"
-          label="Mit SSO anmelden"
-          [fullWidth]="true"
-        />
+          <klar-button
+            variant="outline"
+            size="md"
+            iconName="shield"
+            [label]="'Mit ' + oidc.providerName() + ' anmelden'"
+            [fullWidth]="true"
+            [loading]="oidcLoading()"
+            [disabled]="loading() || oidcLoading()"
+            (clicked)="loginWithOidc()"
+          />
+        }
       </form>
 
       <div class="form-footer">

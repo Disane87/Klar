@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,7 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthStore } from '../../core/auth/auth.store';
+import { OidcService } from '../../core/auth/oidc.service';
 
 @Component({
   selector: 'app-login',
@@ -23,15 +24,18 @@ import { AuthStore } from '../../core/auth/auth.store';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private authStore = inject(AuthStore);
   private router = inject(Router);
+  readonly oidc = inject(OidcService);
 
   readonly email = signal('');
   readonly password = signal('');
   readonly rememberMe = signal(false);
   readonly loading = signal(false);
+  protected readonly statusTime = signal(this.getTimeString());
+  readonly oidcLoading = signal(false);
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
   readonly showResend = signal(false);
@@ -51,6 +55,10 @@ export class LoginComponent {
   });
 
   readonly formValid = computed(() => !this.emailError() && !this.passwordError());
+
+  async ngOnInit(): Promise<void> {
+    await this.oidc.loadConfig();
+  }
 
   async submit(): Promise<void> {
     this.submitted.set(true);
@@ -74,6 +82,18 @@ export class LoginComponent {
       this.handleLoginError(err);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async loginWithOidc(): Promise<void> {
+    if (this.oidcLoading()) return;
+    this.oidcLoading.set(true);
+    try {
+      await this.oidc.startLogin('/app');
+      // Browser navigates away — no finally needed
+    } catch {
+      this.serverError.set('SSO-Anmeldung fehlgeschlagen. Bitte versuche es erneut.');
+      this.oidcLoading.set(false);
     }
   }
 
@@ -102,5 +122,10 @@ export class LoginComponent {
 
   toggleRememberMe(): void {
     this.rememberMe.update(v => !v);
+  }
+
+  private getTimeString(): string {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 }

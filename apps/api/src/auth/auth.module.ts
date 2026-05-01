@@ -8,6 +8,8 @@ import { HouseholdsModule } from '../households/households.module';
 import { AuditModule } from '../audit/audit.module';
 import { MailModule } from '../mail/mail.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { OidcModule } from '../oidc/oidc.module';
+import { CategoriesModule } from '../categories/categories.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -49,6 +51,8 @@ import { EmailVerificationRepository } from './repositories/email-verification.r
     AuditModule,
     MailModule,
     PrismaModule,
+    OidcModule,
+    CategoriesModule,
   ],
   controllers: [AuthController],
   providers: [

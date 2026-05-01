@@ -14,6 +14,7 @@ import { AppRole } from '@prisma/client';
 import type { AuthUser, RegisterResponse } from '@klar/shared';
 import { UsersService } from '../users/users.service';
 import { HouseholdsService } from '../households/households.service';
+import { CategoriesService } from '../categories/categories.service';
 import { MailService } from '../mail/mail.service';
 import { AuditService } from '../audit/audit.service';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
@@ -71,6 +72,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly householdsService: HouseholdsService,
+    private readonly categoriesService: CategoriesService,
     private readonly mailService: MailService,
     private readonly auditService: AuditService,
     private readonly jwtService: JwtService,
@@ -118,7 +120,8 @@ export class AuthService {
       appRole,
     });
 
-    await this.householdsService.createDefault(user.id);
+    const household = await this.householdsService.createDefault(user.id);
+    await this.categoriesService.seedDefaults(household.id);
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
@@ -254,6 +257,10 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
     await this.emailVerificationRepo.create({ userId: user.id, token, expiresAt });
     await this.mailService.sendVerificationEmail(lower, user.displayName, token);
+  }
+
+  toAuthUser(user: User): AuthUser {
+    return this.usersService.toAuthUser(user);
   }
 
   private signAccessToken(user: User): string {

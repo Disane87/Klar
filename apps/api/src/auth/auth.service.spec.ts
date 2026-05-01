@@ -118,9 +118,14 @@ function buildService(): {
     deleteExpired: vi.fn().mockResolvedValue(undefined),
   } as unknown as EmailVerificationRepository;
 
+  const categoriesService = {
+    seedDefaults: vi.fn().mockResolvedValue(undefined),
+  } as unknown as import('../categories/categories.service').CategoriesService;
+
   const service = new AuthService(
     usersService,
     householdsService,
+    categoriesService,
     mailService,
     auditService,
     jwtService,

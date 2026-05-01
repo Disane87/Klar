@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { User } from '@prisma/client';
+import { AppRole } from '@prisma/client';
 import type { AuthUser } from '@klar/shared';
 import { UsersRepository, type CreateUserData } from './users.repository';
 
@@ -35,6 +36,14 @@ export class UsersService {
 
   setEmailVerified(id: string): Promise<void> {
     return this.repo.setEmailVerified(id);
+  }
+
+  setAppRole(id: string, appRole: AppRole): Promise<User> {
+    return this.repo.setAppRole(id, appRole);
+  }
+
+  setPassword(id: string, passwordHash: string): Promise<void> {
+    return this.repo.setPassword(id, passwordHash);
   }
 
   toAuthUser(user: User): AuthUser {

@@ -2,8 +2,10 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Query,
+  Param,
   Req,
   Res,
   UseGuards,
@@ -15,6 +17,7 @@ import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { RegisterResponse, AuthUser, RefreshResponse } from '@klar/shared';
 import { AuthService, type RegisterInput } from './auth.service';
+import { OidcService } from '../oidc/oidc.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -30,10 +33,17 @@ interface ResendBody {
   email: string;
 }
 
+interface HandoverBody {
+  code: string;
+}
+
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly oidcService: OidcService,
+  ) {}
 
   @Public()
   @Post('register')
@@ -141,5 +151,133 @@ export class AuthController {
   async resendVerification(@Body() body: ResendBody): Promise<{ message: string }> {
     await this.authService.resendVerification(body.email);
     return { message: 'Falls eine passende E-Mail-Adresse existiert, wurde eine neue E-Mail gesendet.' };
+  }
+
+  // ── OIDC endpoints ────────────────────────────────────────────────────────
+
+  /** Returns whether OIDC is enabled and the display name. Used by the login page. */
+  @Public()
+  @Get('oidc/config')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  getOidcConfig(): { enabled: boolean; providerName: string } {
+    return {
+      enabled: this.oidcService.isEnabled(),
+      providerName: this.oidcService.getProviderName(),
+    };
+  }
+
+  /** Returns the IdP authorization URL. Frontend redirects the browser there. */
+  @Public()
+  @Get('oidc/authorize')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async oidcAuthorize(
+    @Query('redirect') redirectAfterLogin?: string,
+  ): Promise<{ authorizeUrl: string }> {
+    const authorizeUrl = await this.oidcService.getAuthorizeUrl(redirectAfterLogin);
+    return { authorizeUrl };
+  }
+
+  /**
+   * IdP redirects here after user authentication.
+   * Backend exchanges the code, provisions the user, issues an OTP,
+   * then redirects the browser to the SPA callback page.
+   */
+  @Public()
+  @Get('oidc/callback')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async oidcCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('error') error: string | undefined,
+    @Req() req: FastifyRequest,
+    @Res() reply: FastifyReply,
+  ): Promise<void> {
+    const frontendBase = process.env['FRONTEND_URL'] ?? 'http://localhost:4200';
+
+    if (error || !code || !state) {
+      const msg = encodeURIComponent(error ?? 'Anmeldung abgebrochen');
+      void reply.redirect(`${frontendBase}/auth/callback?error=${msg}`);
+      return;
+    }
+
+    const ua = req.headers['user-agent'];
+    const userAgent = Array.isArray(ua) ? ua[0] : ua;
+
+    try {
+      const { otpCode, redirectAfterLogin } = await this.oidcService.handleCallback(
+        code,
+        state,
+        req.ip,
+        userAgent,
+      );
+
+      const params = new URLSearchParams({ code: otpCode });
+      if (redirectAfterLogin) params.set('redirect', redirectAfterLogin);
+
+      void reply.redirect(`${frontendBase}/auth/callback?${params.toString()}`);
+    } catch {
+      void reply.redirect(`${frontendBase}/auth/callback?error=${encodeURIComponent('Anmeldung fehlgeschlagen')}`);
+    }
+  }
+
+  /**
+   * Exchanges the one-time OTP for a proper JWT token pair.
+   * Called by the SPA after receiving the OTP from the callback URL.
+   */
+  @Public()
+  @Post('handover')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async handover(
+    @Body() body: HandoverBody,
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<{ accessToken: string; user: AuthUser }> {
+    if (!body.code) throw new BadRequestException('Code fehlt');
+
+    const user = await this.oidcService.exchangeHandoverCode(body.code);
+    const { accessToken, refreshToken, refreshExpiresIn } =
+      await this.authService.login(user, {}, {
+        ip: req.ip,
+        headers: req.headers as Record<string, string | string[] | undefined>,
+      });
+
+    void reply.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: refreshExpiresIn,
+    });
+
+    return { accessToken, user: this.authService.toAuthUser(user) };
+  }
+
+  /** Returns all linked OIDC identities for the current user. */
+  @UseGuards(JwtAuthGuard)
+  @Get('oidc/identities')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getOidcIdentities(
+    @CurrentUser() payload: JwtPayload,
+  ): Promise<{ providerName: string; email: string; createdAt: string; lastLoginAt: string | null }[]> {
+    const identities = await this.oidcService.getIdentities(payload.sub);
+    return identities.map(i => ({
+      providerName: i.providerName,
+      email: i.email,
+      createdAt: i.createdAt.toISOString(),
+      lastLoginAt: i.lastLoginAt?.toISOString() ?? null,
+    }));
+  }
+
+  /** Unlinks an OIDC identity from the current user account. */
+  @UseGuards(JwtAuthGuard)
+  @Delete('oidc/identities/:providerName')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async unlinkOidcIdentity(
+    @CurrentUser() payload: JwtPayload,
+    @Param('providerName') providerName: string,
+  ): Promise<void> {
+    await this.oidcService.unlinkIdentity(payload.sub, providerName);
   }
 }

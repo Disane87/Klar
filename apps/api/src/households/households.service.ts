@@ -139,6 +139,14 @@ export class HouseholdsService {
     await this.inviteRepo.delete(inviteId);
   }
 
+  async ensureMembership(userId: string, householdId: string): Promise<void> {
+    const existing = await this.repo.findMembership(userId, householdId);
+    if (!existing) {
+      await this.repo.addMember(userId, householdId);
+      this.auditService.log({ action: 'member.auto_joined', userId, householdId });
+    }
+  }
+
   async joinByCode(userId: string, code: string): Promise<HouseholdMembership> {
     const normalizedCode = code.replace(/-/g, '').toUpperCase();
     try {
