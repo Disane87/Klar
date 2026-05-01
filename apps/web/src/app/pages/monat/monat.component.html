@@ -1,5 +1,137 @@
-<div class="page-stub">
-  <div class="klar-label" style="color: var(--text-muted); margin-bottom: 8px;">PHASE 2+</div>
-  <div style="font-size: 22px; font-weight: 500; letter-spacing: -0.01em;">Monat</div>
-  <div style="font-size: 13px; color: var(--text-2); margin-top: 6px;">Wird in einer der nächsten Phasen implementiert.</div>
+<div class="page">
+
+  <!-- Month nav -->
+  <div class="month-nav">
+    <button type="button" class="nav-btn" aria-label="Vorheriger Monat" (click)="prevMonth()">
+      <klar-icon name="chevron-left" [size]="18"/>
+    </button>
+    <span class="month-title">{{ displayMonth() }}</span>
+    <button type="button" class="nav-btn" aria-label="Nächster Monat" (click)="nextMonth()">
+      <klar-icon name="chevron-right" [size]="18"/>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="stat-grid loading-grid">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="stat-card sk-card">
+          <klar-skeleton height="9px" width="80px"/>
+          <klar-skeleton class="sk-gap-8" height="28px" width="60%"/>
+          <klar-skeleton class="sk-gap-6" height="11px" width="100%"/>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error -->
+  @else if (store.error()) {
+    <div class="error-bar">
+      <klar-icon name="alert-circle" [size]="14"/>
+      <span>Fehler beim Laden der Übersicht.</span>
+      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (!store.cashflow()) {
+    <div class="empty-state">
+      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
+      <p>Noch keine Daten für diesen Monat</p>
+    </div>
+  }
+
+  <!-- Data -->
+  @else {
+    <!-- Status bar (nur aktueller Monat) -->
+    @if (isCurrentMonth()) {
+      <div class="status-bar">
+        <span class="status-stand">{{ statusDate() }}</span>
+        <span class="status-trend income">&#x25CF; TREND POSITIV</span>
+      </div>
+    }
+
+    <!-- Mobile Hero Surplus -->
+    <div class="mobile-hero">
+      <div class="hero-label">
+        {{ surplusPositive() ? 'ÜBERSCHUSS' : 'DEFIZIT' }}
+        @if (isCurrentMonth()) { <span class="hero-stand">· {{ statusDate() }}</span> }
+      </div>
+      <div class="hero-amount" [class.surplus]="surplusPositive()" [class.expense]="!surplusPositive()">
+        {{ formatCents(store.cashflow()!.surplusCents) }}
+      </div>
+      <div class="hero-sub">
+        <span class="income">+{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
+        <span class="hero-arrow">→</span>
+        <span class="expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
+      </div>
+    </div>
+
+    <!-- 4 Stat-Karten -->
+    <div class="stat-grid">
+      <!-- Eingegangen -->
+      <div class="stat-card income-card">
+        <span class="stat-label">EINGEGANGEN</span>
+        <span class="stat-value income">{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
+        <span class="stat-sub">Einnahmen dieses Monats</span>
+      </div>
+
+      <!-- Ausgegeben -->
+      <div class="stat-card expense-card">
+        <span class="stat-label">AUSGEGEBEN</span>
+        <span class="stat-value expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
+        <span class="stat-sub">Ausgaben dieses Monats</span>
+      </div>
+
+      <!-- Variabel verfügbar / Defizit -->
+      <div class="stat-card" [class.surplus-card]="surplusPositive()" [class.deficit-card]="!surplusPositive()">
+        <span class="stat-label">{{ surplusPositive() ? 'VARIABEL VERFÜGBAR' : 'DEFIZIT' }}</span>
+        <span class="stat-value" [class.surplus]="surplusPositive()" [class.expense]="!surplusPositive()">
+          {{ formatCents(store.cashflow()!.surplusCents) }}
+        </span>
+        <span class="stat-sub">Netto · Fixkosten abgezogen</span>
+      </div>
+
+      <!-- Fixkosten -->
+      <div class="stat-card">
+        <span class="stat-label">FIXKOSTEN</span>
+        <span class="stat-value expense">{{ formatCents(store.cashflow()!.recurringExpensesCents) }}</span>
+        <span class="stat-sub">Wiederkehrende Ausgaben</span>
+      </div>
+    </div>
+
+    <!-- Aufschlüsselung Einnahmen vs. Ausgaben -->
+    <div class="breakdown">
+      <div class="breakdown-section">
+        <div class="bk-header">
+          <span class="bk-label">EINNAHMEN</span>
+          <span class="bk-total income">{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
+        </div>
+        <div class="bk-row">
+          <span class="bk-name">Fixe Einnahmen</span>
+          <span class="bk-amount income">{{ formatCents(store.cashflow()!.recurringIncomeCents) }}</span>
+        </div>
+        <div class="bk-row">
+          <span class="bk-name">Buchungen</span>
+          <span class="bk-amount income">{{ formatCents(store.cashflow()!.transactionIncomeCents) }}</span>
+        </div>
+      </div>
+
+      <div class="breakdown-section">
+        <div class="bk-header">
+          <span class="bk-label">AUSGABEN</span>
+          <span class="bk-total expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
+        </div>
+        <div class="bk-row">
+          <span class="bk-name">Fixkosten</span>
+          <span class="bk-amount expense">{{ formatCents(store.cashflow()!.recurringExpensesCents) }}</span>
+        </div>
+        <div class="bk-row">
+          <span class="bk-name">Buchungen</span>
+          <span class="bk-amount expense">{{ formatCents(store.cashflow()!.transactionExpensesCents) }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
 </div>

@@ -1,5 +1,113 @@
-<div class="page-stub">
-  <div class="klar-label" style="color: var(--text-muted); margin-bottom: 8px;">PHASE 2+</div>
-  <div style="font-size: 22px; font-weight: 500; letter-spacing: -0.01em;">Fixkosten</div>
-  <div style="font-size: 13px; color: var(--text-2); margin-top: 6px;">Wird in einer der nächsten Phasen implementiert.</div>
+<div class="page">
+
+  <!-- Stat Strip -->
+  @if (store.fixedCosts() && !store.loading() && !store.error()) {
+    <div class="stat-strip">
+      <div class="stat">
+        <span class="stat-label">EINNAHMEN</span>
+        <span class="stat-value income">{{ formatCents(incomeTotalCents()) }}</span>
+        <span class="stat-sub">{{ incomeSourceCount() }} Quellen</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">AUSGABEN</span>
+        <span class="stat-value expense">{{ formatCents(expenseTotalCents()) }}</span>
+        <span class="stat-sub">{{ expenseCategoryCount() }} Kategorien</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">ÜBERSCHUSS</span>
+        <span class="stat-value surplus">{{ formatCents(surplusCents()) }}</span>
+        <span class="stat-sub">Quote {{ surplusPercent() }}&nbsp;%</span>
+      </div>
+    </div>
+
+    <!-- Subheader -->
+    <div class="sub-header">
+      <div class="sub-left">
+        <span class="sub-month">{{ monthDisplay() }}</span>
+        <span class="sub-title"> — <em class="klar-serif">Klarheit</em> über deine fixen Posten.</span>
+      </div>
+      <div class="sub-actions">
+        <button class="action-btn" type="button">↑↓&nbsp;STAFFEL</button>
+        <button class="action-btn" type="button">EXPORT</button>
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="ledger-shell">
+      @for (_ of [1,2,3]; track $index) {
+        <div class="sk-group-header">
+          <klar-skeleton height="10px" width="120px"/>
+          <klar-skeleton height="13px" width="80px"/>
+        </div>
+        @for (__ of [1,2,3]; track $index) {
+          <div class="sk-row">
+            <klar-skeleton height="12px" width="60%"/>
+            <klar-skeleton height="12px" width="100px"/>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- Error -->
+  @else if (store.error()) {
+    <div class="error-bar">
+      <klar-icon name="alert-circle" [size]="14"/>
+      <span>Fehler beim Laden der Fixkosten.</span>
+      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
+    <div class="empty-state">
+      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
+      <p>Keine Fixkosten für diesen Monat</p>
+    </div>
+  }
+
+  <!-- Ledger -->
+  @else {
+    <div class="ledger-shell">
+      @for (group of sortedGroups(); track group.categoryId) {
+        <div class="group-header" [style.--cat-color]="group.categoryColor">
+          <span class="group-name">{{ group.categoryName }}</span>
+          <span class="group-total"
+                [class.income]="group.totalCents > 0"
+                [class.expense]="group.totalCents < 0">
+            {{ formatCents(group.totalCents) }}
+          </span>
+        </div>
+        @for (item of group.items; track item.id) {
+          <div class="ledger-row">
+            <span class="row-arrow">↳</span>
+            <span class="row-name">{{ item.name }}</span>
+            @if (item.isVariable) {
+              <span class="row-variable">variabel</span>
+            }
+            <span class="row-day">{{ formatDay(item.dayOfMonth) }}</span>
+            <span class="row-amount"
+                  [class.income]="item.monthlyEquivalentCents > 0"
+                  [class.expense]="item.monthlyEquivalentCents < 0">
+              @if (item.isVariable) { ~ }{{ formatCents(item.monthlyEquivalentCents) }}
+            </span>
+            <span class="row-chevron">›</span>
+          </div>
+          @if (item.frequency !== 'MONTHLY') {
+            <div class="row-freq-hint">
+              <span></span><span></span><span></span>
+              <span class="freq-text">
+                {{ formatCents(item.amountCents) }} / {{ frequencyLabel(item.frequency) | lowercase }}
+              </span>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+
 </div>
