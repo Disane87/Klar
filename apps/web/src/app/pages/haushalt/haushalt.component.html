@@ -1,197 +1,266 @@
-<div class="max-w-2xl mx-auto px-4 py-6 space-y-6 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6">
+<div class="page">
 
-  <!-- Header -->
-  <div class="space-y-0.5">
-    <h1 class="text-lg font-semibold text-foreground">Haushalt</h1>
-    <p class="text-xs text-muted-foreground uppercase tracking-widest">Verwaltung</p>
+  <!-- Page Header -->
+  <div class="page-header">
+    <p class="page-super">EINSTELLUNGEN · HAUSHALT</p>
+    <h1 class="page-title">Verwaltung — <em>wer hier wohnt.</em></h1>
   </div>
 
-  <!-- Haushalt-Name -->
-  <klar-card class="p-4 space-y-3">
-    <div class="flex items-center justify-between">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Name</p>
+  <!-- Name Section -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">NAME</span>
       @if (canManage() && !editingName()) {
-        <button
-          (click)="startEditName()"
-          class="text-xs text-primary hover:underline min-h-[44px] px-2"
-        >
-          Bearbeiten
-        </button>
+        <klar-button size="sm" variant="ghost" (click)="startEditName()">Bearbeiten</klar-button>
       }
     </div>
-
     @if (editingName()) {
-      <div class="flex gap-2">
+      <div class="edit-row">
         <klar-input
           class="flex-1"
           [ngModel]="newName()"
           (ngModelChange)="newName.set($event)"
           placeholder="Haushaltsname"
         />
-        <klar-button (click)="saveName()" [loading]="savingName()" size="sm">
-          Speichern
-        </klar-button>
-        <button
-          (click)="cancelEditName()"
-          class="text-xs text-muted-foreground px-2 min-h-[44px]"
-        >
-          Abbruch
-        </button>
+        <klar-button (click)="saveName()" [loading]="savingName()" size="sm">Speichern</klar-button>
+        <button type="button" (click)="cancelEditName()" class="cancel-btn">Abbruch</button>
       </div>
     } @else {
-      <p class="text-base font-medium text-foreground">{{ store.activeName() }}</p>
+      <div class="name-block">
+        <p class="name-value">{{ store.activeName() }}</p>
+        <p class="name-meta">Haushalt-ID · {{ store.activeId()?.slice(0, 8) }}</p>
+      </div>
     }
-  </klar-card>
+  </div>
 
-  <!-- Haushalt wechseln -->
+  <!-- Haushalt wechseln (mehrere Haushalte) -->
   @if (store.households().length > 1) {
-    <klar-card class="p-4 space-y-3">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Meine Haushalte</p>
-      <div class="space-y-2">
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">MEINE HAUSHALTE</span>
+      </div>
+      <div class="member-list">
         @for (item of store.households(); track item.household.id) {
           <button
+            type="button"
             (click)="store.setActiveHousehold(item.household.id)"
-            class="w-full flex items-center justify-between p-3 rounded-lg border min-h-[44px] text-left transition-colors"
-            [class.border-primary]="store.activeId() === item.household.id"
-            [class.bg-primary/5]="store.activeId() === item.household.id"
-            [class.border-border]="store.activeId() !== item.household.id"
+            class="member-row household-btn"
+            [class.active]="store.activeId() === item.household.id"
           >
-            <span class="text-sm font-medium text-foreground">{{ item.household.name }}</span>
-            <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{{ item.role }}</span>
+            <div class="member-info">
+              <p class="member-name">{{ item.household.name }}</p>
+              <p class="member-email">{{ item.role }}</p>
+            </div>
+            @if (store.activeId() === item.household.id) {
+              <klar-icon name="check" [size]="14" class="household-check-icon" />
+            }
           </button>
         }
       </div>
-    </klar-card>
+    </div>
   }
 
   <!-- Mitglieder -->
-  <klar-card class="p-4 space-y-3">
-    <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Mitglieder</p>
-
-    @if (store.members().length === 0) {
-      <p class="text-sm text-muted-foreground">Wird geladen…</p>
-    } @else {
-      <div class="space-y-2">
-        @for (member of store.members(); track member.userId) {
-          <div class="flex items-center justify-between py-2">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="size-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <span class="text-xs font-semibold text-muted-foreground">
-                  {{ member.displayName.slice(0, 2).toUpperCase() }}
-                </span>
-              </div>
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-foreground truncate">{{ member.displayName }}</p>
-                <p class="text-xs text-muted-foreground truncate">{{ member.email }}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <span class="text-[10px] uppercase tracking-widest text-muted-foreground">{{ member.role }}</span>
-              @if (canManage() && member.role !== 'OWNER') {
-                <button
-                  (click)="removeMember(member.userId)"
-                  class="size-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors"
-                  title="Entfernen"
-                >
-                  <klar-icon name="close" class="size-4" />
-                </button>
-              }
-            </div>
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">MITGLIEDER · {{ store.members().length }}</span>
+    </div>
+    <div class="member-list">
+      @for (member of store.members(); track member.userId) {
+        <div class="member-row">
+          <div class="member-avatar">{{ member.displayName.slice(0, 2).toUpperCase() }}</div>
+          <div class="member-info">
+            <p class="member-name">{{ member.displayName }}</p>
+            <p class="member-email">{{ member.email }}</p>
           </div>
-        }
-      </div>
-    }
-  </klar-card>
+          <span class="member-role">{{ member.role }}</span>
+          @if (canManage() && member.role !== 'OWNER') {
+            <button type="button" class="icon-btn danger" (click)="removeMember(member.userId)" title="Entfernen">
+              <klar-icon name="close" [size]="14" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
 
   <!-- Einladungen (nur Owner) -->
   @if (canManage()) {
-    <klar-card class="p-4 space-y-4">
-      <div class="flex items-center justify-between">
-        <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Einladungen</p>
-        <klar-button
-          size="sm"
-          variant="outline"
-          (click)="createInvite()"
-          [loading]="creatingInvite()"
-        >
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">EINLADUNGEN</span>
+        <klar-button size="sm" variant="outline" (click)="createInvite()" [loading]="creatingInvite()">
           + Code erstellen
         </klar-button>
       </div>
 
       @if (newlyCreatedInvite(); as invite) {
-        <div class="rounded-lg border border-success/30 bg-success/5 p-3 space-y-2">
-          <p class="text-[10px] uppercase tracking-widest text-success">Neuer Einladungscode</p>
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-base font-semibold text-foreground tracking-widest tabular-nums">
-              {{ formatCode(invite.code) }}
-            </span>
-            <button
-              (click)="copyCode(invite.code)"
-              class="size-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Code kopieren"
-            >
-              <klar-icon name="copy" class="size-4" />
+        <div class="newly-created-key">
+          <p class="key-warning">Neuer Einladungscode — einmalig verwendbar</p>
+          <div class="key-value-row">
+            <span class="invite-code">{{ formatCode(invite.code) }}</span>
+            <button type="button" class="icon-btn" (click)="copyCode(invite.code)" title="Kopieren">
+              <klar-icon name="copy" [size]="14" />
             </button>
           </div>
           @if (invite.expiresAt) {
-            <p class="text-xs text-muted-foreground">
-              Läuft ab: {{ invite.expiresAt | date:'dd.MM.yyyy' }}
-            </p>
+            <p class="invite-expiry">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
           }
         </div>
       }
 
-      @if (store.invites().length > 0) {
-        <div class="space-y-2">
-          @for (invite of store.invites(); track invite.id) {
-            <div class="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-              <div class="space-y-0.5">
-                <span class="font-mono text-sm font-medium text-foreground tabular-nums">
-                  {{ formatCode(invite.code) }}
-                </span>
-                @if (invite.expiresAt) {
-                  <p class="text-xs text-muted-foreground">
-                    Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}
-                  </p>
-                }
-                @if (invite.usesRemaining !== null) {
-                  <p class="text-xs text-muted-foreground">
-                    Noch {{ invite.usesRemaining }} Nutzung(en)
-                  </p>
-                }
-              </div>
-              <button
-                (click)="deleteInvite(invite.id)"
-                class="size-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors"
-              >
-                <klar-icon name="close" class="size-4" />
-              </button>
+      <div class="invite-list">
+        @for (invite of store.invites(); track invite.id) {
+          <div class="invite-row">
+            <div>
+              <p class="invite-code">{{ formatCode(invite.code) }}</p>
+              @if (invite.expiresAt) {
+                <p class="invite-expiry">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
+              }
+              @if (invite.usesRemaining !== null) {
+                <p class="invite-expiry">Noch {{ invite.usesRemaining }} Nutzung(en)</p>
+              }
             </div>
-          }
-        </div>
-      }
-    </klar-card>
+            <button type="button" class="icon-btn danger" (click)="deleteInvite(invite.id)" title="Löschen">
+              <klar-icon name="close" [size]="14" />
+            </button>
+          </div>
+        }
+      </div>
+      <p class="invite-note">Codes laufen nach 30 Tagen automatisch ab und können nur einmal eingelöst werden.</p>
+    </div>
   }
 
-  <!-- Haushalt beitreten (für alle) -->
-  <klar-card class="p-4 space-y-3">
-    <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Beitreten</p>
-    <div class="flex gap-2">
+  <!-- Haushalt beitreten -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">BEITRETEN</span>
+    </div>
+    <div class="join-row">
       <klar-input
         class="flex-1"
         placeholder="XXXX-XXXX"
         [ngModel]="joinCode()"
         (ngModelChange)="joinCode.set($event)"
       />
-      <klar-button
-        (click)="joinByCode()"
-        [loading]="joining()"
-        size="sm"
-        variant="outline"
-      >
+      <klar-button (click)="joinByCode()" [loading]="joining()" size="sm" variant="outline">
         Beitreten
       </klar-button>
     </div>
-  </klar-card>
+    <p class="join-hint">Du bekommst den Code von einem Owner deines Haushalts.</p>
+  </div>
+
+  <!-- API-Schlüssel -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">API-SCHLÜSSEL</span>
+      <klar-button
+        size="sm"
+        variant="outline"
+        (click)="apiKeysStore.showCreateForm.set(!apiKeysStore.showCreateForm())"
+      >
+        + Neu
+      </klar-button>
+    </div>
+
+    <!-- Neu erstellter Schlüssel (einmalige Anzeige) -->
+    @if (apiKeysStore.justCreatedKey(); as fullKey) {
+      <div class="newly-created-key">
+        <div class="alert-row">
+          <klar-icon name="alert" [size]="14" class="alert-icon" />
+          <p class="key-warning">Nur einmal sichtbar — jetzt kopieren.</p>
+        </div>
+        <div class="key-value-row">
+          <span class="key-value">{{ fullKey }}</span>
+          <button type="button" class="icon-btn" (click)="copyApiKey(fullKey)" title="Schlüssel kopieren">
+            <klar-icon name="copy" [size]="14" />
+          </button>
+        </div>
+        <klar-button size="sm" variant="ghost" (click)="apiKeysStore.clearJustCreated()">
+          Verstanden
+        </klar-button>
+      </div>
+    }
+
+    <!-- Neuer Schlüssel Formular -->
+    @if (apiKeysStore.showCreateForm()) {
+      <div class="new-key-form">
+        <p class="section-label">NEUER SCHLÜSSEL</p>
+        <klar-input
+          placeholder="Name (z.B. Home Assistant)"
+          [ngModel]="apiKeysStore.newKeyName()"
+          (ngModelChange)="apiKeysStore.newKeyName.set($event)"
+        />
+        <div class="key-scopes scope-form">
+          @for (scope of availableScopes; track scope) {
+            <label class="scope-label">
+              <input
+                type="checkbox"
+                class="scope-checkbox"
+                [checked]="apiKeysStore.newKeyScopes().includes(scope)"
+                (change)="apiKeysStore.toggleScope(scope)"
+              />
+              <span class="scope-text">{{ scope }}</span>
+            </label>
+          }
+        </div>
+        <div class="form-actions">
+          <klar-button
+            size="sm"
+            (click)="createApiKey()"
+            [loading]="apiKeysStore.creating()"
+            [disabled]="!apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0"
+          >
+            Erstellen
+          </klar-button>
+          <button
+            type="button"
+            (click)="apiKeysStore.showCreateForm.set(false)"
+            class="cancel-btn"
+          >
+            Abbruch
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Bestehende Schlüssel -->
+    @if (apiKeysStore.loading()) {
+      <p class="status-text">Wird geladen…</p>
+    } @else if (apiKeysStore.isEmpty()) {
+      <p class="status-text">Noch keine API-Schlüssel erstellt.</p>
+    } @else {
+      <div class="api-key-list">
+        @for (key of apiKeysStore.keys()!; track key.id) {
+          <div class="api-key-row" [style.opacity]="key.isRevoked ? '0.5' : '1'">
+            <div class="key-info">
+              <p class="key-name" [style.text-decoration]="key.isRevoked ? 'line-through' : 'none'">
+                {{ key.name }}
+              </p>
+              <div class="key-scopes">
+                @for (scope of key.scopes; track scope) {
+                  <span class="scope-badge">{{ scope }}</span>
+                }
+              </div>
+              <p class="key-meta">
+                Erstellt {{ key.createdAt | date:'dd.MM.yyyy' }}
+                @if (key.lastUsedAt) { · Zuletzt {{ key.lastUsedAt | date:'dd.MM.yyyy' }} }
+              </p>
+            </div>
+            <div class="key-actions">
+              @if (!key.isRevoked) {
+                <button type="button" class="icon-btn" (click)="revokeApiKey(key.id)" title="Widerrufen">
+                  <klar-icon name="lock" [size]="14" />
+                </button>
+              }
+              <button type="button" class="icon-btn danger" (click)="deleteApiKey(key.id)" title="Löschen">
+                <klar-icon name="trash" [size]="14" />
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 
 </div>

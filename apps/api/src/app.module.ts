@@ -11,6 +11,13 @@ import { AuditModule } from './audit/audit.module';
 import { UsersModule } from './users/users.module';
 import { HouseholdsModule } from './households/households.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ProjectsModule } from './projects/projects.module';
+import { RecurringTransactionsModule } from './recurring-transactions/recurring-transactions.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { BudgetsModule } from './budgets/budgets.module';
+import { OverviewModule } from './overview/overview.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -48,6 +55,13 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     UsersModule,
     HouseholdsModule,
     AuthModule,
+    CategoriesModule,
+    ProjectsModule,
+    RecurringTransactionsModule,
+    TransactionsModule,
+    BudgetsModule,
+    OverviewModule,
+    ApiKeysModule,
     HealthModule,
   ],
   providers: [

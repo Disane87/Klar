@@ -34,6 +34,7 @@
     "handlebars": "^4.7.0",
     "nestjs-pino": "^4.0.0",
     "nodemailer": "^6.0.0",
+    "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

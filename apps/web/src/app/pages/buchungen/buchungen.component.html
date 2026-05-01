@@ -1,5 +1,127 @@
-<div class="page-stub">
-  <div class="klar-label" style="color: var(--text-muted); margin-bottom: 8px;">PHASE 2+</div>
-  <div style="font-size: 22px; font-weight: 500; letter-spacing: -0.01em;">Buchungen</div>
-  <div style="font-size: 13px; color: var(--text-2); margin-top: 6px;">Wird in einer der nächsten Phasen implementiert.</div>
+<div class="page">
+
+  <!-- Month nav -->
+  <div class="month-nav">
+    <button type="button" class="nav-btn" aria-label="Vorheriger Monat" (click)="prevMonth()">
+      <klar-icon name="chevron-left" [size]="18"/>
+    </button>
+    <span class="month-title">{{ displayMonth() }}</span>
+    <button type="button" class="nav-btn" aria-label="Nächster Monat" (click)="nextMonth()">
+      <klar-icon name="chevron-right" [size]="18"/>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="stat-strip">
+      <div class="stat">
+        <klar-skeleton height="10px" width="80px"/>
+        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <klar-skeleton height="10px" width="80px"/>
+        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <klar-skeleton height="10px" width="80px"/>
+        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
+      </div>
+    </div>
+
+    <div class="tx-list">
+      @for (_ of [1,2,3,4,5,6]; track $index) {
+        <div class="sk-row">
+          <klar-skeleton height="11px" width="36px"/>
+          <klar-skeleton height="13px" width="55%"/>
+          <klar-skeleton height="13px" width="70px"/>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error -->
+  @else if (store.error()) {
+    <div class="error-bar">
+      <klar-icon name="alert-circle" [size]="14"/>
+      <span>Fehler beim Laden der Buchungen.</span>
+      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (store.isEmpty()) {
+    <!-- Stats strip even when empty -->
+    <div class="stat-strip">
+      <div class="stat">
+        <span class="stat-label">EINNAHMEN</span>
+        <span class="stat-value income">{{ formatCents(0) }}</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">AUSGABEN</span>
+        <span class="stat-value expense">{{ formatCents(0) }}</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">NETTO</span>
+        <span class="stat-value">{{ formatCents(0) }}</span>
+      </div>
+    </div>
+
+    <div class="empty-state">
+      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
+      <p>Noch keine Buchungen für diesen Monat</p>
+    </div>
+  }
+
+  <!-- Data -->
+  @else {
+    <!-- Stats strip -->
+    <div class="stat-strip">
+      <div class="stat">
+        <span class="stat-label">EINNAHMEN</span>
+        <span class="stat-value income">{{ formatCents(store.totalIncomeCents()) }}</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">AUSGABEN</span>
+        <span class="stat-value expense">{{ formatCents(store.totalExpenseCents()) }}</span>
+      </div>
+      <div class="stat-rule"></div>
+      <div class="stat">
+        <span class="stat-label">NETTO</span>
+        <span class="stat-value" [class.income]="store.nettoCents() >= 0" [class.expense]="store.nettoCents() < 0">
+          {{ formatCents(store.nettoCents()) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Transaction list -->
+    <div class="tx-list">
+      @for (tx of store.sortedItems(); track tx.id) {
+        <div class="tx-row">
+          <span class="tx-date">{{ formatDate(tx.date) }}</span>
+
+          <span class="tx-info">
+            <span class="tx-desc">{{ tx.description }}</span>
+            <span class="tx-badges">
+              @if (tx.categoryId) {
+                <span class="tx-badge">KAT</span>
+              }
+              @if (tx.visibility === 'PRIVATE') {
+                <span class="tx-badge tx-badge-private">PRIVAT</span>
+              }
+            </span>
+          </span>
+
+          <span class="tx-amount" [class.income]="tx.amountCents > 0" [class.expense]="tx.amountCents < 0">
+            {{ formatCents(tx.amountCents) }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
 </div>

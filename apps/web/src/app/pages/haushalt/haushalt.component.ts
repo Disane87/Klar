@@ -7,6 +7,7 @@ import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarCardComponent } from '../../shared/ui/klar-card.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
+import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
 import type { InviteCode } from '@klar/shared';
 
 @Component({
@@ -25,7 +26,10 @@ import type { InviteCode } from '@klar/shared';
 })
 export class HaushaltPageComponent implements OnInit {
   protected store = inject(HouseholdStore);
+  protected apiKeysStore = inject(ApiKeysStore);
   private toast = inject(KlarToastService);
+
+  readonly availableScopes = AVAILABLE_SCOPES;
 
   readonly editingName = signal(false);
   readonly newName = signal('');
@@ -123,6 +127,42 @@ export class HaushaltPageComponent implements OnInit {
       this.toast.success('Code kopiert');
     } catch {
       // clipboard not available
+    }
+  }
+
+  async copyApiKey(key: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(key);
+      this.toast.success('API-Schlüssel kopiert');
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  async createApiKey(): Promise<void> {
+    try {
+      await this.apiKeysStore.createKey();
+      this.toast.success('API-Schlüssel erstellt');
+    } catch {
+      this.toast.error('API-Schlüssel konnte nicht erstellt werden');
+    }
+  }
+
+  async revokeApiKey(id: string): Promise<void> {
+    try {
+      await this.apiKeysStore.revokeKey(id);
+      this.toast.success('API-Schlüssel widerrufen');
+    } catch {
+      this.toast.error('API-Schlüssel konnte nicht widerrufen werden');
+    }
+  }
+
+  async deleteApiKey(id: string): Promise<void> {
+    try {
+      await this.apiKeysStore.deleteKey(id);
+      this.toast.success('API-Schlüssel gelöscht');
+    } catch {
+      this.toast.error('API-Schlüssel konnte nicht gelöscht werden');
     }
   }
 }

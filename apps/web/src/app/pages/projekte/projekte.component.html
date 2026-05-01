@@ -1,5 +1,116 @@
-<div class="page-stub">
-  <div class="klar-label" style="color: var(--text-muted); margin-bottom: 8px;">PHASE 2+</div>
-  <div style="font-size: 22px; font-weight: 500; letter-spacing: -0.01em;">Projekte</div>
-  <div style="font-size: 13px; color: var(--text-2); margin-top: 6px;">Wird in einer der nächsten Phasen implementiert.</div>
+<div class="page">
+
+  <!-- Filter Bar — only shown when not loading -->
+  @if (!store.loading()) {
+    <div class="filter-bar">
+      @for (f of filters; track f.value) {
+        <button
+          class="filter-btn"
+          [class.active]="store.statusFilter() === f.value"
+          type="button"
+          (click)="setFilter(f.value)">
+          {{ f.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="project-list">
+      @for (_ of [1, 2, 3]; track $index) {
+        <div class="sk-card">
+          <div class="sk-card-header">
+            <klar-skeleton height="14px" width="55%"/>
+            <klar-skeleton height="10px" width="60px"/>
+          </div>
+          <klar-skeleton height="4px" width="100%"/>
+          <div class="sk-stat-row">
+            <klar-skeleton height="12px" width="30%"/>
+            <klar-skeleton height="12px" width="30%"/>
+            <klar-skeleton height="12px" width="30%"/>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error -->
+  @else if (store.error()) {
+    <div class="error-bar">
+      <klar-icon name="alert-circle" [size]="14"/>
+      <span>Fehler beim Laden der Projekte.</span>
+      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (store.isEmpty()) {
+    <div class="empty-state">
+      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
+      <p>Keine Projekte vorhanden</p>
+    </div>
+  }
+
+  <!-- Project List -->
+  @else {
+    <div class="project-list">
+      @for (item of store.projects()!.projects; track item.id) {
+        <div class="project-card" [style.--project-color]="item.color">
+
+          <!-- Card Header: name + status badge -->
+          <div class="card-header">
+            <span class="project-name">{{ item.name }}</span>
+            <span class="status-badge"
+                  [class.badge-active]="item.status === 'ACTIVE'"
+                  [class.badge-completed]="item.status === 'COMPLETED'"
+                  [class.badge-archived]="item.status === 'ARCHIVED'">
+              {{ statusLabel(item.status) }}
+            </span>
+          </div>
+
+          <!-- Budget progress bar (only if budget is set) -->
+          @if (item.totalBudgetCents !== null) {
+            <div class="progress-wrap">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" [style.width.%]="progressPercent(item)"></div>
+              </div>
+              <span class="progress-label">
+                {{ progressPercent(item) }}&nbsp;% von {{ formatCents(item.totalBudgetCents) }}
+              </span>
+            </div>
+          }
+
+          <!-- Stats row: Balance | Ausgaben | Einnahmen -->
+          <div class="stat-row">
+            <div class="stat-cell">
+              <span class="stat-label">BILANZ</span>
+              <span class="stat-value"
+                    [class.income]="item.balanceCents >= 0"
+                    [class.expense]="item.balanceCents < 0">
+                {{ formatCents(item.balanceCents) }}
+              </span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-cell">
+              <span class="stat-label">AUSGABEN</span>
+              <span class="stat-value expense">{{ formatCents(item.spentCents) }}</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-cell">
+              <span class="stat-label">EINNAHMEN</span>
+              <span class="stat-value income">{{ formatCents(item.incomeCents) }}</span>
+            </div>
+          </div>
+
+          <!-- Transaction count -->
+          <div class="tx-count">
+            {{ item.transactionCount }}&nbsp;{{ item.transactionCount === 1 ? 'Buchung' : 'Buchungen' }}
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
 </div>

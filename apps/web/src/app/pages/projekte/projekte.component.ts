@@ -1,9 +1,59 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
+import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { ProjekteStore } from '../../core/overview/projekte.store';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
+import type { ProjectOverviewItem } from '../../core/overview/overview.service';
 
 @Component({
   selector: 'app-projekte',
   standalone: true,
+  imports: [KlarSkeletonComponent, KlarIconComponent],
   templateUrl: './projekte.component.html',
   styleUrl: './projekte.component.css',
 })
-export class ProjektePageComponent {}
+export class ProjektePageComponent {
+  protected store = inject(ProjekteStore);
+
+  constructor() {
+    inject(PageHeaderService).set({
+      title:         'Projekte',
+      subtitle:      'ZIELE & SONDERPROJEKTE',
+      showPlanspiel: false,
+      showAdd:       true,
+      addLabel:      'Projekt',
+    });
+  }
+
+  formatCents(cents: number): string {
+    return new Intl.NumberFormat('de-DE', {
+      style:    'currency',
+      currency: 'EUR',
+    }).format(cents / 100);
+  }
+
+  progressPercent(item: ProjectOverviewItem): number {
+    if (!item.totalBudgetCents || item.totalBudgetCents === 0) return 0;
+    const pct = (Math.abs(item.spentCents) / Math.abs(item.totalBudgetCents)) * 100;
+    return Math.min(100, Math.max(0, Math.round(pct)));
+  }
+
+  statusLabel(status: string): string {
+    switch (status) {
+      case 'ACTIVE':    return 'Aktiv';
+      case 'COMPLETED': return 'Abgeschlossen';
+      case 'ARCHIVED':  return 'Archiviert';
+      default:          return status;
+    }
+  }
+
+  readonly filters: { value: string; label: string }[] = [
+    { value: 'ACTIVE',    label: 'Aktiv' },
+    { value: 'COMPLETED', label: 'Abgeschlossen' },
+    { value: 'ALL',       label: 'Alle' },
+  ];
+
+  setFilter(value: string): void {
+    this.store.setStatusFilter(value);
+  }
+}

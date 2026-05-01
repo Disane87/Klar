@@ -8,35 +8,50 @@
   padding: 16px 0;
   height: 100%;
   overflow-y: auto;
+  /* Subtle inner shadow to separate from content */
+  box-shadow: inset -1px 0 0 var(--border);
 }
 
-.wordmark-wrap { padding: 0 16px 18px; }
-.section-label { padding: 10px 16px 6px; }
+.wordmark-wrap {
+  padding: 0 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 8px;
+}
+
+.section-label {
+  padding: 12px 16px 5px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--zinc-600);
+}
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 7px 14px;
+  margin: 1px 8px;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 500;
   color: var(--text-2);
   text-decoration: none;
-  border-left: 2px solid transparent;
-  transition: background 100ms, color 100ms;
+  border-left: 3px solid transparent;
+  border-radius: 2px;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .nav-item:hover {
-  background: var(--surface-2);
+  background: color-mix(in oklab, var(--surface-2) 80%, transparent);
   color: var(--text);
 }
 
 .nav-item.active {
   color: var(--text);
-  background: var(--surface-2);
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--surface-2));
   border-left-color: var(--color-accent);
+  position: relative;
 }
 
 .household {
@@ -47,27 +62,28 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  transition: background 100ms;
+  transition: background 150ms ease;
 }
 
 .household:hover {
   background: var(--surface-2);
 }
 
-.section-sys { margin-top: 16px; }
+.section-sys { margin-top: 12px; }
 
 .hh-avatar {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 2px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--color-accent) 12%, var(--surface-2));
+  border: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--text-2);
+  font-weight: 600;
+  color: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -87,4 +103,8 @@
 
 .hh-role {
   color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 1px;
 }

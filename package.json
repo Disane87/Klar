@@ -9,7 +9,10 @@
     "test": "turbo run test",
     "test:integration": "pnpm --filter @klar/api test:integration",
     "test:e2e": "pnpm --filter @klar/api test:e2e",
-    "clean": "turbo run clean && rimraf node_modules"
+    "clean": "turbo run clean && rimraf node_modules",
+    "docker:up": "docker compose -f docker/docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0"

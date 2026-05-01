@@ -29,6 +29,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./pages/auth-callback/auth-callback.component').then(
+        m => m.AuthCallbackComponent,
+      ),
+  },
+  {
     path: 'onboarding',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -71,6 +78,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/buchungen/buchungen.component').then(
             m => m.BuchungenPageComponent,
+          ),
+      },
+      {
+        path: 'planspiel',
+        loadComponent: () =>
+          import('./pages/planspiel/planspiel.component').then(
+            m => m.PlanspielPageComponent,
           ),
       },
       {

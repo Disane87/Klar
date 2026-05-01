@@ -1,9 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { SideNavComponent } from '../side-nav/side-nav.component';
+import { TopBarComponent } from '../top-bar/top-bar.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
 import { HouseholdStore } from '../../core/household/household.store';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { OverviewStore } from '../../core/overview/overview.store';
 
 interface BottomTab {
   id: string;
@@ -26,12 +29,20 @@ const BOTTOM_TABS: BottomTab[] = [
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    SideNavComponent, KlarIconComponent, KlarToastContainerComponent,
+    SideNavComponent, TopBarComponent, KlarIconComponent, KlarToastContainerComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
 export class ShellComponent {
-  protected tabs = BOTTOM_TABS;
-  protected householdStore = inject(HouseholdStore);
+  protected tabs            = BOTTOM_TABS;
+  protected householdStore  = inject(HouseholdStore);
+  protected pageHeader      = inject(PageHeaderService);
+  private   overviewStore   = inject(OverviewStore);
+
+  protected monthChip = computed(() => {
+    const [year, month] = this.overviewStore.currentMonth().split('-');
+    return new Date(Number(year), Number(month) - 1, 1)
+      .toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  });
 }

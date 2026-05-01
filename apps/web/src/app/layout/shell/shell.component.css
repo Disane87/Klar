@@ -53,7 +53,7 @@
   transition: color 100ms;
 }
 
-.tab-item.active { color: var(--color-accent); }
+.tab-item.active { color: var(--color-surplus); }
 
 .tab-label {
   font-size: 9px;

@@ -4,6 +4,18 @@
 
   <!-- Main content -->
   <div class="main">
+    <!-- Global top bar — visible on desktop when a page sets a title -->
+    @if (pageHeader.title()) {
+      <klar-top-bar
+        class="desktop-only"
+        [title]="pageHeader.title()"
+        [subtitle]="pageHeader.subtitle() ?? ''"
+        [monthChip]="monthChip()"
+        [showPlanspiel]="pageHeader.showPlanspiel()"
+        [showAdd]="pageHeader.showAdd()"
+        [addLabel]="pageHeader.addLabel()"
+      />
+    }
     <router-outlet />
   </div>
 </div>

@@ -41,6 +41,7 @@
   --surface-2:   #1f1f23;
   --border:      var(--zinc-800);
   --border-soft: #1d1d20;
+  --border-subtle: #2a2a2e;
   --text:        var(--zinc-50);
   --text-2:      var(--zinc-400);
   --text-muted:  var(--zinc-600);
@@ -62,13 +63,15 @@
   --font-serif: 'Instrument Serif', 'Iowan Old Style', serif;
 
   /* Spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
   --spacing-table-row: 28px;
 
   /* Radius */
@@ -201,11 +204,22 @@ input, select, textarea {
 /* Skeleton animation */
 @keyframes klar-pulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50%       { opacity: 0.55; }
 }
 
 @keyframes klar-spin {
   to { transform: rotate(360deg); }
+}
+
+/* Page / section entry */
+@keyframes klar-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes klar-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Card base */
@@ -215,8 +229,19 @@ input, select, textarea {
   border-radius: var(--radius);
 }
 
+/* Page content entry */
+.klar-page {
+  animation: klar-enter 180ms ease-out both;
+}
+
 /* Scrollbar — minimal, themed */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--zinc-600); }
+::-webkit-scrollbar-thumb { background: var(--zinc-700); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--zinc-500); }
+
+/* ── Selection ───────────────────────────────────────────────── */
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 30%, transparent);
+  color: var(--text);
+}
