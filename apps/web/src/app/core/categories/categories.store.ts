@@ -21,7 +21,8 @@ export class CategoriesStore {
     },
   });
 
-  readonly all    = computed(() => this._resource.value() ?? []);
-  readonly active = computed(() => this.all().filter(c => !c.isArchived));
+  readonly all     = computed(() => this._resource.value() ?? []);
+  readonly active  = computed(() => this.all().filter(c => !c.isArchived));
   readonly loading = this._resource.isLoading;
+  readonly error   = this._resource.error;
 }
