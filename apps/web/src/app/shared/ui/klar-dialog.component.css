@@ -1,0 +1,84 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: color-mix(in oklab, var(--zinc-950) 60%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  animation: klar-fade 120ms ease both;
+}
+
+.panel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+  width: 100%;
+  animation: klar-enter 160ms ease both;
+  box-shadow: 0 24px 48px color-mix(in oklab, var(--zinc-950) 40%, transparent);
+}
+
+.panel--sm { max-width: 360px; }
+.panel--md { max-width: 480px; }
+.panel--lg { max-width: 640px; }
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color 100ms, background 100ms;
+}
+
+.close-btn:hover {
+  color: var(--text);
+  background: color-mix(in oklab, var(--text) 8%, transparent);
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+@media (max-width: 767px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90dvh;
+    max-width: 100%;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

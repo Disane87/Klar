@@ -4,6 +4,7 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
 import { TopBarComponent } from '../top-bar/top-bar.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
+import { KlarDialogComponent } from '../../shared/ui/klar-dialog.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewStore } from '../../core/overview/overview.store';
@@ -29,7 +30,7 @@ const BOTTOM_TABS: BottomTab[] = [
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    SideNavComponent, TopBarComponent, KlarIconComponent, KlarToastContainerComponent,
+    SideNavComponent, TopBarComponent, KlarIconComponent, KlarToastContainerComponent, KlarDialogComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
