@@ -1,11 +1,14 @@
 import { Component, input, output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { KlarIconComponent } from '../icons/klar-icon.component';
+import { HlmInputDirective } from './hlm/hlm-input.directive';
+import { HlmLabelDirective } from './hlm/hlm-label.directive';
+import { HlmErrorDirective } from './hlm/hlm-error.directive';
 
 @Component({
   selector: 'klar-input',
   standalone: true,
-  imports: [KlarIconComponent],
+  imports: [KlarIconComponent, HlmInputDirective, HlmLabelDirective, HlmErrorDirective],
   templateUrl: './klar-input.component.html',
   styleUrl: './klar-input.component.css',
   providers: [

@@ -10,13 +10,13 @@
   height: 36px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius, 4px);
   padding: 0 10px;
   transition: border-color 120ms;
 }
 
 .field:focus-within {
-  border-color: var(--indigo-400);
+  border-color: var(--color-ring);
 }
 
 .field.has-error {
@@ -34,7 +34,7 @@
   margin-right: 6px;
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: var(--body-sm);
+  font-size: 12px;
 }
 
 .suffix {
@@ -42,31 +42,7 @@
   margin-left: 6px;
 }
 
-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 1rem; /* iOS: must be >= 16px to prevent auto-zoom */
-  color: var(--text);
-  font-family: var(--font-sans);
-  min-width: 0;
-}
-
-input::placeholder {
-  color: var(--text-muted);
-}
-
-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .hint {
-  font-size: var(--label-2);
+  font-size: 11px;
   color: var(--text-muted);
-}
-
-.hint.error {
-  color: var(--color-expense);
 }
