@@ -23,11 +23,10 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Set lowercase image names
+      - name: Set image name
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "API_IMAGE=${{ env.REGISTRY }}/${OWNER}/klar-api" >> $GITHUB_ENV
-          echo "WEB_IMAGE=${{ env.REGISTRY }}/${OWNER}/klar-web" >> $GITHUB_ENV
+          echo "KLAR_IMAGE=${{ env.REGISTRY }}/${OWNER}/klar" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -39,41 +38,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (API)
-        id: meta-api
+      - name: Extract metadata
+        id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.API_IMAGE }}
+          images: ${{ env.KLAR_IMAGE }}
           tags: |
             type=sha,prefix=,format=short
             type=raw,value=latest
 
-      - name: Build and push API image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/api/Dockerfile
           push: true
-          tags: ${{ steps.meta-api.outputs.tags }}
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
-
-      - name: Extract metadata (Web)
-        id: meta-web
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.WEB_IMAGE }}
-          tags: |
-            type=sha,prefix=,format=short
-            type=raw,value=latest
-
-      - name: Build and push Web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: ${{ steps.meta-web.outputs.tags }}
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web
-
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=klar
+          cache-to: type=gha,mode=max,scope=klar

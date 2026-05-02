@@ -23,8 +23,8 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
-    image: ghcr.io/disane87/klar-api:${IMAGE_TAG:-latest}
+  app:
+    image: ghcr.io/disane87/klar:${IMAGE_TAG:-latest}
     restart: unless-stopped
     networks:
       - backend
@@ -32,7 +32,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "${API_PORT:-3000}:3000"
+      - "${PORT:-3000}:3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-klar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-klar}
@@ -55,11 +55,3 @@ services:
       OIDC_REQUIRED_GROUP: ${OIDC_REQUIRED_GROUP:-}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
       OIDC_AUTO_JOIN_HOUSEHOLD_ID: ${OIDC_AUTO_JOIN_HOUSEHOLD_ID:-}
-
-  web:
-    image: ghcr.io/disane87/klar-web:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    networks:
-      - backend
-    ports:
-      - "${WEB_PORT:-80}:80"

@@ -1,5 +1,7 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
@@ -68,6 +70,12 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     OverviewModule,
     ApiKeysModule,
     HealthModule,
+    ...(process.env['NODE_ENV'] === 'production'
+      ? [ServeStaticModule.forRoot({
+          rootPath: join(process.cwd(), 'web'),
+          exclude: ['/api/(.*)', '/health'],
+        })]
+      : []),
   ],
   providers: [
     {
