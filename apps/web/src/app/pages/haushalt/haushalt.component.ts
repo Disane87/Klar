@@ -6,7 +6,6 @@ import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarCardComponent } from '../../shared/ui/klar-card.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
@@ -24,7 +23,6 @@ import type { InviteCode } from '@klar/shared';
     HlmCheckboxComponent,
     KlarInputComponent,
     KlarIconComponent,
-    KlarCardComponent,
   ],
   templateUrl: './haushalt.component.html',
   styleUrl: './haushalt.component.css',

@@ -10,7 +10,9 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
       "WebFetch(domain:api.anthropic.com)",
       "mcp__plugin_playwright_playwright__browser_tabs",
-      "mcp__ruflo__memory_search"
+      "mcp__ruflo__memory_search",
+      "Bash(pnpm --filter web e2e)",
+      "Bash(pnpm --filter @klar/api prisma:seed)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\denaro"
