@@ -12,6 +12,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { refreshInterceptor } from './core/interceptors/refresh.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthStore } from './core/auth/auth.store';
+import { ThemeService } from './core/theme/theme.service';
 import { addCollection } from 'iconify-icon';
 import { icons as SimpleIconsData } from '@iconify-json/simple-icons';
 addCollection(SimpleIconsData);
@@ -31,6 +32,12 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: initSessionFactory,
       deps: [AuthStore],
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (theme: ThemeService) => () => { theme.theme(); },
+      deps: [ThemeService],
       multi: true,
     },
     provideServiceWorker('ngsw-worker.js', {
