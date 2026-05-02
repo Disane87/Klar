@@ -43,3 +43,7 @@ screen-*
 # Playwright
 apps/web/test-results/
 apps/web/e2e/.auth/
+
+# Playwright / test screenshots (root-level, never commit)
+buchungen-*.png
+fixkosten-*.png

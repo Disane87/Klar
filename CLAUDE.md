@@ -63,7 +63,7 @@ memory_store(
 | Package Manager | pnpm | 10 |
 | Build | Turborepo | latest |
 | Frontend | Angular | 21 (Zoneless, Signal Forms, Vitest default) |
-| UI Components | Zard UI (shadcn/ui für Angular) | pinned — Beta, nie auto-updaten |
+| UI Components | Spartan UI (spartan.ng — shadcn/ui für Angular) | pinned — Beta, nie auto-updaten |
 | Styling | Tailwind CSS | 4 |
 | PWA | @angular/pwa (Angular Service Worker) | — |
 | State | Angular Signals + `resource()` nativ | kein NgRx, kein Elf |
@@ -407,6 +407,23 @@ Accent (UI)       → text-primary, border-primary
 **Dark Mode:** Tailwind `dark:` von Anfang an auf jeder Komponente — niemals nachrüsten
 
 **Kein hardcoded Color-Hex in Komponenten** — nur Tailwind-Klassen oder CSS-Variablen
+
+### Spartan UI Controls — IMMER verwenden
+
+Für JEDES UI-Control: zuerst spartan.ng prüfen. Wenn ein Brain-Package existiert, dieses verwenden und in `apps/web/src/app/shared/ui/hlm/` kapseln.
+
+Verfügbare hlm-Wrapper:
+- `[hlmBtn]` auf `<button>` — HlmButtonDirective (6 Varianten: default, accent, outline, ghost, subtle, destructive)
+- `[hlmInput]` auf `<input>` / `<textarea>` — HlmInputDirective
+- `[hlmLabel]` auf `<label>` — HlmLabelDirective
+- `[hlmError]` auf beliebigen Elementen — HlmErrorDirective
+- `[hlmSelect]` auf `<select>` — HlmSelectNativeDirective
+- `[hlmBadge]` auf beliebigen Elementen — HlmBadgeDirective
+- `<hlm-checkbox>` — HlmCheckboxComponent (BrnCheckbox-basiert)
+- `<hlm-spinner>` — HlmSpinnerComponent
+- `KlarDialogService.open(config)` — CDK Dialog mit spartan Panel-Styling
+
+**Keine eigenen Control-Implementierungen.** Kein hand-codiertes Dropdown-Verhalten, Fokus-Trapping etc.
 
 ---
 
