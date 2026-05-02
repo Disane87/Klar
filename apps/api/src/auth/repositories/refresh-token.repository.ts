@@ -14,8 +14,8 @@ interface CreateRefreshTokenData {
 export class RefreshTokenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateRefreshTokenData): Promise<void> {
-    await this.prisma.refreshToken.create({ data });
+  async create(data: CreateRefreshTokenData): Promise<RefreshToken> {
+    return this.prisma.refreshToken.create({ data });
   }
 
   findByTokenHash(hash: string): Promise<RefreshToken | null> {
@@ -33,6 +33,20 @@ export class RefreshTokenRepository {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async revokeAllForUserExcept(userId: string, excludeId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null, id: { not: excludeId } },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  findActiveByUser(userId: string): Promise<RefreshToken[]> {
+    return this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

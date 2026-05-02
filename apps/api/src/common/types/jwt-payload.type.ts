@@ -5,4 +5,5 @@ export type JwtPayload = {
   email: string;
   role: AppRole;
   type: 'access';
+  refreshTokenId?: string;
 };

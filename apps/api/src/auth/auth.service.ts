@@ -145,19 +145,20 @@ export class AuthService {
 
     await this.usersService.updateLastLogin(user.id);
 
-    const accessToken = this.signAccessToken(user);
     const refreshTokenRaw = generateToken();
     const tokenHash = hashToken(refreshTokenRaw);
     const ttlMs = opts.rememberMe ? REFRESH_TTL_REMEMBER_MS : REFRESH_TTL_DEFAULT_MS;
     const expiresAt = new Date(Date.now() + ttlMs);
 
-    await this.refreshTokenRepo.create({
+    const createdRefreshToken = await this.refreshTokenRepo.create({
       userId: user.id,
       tokenHash,
       expiresAt,
       userAgent: extractUserAgent(req),
       ip: req.ip,
     });
+
+    const accessToken = this.signAccessToken(user, createdRefreshToken.id);
 
     this.auditService.log({
       action: 'user.login',
@@ -189,19 +190,20 @@ export class AuthService {
       throw new UnauthorizedException('Benutzer nicht gefunden');
     }
 
-    const accessToken = this.signAccessToken(user);
     const newRaw = generateToken();
     const newHash = hashToken(newRaw);
     const remainingMs = Math.max(stored.expiresAt.getTime() - Date.now(), 0);
     const expiresAt = new Date(Date.now() + remainingMs);
 
-    await this.refreshTokenRepo.create({
+    const newToken = await this.refreshTokenRepo.create({
       userId: user.id,
       tokenHash: newHash,
       expiresAt,
       userAgent: extractUserAgent(req),
       ip: req.ip,
     });
+
+    const accessToken = this.signAccessToken(user, newToken.id);
 
     // fire-and-forget — AuditService.log() is void and handles its own errors
     this.auditService.log({
@@ -263,12 +265,13 @@ export class AuthService {
     return this.usersService.toAuthUser(user);
   }
 
-  private signAccessToken(user: User): string {
+  private signAccessToken(user: User, refreshTokenId?: string): string {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.appRole,
       type: 'access',
+      ...(refreshTokenId && { refreshTokenId }),
     };
     return this.jwtService.sign(payload);
   }
