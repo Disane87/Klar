@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -215,6 +216,52 @@ describe('HouseholdsService', () => {
       await service.joinByCode('u-2', 'abcd-1234');
 
       expect(inviteRepo.consumeAndJoin).toHaveBeenCalledWith('ABCD1234', 'u-2');
+    });
+  });
+
+  describe('changeRole', () => {
+    it('throws ForbiddenException when caller is not owner', async () => {
+      (repo.findMembership as ReturnType<typeof vi.fn>).mockResolvedValue(
+        makeMembership({ role: HouseholdRole.MEMBER }),
+      );
+
+      await expect(
+        service.changeRole(
+          makeCtx({ userId: 'u-1' }),
+          'u-2',
+          HouseholdRole.OWNER,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when caller tries to change own role', async () => {
+      (repo.findMembership as ReturnType<typeof vi.fn>).mockResolvedValue(
+        makeMembership({ userId: 'u-1', role: HouseholdRole.OWNER }),
+      );
+
+      await expect(
+        service.changeRole(
+          makeCtx({ userId: 'u-1' }),
+          'u-1',
+          HouseholdRole.MEMBER,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ConflictException when demoting last owner', async () => {
+      (repo.findMembership as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(makeMembership({ userId: 'u-1', role: HouseholdRole.OWNER }))
+        .mockResolvedValueOnce(makeMembership({ userId: 'u-2', role: HouseholdRole.OWNER }));
+      (repo as unknown as { countOwners: ReturnType<typeof vi.fn> }).countOwners = vi.fn().mockResolvedValue(1);
+      (repo as unknown as { updateMemberRole: ReturnType<typeof vi.fn> }).updateMemberRole = vi.fn();
+
+      await expect(
+        service.changeRole(
+          makeCtx({ userId: 'u-1' }),
+          'u-2',
+          HouseholdRole.MEMBER,
+        ),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

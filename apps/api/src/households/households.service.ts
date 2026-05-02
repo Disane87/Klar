@@ -2,6 +2,7 @@ import {
   Injectable,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import type { Household, HouseholdMembership, InviteCode } from '@prisma/client';
@@ -99,6 +100,40 @@ export class HouseholdsService {
       householdId: ctx.householdId,
       metadata: { targetUserId },
     });
+  }
+
+  async changeRole(
+    ctx: RequestContext,
+    targetUserId: string,
+    role: HouseholdRole,
+  ): Promise<HouseholdMembership> {
+    if (targetUserId === ctx.userId) {
+      throw new ForbiddenException('Eigene Rolle kann nicht geändert werden');
+    }
+
+    const callerMembership = await this.repo.findMembership(ctx.userId, ctx.householdId);
+    if (!callerMembership || callerMembership.role !== HouseholdRole.OWNER) {
+      throw new ForbiddenException('Nur der Eigentümer kann Rollen ändern');
+    }
+
+    const targetMembership = await this.repo.findMembership(targetUserId, ctx.householdId);
+    if (!targetMembership) throw new NotFoundException('Mitglied nicht gefunden');
+
+    if (role === HouseholdRole.MEMBER && targetMembership.role === HouseholdRole.OWNER) {
+      const ownerCount = await this.repo.countOwners(ctx.householdId);
+      if (ownerCount <= 1) {
+        throw new ConflictException('Mindestens ein Owner muss im Haushalt verbleiben');
+      }
+    }
+
+    const updated = await this.repo.updateMemberRole(targetUserId, ctx.householdId, role);
+    this.auditService.log({
+      action: 'member.role_changed',
+      userId: ctx.userId,
+      householdId: ctx.householdId,
+      metadata: { targetUserId, role },
+    });
+    return updated;
   }
 
   async createInvite(

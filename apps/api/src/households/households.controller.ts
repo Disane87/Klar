@@ -14,6 +14,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ReqContext } from '../common/decorators/req-context.decorator';
 import type { JwtPayload } from '../common/types/jwt-payload.type';
 import type { RequestContext } from '../common/types/request-context.type';
+import { HouseholdRole } from '@prisma/client';
 import { HouseholdMemberGuard } from './guards/household-member.guard';
 import { HouseholdsService } from './households.service';
 
@@ -68,6 +69,17 @@ export class HouseholdsController {
     @Param('uid') targetUserId: string,
   ) {
     return this.householdsService.removeMember(ctx, targetUserId);
+  }
+
+  @Patch('households/:hid/members/:uid')
+  @UseGuards(HouseholdMemberGuard)
+  changeMemberRole(
+    @ReqContext() ctx: RequestContext,
+    @Param('uid') targetUserId: string,
+    @Body() body: { role: 'OWNER' | 'MEMBER' },
+  ) {
+    const role = body.role === 'OWNER' ? HouseholdRole.OWNER : HouseholdRole.MEMBER;
+    return this.householdsService.changeRole(ctx, targetUserId, role);
   }
 
   @Get('households/:hid/invites')

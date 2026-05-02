@@ -89,4 +89,21 @@ export class HouseholdsRepository {
     }
     return soleOwnerCount;
   }
+
+  async updateMemberRole(
+    userId: string,
+    householdId: string,
+    role: HouseholdRole,
+  ): Promise<HouseholdMembership> {
+    return this.prisma.householdMembership.update({
+      where: { userId_householdId: { userId, householdId } },
+      data: { role },
+    });
+  }
+
+  async countOwners(householdId: string): Promise<number> {
+    return this.prisma.householdMembership.count({
+      where: { householdId, role: HouseholdRole.OWNER },
+    });
+  }
 }
