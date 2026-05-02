@@ -257,3 +257,48 @@ export type CreateBudgetRequest = {
 };
 
 export type UpdateBudgetRequest = Partial<CreateBudgetRequest>;
+
+// ─── User Settings ────────────────────────────────────────────────────────────
+
+export type OidcIdentityItem = {
+  id: string;
+  providerName: string;
+  email: string;
+  createdAt: string;
+  lastLoginAt: string | null;
+};
+
+export type SessionItem = {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+};
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  displayName: string;
+  hasPassword: boolean;
+  appRole: AppRole;
+  createdAt: string;
+  lastLoginAt: string | null;
+  oidcIdentities: OidcIdentityItem[];
+};
+
+export type UpdateProfileRequest = {
+  displayName?: string;
+  email?: string;
+};
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type ChangeRoleRequest = {
+  role: HouseholdRole;
+};
