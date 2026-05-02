@@ -103,7 +103,7 @@ function buildService(): {
   } as unknown as ConfigService;
 
   const refreshTokenRepo = {
-    create: vi.fn().mockResolvedValue(undefined),
+    create: vi.fn().mockResolvedValue(makeRefreshToken()),
     findByTokenHash: vi.fn(),
     revoke: vi.fn().mockResolvedValue(undefined),
     revokeAllForUser: vi.fn().mockResolvedValue(undefined),
