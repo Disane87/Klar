@@ -68,9 +68,11 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <klar-button type="submit" [loading]="loading()" class="w-full">
+        <button hlmBtn variant="default" size="md" type="submit"
+                class="w-full" [disabled]="loading()">
+          @if (loading()) { <hlm-spinner /> }
           Beitreten
-        </klar-button>
+        </button>
 
         <button
           type="button"
@@ -93,9 +95,11 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <klar-button type="submit" [loading]="loading()" class="w-full">
+        <button hlmBtn variant="default" size="md" type="submit"
+                class="w-full" [disabled]="loading()">
+          @if (loading()) { <hlm-spinner /> }
           Weiter
-        </klar-button>
+        </button>
 
         <button
           type="button"

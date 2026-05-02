@@ -53,9 +53,11 @@
   }
 
   <div class="actions">
-    <klar-button variant="ghost" label="Abbrechen" (clicked)="cancel()" />
-    <klar-button variant="primary" label="Speichern"
-                 [loading]="saving()" [disabled]="!isValid()"
-                 (clicked)="save()" />
+    <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
+    <button hlmBtn variant="default" size="sm" type="button"
+            [disabled]="!isValid() || saving()" (click)="save()">
+      @if (saving()) { <hlm-spinner [size]="12" /> }
+      Speichern
+    </button>
   </div>
 </div>

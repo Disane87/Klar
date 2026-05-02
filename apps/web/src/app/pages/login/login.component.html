@@ -95,32 +95,23 @@
           <span class="remember-label">Diesen Browser für 30 Tage merken</span>
         </div>
 
-        <klar-button
-          variant="primary"
-          size="lg"
-          type="submit"
-          label="Anmelden →"
-          [fullWidth]="true"
-          [loading]="loading()"
-          [disabled]="loading()"
-          (clicked)="submit()"
-        />
+        <button hlmBtn variant="default" size="lg" type="submit"
+                class="w-full" [disabled]="loading()" (click)="submit()">
+          @if (loading()) { <hlm-spinner /> }
+          Anmelden →
+        </button>
 
         @if (oidc.enabled()) {
           <div class="oidc-divider">
             <span>oder</span>
           </div>
 
-          <klar-button
-            variant="outline"
-            size="md"
-            iconName="shield"
-            [label]="'Mit ' + oidc.providerName() + ' anmelden'"
-            [fullWidth]="true"
-            [loading]="oidcLoading()"
-            [disabled]="loading() || oidcLoading()"
-            (clicked)="loginWithOidc()"
-          />
+          <button hlmBtn variant="outline" size="md" type="button"
+                  class="w-full" [disabled]="loading() || oidcLoading()" (click)="loginWithOidc()">
+            @if (oidcLoading()) { <hlm-spinner /> }
+            <klar-icon name="shield" [size]="14" />
+            Mit {{ oidc.providerName() }} anmelden
+          </button>
         }
       </form>
 

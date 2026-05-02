@@ -105,16 +105,11 @@
             [error]="submitted() && confirmPasswordError() ? confirmPasswordError()! : ''"
           />
 
-          <klar-button
-            variant="primary"
-            size="lg"
-            type="submit"
-            label="Registrieren →"
-            [fullWidth]="true"
-            [loading]="loading()"
-            [disabled]="loading()"
-            (clicked)="submit()"
-          />
+          <button hlmBtn variant="default" size="lg" type="submit"
+                  class="w-full" [disabled]="loading()" (click)="submit()">
+            @if (loading()) { <hlm-spinner /> }
+            Registrieren →
+          </button>
         </form>
 
         <div class="form-footer">

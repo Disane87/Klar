@@ -20,12 +20,7 @@
         Deine E-Mail-Adresse wurde erfolgreich bestätigt.
         Du kannst dich jetzt anmelden.
       </p>
-      <klar-button
-        variant="primary"
-        size="lg"
-        label="Zur Anmeldung →"
-        routerLink="/login"
-      />
+      <a routerLink="/login" hlmBtn variant="default" size="lg">Zur Anmeldung →</a>
     }
 
     @if (!loading() && errorMessage()) {
@@ -43,14 +38,11 @@
             Bestätigungsmail wurde erneut gesendet.
           </p>
         } @else {
-          <klar-button
-            variant="ghost"
-            size="md"
-            label="Bestätigungsmail erneut senden"
-            [loading]="resendLoading()"
-            [disabled]="resendLoading()"
-            (clicked)="resendVerification()"
-          />
+          <button hlmBtn variant="ghost" size="md" type="button"
+                  [disabled]="resendLoading()" (click)="resendVerification()">
+            @if (resendLoading()) { <hlm-spinner /> }
+            Bestätigungsmail erneut senden
+          </button>
         }
       }
 

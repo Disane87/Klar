@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
+import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 
 @Component({
   selector: 'klar-top-bar',
   standalone: true,
-  imports: [KlarIconComponent, KlarButtonComponent],
+  imports: [KlarIconComponent, HlmButtonDirective],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
 })

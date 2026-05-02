@@ -11,7 +11,7 @@
     <div class="section-header">
       <span class="section-label">NAME</span>
       @if (canManage() && !editingName()) {
-        <klar-button size="sm" variant="ghost" (click)="startEditName()">Bearbeiten</klar-button>
+        <button hlmBtn size="sm" variant="ghost" type="button" (click)="startEditName()">Bearbeiten</button>
       }
     </div>
     @if (editingName()) {
@@ -22,7 +22,11 @@
           (ngModelChange)="newName.set($event)"
           placeholder="Haushaltsname"
         />
-        <klar-button (click)="saveName()" [loading]="savingName()" size="sm">Speichern</klar-button>
+        <button hlmBtn size="sm" variant="default" type="button"
+                [disabled]="savingName()" (click)="saveName()">
+          @if (savingName()) { <hlm-spinner [size]="12" /> }
+          Speichern
+        </button>
         <button type="button" (click)="cancelEditName()" class="cancel-btn">Abbruch</button>
       </div>
     } @else {
@@ -89,9 +93,11 @@
     <div class="section">
       <div class="section-header">
         <span class="section-label">EINLADUNGEN</span>
-        <klar-button size="sm" variant="outline" (click)="createInvite()" [loading]="creatingInvite()">
+        <button hlmBtn size="sm" variant="outline" type="button"
+                [disabled]="creatingInvite()" (click)="createInvite()">
+          @if (creatingInvite()) { <hlm-spinner [size]="12" /> }
           + Code erstellen
-        </klar-button>
+        </button>
       </div>
 
       @if (newlyCreatedInvite(); as invite) {
@@ -143,9 +149,11 @@
         [ngModel]="joinCode()"
         (ngModelChange)="joinCode.set($event)"
       />
-      <klar-button (click)="joinByCode()" [loading]="joining()" size="sm" variant="outline">
+      <button hlmBtn size="sm" variant="outline" type="button"
+              [disabled]="joining()" (click)="joinByCode()">
+        @if (joining()) { <hlm-spinner [size]="12" /> }
         Beitreten
-      </klar-button>
+      </button>
     </div>
     <p class="join-hint">Du bekommst den Code von einem Owner deines Haushalts.</p>
   </div>
@@ -154,13 +162,10 @@
   <div class="section">
     <div class="section-header">
       <span class="section-label">API-SCHLÜSSEL</span>
-      <klar-button
-        size="sm"
-        variant="outline"
-        (click)="apiKeysStore.showCreateForm.set(!apiKeysStore.showCreateForm())"
-      >
+      <button hlmBtn size="sm" variant="outline" type="button"
+        (click)="apiKeysStore.showCreateForm.set(!apiKeysStore.showCreateForm())">
         + Neu
-      </klar-button>
+      </button>
     </div>
 
     <!-- Neu erstellter Schlüssel (einmalige Anzeige) -->
@@ -176,9 +181,9 @@
             <klar-icon name="copy" [size]="14" />
           </button>
         </div>
-        <klar-button size="sm" variant="ghost" (click)="apiKeysStore.clearJustCreated()">
+        <button hlmBtn size="sm" variant="ghost" type="button" (click)="apiKeysStore.clearJustCreated()">
           Verstanden
-        </klar-button>
+        </button>
       </div>
     }
 
@@ -205,14 +210,12 @@
           }
         </div>
         <div class="form-actions">
-          <klar-button
-            size="sm"
-            (click)="createApiKey()"
-            [loading]="apiKeysStore.creating()"
-            [disabled]="!apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0"
-          >
+          <button hlmBtn size="sm" variant="default" type="button"
+                (click)="createApiKey()"
+                [disabled]="apiKeysStore.creating() || !apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0">
+            @if (apiKeysStore.creating()) { <hlm-spinner [size]="12" /> }
             Erstellen
-          </klar-button>
+          </button>
           <button
             type="button"
             (click)="apiKeysStore.showCreateForm.set(false)"

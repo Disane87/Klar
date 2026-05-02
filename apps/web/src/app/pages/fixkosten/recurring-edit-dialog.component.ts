@@ -1,6 +1,7 @@
 import { Component, effect, inject, input, signal, computed } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
+import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -13,7 +14,7 @@ import { safeDayOfMonth } from '@klar/shared';
 @Component({
   selector: 'app-recurring-edit-dialog',
   standalone: true,
-  imports: [KlarButtonComponent],
+  imports: [HlmButtonDirective, HlmSpinnerComponent],
   templateUrl: './recurring-edit-dialog.component.html',
   styleUrl: './recurring-edit-dialog.component.css',
 })
