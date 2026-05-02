@@ -1,21 +1,26 @@
-import { Component, computed, inject, effect } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
+import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { RecurringEditDialogComponent } from './recurring-edit-dialog.component';
+import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 
 @Component({
   selector: 'app-fixkosten',
   standalone: true,
-  imports: [LowerCasePipe, KlarSkeletonComponent, KlarIconComponent],
+  imports: [LowerCasePipe, KlarSkeletonComponent, KlarIconComponent, BrandIconComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
 export class FixkostenPageComponent {
-  protected store = inject(OverviewStore);
+  protected store         = inject(OverviewStore);
+  private dialogService   = inject(KlarDialogService);
 
   constructor() {
     const router = inject(Router);
@@ -30,41 +35,58 @@ export class FixkostenPageComponent {
     });
   }
 
+  // ── Collapse state ───────────────────────────────────────────────────────────
+
+  readonly collapsedGroups = signal(new Set<string>());
+
+  toggleGroup(categoryId: string): void {
+    this.collapsedGroups.update(set => {
+      const next = new Set(set);
+      next.has(categoryId) ? next.delete(categoryId) : next.add(categoryId);
+      return next;
+    });
+  }
+
+  isCollapsed(categoryId: string): boolean {
+    return this.collapsedGroups().has(categoryId);
+  }
+
+  // ── Edit via dialog ──────────────────────────────────────────────────────────
+
+  openEdit(item: FixedCostItem, event: Event): void {
+    event.stopPropagation(); // don't toggle group collapse
+    this.dialogService.open({
+      title:     'Eintrag bearbeiten',
+      component: RecurringEditDialogComponent,
+      inputs:    { item },
+      width:     'sm',
+    });
+  }
+
+  // ── Enriched groups ──────────────────────────────────────────────────────────
+
+  // Backend liefert bereits korrekte Reihenfolge: INCOME → FIXED_INCOME → EXPENSE
+  readonly enrichedGroups = computed(() => this.store.fixedCosts()?.groups ?? []);
+
+  // ── Summary computed ─────────────────────────────────────────────────────────
+
   readonly incomeTotalCents = computed(() =>
-    (this.store.fixedCosts()?.groups ?? [])
-      .filter(g => g.totalCents > 0)
-      .reduce((s, g) => s + g.totalCents, 0)
+    this.enrichedGroups().filter(g => g.totalCents > 0).reduce((s, g) => s + g.totalCents, 0)
   );
 
   readonly expenseTotalCents = computed(() =>
-    (this.store.fixedCosts()?.groups ?? [])
-      .filter(g => g.totalCents < 0)
-      .reduce((s, g) => s + g.totalCents, 0)
+    this.enrichedGroups().filter(g => g.totalCents < 0).reduce((s, g) => s + g.totalCents, 0)
   );
 
-  /** Sortiert: Einnahmen-Gruppen zuerst, dann Ausgaben (wie PDF) */
-  readonly sortedGroups = computed(() => {
-    const groups = this.store.fixedCosts()?.groups ?? [];
-    return [
-      ...groups.filter(g => g.totalCents > 0),
-      ...groups.filter(g => g.totalCents < 0),
-    ];
-  });
-
   readonly incomeSourceCount = computed(() =>
-    (this.store.fixedCosts()?.groups ?? [])
-      .filter(g => g.totalCents > 0)
-      .reduce((s, g) => s + g.items.length, 0)
+    this.enrichedGroups().filter(g => g.totalCents > 0).reduce((s, g) => s + g.items.length, 0)
   );
 
   readonly expenseCategoryCount = computed(() =>
-    (this.store.fixedCosts()?.groups ?? [])
-      .filter(g => g.totalCents < 0).length
+    this.enrichedGroups().filter(g => g.totalCents < 0).length
   );
 
-  readonly surplusCents = computed(() =>
-    this.incomeTotalCents() + this.expenseTotalCents()
-  );
+  readonly surplusCents = computed(() => this.incomeTotalCents() + this.expenseTotalCents());
 
   readonly surplusPercent = computed(() => {
     const inc = this.incomeTotalCents();
@@ -78,11 +100,10 @@ export class FixkostenPageComponent {
     return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }).toUpperCase();
   });
 
+  // ── Formatting helpers ───────────────────────────────────────────────────────
+
   formatCents(cents: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style:    'currency',
-      currency: 'EUR',
-    }).format(cents / 100);
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
   }
 
   formatDay(day: number | null): string {

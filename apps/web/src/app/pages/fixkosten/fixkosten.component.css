@@ -1,9 +1,17 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   animation: klar-enter 160ms ease-out both;
 }
 
@@ -113,10 +121,16 @@
 /* ── Ledger ──────────────────────────────────────────────────────── */
 .ledger-shell {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--bg);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
 }
 
 .group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: grid;
   grid-template-columns: 18px 1fr auto 28px 110px 14px;
   align-items: center;
@@ -126,6 +140,22 @@
   border-top: 1px solid var(--border);
   background: color-mix(in oklab, var(--cat-color, transparent) 5%, var(--surface));
   transition: background 120ms ease;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.group-chevron {
+  grid-column: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: transform 200ms ease;
+}
+
+.group-chevron.collapsed {
+  transform: rotate(-90deg);
 }
 
 .group-header:first-child { border-top: none; }
@@ -163,18 +193,26 @@
   padding: 6px 24px;
   border-top: 1px solid var(--border-subtle);
   transition: background 100ms ease;
-  cursor: default;
+  cursor: pointer;
 }
 
 .ledger-row:hover {
   background: color-mix(in oklab, var(--text) 2.5%, transparent);
 }
 
-.row-arrow {
-  font-size: 11px;
+.ledger-row:hover .row-edit-hint { opacity: 1; }
+
+/* Edit-row hint icon (pencil) — only visible on hover */
+.row-edit-hint {
+  grid-column: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  opacity: 0;
+  transition: opacity 120ms ease;
 }
+
 
 .row-name {
   font-size: 14px;

@@ -73,39 +73,47 @@
   <!-- Ledger -->
   @else {
     <div class="ledger-shell">
-      @for (group of sortedGroups(); track group.categoryId) {
-        <div class="group-header" [style.--cat-color]="group.categoryColor">
+      @for (group of enrichedGroups(); track group.categoryId) {
+        <div class="group-header" [style.--cat-color]="group.categoryColor"
+             (click)="toggleGroup(group.categoryId)">
           <span class="group-name">{{ group.categoryName }}</span>
           <span class="group-total"
                 [class.income]="group.totalCents > 0"
                 [class.expense]="group.totalCents < 0">
             {{ formatCents(group.totalCents) }}
           </span>
+          <span class="group-chevron" [class.collapsed]="isCollapsed(group.categoryId)">
+            <klar-icon name="chevron-down" [size]="12" />
+          </span>
         </div>
-        @for (item of group.items; track item.id) {
-          <div class="ledger-row">
-            <span class="row-arrow">↳</span>
-            <span class="row-name">{{ item.name }}</span>
-            @if (item.isVariable) {
-              <span class="row-variable">variabel</span>
-            }
-            <span class="row-day">{{ formatDay(item.dayOfMonth) }}</span>
-            <span class="row-amount"
-                  [class.income]="item.monthlyEquivalentCents > 0"
-                  [class.expense]="item.monthlyEquivalentCents < 0">
-              @if (item.isVariable) { ~ }{{ formatCents(item.monthlyEquivalentCents) }}
-            </span>
-            <span class="row-chevron">›</span>
-          </div>
-          @if (item.frequency !== 'MONTHLY') {
-            <div class="row-freq-hint">
-              <span></span><span></span><span></span>
-              <span class="freq-text">
-                {{ formatCents(item.amountCents) }} / {{ frequencyLabel(item.frequency) | lowercase }}
+        @if (!isCollapsed(group.categoryId)) {
+          @for (item of group.items; track item.id) {
+            <div class="ledger-row" (click)="openEdit(item, $event)">
+              <app-brand-icon [name]="item.name" [size]="12" />
+              <span class="row-name">{{ item.name }}</span>
+              @if (item.isVariable) {
+                <span class="row-variable">variabel</span>
+              }
+              <span class="row-day">{{ formatDay(item.dayOfMonth) }}</span>
+              <span class="row-amount"
+                    [class.income]="item.monthlyEquivalentCents > 0"
+                    [class.expense]="item.monthlyEquivalentCents < 0">
+                @if (item.isVariable) { ~ }{{ formatCents(item.monthlyEquivalentCents) }}
+              </span>
+              <span class="row-edit-hint">
+                <klar-icon name="pencil" [size]="10" />
               </span>
             </div>
+            @if (item.frequency !== 'MONTHLY') {
+              <div class="row-freq-hint">
+                <span></span><span></span><span></span>
+                <span class="freq-text">
+                  {{ formatCents(item.amountCents) }} / {{ frequencyLabel(item.frequency) | lowercase }}
+                </span>
+              </div>
+            }
           }
-        }
+        } <!-- end @if collapsed -->
       }
     </div>
   }
