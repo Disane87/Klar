@@ -1,0 +1,200 @@
+<div class="page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <p class="page-super">EINSTELLUNGEN</p>
+    <h1 class="page-title">Mein Konto — <em>persönliche Einstellungen.</em></h1>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">PROFIL</span>
+      @if (!editingProfile()) {
+        <button hlmBtn size="sm" variant="ghost" type="button" (click)="startEditProfile()">Bearbeiten</button>
+      }
+    </div>
+    @if (store.loading()) {
+      <klar-skeleton-rows [count]="3" />
+    } @else if (editingProfile()) {
+      <div class="edit-form">
+        <div class="field-group">
+          <label hlmLabel for="edit-name">Anzeigename</label>
+          <input hlmInput id="edit-name" type="text"
+                 [ngModel]="editDisplayName()" (ngModelChange)="editDisplayName.set($event)" />
+        </div>
+        <div class="field-group">
+          <label hlmLabel for="edit-email">E-Mail</label>
+          <input hlmInput id="edit-email" type="email"
+                 [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" />
+        </div>
+        <div class="form-actions">
+          <button hlmBtn size="sm" variant="default" type="button"
+                  [disabled]="savingProfile()" (click)="saveProfile()">
+            @if (savingProfile()) { <hlm-spinner [size]="12" /> }
+            Speichern
+          </button>
+          <button type="button" class="cancel-btn" (click)="cancelEditProfile()">Abbruch</button>
+        </div>
+      </div>
+    } @else {
+      <div class="section-body">
+        <div class="profile-row">
+          <div class="avatar-lg">{{ initials() }}</div>
+          <div>
+            <p class="profile-name">{{ store.profile()?.displayName }}</p>
+            <p class="profile-email">{{ store.profile()?.email }}</p>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Anzeigename</span>
+          <span class="field-value">{{ store.profile()?.displayName }}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">E-Mail</span>
+          <div class="field-value-row">
+            <span class="field-value">{{ store.profile()?.email }}</span>
+            @if (store.profile()?.emailVerified) {
+              <span hlmBadge class="badge-income">Verifiziert</span>
+            } @else {
+              <span hlmBadge class="badge-muted">Nicht verifiziert</span>
+            }
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Mitglied seit</span>
+          <span class="field-value field-muted">
+            {{ store.profile()?.createdAt | date:'dd. MMMM yyyy':'':'de' }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- DARSTELLUNG -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">DARSTELLUNG</span>
+    </div>
+    <div class="section-body">
+      <div class="field-row">
+        <span class="field-label">Farbmodus</span>
+        <div class="toggle-group">
+          <button type="button" class="toggle-option"
+                  [class.active]="themeService.theme() === 'light'"
+                  (click)="setTheme('light')">Hell</button>
+          <button type="button" class="toggle-option"
+                  [class.active]="themeService.theme() === 'dark'"
+                  (click)="setTheme('dark')">Dunkel</button>
+          <button type="button" class="toggle-option"
+                  [class.active]="themeService.theme() === 'system'"
+                  (click)="setTheme('system')">System</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SICHERHEIT -->
+  @if (store.hasPassword()) {
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">SICHERHEIT</span>
+      </div>
+      <div class="section-body">
+        <div class="field-row">
+          <span class="field-label">Passwort</span>
+          <div class="field-value-row">
+            <span class="field-value field-muted" style="font-family:var(--font-mono)">••••••••••••</span>
+            <button hlmBtn size="sm" variant="ghost" type="button" (click)="openChangePassword()">Ändern</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VERKNÜPFTE KONTEN -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">VERKNÜPFTE KONTEN</span>
+    </div>
+    <div class="section-body">
+      @if (store.oidcIdentities().length === 0) {
+        <p class="status-text">Keine verknüpften Konten.</p>
+      }
+      @for (identity of store.oidcIdentities(); track identity.id) {
+        <div class="identity-row">
+          <div class="identity-icon">{{ identity.providerName.slice(0, 2).toUpperCase() }}</div>
+          <div class="identity-info">
+            <p class="identity-name">{{ identity.providerName }}</p>
+            <p class="identity-sub">{{ identity.email }} · verbunden seit {{ identity.createdAt | date:'dd.MM.yyyy' }}</p>
+          </div>
+          <button hlmBtn size="sm" variant="ghost" type="button"
+                  [disabled]="!store.canUnlinkOidc()"
+                  (click)="unlinkOidc(identity.id)"
+                  class="unlink-btn">
+            Trennen
+          </button>
+        </div>
+      }
+      <p class="hint">Mindestens eine Anmeldemethode muss aktiv bleiben.</p>
+    </div>
+  </div>
+
+  <!-- AKTIVE SITZUNGEN -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">AKTIVE SITZUNGEN</span>
+      @if (otherSessions().length > 0) {
+        <button hlmBtn size="sm" variant="ghost" type="button"
+                class="danger-btn" (click)="revokeAllSessions()">
+          Alle widerrufen
+        </button>
+      }
+    </div>
+    <div class="section-body">
+      @if (store.sessionsLoading()) {
+        <klar-skeleton-rows [count]="2" />
+      } @else {
+        @for (session of currentSessions(); track session.id) {
+          <div class="session-row">
+            <div class="session-dot"></div>
+            <div class="session-info">
+              <p class="session-name">{{ session.userAgent ?? 'Unbekanntes Gerät' }}</p>
+              <p class="session-meta">{{ session.ip ?? '—' }} · {{ formatRelativeTime(session.createdAt) }}</p>
+            </div>
+            <span class="session-badge">Diese Sitzung</span>
+          </div>
+        }
+        @for (session of otherSessions(); track session.id) {
+          <div class="session-row">
+            <div class="session-dot old"></div>
+            <div class="session-info">
+              <p class="session-name">{{ session.userAgent ?? 'Unbekanntes Gerät' }}</p>
+              <p class="session-meta">{{ session.ip ?? '—' }} · {{ formatRelativeTime(session.createdAt) }}</p>
+            </div>
+            <button type="button" class="icon-btn danger"
+                    title="Sitzung widerrufen" (click)="revokeSession(session.id)">
+              <klar-icon name="close" [size]="14" />
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- KONTO -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">KONTO</span>
+    </div>
+    <div style="height:12px"></div>
+    <div class="danger-zone">
+      <p class="danger-title">Konto löschen</p>
+      <p class="danger-desc">Löscht deinen Account unwiderruflich. Deine Einträge in gemeinsamen Haushalten bleiben anonymisiert erhalten.</p>
+      <button hlmBtn size="sm" variant="destructive" type="button" (click)="openDeleteAccount()">
+        Konto löschen …
+      </button>
+    </div>
+  </div>
+
+</div>

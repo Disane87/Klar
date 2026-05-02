@@ -94,6 +94,13 @@ export const routes: Routes = [
             m => m.HaushaltPageComponent,
           ),
       },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./pages/settings/settings.component').then(
+            m => m.SettingsPageComponent,
+          ),
+      },
     ],
   },
   {
