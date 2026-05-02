@@ -78,7 +78,7 @@
             <p class="member-email">{{ member.email }}</p>
           </div>
           @if (canManage() && member.userId !== authUserId()) {
-            <select class="member-role-select"
+            <select hlmSelect class="member-role-select"
                     [value]="member.role"
                     [disabled]="!!roleChangePending()[member.userId]"
                     (change)="changeRole(member.userId, $any($event.target).value, $event)">

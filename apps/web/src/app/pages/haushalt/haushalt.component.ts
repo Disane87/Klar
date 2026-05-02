@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
+import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -23,6 +24,7 @@ import type { InviteCode } from '@klar/shared';
     HlmButtonDirective,
     HlmSpinnerComponent,
     HlmCheckboxComponent,
+    HlmSelectNativeDirective,
     KlarInputComponent,
     KlarIconComponent,
   ],
