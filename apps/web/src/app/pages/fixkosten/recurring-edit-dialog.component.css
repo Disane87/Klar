@@ -19,7 +19,7 @@
 }
 
 .field-input {
-  font-size: 14px;
+  font-size: 16px;
   font-family: var(--font-sans);
   color: var(--text);
   background: var(--surface);
@@ -43,7 +43,7 @@
 }
 
 .field-select {
-  font-size: 14px;
+  font-size: 16px;
   font-family: var(--font-sans);
   color: var(--text);
   background: var(--surface);
