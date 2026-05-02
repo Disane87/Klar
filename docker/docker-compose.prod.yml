@@ -1,25 +1,80 @@
-# Production — filled in Phase 14.
-# Will include: postgres, api, web (nginx), traefik.
+networks:
+  traefik-public:
+    external: true
+  backend:
+    internal: true
+
+volumes:
+  postgres-data:
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    networks:
+      - backend
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: ${POSTGRES_USER:-klar}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB:-klar}
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-klar} -d ${POSTGRES_DB:-klar}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # api: (Phase 14)
-  # web: (Phase 14)
-  # traefik: (Phase 14)
+  api:
+    image: ghcr.io/disane87/klar-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - traefik-public
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-klar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-klar}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      PORT: 3000
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      FRONTEND_URL: https://klar.disane.dev
+      APP_URL: https://klar.disane.dev
+      # OIDC (optional)
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-sso}
+      OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: https://klar.disane.dev/api/v1/auth/oidc/callback
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid email profile}
+      OIDC_REQUIRED_GROUP: ${OIDC_REQUIRED_GROUP:-}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
+      OIDC_AUTO_JOIN_HOUSEHOLD_ID: ${OIDC_AUTO_JOIN_HOUSEHOLD_ID:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.klar-api.rule=Host(`klar.disane.dev`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.klar-api.entrypoints=websecure"
+      - "traefik.http.routers.klar-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.klar-api.priority=20"
+      - "traefik.http.services.klar-api.loadbalancer.server.port=3000"
 
-volumes:
-  postgres_prod_data:
-    driver: local
+  web:
+    image: ghcr.io/disane87/klar-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.klar-web.rule=Host(`klar.disane.dev`)"
+      - "traefik.http.routers.klar-web.entrypoints=websecure"
+      - "traefik.http.routers.klar-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.klar-web.priority=10"
+      - "traefik.http.services.klar-web.loadbalancer.server.port=80"

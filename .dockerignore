@@ -1,0 +1,15 @@
+**/.git
+**/.angular
+**/dist
+**/node_modules
+**/.env
+**/.env.local
+apps/api/keys
+**/coverage
+**/.turbo
+**/playwright-report
+**/test-results
+*.md
+.github
+docker
+prisma/seed.ts
