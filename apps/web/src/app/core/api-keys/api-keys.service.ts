@@ -41,7 +41,7 @@ export class ApiKeysService {
   }
 
   revoke(householdId: string, id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl(householdId)}/${id}/revoke`);
+    return this.http.patch<void>(`${this.baseUrl(householdId)}/${id}/revoke`, {});
   }
 
   delete(householdId: string, id: string): Observable<void> {

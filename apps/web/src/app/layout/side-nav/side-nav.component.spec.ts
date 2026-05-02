@@ -1,17 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { SideNavComponent } from './side-nav.component';
-import { HouseholdStore } from '../../core/household/household.store';
-
-const mockHousehold = {
-  household: { id: 'hh-1', name: 'Familie Müller', createdAt: '', updatedAt: '' },
-  role: 'OWNER' as const,
-};
-
-const mockHouseholdStore = {
-  activeHousehold: signal(mockHousehold),
-};
 
 describe('SideNavComponent', () => {
   beforeEach(() =>
@@ -20,7 +10,6 @@ describe('SideNavComponent', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: HouseholdStore, useValue: mockHouseholdStore },
       ],
     }).compileComponents()
   );
@@ -38,9 +27,9 @@ describe('SideNavComponent', () => {
     expect(links.length).toBeGreaterThan(0);
   });
 
-  it('shows household name from store', () => {
+  it('shows nav item labels', () => {
     const fixture = TestBed.createComponent(SideNavComponent);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Familie Müller');
+    expect(fixture.nativeElement.textContent).toContain('Fixkosten');
   });
 });
