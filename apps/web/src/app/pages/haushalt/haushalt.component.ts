@@ -122,7 +122,9 @@ export class HaushaltPageComponent implements OnInit {
     }
   }
 
-  async changeRole(userId: string, newRole: 'OWNER' | 'MEMBER', event: Event): Promise<void> {
+  async changeRole(userId: string, rawRole: string, event: Event): Promise<void> {
+    if (rawRole !== 'OWNER' && rawRole !== 'MEMBER') return;
+    const newRole: 'OWNER' | 'MEMBER' = rawRole;
     const select = event.target as HTMLSelectElement;
     const oldRole = this.store.members().find(m => m.userId === userId)?.role;
     select.value = oldRole ?? 'MEMBER';

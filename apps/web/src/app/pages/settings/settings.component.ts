@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
@@ -34,7 +34,7 @@ import { DeleteAccountDialogComponent } from './delete-account-dialog.component'
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
 })
-export class SettingsPageComponent implements OnInit {
+export class SettingsPageComponent {
   protected store = inject(UserSettingsStore);
   protected themeService = inject(ThemeService);
   private dialog = inject(KlarDialogService);
@@ -64,8 +64,10 @@ export class SettingsPageComponent implements OnInit {
     });
   }
 
-  async ngOnInit(): Promise<void> {
-    await Promise.all([this.store.loadProfile(), this.store.loadSessions()]);
+  ngOnInit(): void {
+    Promise.all([this.store.loadProfile(), this.store.loadSessions()]).catch(() => {
+      this.toast.error('Einstellungen konnten nicht geladen werden');
+    });
   }
 
   startEditProfile(): void {
