@@ -1,5 +1,7 @@
 // apps/web/src/app/shared/ui/klar-dialog.service.ts
-import { Injectable, signal, Type } from '@angular/core';
+import { Injectable, Type, inject, signal } from '@angular/core';
+import { Dialog, DialogRef } from '@angular/cdk/dialog';
+import { KlarDialogComponent } from './klar-dialog.component';
 
 export interface DialogConfig {
   title: string;
@@ -10,15 +12,31 @@ export interface DialogConfig {
   disableBackdropClose?: boolean;
 }
 
+const WIDTH_MAP = { sm: '400px', md: '520px', lg: '680px' } as const;
+
 @Injectable({ providedIn: 'root' })
 export class KlarDialogService {
-  readonly active = signal<DialogConfig | null>(null);
+  private cdk = inject(Dialog);
+  private ref: DialogRef<unknown, KlarDialogComponent> | null = null;
+
+  /** Stub signal — kept for backwards compatibility with any existing readers */
+  readonly active = signal<null>(null);
 
   open(config: DialogConfig): void {
-    this.active.set({ width: 'md', ...config });
+    this.close();
+    this.ref = this.cdk.open(KlarDialogComponent, {
+      data:          { width: 'md', ...config },
+      maxWidth:      WIDTH_MAP[config.width ?? 'md'],
+      width:         '100%',
+      hasBackdrop:   true,
+      backdropClass: 'klar-dialog-backdrop',
+      panelClass:    'klar-dialog-panel',
+      disableClose:  config.disableBackdropClose ?? false,
+    });
   }
 
   close(): void {
-    this.active.set(null);
+    this.ref?.close();
+    this.ref = null;
   }
 }

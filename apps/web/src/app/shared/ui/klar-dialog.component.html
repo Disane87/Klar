@@ -1,18 +1,13 @@
-@if (dialog.active(); as cfg) {
-  <div class="backdrop" (click)="onBackdropClick($event)" role="dialog"
-       [attr.aria-label]="cfg.title" aria-modal="true">
-    <div class="panel panel--{{ cfg.width }}">
-      <div class="panel-header">
-        <span class="panel-title">{{ cfg.title }}</span>
-        <button class="close-btn" type="button" title="Schließen" (click)="dialog.close()">
-          <klar-icon name="x" [size]="14" />
-        </button>
-      </div>
-      <div class="panel-body">
-        <ng-container
-          [ngComponentOutlet]="cfg.component"
-          [ngComponentOutletInputs]="cfg.inputs ?? {}" />
-      </div>
-    </div>
+<div class="panel">
+  <div class="panel-header">
+    <span class="panel-title">{{ cfg.title }}</span>
+    <button class="close-btn" type="button" title="Schließen" (click)="close()">
+      <klar-icon name="x" [size]="14" />
+    </button>
   </div>
-}
+  <div class="panel-body">
+    <ng-container
+      [ngComponentOutlet]="cfg.component"
+      [ngComponentOutletInputs]="cfg.inputs ?? {}" />
+  </div>
+</div>

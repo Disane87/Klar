@@ -260,3 +260,42 @@ input, select, textarea {
   background: color-mix(in oklab, var(--color-primary) 30%, transparent);
   color: var(--text);
 }
+
+/* ── CDK Dialog backdrop (used by KlarDialogService) ─────────── */
+.klar-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, var(--zinc-950) 60%, transparent);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  animation: klar-fade 120ms ease-out both;
+}
+
+.klar-dialog-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .klar-dialog-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    padding: 0;
+  }
+
+  .klar-dialog-panel .panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
