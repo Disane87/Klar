@@ -72,7 +72,7 @@
   --space-8:  32px;
   --space-10: 40px;
   --space-12: 48px;
-  --spacing-table-row: 28px;
+  --spacing-table-row: 35px;
 
   /* Radius */
   --radius-sm: 2px;
@@ -80,18 +80,18 @@
   --radius-md: 6px;
   --radius-lg: 8px;
 
-  /* Type ramps */
-  --label:    9px;
-  --label-2:  11px;
-  --body-sm:  12px;
-  --body:     13px;
-  --body-lg:  14px;
-  --num-sm:   12px;
-  --num:      13px;
-  --num-md:   14px;
-  --num-lg:   18px;
-  --num-card: 20px;
-  --num-hero: 30px;
+  /* Type ramps — scaled ×1.25 to match 125% browser zoom at 100% native zoom */
+  --label:    11px;
+  --label-2:  14px;
+  --body-sm:  15px;
+  --body:     16px;
+  --body-lg:  18px;
+  --num-sm:   15px;
+  --num:      16px;
+  --num-md:   18px;
+  --num-lg:   23px;
+  --num-card: 25px;
+  --num-hero: 38px;
 
   /* Focus ring */
   --ring: 0 0 0 1px var(--indigo-400);
@@ -168,9 +168,14 @@
 /* ============================================================
    Base styles
    ============================================================ */
+html, body {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 html {
   font-family: var(--font-sans);
-  font-size: var(--body);
+  font-size: 16px;
   line-height: 1.45;
   color: var(--text);
   background: var(--bg);
@@ -273,23 +278,21 @@ input, select, textarea {
 }
 
 .klar-dialog-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
   padding: 16px;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  /* CDK cdk-global-overlay-wrapper centers via flexbox — no manual positioning needed */
 }
 
 @media (max-width: 767px) {
   .klar-dialog-panel {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    transform: none !important;
     padding: 0;
   }
 
@@ -299,3 +302,11 @@ input, select, textarea {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* ── Shared dialog content ───────────────────────────────────────── */
+.dialog-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.dialog-warning { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.dialog-error { font-size: 12px; color: var(--color-expense); }
+.dialog-actions { display: flex; gap: 8px; align-items: center; padding-top: 4px; }
+.field-error { font-size: 11px; color: var(--color-expense); margin-top: 2px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }

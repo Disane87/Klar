@@ -1,0 +1,23 @@
+<div class="dialog-body">
+  <p class="dialog-warning">
+    Diese Aktion ist unwiderruflich. Deine Einträge in gemeinsamen Haushalten bleiben anonymisiert erhalten.
+  </p>
+  <div class="field-group">
+    <label hlmLabel for="confirm-email">
+      Gib deine E-Mail-Adresse zur Bestätigung ein:
+      <strong>{{ userEmail() }}</strong>
+    </label>
+    <input hlmInput id="confirm-email" type="email" autocomplete="off"
+           [ngModel]="confirmEmail()" (ngModelChange)="confirmEmail.set($event)" />
+  </div>
+  @if (error()) {
+    <p class="dialog-error">{{ error() }}</p>
+  }
+  <div class="dialog-actions">
+    <button hlmBtn variant="destructive" [disabled]="!canDelete() || deleting()" (click)="confirm()">
+      @if (deleting()) { <hlm-spinner [size]="12" /> }
+      Konto unwiderruflich löschen
+    </button>
+    <button hlmBtn variant="ghost" type="button" (click)="dialog.close()">Abbrechen</button>
+  </div>
+</div>
