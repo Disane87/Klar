@@ -12,6 +12,9 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { refreshInterceptor } from './core/interceptors/refresh.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthStore } from './core/auth/auth.store';
+import { addCollection } from 'iconify-icon';
+import { icons as SimpleIconsData } from '@iconify-json/simple-icons';
+addCollection(SimpleIconsData);
 
 function initSessionFactory(store: AuthStore): () => Promise<void> {
   return () => store.initSession();

@@ -21,8 +21,11 @@
     "@angular/platform-browser-dynamic": "^21.0.0",
     "@angular/router": "^21.0.0",
     "@angular/service-worker": "^21.0.0",
+    "@iconify-json/simple-icons": "^1.2.80",
+    "@iconify/utils": "^3.1.1",
     "@klar/shared": "workspace:*",
     "@klar/shared-frontend": "workspace:*",
+    "iconify-icon": "^3.0.2",
     "rxjs": "^7.8.0",
     "tslib": "^2.8.0"
   },

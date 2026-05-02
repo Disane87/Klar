@@ -1,0 +1,9 @@
+@if (slug(); as s) {
+  <iconify-icon
+    [icon]="'simple-icons:' + s"
+    [width]="size()"
+    [height]="size()"
+    class="brand-icon" />
+} @else {
+  <klar-icon name="tag" [size]="size()" class="brand-icon" />
+}
