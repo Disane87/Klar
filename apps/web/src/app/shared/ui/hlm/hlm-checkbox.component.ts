@@ -1,4 +1,4 @@
-import { Component, computed, input, model, output } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { hlm } from './hlm-utils';
 
 @Component({
@@ -10,7 +10,7 @@ import { hlm } from './hlm-utils';
       [class]="_cls()"
       [checked]="checked()"
       [disabled]="disabled()"
-      (change)="checked.set($any($event.target).checked); checkedChange.emit($any($event.target).checked)"
+      (change)="checked.set($any($event.target).checked)"
     />
   `,
   host: { class: 'inline-flex items-center' },
@@ -19,7 +19,6 @@ export class HlmCheckboxComponent {
   checked   = model(false);
   disabled  = input(false);
   userClass = input('', { alias: 'class' });
-  checkedChange = output<boolean>();
 
   _cls = computed(() => hlm(
     'h-4 w-4 shrink-0 rounded-sm border border-primary accent-primary cursor-pointer',
