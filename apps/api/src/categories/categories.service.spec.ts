@@ -124,7 +124,7 @@ describe('CategoriesService', () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeCategory());
       vi.mocked(repo.hasTransactions).mockResolvedValue(false);
-      vi.mocked(repo.delete).mockResolvedValue(undefined);
+      vi.mocked(repo.delete).mockResolvedValue(makeCategory());
       await service.remove(ctx, 'cat-1');
       expect(repo.delete).toHaveBeenCalledWith('cat-1');
       expect(repo.update).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('CategoriesService', () => {
   describe('seedDefaults', () => {
     it('calls createMany with 10 default categories for the household', async () => {
       const { service, repo } = buildService();
-      vi.mocked(repo.createMany).mockResolvedValue(undefined);
+      vi.mocked(repo.createMany).mockResolvedValue({ count: 0 });
       await service.seedDefaults('hh1');
       const call = vi.mocked(repo.createMany).mock.calls[0][0];
       expect(call).toHaveLength(10);
@@ -153,10 +153,10 @@ describe('CategoriesService', () => {
 
     it('marks all seeded categories as isDefault = true', async () => {
       const { service, repo } = buildService();
-      vi.mocked(repo.createMany).mockResolvedValue(undefined);
+      vi.mocked(repo.createMany).mockResolvedValue({ count: 0 });
       await service.seedDefaults('hh1');
       const call = vi.mocked(repo.createMany).mock.calls[0][0];
-      expect(call.every((c: { isDefault: boolean }) => c.isDefault === true)).toBe(true);
+      expect(call.every((c: { isDefault?: boolean }) => c.isDefault === true)).toBe(true);
     });
   });
 

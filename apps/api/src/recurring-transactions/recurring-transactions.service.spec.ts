@@ -201,7 +201,7 @@ describe('RecurringTransactionsService', () => {
     it('deletes when found and authorized', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeRt());
-      vi.mocked(repo.delete).mockResolvedValue(undefined);
+      vi.mocked(repo.delete).mockResolvedValue(makeRt());
       await service.remove(ctx, 'rt-1');
       expect(repo.delete).toHaveBeenCalledWith('rt-1');
     });

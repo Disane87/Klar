@@ -162,7 +162,7 @@ describe('TransactionsService', () => {
     it('deletes when found and authorized', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeTx());
-      vi.mocked(repo.delete).mockResolvedValue(undefined);
+      vi.mocked(repo.delete).mockResolvedValue(makeTx());
       await service.remove(ctx, 'tx-1');
       expect(repo.delete).toHaveBeenCalledWith('tx-1');
     });

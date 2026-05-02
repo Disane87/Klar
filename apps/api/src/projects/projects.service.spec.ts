@@ -157,7 +157,7 @@ describe('ProjectsService', () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeProject());
       vi.mocked(repo.hasTransactions).mockResolvedValue(false);
-      vi.mocked(repo.delete).mockResolvedValue(undefined);
+      vi.mocked(repo.delete).mockResolvedValue(makeProject());
       await service.remove(ctx, 'proj-1');
       expect(repo.delete).toHaveBeenCalledWith('proj-1');
     });

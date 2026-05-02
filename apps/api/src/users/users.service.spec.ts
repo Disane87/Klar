@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mocked } from 'vitest';
 import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AppRole } from '@prisma/client';
@@ -42,15 +43,15 @@ const makeRepo = () => ({
   findWithOidc: vi.fn(),
   updateProfile: vi.fn(),
   softDelete: vi.fn(),
-} as unknown as jest.Mocked<UsersRepository>);
+} as unknown as Mocked<UsersRepository>);
 
 let service: UsersService;
 let repo: ReturnType<typeof makeRepo>;
-let oidcRepo: jest.Mocked<OidcRepository>;
-let tokenRepo: jest.Mocked<RefreshTokenRepository>;
-let mailService: jest.Mocked<MailService>;
-let auditService: jest.Mocked<AuditService>;
-let householdsRepo: jest.Mocked<HouseholdsRepository>;
+let oidcRepo: Mocked<OidcRepository>;
+let tokenRepo: Mocked<RefreshTokenRepository>;
+let mailService: Mocked<MailService>;
+let auditService: Mocked<AuditService>;
+let householdsRepo: Mocked<HouseholdsRepository>;
 
 beforeEach(() => {
   repo = makeRepo();
@@ -58,18 +59,18 @@ beforeEach(() => {
     findIdentitiesByUser: vi.fn(),
     countIdentitiesByUser: vi.fn(),
     deleteIdentityById: vi.fn(),
-  } as unknown as jest.Mocked<OidcRepository>;
+  } as unknown as Mocked<OidcRepository>;
   tokenRepo = {
     findActiveByUser: vi.fn(),
     revoke: vi.fn(),
     revokeAllForUser: vi.fn(),
     revokeAllForUserExcept: vi.fn(),
-  } as unknown as jest.Mocked<RefreshTokenRepository>;
-  mailService = { sendVerificationEmail: vi.fn() } as unknown as jest.Mocked<MailService>;
-  auditService = { log: vi.fn() } as unknown as jest.Mocked<AuditService>;
+  } as unknown as Mocked<RefreshTokenRepository>;
+  mailService = { sendVerificationEmail: vi.fn() } as unknown as Mocked<MailService>;
+  auditService = { log: vi.fn() } as unknown as Mocked<AuditService>;
   householdsRepo = {
     countOwnerMemberships: vi.fn(),
-  } as unknown as jest.Mocked<HouseholdsRepository>;
+  } as unknown as Mocked<HouseholdsRepository>;
 
   service = new UsersService(
     repo, oidcRepo, tokenRepo, mailService, auditService, householdsRepo,
