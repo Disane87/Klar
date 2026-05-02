@@ -14,6 +14,7 @@ import type { RequestContext } from '../common/types/request-context.type';
 
 export interface FixedCostsItemResponse {
   id: string;
+  categoryId: string;
   name: string;
   amountCents: number;
   monthlyEquivalentCents: number;
@@ -26,6 +27,7 @@ export interface FixedCostsGroupResponse {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  categoryType: string;
   totalCents: number;
   items: FixedCostsItemResponse[];
 }
@@ -139,6 +141,7 @@ export class OverviewService {
     for (const { category, items } of grouped.values()) {
       const responseItems: FixedCostsItemResponse[] = items.map((rt) => ({
         id: rt.id,
+        categoryId: rt.categoryId,
         name: rt.name,
         amountCents: rt.amountCents,
         monthlyEquivalentCents: toMonthlyEquivalent(
@@ -159,13 +162,22 @@ export class OverviewService {
         categoryId: category.id,
         categoryName: category.name,
         categoryColor: category.color,
+        categoryType: category.type,
         totalCents,
         items: responseItems,
       });
     }
 
-    // Sort groups by totalCents ASC (most negative / most expensive first)
-    groups.sort((a, b) => a.totalCents - b.totalCents);
+    // Sort: INCOME → FIXED_INCOME → EXPENSE, within same type by category.sortOrder
+    const typeOrder: Record<string, number> = { INCOME: 0, FIXED_INCOME: 1, EXPENSE: 2 };
+    const sortOrderMap = new Map(
+      [...grouped.values()].map(({ category }) => [category.id, category.sortOrder]),
+    );
+    groups.sort((a, b) => {
+      const typeDiff = (typeOrder[a.categoryType] ?? 9) - (typeOrder[b.categoryType] ?? 9);
+      if (typeDiff !== 0) return typeDiff;
+      return (sortOrderMap.get(a.categoryId) ?? 0) - (sortOrderMap.get(b.categoryId) ?? 0);
+    });
 
     const totalCents = groups.reduce((sum, g) => sum + g.totalCents, 0);
 

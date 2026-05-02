@@ -7,6 +7,7 @@ import type { RecurringFrequency } from '@klar/shared';
 
 export interface FixedCostItem {
   id: string;
+  categoryId: string;
   name: string;
   amountCents: number;
   monthlyEquivalentCents: number;
@@ -19,6 +20,7 @@ export interface FixedCostGroup {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  categoryType: string;
   totalCents: number;
   items: FixedCostItem[];
 }
