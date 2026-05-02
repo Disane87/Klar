@@ -1,19 +1,22 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { TransactionsStore } from '../../core/transactions/transactions.store';
+import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
+import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { TransactionsStore, Transaction } from '../../core/transactions/transactions.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { TransactionDialogComponent } from './transaction-dialog.component';
 
 @Component({
   selector: 'app-buchungen',
   standalone: true,
-  imports: [KlarSkeletonComponent, KlarIconComponent],
+  imports: [KlarSkeletonComponent, KlarIconComponent, BrandIconComponent],
   templateUrl: './buchungen.component.html',
   styleUrl: './buchungen.component.css',
 })
 export class BuchungenPageComponent {
-  protected store        = inject(TransactionsStore);
-  readonly showCreateForm = signal(false);
+  protected store       = inject(TransactionsStore);
+  private dialogService = inject(KlarDialogService);
 
   constructor() {
     inject(PageHeaderService).set({
@@ -22,7 +25,26 @@ export class BuchungenPageComponent {
       showPlanspiel: false,
       showAdd:       true,
       addLabel:      'Buchung',
-      onAdd:         () => this.showCreateForm.set(true),
+      onAdd:         () => this.openCreate(),
+    });
+  }
+
+  openCreate(): void {
+    this.dialogService.open({
+      title:     'Buchung anlegen',
+      component: TransactionDialogComponent,
+      inputs:    { tx: null },
+      width:     'sm',
+    });
+  }
+
+  openEdit(tx: Transaction, event: Event): void {
+    event.stopPropagation();
+    this.dialogService.open({
+      title:     'Buchung bearbeiten',
+      component: TransactionDialogComponent,
+      inputs:    { tx },
+      width:     'sm',
     });
   }
 
@@ -40,7 +62,6 @@ export class BuchungenPageComponent {
   }
 
   formatDate(dateStr: string): string {
-    // YYYY-MM-DD → DD.MM.
     const parts = dateStr.split('-');
     if (parts.length < 3) return dateStr;
     return `${parts[2]}.${parts[1]}.`;

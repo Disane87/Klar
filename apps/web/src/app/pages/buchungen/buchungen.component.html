@@ -101,15 +101,15 @@
     <!-- Transaction list -->
     <div class="tx-list">
       @for (tx of store.sortedItems(); track tx.id) {
-        <div class="tx-row">
-          <span class="tx-date">{{ formatDate(tx.date) }}</span>
+        <div class="tx-row" (click)="openEdit(tx, $event)">
+          <div class="tx-date-brand">
+            <app-brand-icon [name]="tx.description ?? ''" [size]="12" />
+            <span class="tx-date">{{ formatDate(tx.date) }}</span>
+          </div>
 
           <span class="tx-info">
             <span class="tx-desc">{{ tx.description }}</span>
             <span class="tx-badges">
-              @if (tx.categoryId) {
-                <span class="tx-badge">KAT</span>
-              }
               @if (tx.visibility === 'PRIVATE') {
                 <span class="tx-badge tx-badge-private">PRIVAT</span>
               }

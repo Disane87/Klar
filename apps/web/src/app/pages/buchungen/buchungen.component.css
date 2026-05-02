@@ -1,7 +1,16 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
   animation: klar-enter 160ms ease-out both;
@@ -95,14 +104,21 @@
 
 .tx-row {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
+  grid-template-columns: 60px 1fr auto;
   align-items: center;
   gap: 0 12px;
   padding: 10px 24px;
   border-bottom: 1px solid var(--border-subtle);
   min-height: 44px;
   transition: background 100ms ease;
-  cursor: default;
+  cursor: pointer;
+}
+
+.tx-date-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .tx-row:hover  { background: color-mix(in oklab, var(--text) 2.5%, transparent); }
