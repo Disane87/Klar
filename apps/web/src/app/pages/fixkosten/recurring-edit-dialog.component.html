@@ -22,11 +22,10 @@
   <div class="field">
     <label class="field-label" for="red-category">Kategorie</label>
     <select id="red-category" class="field-select"
-            [value]="categoryId()"
             (change)="categoryId.set($any($event.target).value)">
-      <option value="" disabled>Kategorie wählen…</option>
+      <option value="" disabled [selected]="!categoryId()">Kategorie wählen…</option>
       @for (cat of cats.active(); track cat.id) {
-        <option [value]="cat.id">{{ cat.name }}</option>
+        <option [value]="cat.id" [selected]="cat.id === categoryId()">{{ cat.name }}</option>
       }
     </select>
   </div>
@@ -34,10 +33,9 @@
   <div class="field">
     <label class="field-label" for="red-freq">Frequenz</label>
     <select id="red-freq" class="field-select"
-            [value]="frequency()"
             (change)="frequency.set($any($event.target).value)">
       @for (opt of freqOptions; track opt.value) {
-        <option [value]="opt.value">{{ opt.label }}</option>
+        <option [value]="opt.value" [selected]="opt.value === frequency()">{{ opt.label }}</option>
       }
     </select>
   </div>

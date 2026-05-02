@@ -26,11 +26,10 @@
   <div class="field">
     <label class="field-label" for="td-cat">Kategorie</label>
     <select id="td-cat" class="field-select"
-            [value]="categoryId()"
             (change)="categoryId.set($any($event.target).value)">
-      <option value="" disabled>Kategorie wählen…</option>
+      <option value="" disabled [selected]="!categoryId()">Kategorie wählen…</option>
       @for (cat of cats.active(); track cat.id) {
-        <option [value]="cat.id">{{ cat.name }}</option>
+        <option [value]="cat.id" [selected]="cat.id === categoryId()">{{ cat.name }}</option>
       }
     </select>
   </div>
