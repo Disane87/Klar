@@ -74,4 +74,19 @@ export class HouseholdsRepository {
       data: { name },
     });
   }
+
+  async countOwnerMemberships(userId: string): Promise<number> {
+    const ownedHouseholds = await this.prisma.householdMembership.findMany({
+      where: { userId, role: HouseholdRole.OWNER },
+      select: { householdId: true },
+    });
+    let soleOwnerCount = 0;
+    for (const { householdId } of ownedHouseholds) {
+      const ownerCount = await this.prisma.householdMembership.count({
+        where: { householdId, role: HouseholdRole.OWNER },
+      });
+      if (ownerCount === 1) soleOwnerCount++;
+    }
+    return soleOwnerCount;
+  }
 }
