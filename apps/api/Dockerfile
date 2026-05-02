@@ -19,6 +19,7 @@ WORKDIR /app
 COPY --from=deps /app .
 COPY . .
 RUN pnpm --filter @klar/shared build
+RUN pnpm --filter @klar/api prisma:generate
 RUN pnpm --filter @klar/api build
 
 # Production image
