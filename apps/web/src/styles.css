@@ -257,6 +257,6 @@ input, select, textarea {
 
 /* ── Selection ───────────────────────────────────────────────── */
 ::selection {
-  background: color-mix(in oklab, var(--color-accent) 30%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 30%, transparent);
   color: var(--text);
 }
