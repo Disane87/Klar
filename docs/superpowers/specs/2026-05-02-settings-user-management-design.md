@@ -150,8 +150,11 @@ Alle unter `UsersModule` (neues Modul oder Erweiterung des bestehenden Auth-Modu
   ip: string | null;
   createdAt: string;
   expiresAt: string;
-  isCurrent: boolean;            // true wenn tokenHash der aktuellen Session entspricht
+  isCurrent: boolean;            // true wenn RefreshToken.id == jwt.refreshTokenId claim
 }
+// Implementierungsdetail: Access-Token bekommt zusätzlichen Claim `refreshTokenId: string`
+// (gesetzt beim Token-Austausch in AuthService.login/refresh). Damit kann der Session-Endpoint
+// die aktuelle Session sicher identifizieren ohne tokenHash zu exponieren.
 
 // ChangePasswordDto
 {
