@@ -1,8 +1,17 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .page {
   display: flex;
   flex-direction: column;
   gap: 0;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
   animation: klar-enter 160ms ease-out both;
