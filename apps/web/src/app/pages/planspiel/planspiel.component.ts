@@ -5,6 +5,9 @@ import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
+import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
+import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import type { RecurringFrequency } from '@klar/shared';
 import { toMonthlyEquivalent } from '@klar/shared';
 
@@ -25,7 +28,7 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-planspiel',
   standalone: true,
-  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent],
+  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective],
   templateUrl: './planspiel.component.html',
   styleUrl: './planspiel.component.css',
 })

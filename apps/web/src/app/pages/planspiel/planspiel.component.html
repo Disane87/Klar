@@ -158,41 +158,37 @@
 
       <!-- Label input -->
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-muted-foreground">Bezeichnung</label>
+        <label hlmLabel>Bezeichnung</label>
         <input
+          hlmInput
           type="text"
           placeholder="z.B. Gehalt, Miete…"
           [ngModel]="form().label"
-          (ngModelChange)="updateForm({ label: $event })"
-          class="w-full rounded-lg border border-border bg-background px-3 py-2
-                 text-base text-foreground placeholder:text-muted-foreground
-                 focus:outline-none focus:ring-2 focus:ring-primary" />
+          (ngModelChange)="updateForm({ label: $event })" />
       </div>
 
       <!-- Amount input -->
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-muted-foreground">Betrag (€)</label>
+        <label hlmLabel>Betrag (€)</label>
         <input
+          hlmInput
+          class="font-mono tabular-nums"
           type="number"
           inputmode="decimal"
           placeholder="0,00"
           min="0"
           step="0.01"
           [ngModel]="form().amountEuro"
-          (ngModelChange)="updateForm({ amountEuro: $event })"
-          class="w-full rounded-lg border border-border bg-background px-3 py-2
-                 text-base font-mono text-foreground placeholder:text-muted-foreground
-                 focus:outline-none focus:ring-2 focus:ring-primary" />
+          (ngModelChange)="updateForm({ amountEuro: $event })" />
       </div>
 
       <!-- Frequency select -->
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-muted-foreground">Häufigkeit</label>
+        <label hlmLabel>Häufigkeit</label>
         <select
+          hlmSelect
           [ngModel]="form().frequency"
-          (ngModelChange)="updateForm({ frequency: $event })"
-          class="w-full rounded-lg border border-border bg-background px-3 py-2
-                 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+          (ngModelChange)="updateForm({ frequency: $event })">
           <option value="MONTHLY">Monatlich</option>
           <option value="QUARTERLY">Quartalsweise</option>
           <option value="YEARLY">Jährlich</option>

@@ -1,31 +1,31 @@
 <div class="form">
 
   <div class="field">
-    <label class="field-label" for="td-desc">Beschreibung</label>
-    <input id="td-desc" class="field-input" type="text"
+    <label hlmLabel for="td-desc">Beschreibung</label>
+    <input id="td-desc" hlmInput type="text"
            placeholder="z.B. Supermarkt Rewe"
            [value]="description()"
            (input)="description.set($any($event.target).value)" />
   </div>
 
   <div class="field">
-    <label class="field-label" for="td-amount">Betrag (€, negativ = Ausgabe)</label>
-    <input id="td-amount" class="field-input field-input--mono" type="text"
+    <label hlmLabel for="td-amount">Betrag (€, negativ = Ausgabe)</label>
+    <input id="td-amount" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="-50,00"
            [value]="amount()"
            (input)="amount.set($any($event.target).value)" />
   </div>
 
   <div class="field">
-    <label class="field-label" for="td-date">Datum</label>
-    <input id="td-date" class="field-input" type="date"
+    <label hlmLabel for="td-date">Datum</label>
+    <input id="td-date" hlmInput type="date"
            [value]="date()"
            (change)="date.set($any($event.target).value)" />
   </div>
 
   <div class="field">
-    <label class="field-label" for="td-cat">Kategorie</label>
-    <select id="td-cat" class="field-select"
+    <label hlmLabel for="td-cat">Kategorie</label>
+    <select id="td-cat" hlmSelect
             (change)="categoryId.set($any($event.target).value)">
       <option value="" disabled [selected]="!categoryId()">Kategorie wählen…</option>
       @for (cat of cats.active(); track cat.id) {
@@ -35,12 +35,11 @@
   </div>
 
   <div class="field">
-    <label class="field-label" for="td-vis">Sichtbarkeit</label>
-    <select id="td-vis" class="field-select"
-            [value]="visibility()"
+    <label hlmLabel for="td-vis">Sichtbarkeit</label>
+    <select id="td-vis" hlmSelect
             (change)="visibility.set($any($event.target).value)">
-      <option value="SHARED">Geteilt</option>
-      <option value="PRIVATE">Privat</option>
+      <option value="SHARED" [selected]="visibility() === 'SHARED'">Geteilt</option>
+      <option value="PRIVATE" [selected]="visibility() === 'PRIVATE'">Privat</option>
     </select>
   </div>
 

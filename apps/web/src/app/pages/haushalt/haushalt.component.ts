@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarCardComponent } from '../../shared/ui/klar-card.component';
@@ -20,6 +21,7 @@ import type { InviteCode } from '@klar/shared';
     FormsModule,
     HlmButtonDirective,
     HlmSpinnerComponent,
+    HlmCheckboxComponent,
     KlarInputComponent,
     KlarIconComponent,
     KlarCardComponent,

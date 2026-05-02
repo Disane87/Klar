@@ -1,16 +1,16 @@
 <div class="form">
 
   <div class="field">
-    <label class="field-label" for="red-name">Name</label>
-    <input id="red-name" class="field-input" type="text"
+    <label hlmLabel for="red-name">Name</label>
+    <input id="red-name" hlmInput type="text"
            [placeholder]="item().name"
            [value]="name()"
            (input)="name.set($any($event.target).value)" />
   </div>
 
   <div class="field">
-    <label class="field-label" for="red-monthly">Betrag / Monat (€)</label>
-    <input id="red-monthly" class="field-input field-input--mono" type="text"
+    <label hlmLabel for="red-monthly">Betrag / Monat (€)</label>
+    <input id="red-monthly" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="0,00"
            [value]="monthly()"
            (input)="monthly.set($any($event.target).value)" />
@@ -20,8 +20,8 @@
   </div>
 
   <div class="field">
-    <label class="field-label" for="red-category">Kategorie</label>
-    <select id="red-category" class="field-select"
+    <label hlmLabel for="red-category">Kategorie</label>
+    <select id="red-category" hlmSelect
             (change)="categoryId.set($any($event.target).value)">
       <option value="" disabled [selected]="!categoryId()">Kategorie wählen…</option>
       @for (cat of cats.active(); track cat.id) {
@@ -31,8 +31,8 @@
   </div>
 
   <div class="field">
-    <label class="field-label" for="red-freq">Frequenz</label>
-    <select id="red-freq" class="field-select"
+    <label hlmLabel for="red-freq">Frequenz</label>
+    <select id="red-freq" hlmSelect
             (change)="frequency.set($any($event.target).value)">
       @for (opt of freqOptions; track opt.value) {
         <option [value]="opt.value" [selected]="opt.value === frequency()">{{ opt.label }}</option>
@@ -41,8 +41,8 @@
   </div>
 
   <div class="field">
-    <label class="field-label" for="red-day">Buchungstag (1–31)</label>
-    <input id="red-day" class="field-input field-input--mono" type="number"
+    <label hlmLabel for="red-day">Buchungstag (1–31)</label>
+    <input id="red-day" hlmInput class="font-mono tabular-nums" type="number"
            min="1" max="31" placeholder="–"
            [value]="dayOfMonth()"
            (input)="dayOfMonth.set($any($event.target).value)" />

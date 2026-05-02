@@ -198,12 +198,10 @@
         />
         <div class="key-scopes scope-form">
           @for (scope of availableScopes; track scope) {
-            <label class="scope-label">
-              <input
-                type="checkbox"
-                class="scope-checkbox"
+            <label class="scope-label flex items-center gap-2 cursor-pointer">
+              <hlm-checkbox
                 [checked]="apiKeysStore.newKeyScopes().includes(scope)"
-                (change)="apiKeysStore.toggleScope(scope)"
+                (checkedChange)="apiKeysStore.toggleScope(scope)"
               />
               <span class="scope-text">{{ scope }}</span>
             </label>
