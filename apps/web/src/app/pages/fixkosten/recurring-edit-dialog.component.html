@@ -1,0 +1,63 @@
+<div class="form">
+
+  <div class="field">
+    <label class="field-label" for="red-name">Name</label>
+    <input id="red-name" class="field-input" type="text"
+           [placeholder]="item().name"
+           [value]="name()"
+           (input)="name.set($any($event.target).value)" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="red-monthly">Betrag / Monat (€)</label>
+    <input id="red-monthly" class="field-input field-input--mono" type="text"
+           inputmode="decimal" placeholder="0,00"
+           [value]="monthly()"
+           (input)="monthly.set($any($event.target).value)" />
+    @if (freqHint()) {
+      <span class="field-hint">{{ freqHint() }}</span>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="red-category">Kategorie</label>
+    <select id="red-category" class="field-select"
+            [value]="categoryId()"
+            (change)="categoryId.set($any($event.target).value)">
+      <option value="" disabled>Kategorie wählen…</option>
+      @for (cat of cats.active(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="red-freq">Frequenz</label>
+    <select id="red-freq" class="field-select"
+            [value]="frequency()"
+            (change)="frequency.set($any($event.target).value)">
+      @for (opt of freqOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="red-day">Buchungstag (1–31)</label>
+    <input id="red-day" class="field-input field-input--mono" type="number"
+           min="1" max="31" placeholder="–"
+           [value]="dayOfMonth()"
+           (input)="dayOfMonth.set($any($event.target).value)" />
+  </div>
+
+  @if (err()) {
+    <p class="err-msg">{{ err() }}</p>
+  }
+
+  <div class="actions">
+    <klar-button variant="ghost" label="Abbrechen" (clicked)="cancel()" />
+    <klar-button variant="primary" label="Speichern"
+                 [loading]="saving()" [disabled]="!isValid()"
+                 (clicked)="save()" />
+  </div>
+</div>
