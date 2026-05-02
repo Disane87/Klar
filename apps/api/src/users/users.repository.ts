@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { User } from '@prisma/client';
+import type { User, OidcIdentity } from '@prisma/client';
 import { AppRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -65,5 +65,29 @@ export class UsersRepository {
 
   async setPassword(id: string, passwordHash: string): Promise<void> {
     await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+  }
+
+  findWithOidc(id: string): Promise<(User & { oidcIdentities: OidcIdentity[] }) | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { oidcIdentities: { orderBy: { createdAt: 'asc' } } },
+    });
+  }
+
+  async updateProfile(id: string, data: { displayName?: string; email?: string }): Promise<User> {
+    const update: { displayName?: string; email?: string; emailVerified?: boolean } = {};
+    if (data.displayName !== undefined) update.displayName = data.displayName;
+    if (data.email !== undefined) {
+      update.email = data.email.toLowerCase();
+      update.emailVerified = false;
+    }
+    return this.prisma.user.update({ where: { id }, data: update });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
   }
 }

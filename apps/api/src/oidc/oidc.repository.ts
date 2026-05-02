@@ -58,6 +58,10 @@ export class OidcRepository {
     await this.prisma.oidcIdentity.deleteMany({ where: { userId, providerName } });
   }
 
+  async deleteIdentityById(id: string, userId: string): Promise<void> {
+    await this.prisma.oidcIdentity.deleteMany({ where: { id, userId } });
+  }
+
   // ── OidcLoginState ────────────────────────────────────────────────────────
 
   createLoginState(data: CreateOidcLoginStateData): Promise<OidcLoginState> {
