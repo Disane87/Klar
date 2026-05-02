@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { LowerCasePipe } from '@angular/common';
+import { LowerCasePipe, NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -8,13 +8,18 @@ import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { RecurringEditDialogComponent } from './recurring-edit-dialog.component';
+import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
+import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
+import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
+import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 
 @Component({
   selector: 'app-fixkosten',
   standalone: true,
-  imports: [LowerCasePipe, KlarSkeletonComponent, KlarIconComponent, BrandIconComponent],
+  host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
+  imports: [LowerCasePipe, NgClass, KlarSkeletonComponent, KlarIconComponent, BrandIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
@@ -101,10 +106,6 @@ export class FixkostenPageComponent {
   });
 
   // ── Formatting helpers ───────────────────────────────────────────────────────
-
-  formatCents(cents: number): string {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
-  }
 
   formatDay(day: number | null): string {
     if (!day) return '';

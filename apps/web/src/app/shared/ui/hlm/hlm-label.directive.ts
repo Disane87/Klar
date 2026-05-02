@@ -10,7 +10,7 @@ export class HlmLabelDirective {
   userClass = input('', { alias: 'class' });
 
   _cls = computed(() => hlm(
-    'text-[9px] font-medium uppercase tracking-widest text-muted-foreground',
+    'text-[11px] font-medium uppercase tracking-widest text-muted-foreground',
     this.userClass()
   ));
 }

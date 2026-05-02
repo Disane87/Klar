@@ -68,8 +68,8 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <button hlmBtn variant="default" size="md" type="submit"
-                class="w-full" [disabled]="loading()">
+        <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="md" type="submit"
+                class="w-full">
           @if (loading()) { <hlm-spinner /> }
           Beitreten
         </button>
@@ -95,8 +95,8 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <button hlmBtn variant="default" size="md" type="submit"
-                class="w-full" [disabled]="loading()">
+        <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="md" type="submit"
+                class="w-full">
           @if (loading()) { <hlm-spinner /> }
           Weiter
         </button>

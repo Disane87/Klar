@@ -29,6 +29,7 @@ const BRAND_MAP: [string, string][] = [
 @Component({
   selector: 'app-brand-icon',
   standalone: true,
+  host: { class: 'inline-flex items-center justify-center shrink-0 text-(--text-muted)' },
   imports: [KlarIconComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './brand-icon.component.html',

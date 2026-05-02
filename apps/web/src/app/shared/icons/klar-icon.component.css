@@ -1,5 +1,1 @@
-:host {
-  display: inline-flex;
-  align-items: center;
-  line-height: 0;
-}
+/* Host styles moved to host: decorator in klar-icon.component.ts */

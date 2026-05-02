@@ -1,6 +1,6 @@
-<div class="form">
+<div class="flex flex-col gap-4">
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-name">Name</label>
     <input id="red-name" hlmInput type="text"
            [placeholder]="item().name"
@@ -8,18 +8,18 @@
            (input)="name.set($any($event.target).value)" />
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-monthly">Betrag / Monat (€)</label>
     <input id="red-monthly" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="0,00"
            [value]="monthly()"
            (input)="monthly.set($any($event.target).value)" />
     @if (freqHint()) {
-      <span class="field-hint">{{ freqHint() }}</span>
+      <span class="text-[11px] text-(--text-muted)">{{ freqHint() }}</span>
     }
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-category">Kategorie</label>
     <select id="red-category" hlmSelect
             (change)="categoryId.set($any($event.target).value)">
@@ -30,7 +30,7 @@
     </select>
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-freq">Frequenz</label>
     <select id="red-freq" hlmSelect
             (change)="frequency.set($any($event.target).value)">
@@ -40,7 +40,7 @@
     </select>
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-day">Buchungstag (1–31)</label>
     <input id="red-day" hlmInput class="font-mono tabular-nums" type="number"
            min="1" max="31" placeholder="–"
@@ -49,10 +49,10 @@
   </div>
 
   @if (err()) {
-    <p class="err-msg">{{ err() }}</p>
+    <p class="text-[12px] text-expense">{{ err() }}</p>
   }
 
-  <div class="actions">
+  <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
     <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
     <button hlmBtn variant="default" size="sm" type="button"
             [disabled]="!isValid() || saving()" (click)="save()">

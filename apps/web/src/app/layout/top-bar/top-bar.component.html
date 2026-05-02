@@ -1,16 +1,13 @@
-<header class="topbar">
-  <div class="title-area">
-    <span class="title">{{ title() }}</span>
+<header class="w-full h-13 border-b border-(--border) px-5 flex items-center justify-between shrink-0">
+  <div class="flex items-baseline gap-3">
+    <span class="text-sm font-medium tracking-[-0.01em]">{{ title() }}</span>
     @if (subtitle()) {
-      <span class="subtitle klar-label">{{ subtitle() }}</span>
+      <span class="text-(--text-muted) klar-label">{{ subtitle() }}</span>
     }
   </div>
 
-  <div class="actions">
-    <div class="month-chip">
-      <klar-icon name="calendar" [size]="12" class="chip-icon" />
-      <span class="klar-mono">{{ monthChip() }}</span>
-    </div>
+  <div class="flex items-center gap-2">
+    <klar-month-chip [label]="monthChip()" />
     @if (showPlanspiel()) {
       <button hlmBtn variant="ghost" size="sm" type="button" (click)="planspielClick.emit()">
         <klar-icon name="planspiel" [size]="14" />
@@ -23,5 +20,6 @@
         {{ addLabel() }}
       </button>
     }
+    <klar-header-user />
   </div>
 </header>

@@ -5,19 +5,19 @@
     <div class="stat-strip">
       <div class="stat">
         <span class="stat-label">EINNAHMEN</span>
-        <span class="stat-value income">{{ formatCents(incomeTotalCents()) }}</span>
+        <span class="stat-value income">{{ incomeTotalCents() | klarMoney }}</span>
         <span class="stat-sub">{{ incomeSourceCount() }} Quellen</span>
       </div>
       <div class="stat-rule"></div>
       <div class="stat">
         <span class="stat-label">AUSGABEN</span>
-        <span class="stat-value expense">{{ formatCents(expenseTotalCents()) }}</span>
+        <span class="stat-value expense">{{ expenseTotalCents() | klarMoney }}</span>
         <span class="stat-sub">{{ expenseCategoryCount() }} Kategorien</span>
       </div>
       <div class="stat-rule"></div>
       <div class="stat">
         <span class="stat-label">ÜBERSCHUSS</span>
-        <span class="stat-value surplus">{{ formatCents(surplusCents()) }}</span>
+        <span class="stat-value surplus">{{ surplusCents() | klarMoney }}</span>
         <span class="stat-sub">Quote {{ surplusPercent() }}&nbsp;%</span>
       </div>
     </div>
@@ -55,19 +55,12 @@
 
   <!-- Error -->
   @else if (store.error()) {
-    <div class="error-bar">
-      <klar-icon name="alert-circle" [size]="14"/>
-      <span>Fehler beim Laden der Fixkosten.</span>
-      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
-    </div>
+    <klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
   }
 
   <!-- Empty -->
   @else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
-    <div class="empty-state">
-      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
-      <p>Keine Fixkosten für diesen Monat</p>
-    </div>
+    <klar-empty-state message="Keine Fixkosten für diesen Monat" />
   }
 
   <!-- Ledger -->
@@ -77,10 +70,8 @@
         <div class="group-header" [style.--cat-color]="group.categoryColor"
              (click)="toggleGroup(group.categoryId)">
           <span class="group-name">{{ group.categoryName }}</span>
-          <span class="group-total"
-                [class.income]="group.totalCents > 0"
-                [class.expense]="group.totalCents < 0">
-            {{ formatCents(group.totalCents) }}
+          <span class="group-total font-mono tabular-nums" [ngClass]="group.totalCents | klarMoneyClass">
+            {{ group.totalCents | klarMoney }}
           </span>
           <span class="group-chevron" [class.collapsed]="isCollapsed(group.categoryId)">
             <klar-icon name="chevron-down" [size]="12" />
@@ -95,10 +86,8 @@
                 <span class="row-variable">variabel</span>
               }
               <span class="row-day">{{ formatDay(item.dayOfMonth) }}</span>
-              <span class="row-amount"
-                    [class.income]="item.monthlyEquivalentCents > 0"
-                    [class.expense]="item.monthlyEquivalentCents < 0">
-                @if (item.isVariable) { ~ }{{ formatCents(item.monthlyEquivalentCents) }}
+              <span class="row-amount font-mono tabular-nums" [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
+                @if (item.isVariable) { ~ }{{ item.monthlyEquivalentCents | klarMoney }}
               </span>
               <span class="row-edit-hint">
                 <klar-icon name="pencil" [size]="10" />
@@ -108,7 +97,7 @@
               <div class="row-freq-hint">
                 <span></span><span></span><span></span>
                 <span class="freq-text">
-                  {{ formatCents(item.amountCents) }} / {{ frequencyLabel(item.frequency) | lowercase }}
+                  {{ item.amountCents | klarMoney }} / {{ frequencyLabel(item.frequency) | lowercase }}
                 </span>
               </div>
             }

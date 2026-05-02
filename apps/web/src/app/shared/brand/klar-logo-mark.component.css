@@ -1,4 +1,1 @@
-:host {
-  display: inline-flex;
-  align-items: center;
-}
+/* Host styles moved to host: decorator in klar-logo-mark.component.ts */

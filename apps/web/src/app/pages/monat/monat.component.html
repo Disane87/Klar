@@ -1,44 +1,28 @@
 <div class="page">
 
-  <!-- Month nav -->
-  <div class="month-nav">
-    <button type="button" class="nav-btn" aria-label="Vorheriger Monat" (click)="prevMonth()">
-      <klar-icon name="chevron-left" [size]="18"/>
-    </button>
-    <span class="month-title">{{ displayMonth() }}</span>
-    <button type="button" class="nav-btn" aria-label="Nächster Monat" (click)="nextMonth()">
-      <klar-icon name="chevron-right" [size]="18"/>
-    </button>
-  </div>
+  <!-- Calendar scheduler -->
+  <hlm-calendar
+    class="cal-nav-block h-[75dvh]"
+    [month]="store.currentMonth()"
+    [events]="calendarEvents()"
+    (monthChange)="navigateMonth($event)"
+    (dayTap)="onDayTap($event)" />
 
   <!-- Loading -->
   @if (store.loading()) {
-    <div class="stat-grid loading-grid">
-      @for (_ of [1,2,3,4]; track $index) {
-        <div class="stat-card sk-card">
-          <klar-skeleton height="9px" width="80px"/>
-          <klar-skeleton class="sk-gap-8" height="28px" width="60%"/>
-          <klar-skeleton class="sk-gap-6" height="11px" width="100%"/>
-        </div>
-      }
+    <div class="stat-grid">
+      <klar-skeleton-cards [count]="4" />
     </div>
   }
 
   <!-- Error -->
   @else if (store.error()) {
-    <div class="error-bar">
-      <klar-icon name="alert-circle" [size]="14"/>
-      <span>Fehler beim Laden der Übersicht.</span>
-      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
-    </div>
+    <klar-error-bar message="Fehler beim Laden der Übersicht." (retry)="store.reload()" />
   }
 
   <!-- Empty -->
   @else if (!store.cashflow()) {
-    <div class="empty-state">
-      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
-      <p>Noch keine Daten für diesen Monat</p>
-    </div>
+    <klar-empty-state message="Noch keine Daten für diesen Monat" />
   }
 
   <!-- Data -->
@@ -57,47 +41,45 @@
         {{ surplusPositive() ? 'ÜBERSCHUSS' : 'DEFIZIT' }}
         @if (isCurrentMonth()) { <span class="hero-stand">· {{ statusDate() }}</span> }
       </div>
-      <div class="hero-amount" [class.surplus]="surplusPositive()" [class.expense]="!surplusPositive()">
-        {{ formatCents(store.cashflow()!.surplusCents) }}
+      <div class="hero-amount" [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass">
+        {{ store.cashflow()!.surplusCents | klarMoney }}
       </div>
       <div class="hero-sub">
-        <span class="income">+{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
+        <span class="income">+{{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
         <span class="hero-arrow">→</span>
-        <span class="expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
+        <span class="expense">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
       </div>
     </div>
 
     <!-- 4 Stat-Karten -->
     <div class="stat-grid">
       <!-- Eingegangen -->
-      <div class="stat-card income-card">
-        <span class="stat-label">EINGEGANGEN</span>
-        <span class="stat-value income">{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
-        <span class="stat-sub">Einnahmen dieses Monats</span>
-      </div>
+      <klar-stat-card
+        label="EINGEGANGEN"
+        [valueCents]="store.cashflow()!.totalIncomeCents"
+        sub="Einnahmen dieses Monats"
+        tone="income" />
 
       <!-- Ausgegeben -->
-      <div class="stat-card expense-card">
-        <span class="stat-label">AUSGEGEBEN</span>
-        <span class="stat-value expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
-        <span class="stat-sub">Ausgaben dieses Monats</span>
-      </div>
+      <klar-stat-card
+        label="AUSGEGEBEN"
+        [valueCents]="store.cashflow()!.totalExpensesCents"
+        sub="Ausgaben dieses Monats"
+        tone="expense" />
 
       <!-- Variabel verfügbar / Defizit -->
-      <div class="stat-card" [class.surplus-card]="surplusPositive()" [class.deficit-card]="!surplusPositive()">
-        <span class="stat-label">{{ surplusPositive() ? 'VARIABEL VERFÜGBAR' : 'DEFIZIT' }}</span>
-        <span class="stat-value" [class.surplus]="surplusPositive()" [class.expense]="!surplusPositive()">
-          {{ formatCents(store.cashflow()!.surplusCents) }}
-        </span>
-        <span class="stat-sub">Netto · Fixkosten abgezogen</span>
-      </div>
+      <klar-stat-card
+        [label]="surplusPositive() ? 'VARIABEL VERFÜGBAR' : 'DEFIZIT'"
+        [valueCents]="store.cashflow()!.surplusCents"
+        sub="Netto · Fixkosten abgezogen"
+        tone="auto" />
 
       <!-- Fixkosten -->
-      <div class="stat-card">
-        <span class="stat-label">FIXKOSTEN</span>
-        <span class="stat-value expense">{{ formatCents(store.cashflow()!.recurringExpensesCents) }}</span>
-        <span class="stat-sub">Wiederkehrende Ausgaben</span>
-      </div>
+      <klar-stat-card
+        label="FIXKOSTEN"
+        [valueCents]="store.cashflow()!.recurringExpensesCents"
+        sub="Wiederkehrende Ausgaben"
+        tone="expense" />
     </div>
 
     <!-- Aufschlüsselung Einnahmen vs. Ausgaben -->
@@ -105,33 +87,96 @@
       <div class="breakdown-section">
         <div class="bk-header">
           <span class="bk-label">EINNAHMEN</span>
-          <span class="bk-total income">{{ formatCents(store.cashflow()!.totalIncomeCents) }}</span>
+          <span class="bk-total income">{{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
         </div>
         <div class="bk-row">
           <span class="bk-name">Fixe Einnahmen</span>
-          <span class="bk-amount income">{{ formatCents(store.cashflow()!.recurringIncomeCents) }}</span>
+          <span class="bk-amount income">{{ store.cashflow()!.recurringIncomeCents | klarMoney }}</span>
         </div>
         <div class="bk-row">
           <span class="bk-name">Buchungen</span>
-          <span class="bk-amount income">{{ formatCents(store.cashflow()!.transactionIncomeCents) }}</span>
+          <span class="bk-amount income">{{ store.cashflow()!.transactionIncomeCents | klarMoney }}</span>
         </div>
       </div>
 
       <div class="breakdown-section">
         <div class="bk-header">
           <span class="bk-label">AUSGABEN</span>
-          <span class="bk-total expense">{{ formatCents(store.cashflow()!.totalExpensesCents) }}</span>
+          <span class="bk-total expense">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
         </div>
         <div class="bk-row">
           <span class="bk-name">Fixkosten</span>
-          <span class="bk-amount expense">{{ formatCents(store.cashflow()!.recurringExpensesCents) }}</span>
+          <span class="bk-amount expense">{{ store.cashflow()!.recurringExpensesCents | klarMoney }}</span>
         </div>
         <div class="bk-row">
           <span class="bk-name">Buchungen</span>
-          <span class="bk-amount expense">{{ formatCents(store.cashflow()!.transactionExpensesCents) }}</span>
+          <span class="bk-amount expense">{{ store.cashflow()!.transactionExpensesCents | klarMoney }}</span>
         </div>
       </div>
     </div>
+
   }
 
 </div>
+
+<!-- ── Mobile Day Detail Sheet ──────────────────────────────── -->
+@if (sheetDay(); as sd) {
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/60 z-200 md:hidden"
+       (click)="sheetDay.set(null)"></div>
+
+  <!-- Sheet -->
+  <div class="fixed bottom-0 left-0 right-0 z-201 md:hidden
+              flex flex-col rounded-t-2xl border-t border-(--border)
+              bg-(--surface) pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+
+    <!-- Drag handle -->
+    <div class="flex justify-center pt-3 pb-2 shrink-0">
+      <div class="w-10 h-1 rounded-full bg-(--border)"></div>
+    </div>
+
+    <!-- Date header -->
+    <div class="px-5 py-2.5 border-b border-(--border) shrink-0">
+      <p class="text-[11px] font-semibold uppercase tracking-widest text-(--text-muted)">
+        {{ sheetDayLabel() }}
+      </p>
+    </div>
+
+    <!-- Event list -->
+    @if (sd.events.length === 0) {
+      <div class="px-5 py-10 text-center text-[13px] text-(--text-muted)">
+        Keine Einträge für diesen Tag
+      </div>
+    } @else {
+      <div class="flex flex-col gap-2 px-4 py-3 overflow-y-auto max-h-[55dvh]">
+        @for (ev of sd.events; track $index) {
+          <div class="flex items-center gap-3 rounded-[5px] px-3 py-2.5 border-l-2"
+               [style.background]="ev.color + '18'"
+               [style.borderLeftColor]="ev.color">
+            <span class="flex-1 min-w-0 text-[13px] font-medium text-(--text) truncate">
+              {{ ev.name }}
+            </span>
+            <span class="font-mono tabular-nums text-[13px] shrink-0"
+                  [ngClass]="ev.amountCents | klarMoneyClass">
+              {{ ev.amountCents | klarMoney }}
+            </span>
+          </div>
+        }
+        <!-- Daily total -->
+        @if (sd.events.length > 1) {
+          @let total = sd.events.reduce(sumAmounts, 0);
+          <div class="flex items-center justify-between px-3 py-2.5
+                      border-t border-(--border) mt-1">
+            <span class="text-[10px] font-semibold uppercase tracking-widest text-(--text-muted)">
+              GESAMT
+            </span>
+            <span class="font-mono tabular-nums text-[13px] font-semibold"
+                  [ngClass]="total | klarMoneyClass">
+              {{ total | klarMoney }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

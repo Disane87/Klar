@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { HlmLoadingBtnDirective } from '../../shared/ui/hlm/hlm-loading-btn.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -19,10 +20,12 @@ type Mode = 'choose' | 'create' | 'join';
     FormsModule,
     KlarWordmarkComponent,
     HlmButtonDirective,
+    HlmLoadingBtnDirective,
     HlmSpinnerComponent,
     KlarInputComponent,
     KlarIconComponent,
   ],
+  host: { class: 'block' },
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
 })

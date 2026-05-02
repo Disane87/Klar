@@ -37,19 +37,12 @@
 
   <!-- Error -->
   @else if (store.error()) {
-    <div class="error-bar">
-      <klar-icon name="alert-circle" [size]="14"/>
-      <span>Fehler beim Laden der Projekte.</span>
-      <button class="retry-btn" type="button" (click)="store.reload()">Erneut versuchen</button>
-    </div>
+    <klar-error-bar message="Fehler beim Laden der Projekte." (retry)="store.reload()" />
   }
 
   <!-- Empty -->
   @else if (store.isEmpty()) {
-    <div class="empty-state">
-      <klar-icon name="inbox" [size]="36" [stroke]="1.25"/>
-      <p>Keine Projekte vorhanden</p>
-    </div>
+    <klar-empty-state message="Keine Projekte vorhanden" />
   }
 
   <!-- Project List -->
@@ -76,7 +69,7 @@
                 <div class="progress-bar-fill" [style.width.%]="progressPercent(item)"></div>
               </div>
               <span class="progress-label">
-                {{ progressPercent(item) }}&nbsp;% von {{ formatCents(item.totalBudgetCents) }}
+                {{ progressPercent(item) }}&nbsp;% von {{ item.totalBudgetCents | klarMoney }}
               </span>
             </div>
           }
@@ -85,21 +78,19 @@
           <div class="stat-row">
             <div class="stat-cell">
               <span class="stat-label">BILANZ</span>
-              <span class="stat-value"
-                    [class.income]="item.balanceCents >= 0"
-                    [class.expense]="item.balanceCents < 0">
-                {{ formatCents(item.balanceCents) }}
+              <span class="stat-value font-mono tabular-nums" [ngClass]="item.balanceCents | klarMoneyClass">
+                {{ item.balanceCents | klarMoney }}
               </span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-cell">
               <span class="stat-label">AUSGABEN</span>
-              <span class="stat-value expense">{{ formatCents(item.spentCents) }}</span>
+              <span class="stat-value font-mono tabular-nums" [ngClass]="item.spentCents | klarMoneyClass">{{ item.spentCents | klarMoney }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-cell">
               <span class="stat-label">EINNAHMEN</span>
-              <span class="stat-value income">{{ formatCents(item.incomeCents) }}</span>
+              <span class="stat-value font-mono tabular-nums" [ngClass]="item.incomeCents | klarMoneyClass">{{ item.incomeCents | klarMoney }}</span>
             </div>
           </div>
 

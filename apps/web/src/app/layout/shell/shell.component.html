@@ -1,13 +1,13 @@
-<div class="shell">
+<div class="flex h-dvh overflow-hidden bg-(--bg)">
   <!-- Desktop sidebar — hidden on mobile -->
-  <klar-side-nav class="desktop-only" />
+  <klar-side-nav class="hidden md:flex" />
 
   <!-- Main content -->
-  <div class="main">
-    <!-- Global top bar — visible on desktop when a page sets a title -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
     @if (pageHeader.title()) {
+      <!-- Desktop top bar -->
       <klar-top-bar
-        class="desktop-only"
+        class="hidden md:flex"
         [title]="pageHeader.title()"
         [subtitle]="pageHeader.subtitle() ?? ''"
         [monthChip]="monthChip()"
@@ -17,30 +17,35 @@
         (addClick)="pageHeader.onAdd()?.()"
         (planspielClick)="pageHeader.onPlanspiel()?.()"
       />
+      <!-- Mobile header — title + month chip + user, hidden on desktop -->
+      <header class="flex h-12 px-4 border-b border-(--border) bg-(--surface) items-center justify-between shrink-0 md:hidden">
+        <span class="text-sm font-medium tracking-[-0.01em]">{{ pageHeader.title() }}</span>
+        <div class="flex items-center gap-2">
+          <klar-month-chip [label]="monthChip()" />
+          <klar-header-user />
+        </div>
+      </header>
     }
     <router-outlet />
   </div>
 </div>
 
 <!-- Mobile bottom nav — hidden on desktop -->
-<nav class="bottom-nav mobile-only">
+<nav class="fixed bottom-0 left-0 right-0 pb-(--safe-bottom) border-t border-(--border) bg-(--surface) grid grid-cols-5 z-[100] md:hidden">
   @for (tab of tabs; track tab.id) {
-    <a [routerLink]="tab.route" routerLinkActive="active" class="tab-item"
-       [class.primary]="tab.primary">
+    <a [routerLink]="tab.route" routerLinkActive="active"
+       class="flex flex-col items-center justify-center gap-1 py-2.5 text-(--text-muted) [&.active]:text-surplus no-underline min-h-14 transition-colors duration-100">
       @if (tab.primary) {
-        <div class="primary-btn">
+        <div class="size-9 rounded-(--radius) bg-accent text-(--zinc-950) flex items-center justify-center -mt-1.5">
           <klar-icon [name]="tab.icon" [size]="18" [stroke]="2" />
         </div>
       } @else {
         <klar-icon [name]="tab.icon" [size]="18" [stroke]="1.6" />
       }
-      <span class="tab-label">{{ tab.label }}</span>
+      <span class="text-[9px] tracking-[0.08em] uppercase font-medium">{{ tab.label }}</span>
     </a>
   }
 </nav>
-
-<!-- Spacer prevents content from being obscured by bottom nav -->
-<div class="bottom-spacer mobile-only"></div>
 
 <!-- Global toast container -->
 <klar-toast-container />

@@ -4,6 +4,7 @@ import { KlarLogoMarkComponent } from './klar-logo-mark.component';
 @Component({
   selector: 'klar-wordmark',
   standalone: true,
+  host: { class: 'inline-flex items-center' },
   imports: [KlarLogoMarkComponent],
   templateUrl: './klar-wordmark.component.html',
   styleUrl: './klar-wordmark.component.css',

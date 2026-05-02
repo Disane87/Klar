@@ -35,6 +35,8 @@ prisma/seed.ts
 
 # Ruflo / swarm state
 ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
 .swarm/
 .claude-flow/
 .playwright*/
@@ -47,3 +49,5 @@ apps/web/e2e/.auth/
 # Playwright / test screenshots (root-level, never commit)
 buchungen-*.png
 fixkosten-*.png
+*.png
+.gstack/

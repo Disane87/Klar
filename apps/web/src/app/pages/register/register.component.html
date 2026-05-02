@@ -105,8 +105,8 @@
             [error]="submitted() && confirmPasswordError() ? confirmPasswordError()! : ''"
           />
 
-          <button hlmBtn variant="default" size="lg" type="submit"
-                  class="w-full" [disabled]="loading()" (click)="submit()">
+          <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="lg" type="submit"
+                  class="w-full" (click)="submit()">
             @if (loading()) { <hlm-spinner /> }
             Registrieren →
           </button>

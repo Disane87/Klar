@@ -1,11 +1,1 @@
-:host {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.brand-icon {
-  display: block;
-}
+/* All styles migrated to Tailwind utility classes (host: decorator + inline classes). */

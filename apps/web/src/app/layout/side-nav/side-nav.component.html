@@ -1,33 +1,25 @@
-<aside class="sidenav">
-  <div class="wordmark-wrap">
+<aside class="w-50 shrink-0 bg-(--surface) border-r border-(--border) flex flex-col py-4 h-full overflow-y-auto">
+  <div class="px-4 pb-5 border-b border-(--border) mb-2">
     <klar-wordmark [size]="22" />
   </div>
 
-  <div class="section-label klar-label">Übersicht</div>
+  <div class="px-4 pt-3 pb-1.25 text-[9px] tracking-[0.14em] text-zinc-600 klar-label">Übersicht</div>
   @for (item of mainItems; track item.id) {
-    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+    <a [routerLink]="item.route" routerLinkActive="active"
+       class="flex items-center gap-2.5 py-1.75 px-3.5 mx-2 my-px text-[11px] uppercase tracking-[0.08em] font-medium text-(--text-2) no-underline border-l-[3px] border-transparent rounded-xs transition-colors duration-150 hover:bg-[color-mix(in_oklab,var(--surface-2)_80%,transparent)] hover:text-(--text) [&.active]:text-(--text) [&.active]:bg-[color-mix(in_oklab,var(--color-accent)_10%,var(--surface-2))] [&.active]:border-l-accent [&.active]:relative">
       <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
       <span>{{ item.label }}</span>
     </a>
   }
 
-  <div class="section-label klar-label section-sys">System</div>
-  @for (item of sysItems; track item.id) {
-    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
-      <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
-      <span>{{ item.label }}</span>
-    </a>
-  }
-
-  @if (householdStore.activeHousehold(); as active) {
-    <a routerLink="/app/haushalt" class="household" title="Haushalt verwalten">
-      <div class="hh-avatar">
-        {{ active.household.name.slice(0, 2).toUpperCase() }}
-      </div>
-      <div class="hh-info">
-        <div class="hh-name">{{ active.household.name }}</div>
-        <div class="klar-label-2 hh-role">{{ active.role }}</div>
-      </div>
-    </a>
-  }
+  <div class="mt-auto">
+    <div class="px-4 pt-3 pb-1.25 text-[9px] tracking-[0.14em] text-zinc-600 klar-label">System</div>
+    @for (item of sysItems; track item.id) {
+      <a [routerLink]="item.route" routerLinkActive="active"
+         class="flex items-center gap-2.5 py-1.75 px-3.5 mx-2 my-px text-[11px] uppercase tracking-[0.08em] font-medium text-(--text-2) no-underline border-l-[3px] border-transparent rounded-xs transition-colors duration-150 hover:bg-[color-mix(in_oklab,var(--surface-2)_80%,transparent)] hover:text-(--text) [&.active]:text-(--text) [&.active]:bg-[color-mix(in_oklab,var(--color-accent)_10%,var(--surface-2))] [&.active]:border-l-accent [&.active]:relative">
+        <klar-icon [name]="item.icon" [size]="14" [stroke]="1.6" />
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </div>
 </aside>

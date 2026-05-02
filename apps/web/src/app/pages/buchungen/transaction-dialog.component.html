@@ -1,6 +1,6 @@
-<div class="form">
+<div class="flex flex-col gap-4">
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-desc">Beschreibung</label>
     <input id="td-desc" hlmInput type="text"
            placeholder="z.B. Supermarkt Rewe"
@@ -8,7 +8,7 @@
            (input)="description.set($any($event.target).value)" />
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-amount">Betrag (€, negativ = Ausgabe)</label>
     <input id="td-amount" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="-50,00"
@@ -16,14 +16,14 @@
            (input)="amount.set($any($event.target).value)" />
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-date">Datum</label>
     <input id="td-date" hlmInput type="date"
            [value]="date()"
            (change)="date.set($any($event.target).value)" />
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-cat">Kategorie</label>
     <select id="td-cat" hlmSelect
             (change)="categoryId.set($any($event.target).value)">
@@ -34,7 +34,7 @@
     </select>
   </div>
 
-  <div class="field">
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-vis">Sichtbarkeit</label>
     <select id="td-vis" hlmSelect
             (change)="visibility.set($any($event.target).value)">
@@ -44,10 +44,10 @@
   </div>
 
   @if (err()) {
-    <p class="err-msg">{{ err() }}</p>
+    <p class="text-[12px] text-expense">{{ err() }}</p>
   }
 
-  <div class="actions">
+  <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
     @if (isEditMode()) {
       <button hlmBtn variant="destructive" size="sm" type="button"
               [disabled]="saving()" (click)="remove()">

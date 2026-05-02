@@ -412,7 +412,7 @@ Accent (UI)       → text-primary, border-primary
 
 Für JEDES UI-Control: zuerst spartan.ng prüfen. Wenn ein Brain-Package existiert, dieses verwenden und in `apps/web/src/app/shared/ui/hlm/` kapseln.
 
-Verfügbare hlm-Wrapper:
+Verfügbare hlm-Wrapper (Spartan-Basis):
 - `[hlmBtn]` auf `<button>` — HlmButtonDirective (6 Varianten: default, accent, outline, ghost, subtle, destructive)
 - `[hlmInput]` auf `<input>` / `<textarea>` — HlmInputDirective
 - `[hlmLabel]` auf `<label>` — HlmLabelDirective
@@ -422,6 +422,24 @@ Verfügbare hlm-Wrapper:
 - `<hlm-checkbox>` — HlmCheckboxComponent (BrnCheckbox-basiert)
 - `<hlm-spinner>` — HlmSpinnerComponent
 - `KlarDialogService.open(config)` — CDK Dialog mit spartan Panel-Styling
+- `button[hlmBtn][klarLoadingBtn]` — HlmLoadingBtnDirective; `[klarLoadingBtn]="loading()"` setzt disabled + aria-busy
+
+Klar Shared UI-Components (`apps/web/src/app/shared/ui/`):
+- `<klar-error-bar [message]="..." (retry)="..." />` — Fehlerleiste mit Retry-Button
+- `<klar-empty-state [message]="..." [icon]="..." />` — Leer-Zustand mit Icon
+- `<klar-month-picker [month]="..." (monthChange)="..." />` — Monats-Navigation (YYYY-MM)
+- `<klar-form-field [label]="..." [for]="..." [error]="..." />` — Label + Input-Slot + Fehlertext
+- `<klar-section-header [title]="..." />` — Section-Label (10px uppercase) + ng-content Action-Slot
+- `<klar-icon-button [icon]="..." [label]="..." [danger]="..." />` — Icon-only Button (44px Touch-Target)
+- `<klar-stat-card [label]="..." [valueCents]="..." [sub]="..." [tone]="income|expense|auto|neutral" />` — KPI-Karte
+- `<klar-skeleton-rows [count]="5" />` — Skeleton für Listen-Zeilen (Datum|Beschreibung|Betrag)
+- `<klar-skeleton-cards [count]="4" />` — Skeleton für Stat-Karten
+- `<hlm-calendar [month]="'YYYY-MM'" (monthChange)="..." [(date)]="selectedDate" />` — Monatskalender-Grid, Spartan-Stil, Mo-So, heute hervorgehoben, Wochen-Navigation
+- `<klar-month-chip [label]="'Mai 2026'" />` — Display-only Monats-Chip (h-7, gleiche Höhe wie `hlmBtn size="sm"`)
+
+Klar Shared Pipes (`apps/web/src/app/shared/pipes/`):
+- `{{ cents | klarMoney }}` — KlarMoneyPipe: Cent → de-DE EUR (z.B. `1.234,56 €`)
+- `[ngClass]="cents | klarMoneyClass"` — KlarMoneyClassPipe: positiv→`text-success`, negativ→`text-danger`, null→`text-muted-foreground`
 
 **Keine eigenen Control-Implementierungen.** Kein hand-codiertes Dropdown-Verhalten, Fokus-Trapping etc.
 

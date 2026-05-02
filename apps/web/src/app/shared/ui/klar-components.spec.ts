@@ -19,18 +19,20 @@ describe('KlarBadgeComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('applies tone class to host', () => {
+  it('applies rose variant classes to inner span', () => {
     const fixture = TestBed.createComponent(KlarBadgeComponent);
     fixture.componentRef.setInput('tone', 'rose');
     fixture.detectChanges();
-    expect(fixture.nativeElement.className).toContain('tone-rose');
+    const span: HTMLElement = fixture.nativeElement.querySelector('span');
+    expect(span.className).toContain('text-danger');
   });
 
-  it('applies dim class when dim is true', () => {
+  it('applies opacity class when dim is true', () => {
     const fixture = TestBed.createComponent(KlarBadgeComponent);
     fixture.componentRef.setInput('dim', true);
     fixture.detectChanges();
-    expect(fixture.nativeElement.className).toContain('dim');
+    const span: HTMLElement = fixture.nativeElement.querySelector('span');
+    expect(span.className).toContain('opacity-55');
   });
 });
 

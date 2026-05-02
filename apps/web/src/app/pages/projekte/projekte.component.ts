@@ -1,14 +1,19 @@
 import { Component, inject } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
-import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { ProjekteStore } from '../../core/overview/projekte.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
+import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
+import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
+import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import type { ProjectOverviewItem } from '../../core/overview/overview.service';
 
 @Component({
   selector: 'app-projekte',
   standalone: true,
-  imports: [KlarSkeletonComponent, KlarIconComponent],
+  host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
+  imports: [NgClass, KlarSkeletonComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent],
   templateUrl: './projekte.component.html',
   styleUrl: './projekte.component.css',
 })
@@ -23,13 +28,6 @@ export class ProjektePageComponent {
       showAdd:       true,
       addLabel:      'Projekt',
     });
-  }
-
-  formatCents(cents: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style:    'currency',
-      currency: 'EUR',
-    }).format(cents / 100);
   }
 
   progressPercent(item: ProjectOverviewItem): number {

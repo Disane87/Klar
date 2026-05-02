@@ -4,7 +4,8 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
 import { TopBarComponent } from '../top-bar/top-bar.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
-import { HouseholdStore } from '../../core/household/household.store';
+import { KlarMonthChipComponent } from '../../shared/ui/klar-month-chip.component';
+import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 
@@ -29,16 +30,16 @@ const BOTTOM_TABS: BottomTab[] = [
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    SideNavComponent, TopBarComponent, KlarIconComponent, KlarToastContainerComponent,
+    SideNavComponent, TopBarComponent, KlarIconComponent,
+    KlarToastContainerComponent, KlarMonthChipComponent, KlarHeaderUserComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
 export class ShellComponent {
-  protected tabs            = BOTTOM_TABS;
-  protected householdStore  = inject(HouseholdStore);
-  protected pageHeader      = inject(PageHeaderService);
-  private   overviewStore   = inject(OverviewStore);
+  protected tabs        = BOTTOM_TABS;
+  protected pageHeader  = inject(PageHeaderService);
+  private   overviewStore = inject(OverviewStore);
 
   protected monthChip = computed(() => {
     const [year, month] = this.overviewStore.currentMonth().split('-');
