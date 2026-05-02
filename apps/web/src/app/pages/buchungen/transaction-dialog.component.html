@@ -1,0 +1,62 @@
+<div class="form">
+
+  <div class="field">
+    <label class="field-label" for="td-desc">Beschreibung</label>
+    <input id="td-desc" class="field-input" type="text"
+           placeholder="z.B. Supermarkt Rewe"
+           [value]="description()"
+           (input)="description.set($any($event.target).value)" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="td-amount">Betrag (€, negativ = Ausgabe)</label>
+    <input id="td-amount" class="field-input field-input--mono" type="text"
+           inputmode="decimal" placeholder="-50,00"
+           [value]="amount()"
+           (input)="amount.set($any($event.target).value)" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="td-date">Datum</label>
+    <input id="td-date" class="field-input" type="date"
+           [value]="date()"
+           (change)="date.set($any($event.target).value)" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="td-cat">Kategorie</label>
+    <select id="td-cat" class="field-select"
+            [value]="categoryId()"
+            (change)="categoryId.set($any($event.target).value)">
+      <option value="" disabled>Kategorie wählen…</option>
+      @for (cat of cats.active(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="td-vis">Sichtbarkeit</label>
+    <select id="td-vis" class="field-select"
+            [value]="visibility()"
+            (change)="visibility.set($any($event.target).value)">
+      <option value="SHARED">Geteilt</option>
+      <option value="PRIVATE">Privat</option>
+    </select>
+  </div>
+
+  @if (err()) {
+    <p class="err-msg">{{ err() }}</p>
+  }
+
+  <div class="actions">
+    @if (isEditMode()) {
+      <klar-button variant="ghost" label="Löschen"
+                   [loading]="saving()" (clicked)="remove()" />
+    }
+    <klar-button variant="ghost" label="Abbrechen" (clicked)="cancel()" />
+    <klar-button variant="primary" [label]="isEditMode() ? 'Speichern' : 'Anlegen'"
+                 [loading]="saving()" [disabled]="!isValid()"
+                 (clicked)="save()" />
+  </div>
+</div>
