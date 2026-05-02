@@ -1,15 +1,15 @@
 import { Component, input } from '@angular/core';
+import { HlmBadgeDirective, type BadgeVariant } from './hlm/hlm-badge.directive';
 
-export type BadgeTone = 'zinc' | 'emerald' | 'rose' | 'sky' | 'amber' | 'indigo';
+/** @deprecated Use HlmBadgeDirective ([hlmBadge]) directly */
+export type BadgeTone = BadgeVariant;
 
 @Component({
   selector: 'klar-badge',
   standalone: true,
-  templateUrl: './klar-badge.component.html',
-  styleUrl: './klar-badge.component.css',
-  host: {
-    '[class]': '"tone-" + tone() + (dim() ? " dim" : "")',
-  },
+  imports: [HlmBadgeDirective],
+  template: `<span hlmBadge [variant]="tone()" [dim]="dim()"><ng-content /></span>`,
+  styles: [`:host { display: contents; }`],
 })
 export class KlarBadgeComponent {
   tone = input<BadgeTone>('zinc');
