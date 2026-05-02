@@ -10,6 +10,10 @@
     "test:integration": "pnpm --filter @klar/api test:integration",
     "test:e2e": "pnpm --filter @klar/api test:e2e",
     "clean": "turbo run clean && rimraf node_modules",
+    "db:migrate": "pnpm --filter @klar/api prisma:migrate",
+    "db:seed": "pnpm --filter @klar/api prisma:seed",
+    "db:reset": "pnpm --filter @klar/api prisma:reset",
+    "db:studio": "pnpm --filter @klar/api prisma:studio",
     "docker:up": "docker compose -f docker/docker-compose.dev.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
     "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f"

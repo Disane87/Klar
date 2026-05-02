@@ -30,6 +30,9 @@ Thumbs.db
 *.db
 *.db-journal
 
+# Seed mit realen Daten — nur lokal, nie einchecken
+prisma/seed.ts
+
 # Ruflo / swarm state
 ruvector.db
 .swarm/
