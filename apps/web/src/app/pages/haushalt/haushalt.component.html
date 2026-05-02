@@ -77,11 +77,19 @@
             <p class="member-name">{{ member.displayName }}</p>
             <p class="member-email">{{ member.email }}</p>
           </div>
-          <span class="member-role">{{ member.role }}</span>
-          @if (canManage() && member.role !== 'OWNER') {
+          @if (canManage() && member.userId !== authUserId()) {
+            <select class="member-role-select"
+                    [value]="member.role"
+                    [disabled]="!!roleChangePending()[member.userId]"
+                    (change)="changeRole(member.userId, $any($event.target).value, $event)">
+              <option value="MEMBER">MEMBER</option>
+              <option value="OWNER">OWNER</option>
+            </select>
             <button type="button" class="icon-btn danger" (click)="removeMember(member.userId)" title="Entfernen">
               <klar-icon name="close" [size]="14" />
             </button>
+          } @else {
+            <span class="member-role">{{ member.role }}</span>
           }
         </div>
       }

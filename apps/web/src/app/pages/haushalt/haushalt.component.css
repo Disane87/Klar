@@ -1,11 +1,3 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
 .page {
   display: flex;
   flex-direction: column;
@@ -365,6 +357,28 @@
   min-width: 0;
   flex: 1;
 }
+
+.member-role-select {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  appearance: none;
+  min-height: 28px;
+  transition: border-color 80ms;
+}
+.member-role-select:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--text);
+}
+.member-role-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 767px) {
   .page { padding-bottom: calc(env(safe-area-inset-bottom) + 5rem); }

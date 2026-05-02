@@ -35,6 +35,12 @@ export class HouseholdService {
     return firstValueFrom(this.http.delete<void>(`${BASE}/${hid}/members/${userId}`));
   }
 
+  changeMemberRole(hid: string, userId: string, role: 'OWNER' | 'MEMBER'): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(`${BASE}/${hid}/members/${userId}`, { role }),
+    );
+  }
+
   listInvites(hid: string): Promise<InviteCode[]> {
     return firstValueFrom(this.http.get<InviteCode[]>(`${BASE}/${hid}/invites`));
   }

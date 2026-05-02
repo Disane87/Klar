@@ -102,6 +102,13 @@ export class HouseholdStore {
     this._members.update(list => list.filter(m => m.userId !== userId));
   }
 
+  async changeRole(userId: string, role: 'OWNER' | 'MEMBER'): Promise<void> {
+    const id = this._activeId();
+    if (!id) return;
+    await this.householdService.changeMemberRole(id, userId, role);
+    await this.loadMembers();
+  }
+
   async rename(name: string): Promise<Household> {
     const id = this._activeId();
     if (!id) throw new Error('Kein aktiver Haushalt');

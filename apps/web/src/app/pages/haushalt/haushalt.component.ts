@@ -7,6 +7,7 @@ import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { HouseholdStore } from '../../core/household/household.store';
+import { AuthStore } from '../../core/auth/auth.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
@@ -15,6 +16,7 @@ import type { InviteCode } from '@klar/shared';
 @Component({
   selector: 'app-haushalt',
   standalone: true,
+  host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
   imports: [
     DatePipe,
     FormsModule,
@@ -31,8 +33,11 @@ export class HaushaltPageComponent implements OnInit {
   protected store = inject(HouseholdStore);
   protected apiKeysStore = inject(ApiKeysStore);
   private toast = inject(KlarToastService);
+  private authStore = inject(AuthStore);
 
   readonly availableScopes = AVAILABLE_SCOPES;
+  readonly authUserId = computed(() => this.authStore.user()?.id);
+  readonly roleChangePending = signal<Record<string, boolean>>({});
 
   readonly editingName = signal(false);
   readonly newName = signal('');
@@ -112,6 +117,33 @@ export class HaushaltPageComponent implements OnInit {
       this.toast.success('Mitglied entfernt');
     } catch {
       this.toast.error('Mitglied konnte nicht entfernt werden');
+    }
+  }
+
+  async changeRole(userId: string, newRole: 'OWNER' | 'MEMBER', event: Event): Promise<void> {
+    const select = event.target as HTMLSelectElement;
+    const oldRole = this.store.members().find(m => m.userId === userId)?.role;
+    select.value = oldRole ?? 'MEMBER';
+
+    const memberName = this.store.members().find(m => m.userId === userId)?.displayName ?? userId;
+    const roleLabel = newRole === 'OWNER' ? 'Owner' : 'Member';
+    const confirmed = window.confirm(
+      `${memberName} zu ${roleLabel} machen?\n\nOwner können Mitglieder einladen, entfernen und Rollen ändern.`,
+    );
+    if (!confirmed) return;
+
+    this.roleChangePending.update(p => ({ ...p, [userId]: true }));
+    try {
+      await this.store.changeRole(userId, newRole);
+      this.toast.success('Rolle geändert');
+    } catch {
+      this.toast.error('Rolle konnte nicht geändert werden');
+    } finally {
+      this.roleChangePending.update(p => {
+        const next = { ...p };
+        delete next[userId];
+        return next;
+      });
     }
   }
 
