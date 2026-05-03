@@ -36,6 +36,7 @@ COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 ENV NODE_PATH=/app/apps/api/node_modules
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=builder /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/web/dist/web/browser ./web
 COPY --from=builder /app/prisma ./prisma
