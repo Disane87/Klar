@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   ForbiddenException,
   ConflictException,
@@ -69,6 +70,8 @@ function extractUserAgent(req: IncomingRequest): string | undefined {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly householdsService: HouseholdsService,
@@ -126,7 +129,9 @@ export class AuthService {
     const token = generateToken();
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
     await this.emailVerificationRepo.create({ userId: user.id, token, expiresAt });
-    await this.mailService.sendVerificationEmail(email, dto.displayName, token);
+    this.mailService.sendVerificationEmail(email, dto.displayName, token).catch((err) => {
+      this.logger.error(`Failed to send verification email to ${email}: ${String(err)}`);
+    });
 
     this.auditService.log({
       action: 'user.register',
@@ -258,7 +263,9 @@ export class AuthService {
     const token = generateToken();
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
     await this.emailVerificationRepo.create({ userId: user.id, token, expiresAt });
-    await this.mailService.sendVerificationEmail(lower, user.displayName, token);
+    this.mailService.sendVerificationEmail(lower, user.displayName, token).catch((err) => {
+      this.logger.error(`Failed to send verification email to ${lower}: ${String(err)}`);
+    });
   }
 
   toAuthUser(user: User): AuthUser {

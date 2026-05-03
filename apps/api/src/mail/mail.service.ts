@@ -19,6 +19,7 @@ export class MailService {
       host: mail.host,
       port: mail.port,
       secure: mail.secure,
+      ...(mail.user && mail.pass ? { auth: { user: mail.user, pass: mail.pass } } : {}),
     });
   }
 

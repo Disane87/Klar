@@ -44,6 +44,14 @@ services:
       REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
       FRONTEND_URL: ${FRONTEND_URL}
       APP_URL: ${APP_URL}
+      # Mail (optional — registration works without SMTP, email verification skipped)
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_SECURE: ${MAIL_SECURE:-false}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASS: ${MAIL_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@klar.app}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Klar}
       # OIDC (optional)
       OIDC_ENABLED: ${OIDC_ENABLED:-false}
       OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-sso}
