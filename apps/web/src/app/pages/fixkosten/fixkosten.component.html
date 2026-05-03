@@ -1,110 +1,81 @@
-<div class="page">
-
-  <!-- Stat Strip -->
-  @if (store.fixedCosts() && !store.loading() && !store.error()) {
-    <div class="stat-strip">
-      <div class="stat">
-        <span class="stat-label">EINNAHMEN</span>
-        <span class="stat-value income">{{ incomeTotalCents() | klarMoney }}</span>
-        <span class="stat-sub">{{ incomeSourceCount() }} Quellen</span>
+<!-- Loading skeleton -->
+@if (store.loading()) {
+  <div class="flex flex-col overflow-y-auto">
+    @for (_ of [1,2,3]; track $index) {
+      <div class="flex items-center h-6.5 px-4 gap-2 border-l-2 border-(--border)">
+        <klar-skeleton height="9px" width="120px" />
+        <div class="flex-1"></div>
+        <klar-skeleton height="11px" width="80px" />
       </div>
-      <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">AUSGABEN</span>
-        <span class="stat-value expense">{{ expenseTotalCents() | klarMoney }}</span>
-        <span class="stat-sub">{{ expenseCategoryCount() }} Kategorien</span>
-      </div>
-      <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">ÜBERSCHUSS</span>
-        <span class="stat-value surplus">{{ surplusCents() | klarMoney }}</span>
-        <span class="stat-sub">Quote {{ surplusPercent() }}&nbsp;%</span>
-      </div>
-    </div>
-
-    <!-- Subheader -->
-    <div class="sub-header">
-      <div class="sub-left">
-        <span class="sub-month">{{ monthDisplay() }}</span>
-        <span class="sub-title"> — <em class="klar-serif">Klarheit</em> über deine fixen Posten.</span>
-      </div>
-      <div class="sub-actions">
-        <button class="action-btn" type="button">↑↓&nbsp;STAFFEL</button>
-        <button class="action-btn" type="button">EXPORT</button>
-      </div>
-    </div>
-  }
-
-  <!-- Loading -->
-  @if (store.loading()) {
-    <div class="ledger-shell">
-      @for (_ of [1,2,3]; track $index) {
-        <div class="sk-group-header">
-          <klar-skeleton height="10px" width="120px"/>
-          <klar-skeleton height="13px" width="80px"/>
+      @for (__ of [1,2,3]; track $index) {
+        <div class="flex items-center h-6.5 px-4 gap-2">
+          <klar-skeleton height="11px" width="55%" />
+          <div class="flex-1"></div>
+          <klar-skeleton height="11px" width="68px" />
         </div>
-        @for (__ of [1,2,3]; track $index) {
-          <div class="sk-row">
-            <klar-skeleton height="12px" width="60%"/>
-            <klar-skeleton height="12px" width="100px"/>
+      }
+    }
+  </div>
+}
+
+<!-- Error -->
+@else if (store.error()) {
+  <klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
+}
+
+<!-- Empty -->
+@else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
+  <klar-empty-state message="Keine Fixkosten für diesen Monat" />
+}
+
+<!-- Ledger -->
+@else {
+  <div class="flex flex-col overflow-y-auto">
+    @for (group of enrichedGroups(); track group.categoryId) {
+
+      <!-- Group header: 2px left border (category color), 5px dot, name, total, chevron -->
+      <div class="flex items-center h-6.5 px-4 gap-2 border-l-2 cursor-pointer
+                  hover:bg-(--surface-2) transition-colors duration-100"
+           [style.border-left-color]="group.categoryColor"
+           (click)="toggleGroup(group.categoryId)">
+        <span class="w-1.25 h-1.25 rounded-full shrink-0"
+              [style.background]="group.categoryColor"></span>
+        <span class="text-[9px] uppercase tracking-widest font-medium text-(--text-muted) flex-1 leading-none">
+          {{ group.categoryName }}
+        </span>
+        <span class="font-mono tabular-nums text-[11px]" [ngClass]="group.totalCents | klarMoneyClass">
+          {{ group.totalCents | klarMoney }}
+        </span>
+        <klar-icon name="chevron-down" [size]="10"
+                   class="text-(--text-muted) transition-transform duration-150 shrink-0"
+                   [class.-rotate-90]="isCollapsed(group.categoryId)" />
+      </div>
+
+      <!-- Individual rows: 26px, no border, name + shortFreq + day + amount -->
+      @if (!isCollapsed(group.categoryId)) {
+        @for (item of group.items; track item.id) {
+          <div class="flex items-center h-6.5 px-4 gap-2 cursor-pointer
+                      hover:bg-(--surface-2) transition-colors duration-100"
+               (click)="openEdit(item, $event)">
+            <span class="flex-1 text-[13px] text-(--text) truncate leading-none min-w-0">
+              {{ item.name }}
+            </span>
+            @if (item.frequency !== 'MONTHLY') {
+              <span class="text-[9px] text-(--text-muted) shrink-0 leading-none">
+                {{ shortFreq(item.frequency) }}
+              </span>
+            }
+            <span class="text-[9px] font-mono text-(--text-muted) w-5.5 text-right shrink-0 tabular-nums leading-none">
+              {{ formatDay(item.dayOfMonth) }}
+            </span>
+            <span class="font-mono tabular-nums text-[11px] w-17 text-right shrink-0 leading-none"
+                  [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
+              {{ item.monthlyEquivalentCents | klarMoney }}
+            </span>
           </div>
         }
       }
-    </div>
-  }
 
-  <!-- Error -->
-  @else if (store.error()) {
-    <klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
-  }
-
-  <!-- Empty -->
-  @else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
-    <klar-empty-state message="Keine Fixkosten für diesen Monat" />
-  }
-
-  <!-- Ledger -->
-  @else {
-    <div class="ledger-shell">
-      @for (group of enrichedGroups(); track group.categoryId) {
-        <div class="group-header" [style.--cat-color]="group.categoryColor"
-             (click)="toggleGroup(group.categoryId)">
-          <span class="group-name">{{ group.categoryName }}</span>
-          <span class="group-total font-mono tabular-nums" [ngClass]="group.totalCents | klarMoneyClass">
-            {{ group.totalCents | klarMoney }}
-          </span>
-          <span class="group-chevron" [class.collapsed]="isCollapsed(group.categoryId)">
-            <klar-icon name="chevron-down" [size]="12" />
-          </span>
-        </div>
-        @if (!isCollapsed(group.categoryId)) {
-          @for (item of group.items; track item.id) {
-            <div class="ledger-row" (click)="openEdit(item, $event)">
-              <app-brand-icon [name]="item.name" [size]="12" />
-              <span class="row-name">{{ item.name }}</span>
-              @if (item.isVariable) {
-                <span class="row-variable">variabel</span>
-              }
-              <span class="row-day">{{ formatDay(item.dayOfMonth) }}</span>
-              <span class="row-amount font-mono tabular-nums" [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
-                @if (item.isVariable) { ~ }{{ item.monthlyEquivalentCents | klarMoney }}
-              </span>
-              <span class="row-edit-hint">
-                <klar-icon name="pencil" [size]="10" />
-              </span>
-            </div>
-            @if (item.frequency !== 'MONTHLY') {
-              <div class="row-freq-hint">
-                <span></span><span></span><span></span>
-                <span class="freq-text">
-                  {{ item.amountCents | klarMoney }} / {{ frequencyLabel(item.frequency) | lowercase }}
-                </span>
-              </div>
-            }
-          }
-        } <!-- end @if collapsed -->
-      }
-    </div>
-  }
-
-</div>
+    }
+  </div>
+}
