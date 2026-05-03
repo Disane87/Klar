@@ -1,6 +1,7 @@
 import { Component, signal, computed, input, model, output } from '@angular/core';
 import { KlarIconComponent } from '../../icons/klar-icon.component';
 import { KlarMoneyPipe } from '../../pipes/klar-money.pipe';
+import { CalendarLegendComponent } from '../calendar-legend.component';
 
 export interface CalendarEvent {
   name: string;
@@ -24,48 +25,40 @@ interface CalendarDay {
 @Component({
   selector: 'hlm-calendar',
   standalone: true,
-  imports: [KlarIconComponent, KlarMoneyPipe],
+  imports: [KlarIconComponent, KlarMoneyPipe, CalendarLegendComponent],
   host: { class: 'flex flex-col h-full' },
   template: `
     <!-- ── Header ───────────────────────────────────────────────── -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-(--border)">
-      <div class="flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-(--border)">
+      <div class="flex flex-col gap-1">
+        <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
           TAGESANSICHT
         </span>
-        <span class="text-[13px] font-semibold tracking-[-0.01em] text-(--text)">
+        <span class="text-[16px] font-semibold tracking-[-0.01em] text-(--text)">
           {{ title() }}
         </span>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-2">
         <!-- Legend -->
-        <div class="hidden md:flex items-center gap-3 mr-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-(--text-muted)">
-          <span class="flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-(--color-income)"></span>EINNAHME
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-(--color-expense)"></span>AUSGABE
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-surplus"></span>FIXKOSTEN
-          </span>
+        <div class="hidden md:flex mr-3">
+          <klar-calendar-legend />
         </div>
         <!-- Nav buttons -->
         <button type="button" (click)="prev()"
                 aria-label="Vorheriger Monat"
-                class="flex size-8 items-center justify-center rounded
+                class="flex size-9 items-center justify-center rounded-md
                        text-(--text-muted) transition-colors
                        hover:bg-(--surface-2) hover:text-(--text)
                        active:opacity-70">
-          <klar-icon name="chevron-left" [size]="14" />
+          <klar-icon name="chevron-left" [size]="18" />
         </button>
         <button type="button" (click)="next()"
                 aria-label="Nächster Monat"
-                class="flex size-8 items-center justify-center rounded
+                class="flex size-9 items-center justify-center rounded-md
                        text-(--text-muted) transition-colors
                        hover:bg-(--surface-2) hover:text-(--text)
                        active:opacity-70">
-          <klar-icon name="chevron-right" [size]="14" />
+          <klar-icon name="chevron-right" [size]="18" />
         </button>
       </div>
     </div>
@@ -74,8 +67,8 @@ interface CalendarDay {
     <div class="flex-1 grid grid-cols-7 grid-rows-[auto_repeat(6,1fr)]">
       <!-- Weekday headers -->
       @for (wd of WEEKDAYS; track wd) {
-        <div class="py-1.5 text-center text-[9px] font-semibold uppercase
-                    tracking-[0.08em] text-(--text-muted)
+        <div class="py-3 text-center text-[10px] font-semibold uppercase
+                    tracking-[0.1em] text-(--text-muted)
                     border-b border-(--border)">
           {{ wd }}
         </div>
@@ -100,8 +93,8 @@ interface CalendarDay {
           @if (!day.isOutside) {
             <!-- Desktop: recurring chips + transaction dots -->
             <div class="hidden md:block">
-              @for (ev of recurringEvents(day.day).slice(0, 4); track $index) {
-                <div class="mt-0.5 mx-0.5 rounded-[3px] px-1.5 py-0.75 text-[10px]
+              @for (ev of recurringEvents(day.day).slice(0, 3); track $index) {
+                <div class="mt-1 mx-1 rounded px-2 py-1 text-[10px]
                             font-medium leading-tight truncate border-l-2"
                      [style.background]="ev.color + '22'"
                      [style.borderLeftColor]="ev.color"
@@ -109,15 +102,15 @@ interface CalendarDay {
                   {{ ev.name }}
                 </div>
               }
-              @if (recurringEvents(day.day).length > 4) {
-                <div class="mt-0.5 mx-0.5 rounded-[3px] px-1.5 py-0.75 text-[9px]
+              @if (recurringEvents(day.day).length > 3) {
+                <div class="mt-1 mx-1 rounded px-2 py-1 text-[9px]
                             font-medium text-(--text-muted) bg-(--surface-2)">
-                  +{{ recurringEvents(day.day).length - 4 }} weitere
+                  +{{ recurringEvents(day.day).length - 3 }} weitere
                 </div>
               }
               @let txs = txDots(day.day);
               @if (txs.length) {
-                <div class="flex flex-wrap gap-0.5 mt-1 px-1.5">
+                <div class="flex flex-wrap gap-1 mt-1.5 px-1.5">
                   @for (dot of txs; track dot.color) {
                     <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                           [style.background]="dot.color"></span>
@@ -126,7 +119,7 @@ interface CalendarDay {
               }
             </div>
             <!-- Mobile: all events as dots -->
-            <div class="md:hidden flex flex-wrap justify-center gap-0.5 mt-0.5 px-0.5">
+            <div class="md:hidden flex flex-wrap justify-center gap-1 mt-1 px-0.5">
               @for (dot of dotSummary(day.day); track dot.color) {
                 <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                       [style.background]="dot.color"></span>
@@ -138,27 +131,27 @@ interface CalendarDay {
           @if (hoveredDay() === day.day && !day.isOutside) {
             @let evts = dayEvents(day.day);
             @if (evts.length) {
-              <div class="hidden md:block absolute z-50 min-w-50 max-w-60
+              <div class="hidden md:block absolute z-50 min-w-56 max-w-64
                           rounded-md border border-(--border)
                           bg-(--surface) shadow-[0_4px_20px_rgba(0,0,0,0.35)]
-                          p-2 pointer-events-none"
+                          p-3 pointer-events-none"
                    [class]="hcPosition(day)">
 
                 <!-- Date label -->
-                <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-widest
-                            text-(--text-muted) border-b border-(--border) pb-1">
+                <div class="mb-2 text-[11px] font-semibold uppercase tracking-widest
+                            text-(--text-muted) border-b border-(--border) pb-2">
                   {{ day.day }}. {{ monthShort() }}
                 </div>
 
                 <!-- Event rows -->
                 @for (ev of evts; track $index) {
-                  <div class="flex items-center gap-1.5 py-0.5">
-                    <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                  <div class="flex items-center gap-2 py-1">
+                    <span class="w-2 h-2 rounded-full shrink-0"
                           [style.background]="ev.color"></span>
-                    <span class="flex-1 min-w-0 text-[11px] text-(--text-2) truncate">
+                    <span class="flex-1 min-w-0 text-[12px] text-(--text-2) truncate">
                       {{ ev.name }}
                     </span>
-                    <span class="font-mono tabular-nums text-[11px] shrink-0 ml-1"
+                    <span class="font-mono tabular-nums text-[12px] shrink-0 ml-1"
                           [style.color]="ev.amountCents >= 0 ? 'var(--color-income)' : 'var(--color-expense)'">
                       {{ ev.amountCents | klarMoney }}
                     </span>
@@ -168,9 +161,9 @@ interface CalendarDay {
                 <!-- Daily total (if multiple events) -->
                 @if (evts.length > 1) {
                   @let total = evts.reduce(sumAmounts, 0);
-                  <div class="flex items-center justify-between mt-1 pt-1
+                  <div class="flex items-center justify-between mt-2 pt-2
                               border-t border-(--border)
-                              text-[10px] font-semibold uppercase tracking-[0.08em]">
+                              text-[11px] font-semibold uppercase tracking-[0.08em]">
                     <span class="text-(--text-muted)">GESAMT</span>
                     <span class="font-mono tabular-nums"
                           [style.color]="total >= 0 ? 'var(--color-income)' : 'var(--color-expense)'">
@@ -280,14 +273,14 @@ export class HlmCalendarComponent {
   }
 
   protected dayCellClass(day: CalendarDay): string {
-    const base = 'p-1 cursor-pointer transition-colors duration-75 ';
+    const base = 'p-2 cursor-pointer transition-colors duration-100 ';
     if (day.isOutside) return base + 'opacity-25 cursor-default ';
-    if (day.isToday)   return base + 'bg-[color-mix(in_oklab,var(--color-surplus)_8%,var(--surface))] ';
-    return base + 'hover:bg-[color-mix(in_oklab,var(--text)_3%,transparent)] ';
+    if (day.isToday)   return base + 'bg-[color-mix(in_oklab,var(--color-surplus)_10%,var(--surface))] ';
+    return base + 'hover:bg-(--surface-2) ';
   }
 
   protected dayNumClass(day: CalendarDay): string {
-    const base = 'mx-auto w-5 h-5 text-[11px] font-mono tabular-nums rounded-full ';
+    const base = 'mx-auto w-7 h-7 text-[12px] font-mono tabular-nums rounded-full ';
     if (day.isSelected) return base + 'bg-[var(--color-accent)] text-[var(--zinc-950)] font-bold ';
     if (day.isToday)    return base + 'bg-[var(--color-surplus)] text-[var(--zinc-950)] font-bold ';
     return base + 'text-[var(--text-2)] font-medium ';

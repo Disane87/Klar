@@ -20,7 +20,7 @@
 }
 
 .panel-title {
-  font-size: 14px;
+  font-size: var(--body-sm);
   font-weight: 600;
   color: var(--text);
   text-transform: uppercase;

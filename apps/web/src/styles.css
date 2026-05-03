@@ -7,23 +7,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   KLAR — Design Tokens (dark default)
-   ============================================================ */
+    KLAR — Swiss Tech Theme (dark default)
+    ============================================================ */
 :root {
-  /* Zinc palette */
-  --zinc-50:  #fafafa;
-  --zinc-100: #f4f4f5;
-  --zinc-200: #e4e4e7;
-  --zinc-300: #d4d4d8;
-  --zinc-400: #a1a1aa;
-  --zinc-500: #71717a;
-  --zinc-600: #52525b;
-  --zinc-700: #3f3f46;
-  --zinc-800: #27272a;
-  --zinc-900: #18181b;
-  --zinc-950: #09090b;
+  /* Swiss Gray palette — warmer, lighter dark */
+  --swiss-10:  #1a1a1e;
+  --swiss-15:  #222228;
+  --swiss-20:  #2a2a30;
+  --swiss-25:  #323238;
+  --swiss-30:  #3a3a42;
+  --swiss-40:  #52525e;
+  --swiss-50:  #71717a;
+  --swiss-60:  #9898a0;
+  --swiss-70:  #b8b8c0;
+  --swiss-80:  #d8d8e0;
+  --swiss-90:  #f0f0f4;
 
   /* Semantic palette */
+  --red-accent:   #e63946;
+  --red-accent-hover: #d62839;
   --emerald-400: #34d399;
   --emerald-600: #059669;
   --rose-400:    #fb7185;
@@ -32,35 +34,35 @@
   --sky-600:     #0284c7;
   --amber-400:   #fbbf24;
   --amber-600:   #d97706;
-  --indigo-400:  #818cf8;
-  --indigo-600:  #4f46e5;
 
-  /* Theme: dark (default) */
-  --bg:          var(--zinc-950);
-  --surface:     var(--zinc-900);
-  --surface-2:   #1f1f23;
-  --border:      var(--zinc-800);
-  --border-soft: #1d1d20;
-  --border-subtle: #2a2a2e;
-  --text:        var(--zinc-50);
-  --text-2:      var(--zinc-400);
-  --text-muted:  var(--zinc-600);
+  /* Theme: Swiss Dark (default) */
+  --bg:          var(--swiss-10);
+  --surface:     var(--swiss-15);
+  --surface-2:   var(--swiss-20);
+  --border:      var(--swiss-25);
+  --border-soft: var(--swiss-20);
+  --border-subtle: #3a3a42;
+  --text:        var(--swiss-90);
+  --text-2:      var(--swiss-60);
+  --text-muted:  var(--swiss-50);
 
+  /* Domain colors — keeping income/expense semantic */
   --color-income:   var(--emerald-400);
   --color-expense:  var(--rose-400);
   --color-surplus:  var(--sky-400);
   --color-variable: var(--amber-400);
-  --color-accent:   var(--indigo-400);
+  --color-accent:   var(--red-accent);
 
   --color-income-tint:   color-mix(in oklab, var(--emerald-400) 8%, transparent);
   --color-expense-tint:  color-mix(in oklab, var(--rose-400)    8%, transparent);
   --color-surplus-tint:  color-mix(in oklab, var(--sky-400)    10%, transparent);
   --color-variable-tint: color-mix(in oklab, var(--amber-400)   8%, transparent);
+  --color-accent-tint:   color-mix(in oklab, var(--red-accent)   12%, transparent);
 
-  /* Fonts */
-  --font-sans:  'Geist', 'Outfit', system-ui, sans-serif;
+  /* Fonts — Space Grotesk for headings/body, JetBrains Mono for numbers */
+  --font-sans:  'Space Grotesk', 'DM Sans', system-ui, sans-serif;
   --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
-  --font-serif: 'Instrument Serif', 'Iowan Old Style', serif;
+  --font-serif: 'Fraunces', 'Iowan Old Style', serif;
 
   /* Spacing */
   --space-1:  4px;
@@ -72,29 +74,31 @@
   --space-8:  32px;
   --space-10: 40px;
   --space-12: 48px;
-  --spacing-table-row: 26px;
+  --spacing-table-row: 28px;
 
-  /* Radius */
-  --radius-sm: 2px;
-  --radius:    4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  /* Radius — slightly more modern */
+  --radius-sm: 3px;
+  --radius:    5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
 
-  /* Type ramps — scaled ×1.25 to match 125% browser zoom at 100% native zoom */
-  --label:    11px;
-  --label-2:  14px;
-  --body-sm:  15px;
-  --body:     16px;
-  --body-lg:  18px;
-  --num-sm:   15px;
-  --num:      16px;
-  --num-md:   18px;
-  --num-lg:   23px;
-  --num-card: 25px;
-  --num-hero: 38px;
+  /* Type ramps — improved readability */
+  --label:    12px;
+  --label-2:  13px;
+  --body-sm:  14px;
+  --body:     15px;
+  --body-lg:  17px;
+  --num-sm:   14px;
+  --num:      15px;
+  --num-md:   17px;
+  --num-lg:   21px;
+  --num-card: 24px;
+  --num-hero: 36px;
+  --num-xl: 32px;
+  --display:  48px;
 
-  /* Focus ring */
-  --ring: 0 0 0 1px var(--indigo-400);
+  /* Focus ring — red accent */
+  --ring: 0 0 0 1px var(--red-accent);
 
   /* iOS Safe Area insets */
   --safe-top:    env(safe-area-inset-top, 0px);
@@ -105,24 +109,25 @@
 
 [data-theme="light"] {
   --bg:          #ffffff;
-  --surface:     var(--zinc-50);
-  --surface-2:   #f0f0f1;
-  --border:      var(--zinc-200);
-  --border-soft: var(--zinc-100);
-  --text:        var(--zinc-900);
-  --text-2:      var(--zinc-600);
-  --text-muted:  var(--zinc-400);
+  --surface:     #f5f5f7;
+  --surface-2:   #ebebed;
+  --border:      #d4d4d6;
+  --border-soft: #e5e5e7;
+  --text:        #1a1a1e;
+  --text-2:      #52525e;
+  --text-muted:  #71717a;
 
   --color-income:   var(--emerald-600);
   --color-expense:  var(--rose-600);
   --color-surplus:  var(--sky-600);
   --color-variable: var(--amber-600);
-  --color-accent:   var(--indigo-600);
+  --color-accent:   var(--red-accent);
 
   --color-income-tint:   color-mix(in oklab, var(--emerald-600) 6%, transparent);
   --color-expense-tint:  color-mix(in oklab, var(--rose-600)    6%, transparent);
   --color-surplus-tint:  color-mix(in oklab, var(--sky-600)     8%, transparent);
   --color-variable-tint: color-mix(in oklab, var(--amber-600)   6%, transparent);
+  --color-accent-tint:   color-mix(in oklab, var(--red-accent)   8%, transparent);
 }
 
 /* Tailwind theme — expose semantic colors as utilities */
@@ -132,37 +137,38 @@
   --color-expense:  #fb7185;
   --color-surplus:  #38bdf8;
   --color-variable: #fbbf24;
-  --color-bg:       #09090b;
-  --color-surface:  #18181b;
-  --color-border:   #27272a;
+  --color-accent:   #e63946;
+  --color-bg:       #1a1a1e;
+  --color-surface:  #222228;
+  --color-border:   #2a2a30;
 
-  /* Fonts */
-  --font-sans:  'Geist', 'Outfit', system-ui, sans-serif;
+  /* Fonts — Space Grotesk + JetBrains Mono */
+  --font-sans:  'Space Grotesk', 'DM Sans', system-ui, sans-serif;
   --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
-  --font-serif: 'Instrument Serif', 'Iowan Old Style', serif;
+  --font-serif: 'Fraunces', 'Iowan Old Style', serif;
 
   /* Semantic aliases — spartan.ng + shadcn-compatible tokens */
-  --color-background:             #09090b;
-  --color-foreground:             #fafafa;
-  --color-card:                   #18181b;
-  --color-card-foreground:        #fafafa;
-  --color-popover:                #18181b;
-  --color-popover-foreground:     #fafafa;
-  --color-primary:                #818cf8;
-  --color-primary-foreground:     #09090b;
-  --color-secondary:              #27272a;
-  --color-secondary-foreground:   #fafafa;
-  --color-muted:                  #27272a;
+  --color-background:             #1a1a1e;
+  --color-foreground:             #f0f0f4;
+  --color-card:                   #222228;
+  --color-card-foreground:        #f0f0f4;
+  --color-popover:                #222228;
+  --color-popover-foreground:     #f0f0f4;
+  --color-primary:                #e63946;
+  --color-primary-foreground:     #ffffff;
+  --color-secondary:              #2a2a30;
+  --color-secondary-foreground:   #f0f0f4;
+  --color-muted:                  #2a2a30;
   --color-muted-foreground:       #71717a;
-  --color-accent:                 #1f1f23;
-  --color-accent-foreground:      #fafafa;
+  --color-accent:                 #323238;
+  --color-accent-foreground:      #f0f0f4;
   --color-destructive:            #fb7185;
   --color-destructive-foreground: #09090b;
-  --color-input:                  #27272a;
-  --color-ring:                   #818cf8;
+  --color-input:                  #2a2a30;
+  --color-ring:                   #e63946;
   --color-success:                #34d399;
   --color-danger:                 #fb7185;
-  --radius: 4px;
+  --radius: 5px;
 }
 
 /* ============================================================
@@ -305,8 +311,8 @@ input, select, textarea {
 
 /* ── Shared dialog content ───────────────────────────────────────── */
 .dialog-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
-.dialog-warning { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-.dialog-error { font-size: 12px; color: var(--color-expense); }
+.dialog-warning { font-size: var(--label-2); color: var(--text-muted); line-height: 1.5; }
+.dialog-error { font-size: var(--label); color: var(--color-expense); }
 .dialog-actions { display: flex; gap: 8px; align-items: center; padding-top: 4px; }
-.field-error { font-size: 11px; color: var(--color-expense); margin-top: 2px; }
+.field-error { font-size: var(--label); color: var(--color-expense); margin-top: 2px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }

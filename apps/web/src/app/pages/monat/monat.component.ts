@@ -29,6 +29,7 @@ export class MonatPageComponent {
   protected store  = inject(OverviewStore);
   private txStore  = inject(TransactionsStore);
   private pageHeader = inject(PageHeaderService);
+  private router    = inject(Router);
 
   protected readonly sheetDay = signal<{ date: Date; events: CalendarEvent[] } | null>(null);
 
@@ -41,14 +42,13 @@ export class MonatPageComponent {
   protected readonly sumAmounts = (acc: number, ev: CalendarEvent) => acc + ev.amountCents;
 
   constructor() {
-    const router = inject(Router);
     this.pageHeader.set({
       title:         'Monatsansicht',
       showPlanspiel: true,
       showAdd:       true,
       addLabel:      'Buchung',
-      onPlanspiel:   () => router.navigate(['/app/planspiel']),
-      onAdd:         () => router.navigate(['/app/buchungen']),
+      onPlanspiel:   () => this.router.navigate(['/app/planspiel']),
+      onAdd:         () => this.router.navigate(['/app/buchungen']),
     });
 
     effect(() => { this.txStore.setMonth(this.store.currentMonth()); });
@@ -68,9 +68,15 @@ export class MonatPageComponent {
     this.store.setMonth(month);
   }
 
+  protected openCreate(): void {
+    this.router.navigate(['/app/buchungen']);
+  }
+
   protected onDayTap(payload: { date: Date; events: CalendarEvent[] }): void {
     if (window.innerWidth < 768) {
       this.sheetDay.set(payload);
+    } else {
+      this.router.navigate(['/app/buchungen']);
     }
   }
 

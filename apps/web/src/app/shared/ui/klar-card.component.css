@@ -1,10 +1,10 @@
 :host {
   display: block;
   background: var(--surface);
-  border: 1px solid var(--zinc-700);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px color-mix(in oklab, #000 50%, transparent), inset 0 1px 0 color-mix(in oklab, #fff 5%, transparent);
 }
 
 :host.compact { padding: 12px; }

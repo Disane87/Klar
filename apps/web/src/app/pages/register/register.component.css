@@ -21,7 +21,7 @@
 }
 
 .headline {
-  font-size: 48px;
+  font-size: var(--display);
   font-weight: 500;
   line-height: 1.05;
   letter-spacing: -0.025em;
@@ -37,7 +37,7 @@
 
 .tagline {
   margin-top: 22px;
-  font-size: 14px;
+  font-size: var(--body-sm);
   color: var(--text-2);
   max-width: 360px;
   line-height: 1.55;
@@ -46,7 +46,7 @@
 .trust-badges {
   display: flex;
   gap: 18px;
-  font-size: 11px;
+  font-size: var(--label);
   color: var(--text-muted);
 }
 
@@ -74,15 +74,15 @@
   margin: 0 auto;
 }
 
-.form-title { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
-.form-subtitle { font-size: 13px; color: var(--text-2); margin-bottom: 24px; }
+.form-title { font-size: var(--num-lg); font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+.form-subtitle { font-size: var(--label-2); color: var(--text-2); margin-bottom: 24px; }
 .form { display: flex; flex-direction: column; gap: 14px; }
 
 .form-footer {
   display: flex;
   justify-content: space-between;
   margin-top: 16px;
-  font-size: 11px;
+  font-size: var(--label);
   color: var(--text-muted);
 }
 
@@ -99,7 +99,7 @@
   border-radius: 6px;
   border: 1px solid var(--color-expense);
   background: color-mix(in srgb, var(--color-expense) 10%, transparent);
-  font-size: 13px;
+  font-size: var(--label-2);
   color: var(--color-expense);
 }
 
@@ -124,7 +124,7 @@
 }
 
 .success-message {
-  font-size: 14px;
+  font-size: var(--body-sm);
   color: var(--text-2);
   line-height: 1.6;
   margin: 8px 0 20px;

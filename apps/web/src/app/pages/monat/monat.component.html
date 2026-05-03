@@ -28,7 +28,7 @@
 
   <!-- Empty -->
   @else if (!store.cashflow()) {
-    <klar-empty-state message="Noch keine Daten für diesen Monat" />
+    <klar-empty-state message="Noch keine Daten für diesen Monat" ctaLabel="Buchung hinzufügen" (ctaClick)="openCreate()" />
   }
 
   <!-- Data -->

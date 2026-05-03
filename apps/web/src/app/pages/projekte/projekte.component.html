@@ -42,14 +42,16 @@
 
   <!-- Empty -->
   @else if (store.isEmpty()) {
-    <klar-empty-state message="Keine Projekte vorhanden" />
+    <klar-empty-state message="Keine Projekte vorhanden" ctaLabel="Projekt erstellen" (ctaClick)="openCreate()" />
   }
 
   <!-- Project List -->
   @else {
     <div class="project-list">
       @for (item of store.projects()!.projects; track item.id) {
-        <div class="project-card" [style.--project-color]="item.color">
+        <div class="project-card" [style.--project-color]="item.color"
+             (click)="openProject(item)" tabindex="0"
+             role="button" [attr.aria-label]="item.name + ' öffnen'">
 
           <!-- Card Header: name + status badge -->
           <div class="card-header">

@@ -1,7 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { ProjekteStore } from '../../core/overview/projekte.store';
+import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
@@ -19,6 +21,8 @@ import type { ProjectOverviewItem } from '../../core/overview/overview.service';
 })
 export class ProjektePageComponent {
   protected store = inject(ProjekteStore);
+  private txStore  = inject(TransactionsStore);
+  private router   = inject(Router);
 
   constructor() {
     inject(PageHeaderService).set({
@@ -26,8 +30,19 @@ export class ProjektePageComponent {
       subtitle:      'ZIELE & SONDERPROJEKTE',
       showPlanspiel: false,
       showAdd:       true,
-      addLabel:      'Projekt',
+      addLabel:      'Buchung',
+      onAdd:         () => this.openCreate(),
     });
+  }
+
+  openCreate(): void {
+    this.txStore.clearFilters();
+    this.router.navigate(['/app/buchungen']);
+  }
+
+  openProject(project: ProjectOverviewItem): void {
+    this.txStore.projectFilter.set(project.id);
+    void this.router.navigate(['/app/buchungen']);
   }
 
   progressPercent(item: ProjectOverviewItem): number {

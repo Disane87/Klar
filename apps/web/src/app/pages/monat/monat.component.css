@@ -35,7 +35,7 @@
 .hero-amount {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 32px;
+  font-size: var(--num-xl);
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -46,7 +46,7 @@
 
 .hero-sub {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--label);
   color: var(--text-2);
   display: flex;
   align-items: center;

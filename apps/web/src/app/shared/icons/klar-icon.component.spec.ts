@@ -11,7 +11,7 @@ describe('KlarIconComponent', () => {
   );
 
   const icons = [
-    'fixkosten', 'ueberschuss', 'planspiel', 'haushalt', 'wiederkehrend',
+    'fixkosten', 'ueberschuss', 'planspiel', 'haushalt', 'tresor', 'wiederkehrend',
     'dashboard', 'trending', 'folder', 'receipt', 'settings',
     'key', 'shield', 'plus', 'pencil', 'trash',
     'chevron-right', 'chevron-down', 'chevron-left', 'check', 'x', 'alert',

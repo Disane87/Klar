@@ -34,7 +34,7 @@
   margin-right: 6px;
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--label);
 }
 
 .suffix {
@@ -43,6 +43,6 @@
 }
 
 .hint {
-  font-size: 11px;
+  font-size: var(--label);
   color: var(--text-muted);
 }
