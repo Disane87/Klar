@@ -14,7 +14,7 @@
   background: var(--surface);
 }
 .page-super {
-  font-size: 11px;
+  font-size: var(--label);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 500;
@@ -22,7 +22,7 @@
   margin-bottom: 6px;
 }
 .page-title {
-  font-size: 20px;
+  font-size: var(--num-card);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -41,14 +41,38 @@
   background: color-mix(in oklab, var(--surface) 60%, var(--bg));
 }
 .section-label {
-  font-size: 11px;
+  font-size: var(--label);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 500;
   color: var(--text-muted);
 }
 .section-body { padding: 12px 24px; }
+.section-note {
+  padding: 0 24px 14px;
+  font-size: var(--label);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
 
+/* Nav link to household page */
+.nav-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 80ms;
+  cursor: pointer;
+}
+.nav-link-row:hover { background: var(--surface-2); }
+.nav-link-info { flex: 1; min-width: 0; }
+.nav-link-title { font-size: var(--label-2); font-weight: 500; }
+.nav-link-sub { font-size: var(--label); color: var(--text-muted); margin-top: 2px; }
+.nav-link-chevron { color: var(--text-muted); flex-shrink: 0; }
+
+/* Profile */
 .profile-row {
   display: flex;
   align-items: center;
@@ -65,14 +89,15 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--label-2);
   font-weight: 700;
   color: var(--color-accent);
   flex-shrink: 0;
 }
-.profile-name { font-size: 15px; font-weight: 600; }
-.profile-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.profile-name { font-size: var(--body); font-weight: 600; }
+.profile-email { font-size: var(--label); color: var(--text-muted); margin-top: 2px; }
 
+/* Field rows */
 .field-row {
   display: flex;
   align-items: center;
@@ -81,12 +106,12 @@
 }
 .field-row:last-child { border-bottom: none; }
 .field-label {
-  font-size: 12px;
+  font-size: var(--label);
   color: var(--text-muted);
   width: 130px;
   flex-shrink: 0;
 }
-.field-value { font-size: 13px; font-weight: 500; flex: 1; }
+.field-value { font-size: var(--label-2); font-weight: 500; flex: 1; }
 .field-muted { color: var(--text-muted); font-weight: 400; }
 .field-value-row {
   display: flex;
@@ -94,7 +119,12 @@
   gap: 8px;
   flex: 1;
 }
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 
+/* Toggle group (theme) */
 .toggle-group {
   display: flex;
   border: 1px solid var(--border);
@@ -103,7 +133,7 @@
 }
 .toggle-option {
   padding: 5px 12px;
-  font-size: 11px;
+  font-size: var(--label);
   cursor: pointer;
   color: var(--text-muted);
   background: transparent;
@@ -112,9 +142,10 @@
   transition: all 80ms;
 }
 .toggle-option:last-child { border-right: none; }
-.toggle-option.active { background: var(--color-accent); color: #0f0f11; font-weight: 600; }
+.toggle-option.active { background: var(--color-accent); color: var(--bg); font-weight: 600; }
 .toggle-option:not(.active):hover { background: var(--surface-2); color: var(--text); }
 
+/* Identity rows (linked accounts) */
 .identity-row {
   display: flex;
   align-items: center;
@@ -138,10 +169,11 @@
   flex-shrink: 0;
 }
 .identity-info { flex: 1; }
-.identity-name { font-size: 13px; font-weight: 500; }
-.identity-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.identity-name { font-size: var(--label-2); font-weight: 500; }
+.identity-sub { font-size: var(--label); color: var(--text-muted); margin-top: 1px; }
 .unlink-btn { color: var(--color-expense) !important; }
 
+/* Session rows */
 .session-row {
   display: flex;
   align-items: center;
@@ -160,8 +192,8 @@
 }
 .session-dot.old { background: var(--text-muted); box-shadow: none; }
 .session-info { flex: 1; }
-.session-name { font-size: 13px; font-weight: 500; }
-.session-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-family: var(--font-mono); }
+.session-name { font-size: var(--label-2); font-weight: 500; }
+.session-meta { font-size: var(--label); color: var(--text-muted); margin-top: 1px; font-family: var(--font-mono); }
 .session-badge {
   font-size: 9px;
   text-transform: uppercase;
@@ -174,6 +206,8 @@
   font-weight: 700;
   flex-shrink: 0;
 }
+
+/* Icon button */
 .icon-btn {
   min-width: 44px;
   min-height: 44px;
@@ -193,18 +227,21 @@
 }
 .danger-btn { color: var(--color-expense) !important; }
 
+/* Danger zone (account deletion) */
 .danger-zone {
   padding: 12px 16px;
   border-left: 2px solid color-mix(in oklab, var(--color-expense) 40%, transparent);
   margin: 0 24px 16px;
   background: color-mix(in oklab, var(--color-expense) 4%, transparent);
 }
-.danger-title { font-size: 12px; font-weight: 600; color: var(--color-expense); margin-bottom: 4px; }
-.danger-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+.danger-title { font-size: var(--label); font-weight: 600; color: var(--color-expense); margin-bottom: 4px; }
+.danger-desc { font-size: var(--label); color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
 
-.hint { font-size: 11px; color: var(--text-muted); line-height: 1.5; padding: 4px 0 8px; }
-.status-text { font-size: 13px; color: var(--text-muted); padding: 8px 0; }
+/* Hints & status */
+.hint { font-size: var(--label); color: var(--text-muted); line-height: 1.5; padding: 4px 0 8px; }
+.status-text { font-size: var(--label-2); color: var(--text-muted); padding: 8px 0; }
 
+/* Edit form */
 .edit-form {
   padding: 12px 24px;
   display: flex;
@@ -216,7 +253,7 @@
 .cancel-btn {
   min-height: 44px;
   padding: 0 10px;
-  font-size: 11px;
+  font-size: var(--label);
   background: none;
   border: none;
   cursor: pointer;
@@ -226,6 +263,7 @@
 }
 .cancel-btn:hover { color: var(--text); }
 
+/* Badges */
 .badge-income {
   background: color-mix(in oklab, var(--color-income) 12%, var(--surface-2));
   color: var(--color-income);
@@ -235,11 +273,10 @@
   color: var(--text-muted);
 }
 
+/* Responsive */
 @media (max-width: 767px) {
   .page { padding-bottom: calc(env(safe-area-inset-bottom) + 5rem); }
-  .page-header, .section-header, .section-body, .edit-form, .danger-zone {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
+  .page-header, .section-header, .section-body, .edit-form, .danger-zone,
+  .nav-link-row { padding-left: 16px; padding-right: 16px; }
   .danger-zone { margin-left: 16px; margin-right: 16px; }
 }

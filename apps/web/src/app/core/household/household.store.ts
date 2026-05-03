@@ -126,4 +126,38 @@ export class HouseholdStore {
     await this.loadHouseholds();
     await this.router.navigate(['/app']);
   }
+
+  async leave(): Promise<void> {
+    const id = this._activeId();
+    if (!id) return;
+    await this.householdService.leaveHousehold(id);
+    this._households.update(list => list.filter(h => h.household.id !== id));
+    this._members.set([]);
+    this._invites.set([]);
+    const remaining = this._households();
+    if (remaining.length > 0) {
+      this._activeId.set(remaining[0].household.id);
+      await this.router.navigate(['/app']);
+    } else {
+      this._activeId.set(null);
+      await this.router.navigate(['/onboarding']);
+    }
+  }
+
+  async deleteActiveHousehold(): Promise<void> {
+    const id = this._activeId();
+    if (!id) return;
+    await this.householdService.deleteHousehold(id);
+    this._households.update(list => list.filter(h => h.household.id !== id));
+    this._members.set([]);
+    this._invites.set([]);
+    const remaining = this._households();
+    if (remaining.length > 0) {
+      this._activeId.set(remaining[0].household.id);
+      await this.router.navigate(['/app']);
+    } else {
+      this._activeId.set(null);
+      await this.router.navigate(['/onboarding']);
+    }
+  }
 }

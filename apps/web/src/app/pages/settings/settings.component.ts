@@ -1,6 +1,7 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
@@ -11,6 +12,7 @@ import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarSkeletonRowsComponent } from '../../shared/ui/klar-skeleton-rows.component';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
+import { HouseholdStore } from '../../core/household/household.store';
 import { ThemeService, type Theme } from '../../core/theme/theme.service';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { ChangePasswordDialogComponent } from './change-password-dialog.component';
@@ -23,6 +25,7 @@ import { DeleteAccountDialogComponent } from './delete-account-dialog.component'
   imports: [
     DatePipe,
     FormsModule,
+    RouterLink,
     HlmButtonDirective,
     HlmInputDirective,
     HlmLabelDirective,
@@ -36,13 +39,13 @@ import { DeleteAccountDialogComponent } from './delete-account-dialog.component'
 })
 export class SettingsPageComponent {
   protected store = inject(UserSettingsStore);
+  protected hhStore = inject(HouseholdStore);
   protected themeService = inject(ThemeService);
   private dialog = inject(KlarDialogService);
   private toast = inject(KlarToastService);
 
   readonly editingProfile = signal(false);
   readonly editDisplayName = signal('');
-  readonly editEmail = signal('');
   readonly savingProfile = signal(false);
 
   readonly initials = computed(() => {
@@ -60,20 +63,21 @@ export class SettingsPageComponent {
   constructor() {
     inject(PageHeaderService).set({
       title: 'Einstellungen',
-      subtitle: 'MEIN KONTO',
+      subtitle: 'PROFIL & APP',
     });
   }
 
-  ngOnInit(): void {
-    Promise.all([this.store.loadProfile(), this.store.loadSessions()]).catch(() => {
+  async ngOnInit(): Promise<void> {
+    await Promise.all([
+      this.store.loadProfile(),
+      this.store.loadSessions(),
+    ]).catch(() => {
       this.toast.error('Einstellungen konnten nicht geladen werden');
     });
   }
 
   startEditProfile(): void {
-    const p = this.store.profile();
-    this.editDisplayName.set(p?.displayName ?? '');
-    this.editEmail.set(p?.email ?? '');
+    this.editDisplayName.set(this.store.profile()?.displayName ?? '');
     this.editingProfile.set(true);
   }
 
@@ -86,7 +90,6 @@ export class SettingsPageComponent {
     try {
       await this.store.updateProfile({
         displayName: this.editDisplayName(),
-        email: this.editEmail(),
       });
       this.editingProfile.set(false);
       this.toast.success('Profil gespeichert');
@@ -95,6 +98,10 @@ export class SettingsPageComponent {
     } finally {
       this.savingProfile.set(false);
     }
+  }
+
+  setTheme(theme: Theme): void {
+    this.themeService.set(theme);
   }
 
   openChangePassword(): void {
@@ -108,10 +115,6 @@ export class SettingsPageComponent {
       width: 'sm',
       disableBackdropClose: true,
     });
-  }
-
-  setTheme(theme: Theme): void {
-    this.themeService.set(theme);
   }
 
   async revokeSession(tokenId: string): Promise<void> {

@@ -106,4 +106,16 @@ export class HouseholdsRepository {
       where: { householdId, role: HouseholdRole.OWNER },
     });
   }
+
+  async countMembers(householdId: string): Promise<number> {
+    return this.prisma.householdMembership.count({
+      where: { householdId },
+    });
+  }
+
+  async deleteHousehold(householdId: string): Promise<void> {
+    await this.prisma.householdMembership.deleteMany({ where: { householdId } });
+    await this.prisma.inviteCode.deleteMany({ where: { householdId } });
+    await this.prisma.household.delete({ where: { id: householdId } });
+  }
 }

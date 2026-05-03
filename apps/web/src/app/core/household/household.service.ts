@@ -58,4 +58,12 @@ export class HouseholdService {
       this.http.post<{ householdId: string }>(`${BASE}/join`, { code }),
     );
   }
+
+  leaveHousehold(hid: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${BASE}/${hid}/leave`));
+  }
+
+  deleteHousehold(hid: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${BASE}/${hid}`));
+  }
 }

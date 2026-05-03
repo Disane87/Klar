@@ -202,4 +202,42 @@ export class HouseholdsService {
       throw err;
     }
   }
+
+  async leave(ctx: RequestContext): Promise<void> {
+    const membership = await this.repo.findMembership(ctx.userId, ctx.householdId);
+    if (!membership) throw new NotFoundException('Mitgliedschaft nicht gefunden');
+
+    if (membership.role === HouseholdRole.OWNER) {
+      const ownerCount = await this.repo.countOwners(ctx.householdId);
+      if (ownerCount <= 1) {
+        throw new ForbiddenException('Der letzte Owner kann den Haushalt nicht verlassen. Bitte übertrage die Ownership oder lösche den Haushalt.');
+      }
+    }
+
+    await this.repo.removeMember(ctx.userId, ctx.householdId);
+    this.auditService.log({
+      action: 'member.left',
+      userId: ctx.userId,
+      householdId: ctx.householdId,
+    });
+  }
+
+  async deleteHousehold(ctx: RequestContext): Promise<void> {
+    const membership = await this.repo.findMembership(ctx.userId, ctx.householdId);
+    if (!membership || membership.role !== HouseholdRole.OWNER) {
+      throw new ForbiddenException('Nur der Eigentümer kann den Haushalt löschen');
+    }
+
+    const memberCount = await this.repo.countMembers(ctx.householdId);
+    if (memberCount > 1) {
+      throw new ForbiddenException('Haushalt mit mehreren Mitgliedern kann nicht gelöscht werden. Bitte entferne zuerst alle Mitglieder.');
+    }
+
+    await this.repo.deleteHousehold(ctx.householdId);
+    this.auditService.log({
+      action: 'household.deleted',
+      userId: ctx.userId,
+      householdId: ctx.householdId,
+    });
+  }
 }

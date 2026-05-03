@@ -48,11 +48,18 @@ export class HaushaltPageComponent implements OnInit {
   readonly newlyCreatedInvite = signal<InviteCode | null>(null);
   readonly joinCode = signal('');
   readonly joining = signal(false);
+  readonly leavingHousehold = signal(false);
+  readonly deletingHousehold = signal(false);
 
   readonly canManage = computed(() => this.store.isOwner());
   readonly activeApiKeys = computed(() =>
     (this.apiKeysStore.keys() ?? []).filter(k => !k.isRevoked)
   );
+  readonly isSoleOwner = computed(() => {
+    const members = this.store.members();
+    const owners = members.filter(m => m.role === 'OWNER');
+    return owners.length === 1;
+  });
 
   constructor() {
     inject(PageHeaderService).set({
@@ -212,6 +219,39 @@ export class HaushaltPageComponent implements OnInit {
       this.toast.success('API-Schlüssel gelöscht');
     } catch {
       this.toast.error('API-Schlüssel konnte nicht gelöscht werden');
+    }
+  }
+
+  async leaveHousehold(): Promise<void> {
+    const confirmed = window.confirm('Möchtest du diesen Haushalt wirklich verlassen?');
+    if (!confirmed) return;
+    this.leavingHousehold.set(true);
+    try {
+      await this.store.leave();
+      this.toast.success('Haushalt verlassen');
+    } catch (err: unknown) {
+      const msg = (err as { error?: { detail?: string } })?.error?.detail;
+      this.toast.error(msg ?? 'Haushalt konnte nicht verlassen werden');
+    } finally {
+      this.leavingHousehold.set(false);
+    }
+  }
+
+  async deleteHousehold(): Promise<void> {
+    const name = this.store.activeName();
+    const confirmed = window.confirm(
+      `Haushalt "${name}" unwiderruflich löschen?\n\nAlle Daten gehen verloren.`,
+    );
+    if (!confirmed) return;
+    this.deletingHousehold.set(true);
+    try {
+      await this.store.deleteActiveHousehold();
+      this.toast.success('Haushalt gelöscht');
+    } catch (err: unknown) {
+      const msg = (err as { error?: { detail?: string } })?.error?.detail;
+      this.toast.error(msg ?? 'Haushalt konnte nicht gelöscht werden');
+    } finally {
+      this.deletingHousehold.set(false);
     }
   }
 }

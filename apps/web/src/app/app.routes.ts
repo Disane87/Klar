@@ -88,6 +88,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tresor',
+        loadComponent: () =>
+          import('./pages/tresor/tresor.component').then(
+            m => m.TresorPageComponent,
+          ),
+      },
+      {
         path: 'haushalt',
         loadComponent: () =>
           import('./pages/haushalt/haushalt.component').then(

@@ -272,4 +272,37 @@
     }
   </div>
 
+  <!-- ═══════════════════════════════════════════════
+       GEFAHRENZONE
+       ═══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label" style="color: var(--color-expense)">GEFAHRENZONE</span>
+    </div>
+    <div class="danger-zone">
+      @if (canManage() && isSoleOwner()) {
+        <p class="danger-title">Haushalt löschen</p>
+        <p class="danger-desc">Löscht diesen Haushalt unwiderruflich. Du bist der einzige Owner — alle Daten gehen verloren.</p>
+        <button hlmBtn size="sm" variant="destructive" type="button" (click)="deleteHousehold()">
+          @if (deletingHousehold()) { <hlm-spinner [size]="12" /> }
+          Haushalt löschen …
+        </button>
+      } @else if (canManage()) {
+        <p class="danger-title">Haushalt verlassen</p>
+        <p class="danger-desc">Du verlässt diesen Haushalt. Andere Mitglieder bleiben erhalten. Du kannst jederzeit über einen Einladungscode wieder beitreten.</p>
+        <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
+          @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
+          Haushalt verlassen …
+        </button>
+      } @else {
+        <p class="danger-title">Haushalt verlassen</p>
+        <p class="danger-desc">Du verlässt diesen Haushalt und verlierst den Zugriff auf alle gemeinsamen Daten.</p>
+        <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
+          @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
+          Haushalt verlassen …
+        </button>
+      }
+    </div>
+  </div>
+
 </div>

@@ -109,4 +109,18 @@ export class HouseholdsController {
   ) {
     return this.householdsService.deleteInvite(ctx, inviteId);
   }
+
+  @Delete('households/:hid/leave')
+  @UseGuards(HouseholdMemberGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  leaveHousehold(@ReqContext() ctx: RequestContext) {
+    return this.householdsService.leave(ctx);
+  }
+
+  @Delete('households/:hid')
+  @UseGuards(HouseholdMemberGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteHousehold(@ReqContext() ctx: RequestContext) {
+    return this.householdsService.deleteHousehold(ctx);
+  }
 }

@@ -3,10 +3,12 @@
   <!-- Page Header -->
   <div class="page-header">
     <p class="page-super">EINSTELLUNGEN</p>
-    <h1 class="page-title">Mein Konto — <em>persönliche Einstellungen.</em></h1>
+    <h1 class="page-title">Profil & App — <em>dein Klar.</em></h1>
   </div>
 
-  <!-- PROFIL -->
+  <!-- ═══════════════════════════════════════════════
+       PROFIL
+       ═══════════════════════════════════════════════ -->
   <div class="section">
     <div class="section-header">
       <span class="section-label">PROFIL</span>
@@ -22,11 +24,6 @@
           <label hlmLabel for="edit-name">Anzeigename</label>
           <input hlmInput id="edit-name" type="text"
                  [ngModel]="editDisplayName()" (ngModelChange)="editDisplayName.set($event)" />
-        </div>
-        <div class="field-group">
-          <label hlmLabel for="edit-email">E-Mail</label>
-          <input hlmInput id="edit-email" type="email"
-                 [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" />
         </div>
         <div class="form-actions">
           <button hlmBtn size="sm" variant="default" type="button"
@@ -71,7 +68,20 @@
     }
   </div>
 
-  <!-- DARSTELLUNG -->
+  <!-- Haushalt-Link -->
+  <div class="section">
+    <a routerLink="/app/haushalt" class="nav-link-row">
+      <div class="nav-link-info">
+        <p class="nav-link-title">Haushalt verwalten</p>
+        <p class="nav-link-sub">{{ hhStore.activeName() }}</p>
+      </div>
+      <klar-icon name="chevron-right" [size]="16" class="nav-link-chevron" />
+    </a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       DARSTELLUNG
+       ═══════════════════════════════════════════════ -->
   <div class="section">
     <div class="section-header">
       <span class="section-label">DARSTELLUNG</span>
@@ -91,10 +101,16 @@
                   (click)="setTheme('system')">System</button>
         </div>
       </div>
+      <div class="field-row">
+        <span class="field-label">Sprache</span>
+        <span class="field-value field-muted">Deutsch</span>
+      </div>
     </div>
   </div>
 
-  <!-- SICHERHEIT -->
+  <!-- ═══════════════════════════════════════════════
+       SICHERHEIT
+       ═══════════════════════════════════════════════ -->
   @if (store.hasPassword()) {
     <div class="section">
       <div class="section-header">
@@ -182,7 +198,31 @@
     </div>
   </div>
 
-  <!-- KONTO -->
+  <!-- ═══════════════════════════════════════════════
+       APP-INFOS
+       ═══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">APP-INFOS</span>
+    </div>
+    <div class="section-body">
+      <div class="field-row">
+        <span class="field-label">Währung</span>
+        <div class="field-value-row">
+          <span class="field-value font-mono">€</span>
+          <span class="field-value field-muted">Euro</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Version</span>
+        <span class="field-value field-muted font-mono">1.0.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       KONTO
+       ═══════════════════════════════════════════════ -->
   <div class="section">
     <div class="section-header">
       <span class="section-label">KONTO</span>

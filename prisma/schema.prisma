@@ -66,12 +66,11 @@ model User {
   createdAt     DateTime  @default(now())
   lastLoginAt   DateTime?
 
-  memberships         HouseholdMembership[]
-  oidcIdentities      OidcIdentity[]
-  refreshTokens       RefreshToken[]
-  emailVerifications  EmailVerification[]
-  // Keine direkte Relation zu Transactions/RecurringTransactions/etc.
-  // da createdByUserId nullable ist (Account-Delete anonymisiert)
+memberships         HouseholdMembership[]
+   oidcIdentities      OidcIdentity[]
+   refreshTokens       RefreshToken[]
+   emailVerifications  EmailVerification[]
+   recurringTransactions RecurringTransaction[]
 
   @@index([email])
   @@index([isDeleted])
@@ -281,9 +280,10 @@ model RecurringTransaction {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  household    Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  category     Category     @relation(fields: [categoryId], references: [id])
-  project      Project?     @relation(fields: [projectId], references: [id])
+household    Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+   category     Category     @relation(fields: [categoryId], references: [id])
+   project      Project?     @relation(fields: [projectId], references: [id])
+   createdBy    User?        @relation(fields: [createdByUserId], references: [id])
   // Referenz auf ggf. daraus erstellte manuelle Transaktionen (z.B. wenn User Ist-Wert nachträgt)
   transactions Transaction[]
 
