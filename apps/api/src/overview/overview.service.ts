@@ -21,6 +21,8 @@ export interface FixedCostsItemResponse {
   frequency: string;
   isVariable: boolean;
   dayOfMonth: number | null;
+  createdBy: string | null;
+  createdById: string | null;
 }
 
 export interface FixedCostsGroupResponse {
@@ -28,6 +30,7 @@ export interface FixedCostsGroupResponse {
   categoryName: string;
   categoryColor: string;
   categoryType: string;
+  categorySortOrder: number;
   totalCents: number;
   items: FixedCostsItemResponse[];
 }
@@ -109,10 +112,10 @@ export class OverviewService {
     const ym = month ?? currentYearMonth();
     const { firstDay, lastDay } = parseMonth(ym);
 
-    // Load all active recurring transactions with their category
+    // Load all active recurring transactions with category and creator
     const rts = await this.prisma.recurringTransaction.findMany({
       where: { householdId: ctx.householdId, isActive: true },
-      include: { category: true },
+      include: { category: true, createdBy: { select: { id: true, displayName: true } } },
       orderBy: [{ createdAt: 'asc' }],
     });
 
@@ -124,7 +127,7 @@ export class OverviewService {
     // Group by categoryId
     const grouped = new Map<
       string,
-      { category: Category; items: (RecurringTransaction & { category: Category })[] }
+      { category: Category; items: (RecurringTransaction & { category: Category; createdBy: { id: string; displayName: string } | null })[] }
     >();
 
     for (const rt of visible) {
@@ -151,6 +154,8 @@ export class OverviewService {
         frequency: rt.frequency,
         isVariable: rt.isVariable,
         dayOfMonth: rt.dayOfMonth,
+        createdBy: rt.createdBy?.displayName ?? null,
+        createdById: rt.createdByUserId ?? null,
       }));
 
       const totalCents = responseItems.reduce(
@@ -163,6 +168,7 @@ export class OverviewService {
         categoryName: category.name,
         categoryColor: category.color,
         categoryType: category.type,
+        categorySortOrder: category.sortOrder,
         totalCents,
         items: responseItems,
       });

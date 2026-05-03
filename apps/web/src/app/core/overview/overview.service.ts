@@ -14,6 +14,8 @@ export interface FixedCostItem {
   frequency: RecurringFrequency;
   isVariable: boolean;
   dayOfMonth: number | null;
+  createdBy: string | null;
+  createdById: string | null;
 }
 
 export interface FixedCostGroup {
@@ -21,6 +23,7 @@ export interface FixedCostGroup {
   categoryName: string;
   categoryColor: string;
   categoryType: string;
+  categorySortOrder: number;
   totalCents: number;
   items: FixedCostItem[];
 }
