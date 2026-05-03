@@ -1,6 +1,6 @@
 <!-- Loading skeleton -->
 @if (store.loading()) {
-  <div class="flex flex-col overflow-y-auto">
+  <div class="flex flex-col overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
     @for (_ of [1,2,3]; track $index) {
       <div class="flex items-center h-6.5 px-4 gap-2 border-l-2 border-(--border)">
         <klar-skeleton height="9px" width="120px" />
@@ -30,7 +30,7 @@
 
 <!-- Ledger -->
 @else {
-  <div class="flex flex-col overflow-y-auto">
+  <div class="flex flex-col overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
     @for (group of enrichedGroups(); track group.categoryId) {
 
       <!-- Group header: 2px left border (category color), 5px dot, name, total, chevron -->
