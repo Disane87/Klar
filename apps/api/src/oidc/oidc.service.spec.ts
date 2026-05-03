@@ -37,6 +37,8 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   isDeleted: false,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   lastLoginAt: null,
+  totpSecret: null,
+  totpEnabled: false,
   ...overrides,
 });
 

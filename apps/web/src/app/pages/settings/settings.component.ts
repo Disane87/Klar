@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
@@ -15,8 +16,10 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { ThemeService, type Theme } from '../../core/theme/theme.service';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { ChangePasswordDialogComponent } from './change-password-dialog.component';
 import { DeleteAccountDialogComponent } from './delete-account-dialog.component';
+import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
 
 @Component({
   selector: 'app-settings',
@@ -41,6 +44,7 @@ export class SettingsPageComponent {
   protected store = inject(UserSettingsStore);
   protected hhStore = inject(HouseholdStore);
   protected themeService = inject(ThemeService);
+  private authService = inject(AuthService);
   private dialog = inject(KlarDialogService);
   private toast = inject(KlarToastService);
 
@@ -144,6 +148,11 @@ export class SettingsPageComponent {
     }
   }
 
+  formatDate(isoString: string): string {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
   formatRelativeTime(isoString: string): string {
     const diff = Date.now() - new Date(isoString).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -153,5 +162,24 @@ export class SettingsPageComponent {
     if (hours < 24) return `vor ${hours} Stunden`;
     const days = Math.floor(hours / 24);
     return `vor ${days} Tagen`;
+  }
+
+  // 2FA methods
+  async disableTotp(): Promise<void> {
+    try {
+      await firstValueFrom(this.authService.disableTotp());
+      await this.store.loadProfile();
+      this.toast.success('2FA wurde deaktiviert');
+    } catch {
+      this.toast.error('2FA konnte nicht deaktiviert werden');
+    }
+  }
+
+  openTotpSetup(): void {
+    this.dialog.open({
+      title: '2FA einrichten',
+      component: TotpSetupDialogComponent,
+      width: 'sm',
+    });
   }
 }

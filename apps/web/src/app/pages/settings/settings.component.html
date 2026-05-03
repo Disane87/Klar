@@ -61,11 +61,40 @@
         <div class="field-row">
           <span class="field-label">Mitglied seit</span>
           <span class="field-value field-muted">
-            {{ store.profile()?.createdAt | date:'dd. MMMM yyyy':'':'de' }}
+            {{ formatDate(store.profile()?.createdAt || '') }}
           </span>
         </div>
       </div>
     }
+  </div>
+
+  <!-- 2FA -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">2-FAKTOR-AUTHENTIFIZIERUNG</span>
+    </div>
+    <div class="section-body">
+      @if (store.profile()?.totpEnabled) {
+        <div class="field-row">
+          <span class="field-label">Status</span>
+          <div class="field-value-row">
+            <span class="field-value text-[var(--color-income)]">Aktiviert</span>
+            <klar-icon name="shield-check" [size]="16" class="text-[var(--color-income)]" />
+          </div>
+        </div>
+        <button hlmBtn variant="outline" size="sm" class="w-full mt-3" (click)="disableTotp()">
+          2FA deaktivieren
+        </button>
+      } @else {
+        <p class="text-[var(--label)] text-[var(--text-2)] mb-3">
+          Schütze dein Konto mit einer zusätzlichen Authenticator-App.
+        </p>
+        <button hlmBtn variant="default" class="w-full" (click)="openTotpSetup()">
+          <klar-icon name="shield-plus" [size]="14" class="mr-2" />
+          2FA einrichten
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Haushalt-Link -->

@@ -67,23 +67,27 @@ export class AuthController {
     @Body() body: LoginBody,
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
-  ): Promise<{ accessToken: string; user: AuthUser }> {
+  ): Promise<{ accessToken: string; user: AuthUser } | { requiresTotp: true; tempToken: string }> {
     const validatedUser = await this.authService.validateLocalUser(body.email, body.password);
-    const { accessToken, user, refreshToken, refreshExpiresIn } =
-      await this.authService.login(validatedUser, { rememberMe: body.rememberMe }, {
-        ip: req.ip,
-        headers: req.headers as Record<string, string | string[] | undefined>,
-      });
+    const result = await this.authService.login(validatedUser, { rememberMe: body.rememberMe }, {
+      ip: req.ip,
+      headers: req.headers as Record<string, string | string[] | undefined>,
+    });
 
-    void reply.setCookie('refresh_token', refreshToken, {
+    if ('requiresTotp' in result && result.requiresTotp) {
+      return { requiresTotp: true, tempToken: result.tempToken };
+    }
+
+    const tokenSet = result as { accessToken: string; refreshToken: string; refreshExpiresIn: number; user: AuthUser };
+    void reply.setCookie('refresh_token', tokenSet.refreshToken, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
-      maxAge: refreshExpiresIn,
+      maxAge: tokenSet.refreshExpiresIn,
     });
 
-    return { accessToken, user };
+    return { accessToken: tokenSet.accessToken, user: tokenSet.user };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -237,21 +241,25 @@ export class AuthController {
     if (!body.code) throw new BadRequestException('Code fehlt');
 
     const user = await this.oidcService.exchangeHandoverCode(body.code);
-    const { accessToken, refreshToken, refreshExpiresIn } =
-      await this.authService.login(user, {}, {
-        ip: req.ip,
-        headers: req.headers as Record<string, string | string[] | undefined>,
-      });
+    const result = await this.authService.login(user, {}, {
+      ip: req.ip,
+      headers: req.headers as Record<string, string | string[] | undefined>,
+    });
 
-    void reply.setCookie('refresh_token', refreshToken, {
+    if ('requiresTotp' in result && result.requiresTotp) {
+      throw new BadRequestException('2FA erforderlich. Bitte zuerst einloggen.');
+    }
+
+    const tokenSet = result as { accessToken: string; refreshToken: string; refreshExpiresIn: number };
+    void reply.setCookie('refresh_token', tokenSet.refreshToken, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
-      maxAge: refreshExpiresIn,
+      maxAge: tokenSet.refreshExpiresIn,
     });
 
-    return { accessToken, user: this.authService.toAuthUser(user) };
+    return { accessToken: tokenSet.accessToken, user: this.authService.toAuthUser(user) };
   }
 
   /** Returns all linked OIDC identities for the current user. */
@@ -280,5 +288,73 @@ export class AuthController {
     @Param('providerName') providerName: string,
   ): Promise<void> {
     await this.oidcService.unlinkIdentity(payload.sub, providerName);
+  }
+
+  // ── TOTP / 2FA ─────────────────────────────────────────────────────
+
+  /** Verifies TOTP code after login with tempToken and issues real tokens. */
+  @Public()
+  @Post('totp/verify')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async verifyTotp(
+    @Body() body: { tempToken: string; code: string; rememberMe?: boolean },
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<{ accessToken: string; user: AuthUser }> {
+    if (!body.tempToken || !body.code) {
+      throw new BadRequestException('tempToken und Code erforderlich');
+    }
+    const result = await this.authService.verifyTotpAndLogin(
+      body.tempToken,
+      body.code,
+      { rememberMe: body.rememberMe },
+      {
+        ip: req.ip,
+        headers: req.headers as Record<string, string | string[] | undefined>,
+      },
+    );
+    void reply.setCookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: result.refreshExpiresIn,
+    });
+    return { accessToken: result.accessToken, user: result.user };
+  }
+
+  /** Initiates 2FA setup - returns QR code URI (requires authentication). */
+  @UseGuards(JwtAuthGuard)
+  @Get('totp/setup')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async setupTotp(
+    @CurrentUser() payload: JwtPayload,
+  ): Promise<{ secret: string; uri: string }> {
+    return this.authService.setupTotp(payload.sub);
+  }
+
+  /** Confirms and enables 2FA after verifying a TOTP code. */
+  @UseGuards(JwtAuthGuard)
+  @Post('totp/enable')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async enableTotp(
+    @CurrentUser() payload: JwtPayload,
+    @Body() body: { code: string },
+  ): Promise<void> {
+    if (!body.code) throw new BadRequestException('Code erforderlich');
+    await this.authService.verifyAndEnableTotp(payload.sub, body.code);
+  }
+
+  /** Disables 2FA for the current user. */
+  @UseGuards(JwtAuthGuard)
+  @Delete('totp')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async disableTotp(
+    @CurrentUser() payload: JwtPayload,
+  ): Promise<void> {
+    await this.authService.disableTotp(payload.sub);
   }
 }

@@ -50,8 +50,13 @@
     </div>
     <div class="max-w-[360px] w-full mx-auto">
       <div class="mb-1.5 text-[var(--label)] text-[var(--text-muted)] tracking-wider">SESSION · NEU</div>
-      <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">Anmelden</div>
-      <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Klar · Dein privates Haushaltsbuch</div>
+      @if (totpRequired()) {
+        <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">2-Faktor-Authentifizierung</div>
+        <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Code aus deiner Authenticator-App eingeben</div>
+      } @else {
+        <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">Anmelden</div>
+        <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Klar · Dein privates Haushaltsbuch</div>
+      }
 
       @if (serverError()) {
         <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
@@ -65,7 +70,35 @@
         </div>
       }
 
-      <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); submit()">
+      @if (totpRequired()) {
+        <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); verifyTotp()">
+          @if (totpError()) {
+            <div class="flex items-center gap-2 p-3 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
+              <klar-icon name="alert-triangle" [size]="14" />
+              <span>{{ totpError() }}</span>
+            </div>
+          }
+          <klar-input
+            label="AUTHENTIFICATOR-CODE"
+            type="text"
+            placeholder="000 000"
+            iconName="shield-check"
+            [ngModel]="totpCode()"
+            (ngModelChange)="totpCode.set($event)"
+            name="totpCode"
+            autocomplete="one-time-code"
+          />
+          <button hlmBtn [klarLoadingBtn]="totpLoading()" variant="default" size="lg" type="submit"
+                  class="w-full">
+            @if (totpLoading()) { <hlm-spinner /> }
+            Anmelden →
+          </button>
+          <button type="button" class="bg-transparent border-none p-0 text-[var(--label)] text-[var(--color-accent)] cursor-pointer hover:underline" (click)="backToPassword()">
+            ← Zurück zur Anmeldung
+          </button>
+        </form>
+      } @else {
+        <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); submit()">
         <klar-input
           label="E-MAIL"
           type="email"
@@ -121,6 +154,7 @@
           </button>
         }
       </form>
+      }
 
       <div class="flex justify-between mt-4 text-[var(--label)] text-[var(--text-muted)]">
         <span>Kein Konto?</span>

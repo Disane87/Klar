@@ -34,6 +34,8 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   isDeleted: false,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   lastLoginAt: null,
+  totpSecret: null,
+  totpEnabled: false,
   ...overrides,
 });
 
@@ -79,6 +81,7 @@ function buildService(): {
     create: vi.fn(),
     updateLastLogin: vi.fn(),
     setEmailVerified: vi.fn(),
+    update: vi.fn().mockResolvedValue({}),
     toAuthUser: vi.fn().mockReturnValue({ id: 'user-1', email: 'test@example.com' }),
   } as unknown as UsersService;
 
@@ -118,6 +121,13 @@ function buildService(): {
     deleteExpired: vi.fn().mockResolvedValue(undefined),
   } as unknown as EmailVerificationRepository;
 
+  const tempTokenRepo = {
+    create: vi.fn().mockResolvedValue({}),
+    findByToken: vi.fn(),
+    markUsed: vi.fn().mockResolvedValue(undefined),
+    deleteExpired: vi.fn().mockResolvedValue(undefined),
+  } as unknown as import('./repositories/temp-token.repository').TempTokenRepository;
+
   const categoriesService = {
     seedDefaults: vi.fn().mockResolvedValue(undefined),
   } as unknown as import('../categories/categories.service').CategoriesService;
@@ -132,6 +142,7 @@ function buildService(): {
     configService,
     refreshTokenRepo,
     emailVerificationRepo,
+    tempTokenRepo,
   );
 
   return {
@@ -254,10 +265,10 @@ describe('AuthService', () => {
 
     it('returns tokens when user is verified', async () => {
       const { service, usersService } = buildService();
-      const user = makeUser({ emailVerified: true });
+      const user = makeUser({ emailVerified: true, totpEnabled: false });
       vi.mocked(usersService.updateLastLogin).mockResolvedValue(undefined);
 
-      const result = await service.login(user, {}, fakeReq);
+      const result = await service.login(user, {}, fakeReq) as { accessToken: string; refreshToken: string; refreshExpiresIn: number; user: import('@klar/shared').AuthUser };
 
       expect(result.accessToken).toBe('signed-jwt');
       expect(result.refreshToken).toBeDefined();
@@ -266,11 +277,11 @@ describe('AuthService', () => {
 
     it('uses longer TTL when rememberMe is true', async () => {
       const { service, usersService } = buildService();
-      const user = makeUser({ emailVerified: true });
+      const user = makeUser({ emailVerified: true, totpEnabled: false });
       vi.mocked(usersService.updateLastLogin).mockResolvedValue(undefined);
 
-      const shortResult = await service.login(user, { rememberMe: false }, fakeReq);
-      const longResult = await service.login(user, { rememberMe: true }, fakeReq);
+      const shortResult = await service.login(user, { rememberMe: false }, fakeReq) as { refreshExpiresIn: number };
+      const longResult = await service.login(user, { rememberMe: true }, fakeReq) as { refreshExpiresIn: number };
 
       expect(longResult.refreshExpiresIn).toBeGreaterThan(shortResult.refreshExpiresIn);
     });

@@ -90,4 +90,8 @@ export class UsersRepository {
       data: { isDeleted: true },
     });
   }
+
+  async update(id: string, data: Partial<Pick<User, 'totpSecret' | 'totpEnabled'>>): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
 }

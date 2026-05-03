@@ -83,6 +83,7 @@ export class UsersService {
       appRole: user.appRole,
       createdAt: user.createdAt.toISOString(),
       lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      totpEnabled: user.totpEnabled,
       oidcIdentities: user.oidcIdentities.map((o): OidcIdentityItem => ({
         id: o.id,
         providerName: o.providerName,
@@ -194,5 +195,9 @@ export class UsersService {
       appRole: user.appRole,
       createdAt: user.createdAt.toISOString(),
     };
+  }
+
+  async update(userId: string, data: Partial<Pick<User, 'totpSecret' | 'totpEnabled'>>): Promise<void> {
+    await this.repo.update(userId, data);
   }
 }

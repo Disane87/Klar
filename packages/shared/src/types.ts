@@ -286,6 +286,7 @@ export type UserProfile = {
   appRole: AppRole;
   createdAt: string;
   lastLoginAt: string | null;
+  totpEnabled: boolean;
   oidcIdentities: OidcIdentityItem[];
 };
 

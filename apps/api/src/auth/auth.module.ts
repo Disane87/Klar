@@ -18,6 +18,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
+import { TempTokenRepository } from './repositories/temp-token.repository';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { EmailVerificationRepository } from './repositories/email-verification.r
     JwtAuthGuard,
     RefreshTokenRepository,
     EmailVerificationRepository,
+    TempTokenRepository,
   ],
   exports: [JwtAuthGuard, LocalAuthGuard],
 })

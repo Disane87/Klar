@@ -65,12 +65,15 @@ model User {
   isDeleted     Boolean   @default(false)  // soft-delete bei Account-Löschung
   createdAt     DateTime  @default(now())
   lastLoginAt   DateTime?
+  totpSecret    String?             // Base32 encoded TOTP secret
+  totpEnabled   Boolean   @default(false)
 
 memberships         HouseholdMembership[]
    oidcIdentities      OidcIdentity[]
    refreshTokens       RefreshToken[]
    emailVerifications  EmailVerification[]
    recurringTransactions RecurringTransaction[]
+   tempTokens          TempToken[]
 
   @@index([email])
   @@index([isDeleted])
@@ -143,6 +146,21 @@ model RefreshToken {
 
   @@index([userId])
   @@index([expiresAt])  // für Cleanup
+}
+
+model TempToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique  // Plain text (short-lived, 5 min)
+  purpose   String    // z.B. "totp_login"
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ─────────────────────────────────────────────

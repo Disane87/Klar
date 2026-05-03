@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import type { AuthUser } from '@klar/shared';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
@@ -43,6 +44,13 @@ export class LoginComponent implements OnInit {
   readonly serverError = signal<string | null>(null);
   readonly showResend = signal(false);
 
+  // 2FA state
+  readonly totpRequired = signal(false);
+  readonly tempToken = signal('');
+  readonly totpCode = signal('');
+  readonly totpLoading = signal(false);
+  readonly totpError = signal<string | null>(null);
+
   readonly emailError = computed(() => {
     const v = this.email();
     if (!v) return 'Pflichtfeld';
@@ -72,20 +80,52 @@ export class LoginComponent implements OnInit {
     this.showResend.set(false);
 
     try {
-      const res = await firstValueFrom(
+      const res: { accessToken?: string; user?: unknown; requiresTotp?: boolean; tempToken?: string } = await firstValueFrom(
         this.authService.login({
           email: this.email(),
           password: this.password(),
           rememberMe: this.rememberMe(),
         }),
       );
-      this.authStore.setSession(res.user, res.accessToken);
-      await this.router.navigate(['/app']);
+
+      if (res.requiresTotp && res.tempToken) {
+        this.totpRequired.set(true);
+        this.tempToken.set(res.tempToken);
+      } else if (res.accessToken && res.user) {
+        this.authStore.setSession(res.user as AuthUser, res.accessToken);
+        await this.router.navigate(['/app']);
+      }
     } catch (err: unknown) {
       this.handleLoginError(err);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async verifyTotp(): Promise<void> {
+    if (!this.totpCode() || this.totpLoading()) return;
+
+    this.totpLoading.set(true);
+    this.totpError.set(null);
+
+    try {
+      const res = await firstValueFrom(
+        this.authService.verifyTotp(this.tempToken(), this.totpCode(), this.rememberMe()),
+      );
+      this.authStore.setSession(res.user, res.accessToken);
+      await this.router.navigate(['/app']);
+    } catch {
+      this.totpError.set('Ungültiger Code. Bitte versuche es erneut.');
+    } finally {
+      this.totpLoading.set(false);
+    }
+  }
+
+  backToPassword(): void {
+    this.totpRequired.set(false);
+    this.tempToken.set('');
+    this.totpCode.set('');
+    this.totpError.set(null);
   }
 
   async loginWithOidc(): Promise<void> {

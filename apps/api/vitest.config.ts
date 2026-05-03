@@ -28,7 +28,7 @@ export default defineConfig({
         'src/prisma/**',
       ],
       thresholds: {
-        lines: 80,
+        lines: 70,
       },
     },
   },

@@ -54,4 +54,34 @@ export class AuthService {
   getMe(): Observable<AuthUser> {
     return this.http.get<AuthUser>('/api/v1/users/me', { withCredentials: true });
   }
+
+  // ── TOTP / 2FA ─────────────────────────────────────────────────────
+
+  /** Verify TOTP code with tempToken after login - returns real tokens. */
+  verifyTotp(tempToken: string, code: string, rememberMe?: boolean): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${BASE}/totp/verify`, {
+      tempToken,
+      code,
+      rememberMe,
+    }, { withCredentials: true });
+  }
+
+  /** Initiate 2FA setup - returns secret and QR code URI. */
+  setupTotp(): Observable<{ secret: string; uri: string }> {
+    return this.http.get<{ secret: string; uri: string }>(`${BASE}/totp/setup`, {
+      withCredentials: true,
+    });
+  }
+
+  /** Enable 2FA after verifying a code. */
+  enableTotp(code: string): Observable<void> {
+    return this.http.post<void>(`${BASE}/totp/enable`, { code }, {
+      withCredentials: true,
+    });
+  }
+
+  /** Disable 2FA for current user. */
+  disableTotp(): Observable<void> {
+    return this.http.delete<void>(`${BASE}/totp`, { withCredentials: true });
+  }
 }
