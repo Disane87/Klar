@@ -1,8 +1,8 @@
-<div class="page">
+<div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
 
   <!-- Calendar scheduler -->
   <hlm-calendar
-    class="cal-nav-block h-[75dvh]"
+    class="cal-nav-block shrink-0"
     [month]="store.currentMonth()"
     [events]="calendarEvents()"
     (monthChange)="navigateMonth($event)"
@@ -10,8 +10,13 @@
 
   <!-- Loading -->
   @if (store.loading()) {
-    <div class="stat-grid">
-      <klar-skeleton-cards [count]="4" />
+    <div class="grid grid-cols-4 border-t border-(--border) divide-x divide-(--border) shrink-0">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="flex flex-col items-center py-2.5 gap-1">
+          <div class="h-2 w-16 bg-(--surface-2) rounded animate-pulse"></div>
+          <div class="h-2.75 w-20 bg-(--surface-2) rounded animate-pulse mt-0.5"></div>
+        </div>
+      }
     </div>
   }
 
@@ -27,15 +32,8 @@
 
   <!-- Data -->
   @else {
-    <!-- Status bar (nur aktueller Monat) -->
-    @if (isCurrentMonth()) {
-      <div class="status-bar">
-        <span class="status-stand">{{ statusDate() }}</span>
-        <span class="status-trend income">&#x25CF; TREND POSITIV</span>
-      </div>
-    }
 
-    <!-- Mobile Hero Surplus -->
+    <!-- Mobile Hero Surplus — unchanged -->
     <div class="mobile-hero">
       <div class="hero-label">
         {{ surplusPositive() ? 'ÜBERSCHUSS' : 'DEFIZIT' }}
@@ -51,98 +49,105 @@
       </div>
     </div>
 
-    <!-- 4 Stat-Karten -->
-    <div class="stat-grid">
-      <!-- Eingegangen -->
-      <klar-stat-card
-        label="EINGEGANGEN"
-        [valueCents]="store.cashflow()!.totalIncomeCents"
-        sub="Einnahmen dieses Monats"
-        tone="income" />
-
-      <!-- Ausgegeben -->
-      <klar-stat-card
-        label="AUSGEGEBEN"
-        [valueCents]="store.cashflow()!.totalExpensesCents"
-        sub="Ausgaben dieses Monats"
-        tone="expense" />
-
-      <!-- Variabel verfügbar / Defizit -->
-      <klar-stat-card
-        [label]="surplusPositive() ? 'VARIABEL VERFÜGBAR' : 'DEFIZIT'"
-        [valueCents]="store.cashflow()!.surplusCents"
-        sub="Netto · Fixkosten abgezogen"
-        tone="auto" />
-
-      <!-- Fixkosten -->
-      <klar-stat-card
-        label="FIXKOSTEN"
-        [valueCents]="store.cashflow()!.recurringExpensesCents"
-        sub="Wiederkehrende Ausgaben"
-        tone="expense" />
+    <!-- 4-column inline stat row (replaces 4 stat cards) -->
+    <div class="grid grid-cols-4 border-t border-b border-(--border) divide-x divide-(--border) shrink-0">
+      <div class="flex flex-col items-center py-2.5 gap-1">
+        <span class="text-[8px] uppercase tracking-widest text-(--text-muted) font-medium leading-none">EINGEGANGEN</span>
+        <span class="font-mono tabular-nums text-[11px] text-(--color-income) leading-none">
+          {{ store.cashflow()!.totalIncomeCents | klarMoney }}
+        </span>
+      </div>
+      <div class="flex flex-col items-center py-2.5 gap-1">
+        <span class="text-[8px] uppercase tracking-widest text-(--text-muted) font-medium leading-none">AUSGEGEBEN</span>
+        <span class="font-mono tabular-nums text-[11px] text-(--color-expense) leading-none">
+          {{ store.cashflow()!.totalExpensesCents | klarMoney }}
+        </span>
+      </div>
+      <div class="flex flex-col items-center py-2.5 gap-1">
+        <span class="text-[8px] uppercase tracking-widest text-(--text-muted) font-medium leading-none">FIXKOSTEN</span>
+        <span class="font-mono tabular-nums text-[11px] text-(--color-expense) leading-none">
+          {{ store.cashflow()!.recurringExpensesCents | klarMoney }}
+        </span>
+      </div>
+      <div class="flex flex-col items-center py-2.5 gap-1">
+        <span class="text-[8px] uppercase tracking-widest text-(--text-muted) font-medium leading-none">VARIABEL</span>
+        <span class="font-mono tabular-nums text-[11px] leading-none"
+              [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass">
+          {{ store.cashflow()!.surplusCents | klarMoney }}
+        </span>
+      </div>
     </div>
 
-    <!-- Aufschlüsselung Einnahmen vs. Ausgaben -->
-    <div class="breakdown">
-      <div class="breakdown-section">
-        <div class="bk-header">
-          <span class="bk-label">EINNAHMEN</span>
-          <span class="bk-total income">{{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
+    <!-- Breakdown: income vs expenses — rows tightened to 26px -->
+    <div class="flex flex-col shrink-0">
+
+      <div class="flex flex-col">
+        <div class="flex items-center h-6.5 px-4 gap-2 border-b border-(--border)">
+          <span class="text-[9px] uppercase tracking-widest text-(--text-muted) font-medium flex-1 leading-none">EINNAHMEN</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-income) leading-none">
+            {{ store.cashflow()!.totalIncomeCents | klarMoney }}
+          </span>
         </div>
-        <div class="bk-row">
-          <span class="bk-name">Fixe Einnahmen</span>
-          <span class="bk-amount income">{{ store.cashflow()!.recurringIncomeCents | klarMoney }}</span>
+        <div class="flex items-center h-6.5 px-4 gap-2">
+          <span class="text-[13px] text-(--text) flex-1 leading-none">Fixe Einnahmen</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-income) leading-none">
+            {{ store.cashflow()!.recurringIncomeCents | klarMoney }}
+          </span>
         </div>
-        <div class="bk-row">
-          <span class="bk-name">Buchungen</span>
-          <span class="bk-amount income">{{ store.cashflow()!.transactionIncomeCents | klarMoney }}</span>
+        <div class="flex items-center h-6.5 px-4 gap-2">
+          <span class="text-[13px] text-(--text) flex-1 leading-none">Buchungen</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-income) leading-none">
+            {{ store.cashflow()!.transactionIncomeCents | klarMoney }}
+          </span>
         </div>
       </div>
 
-      <div class="breakdown-section">
-        <div class="bk-header">
-          <span class="bk-label">AUSGABEN</span>
-          <span class="bk-total expense">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
+      <div class="flex flex-col border-t border-(--border)">
+        <div class="flex items-center h-6.5 px-4 gap-2 border-b border-(--border)">
+          <span class="text-[9px] uppercase tracking-widest text-(--text-muted) font-medium flex-1 leading-none">AUSGABEN</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-expense) leading-none">
+            {{ store.cashflow()!.totalExpensesCents | klarMoney }}
+          </span>
         </div>
-        <div class="bk-row">
-          <span class="bk-name">Fixkosten</span>
-          <span class="bk-amount expense">{{ store.cashflow()!.recurringExpensesCents | klarMoney }}</span>
+        <div class="flex items-center h-6.5 px-4 gap-2">
+          <span class="text-[13px] text-(--text) flex-1 leading-none">Fixkosten</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-expense) leading-none">
+            {{ store.cashflow()!.recurringExpensesCents | klarMoney }}
+          </span>
         </div>
-        <div class="bk-row">
-          <span class="bk-name">Buchungen</span>
-          <span class="bk-amount expense">{{ store.cashflow()!.transactionExpensesCents | klarMoney }}</span>
+        <div class="flex items-center h-6.5 px-4 gap-2">
+          <span class="text-[13px] text-(--text) flex-1 leading-none">Buchungen</span>
+          <span class="font-mono tabular-nums text-[11px] text-(--color-expense) leading-none">
+            {{ store.cashflow()!.transactionExpensesCents | klarMoney }}
+          </span>
         </div>
       </div>
+
     </div>
 
   }
 
 </div>
 
-<!-- ── Mobile Day Detail Sheet ──────────────────────────────── -->
+<!-- ── Mobile Day Detail Sheet ─────────────────────── -->
 @if (sheetDay(); as sd) {
-  <!-- Backdrop -->
   <div class="fixed inset-0 bg-black/60 z-200 md:hidden"
        (click)="sheetDay.set(null)"></div>
 
-  <!-- Sheet -->
   <div class="fixed bottom-0 left-0 right-0 z-201 md:hidden
               flex flex-col rounded-t-2xl border-t border-(--border)
               bg-(--surface) pb-[calc(env(safe-area-inset-bottom)+1rem)]">
 
-    <!-- Drag handle -->
     <div class="flex justify-center pt-3 pb-2 shrink-0">
       <div class="w-10 h-1 rounded-full bg-(--border)"></div>
     </div>
 
-    <!-- Date header -->
     <div class="px-5 py-2.5 border-b border-(--border) shrink-0">
       <p class="text-[11px] font-semibold uppercase tracking-widest text-(--text-muted)">
         {{ sheetDayLabel() }}
       </p>
     </div>
 
-    <!-- Event list -->
     @if (sd.events.length === 0) {
       <div class="px-5 py-10 text-center text-[13px] text-(--text-muted)">
         Keine Einträge für diesen Tag
@@ -162,7 +167,6 @@
             </span>
           </div>
         }
-        <!-- Daily total -->
         @if (sd.events.length > 1) {
           @let total = sd.events.reduce(sumAmounts, 0);
           <div class="flex items-center justify-between px-3 py-2.5
