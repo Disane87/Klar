@@ -1,81 +1,219 @@
 <!-- Loading skeleton -->
 @if (store.loading()) {
-  <div class="flex flex-col overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
-    @for (_ of [1,2,3]; track $index) {
-      <div class="flex items-center h-6.5 px-4 gap-2 border-l-2 border-(--border)">
-        <klar-skeleton height="9px" width="120px" />
-        <div class="flex-1"></div>
-        <klar-skeleton height="11px" width="80px" />
-      </div>
-      @for (__ of [1,2,3]; track $index) {
-        <div class="flex items-center h-6.5 px-4 gap-2">
-          <klar-skeleton height="11px" width="55%" />
-          <div class="flex-1"></div>
-          <klar-skeleton height="11px" width="68px" />
-        </div>
-      }
-    }
+<div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+  <!-- Summary skeleton -->
+  <div class="grid grid-cols-3 gap-3 mb-4">
+    <klar-skeleton height="76px" />
+    <klar-skeleton height="76px" />
+    <klar-skeleton height="76px" />
   </div>
+  <!-- Groups skeleton -->
+  @for (_ of [1,2,3]; track $index) {
+  <div class="mb-3 rounded-md border border-(--border) overflow-hidden">
+    <div class="flex items-center h-10 px-4 gap-3 border-b border-(--border)">
+      <klar-skeleton height="10px" width="100px" />
+      <div class="flex-1"></div>
+      <klar-skeleton height="14px" width="70px" />
+    </div>
+    <div class="p-2">
+      @for (__ of [1,2,3]; track $index) {
+      <div class="flex items-center h-9 px-3 gap-3">
+        <klar-skeleton height="14px" width="45%" />
+        <div class="flex-1"></div>
+        <klar-skeleton height="14px" width="60px" />
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>
 }
 
 <!-- Error -->
 @else if (store.error()) {
-  <klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
+<klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
 }
 
 <!-- Empty -->
 @else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
-  <klar-empty-state message="Keine Fixkosten für diesen Monat" />
+<klar-empty-state message="Keine Fixkosten für diesen Monat" ctaLabel="Zur Buchungsverwaltung"
+  (ctaClick)="openCreate()" />
 }
 
 <!-- Ledger -->
 @else {
-  <div class="flex flex-col overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
-    @for (group of enrichedGroups(); track group.categoryId) {
+<div class="flex flex-col p-5 pt-3 gap-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
 
-      <!-- Group header: 2px left border (category color), 5px dot, name, total, chevron -->
-      <div class="flex items-center h-6.5 px-4 gap-2 border-l-2 cursor-pointer
-                  hover:bg-(--surface-2) transition-colors duration-100"
-           [style.border-left-color]="group.categoryColor"
-           (click)="toggleGroup(group.categoryId)">
-        <span class="w-1.25 h-1.25 rounded-full shrink-0"
-              [style.background]="group.categoryColor"></span>
-        <span class="text-[9px] uppercase tracking-widest font-medium text-(--text-muted) flex-1 leading-none">
-          {{ group.categoryName }}
-        </span>
-        <span class="font-mono tabular-nums text-[11px]" [ngClass]="group.totalCents | klarMoneyClass">
+  <!-- Summary cards -->
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-[11px] uppercase tracking-wider font-semibold text-(--text-muted)">Übersicht</span>
+    <div class="flex items-center gap-2">
+      <label class="flex items-center gap-1.5 cursor-pointer select-none">
+        <span class="text-[10px] text-(--text-muted)">Planspiel</span>
+        <button role="switch"
+          class="relative inline-flex h-4.5 w-8 shrink-0 rounded-full border border-(--border) transition-colors duration-200"
+          [class.bg-(--color-accent)]="planspielActive()" [class.bg-(--surface-2)]="!planspielActive()"
+          [attr.aria-checked]="planspielActive()" (click)="togglePlanspiel()">
+          <span
+            class="pointer-events-none inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform duration-200"
+            [class.translate-x-[14px]]="planspielActive()" [class.translate-x-0]="!planspielActive()"
+            style="margin-top:1px; margin-left:2px;"></span>
+        </button>
+      </label>
+      <select class="text-[11px] bg-(--surface) border border-(--border) rounded px-2 py-1 text-(--text)
+                       hover:border-(--border-subtle) focus:outline-none focus:border-accent
+                       font-mono tabular-nums appearance-none cursor-pointer pr-6" [value]="memberFilter() ?? ''"
+        (change)="memberFilter.set($any($event.target).value || null)">
+        @for (opt of memberOptions(); track opt.userId) {
+        <option [value]="opt.userId">{{ opt.displayName }}</option>
+        }
+      </select>
+      <button class="flex items-center gap-1.5 text-[11px] text-(--text-muted) hover:text-(--text) transition-colors"
+        (click)="exportPdf()">
+        <klar-icon name="download" [size]="12" />
+        PDF
+      </button>
+    </div>
+  </div>
+  <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Einnahmen</span>
+        <span class="text-[9px] uppercase tracking-wider text-(--text-muted)">brutto</span>
+      </div>
+      <div class="font-mono text-[18px] tabular-nums text-(--color-income) mt-2">
+        {{ incomeTotalCents() | klarMoney }}
+      </div>
+      @if (incomeBracket().label !== '–') {
+      <div class="mt-1.5 flex items-center gap-1.5">
+        <span class="text-[10px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</span>
+        <span class="text-[9px] text-(--text-muted)">{{ incomeBracket().desc }}</span>
+      </div>
+      }
+    </div>
+    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Ausgaben</span>
+      </div>
+      <div class="font-mono text-[18px] tabular-nums text-(--color-expense) mt-2">
+        {{ expenseTotalCents() | klarMoney }}
+      </div>
+      @if (expenseRatio() !== null) {
+      <div class="mt-1.5 flex items-center gap-1.5">
+        <iconify-icon
+          [icon]="expenseRatio()! <= 70 ? 'lucide:trending-down' : expenseRatio()! <= 100 ? 'lucide:minus' : 'lucide:trending-up'"
+          width="12" height="12" [class]="expenseRatingColor()"></iconify-icon>
+        <span class="font-mono text-[10px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
+        <span class="text-[10px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
+      </div>
+      }
+    </div>
+    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Überschuss</span>
+      </div>
+      <div class="font-mono text-[18px] tabular-nums mt-2" [ngClass]="surplusCents() | klarMoneyClass">
+        {{ surplusCents() | klarMoney }}
+      </div>
+      @if (surplusRatio() !== null) {
+      <div class="mt-1.5 flex items-center gap-1.5">
+        <iconify-icon [icon]="surplusCents() >= 0 ? 'lucide:arrow-up-right' : 'lucide:arrow-down-right'" width="12"
+          height="12" [class]="surplusRatingColor()"></iconify-icon>
+        <span class="font-mono text-[10px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
+        <span class="text-[10px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Groups with clear section separation -->
+  @for (group of enrichedGroups(); track group.categoryId) {
+
+  <!-- Group section - clear card-like container -->
+  <div class="mb-3 rounded-md border border-(--border) bg-(--surface-2)">
+    <!-- Group header -->
+    <div class="flex items-center h-10 px-4 gap-4 cursor-pointer bg-(--surface)
+                    hover:bg-(--surface-2) transition-colors duration-150" (click)="toggleGroup(group.categoryId)">
+      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="group.categoryColor"></span>
+      <span class="text-[11px] uppercase tracking-wider font-semibold text-(--text-2) flex-1 truncate">
+        {{ group.categoryName }}
+      </span>
+      <div class="flex items-center gap-3">
+        <span class="font-mono tabular-nums text-[14px]" [ngClass]="group.totalCents | klarMoneyClass">
           {{ group.totalCents | klarMoney }}
         </span>
-        <klar-icon name="chevron-down" [size]="10"
-                   class="text-(--text-muted) transition-transform duration-150 shrink-0"
-                   [class.-rotate-90]="isCollapsed(group.categoryId)" />
+        <klar-icon name="chevron-down" [size]="14"
+          class="text-(--text-muted) transition-transform duration-200 shrink-0"
+          [class.-rotate-90]="isCollapsed(group.categoryId)" />
       </div>
+    </div>
 
-      <!-- Individual rows: 26px, no border, name + shortFreq + day + amount -->
-      @if (!isCollapsed(group.categoryId)) {
-        @for (item of group.items; track item.id) {
-          <div class="flex items-center h-6.5 px-4 gap-2 cursor-pointer
-                      hover:bg-(--surface-2) transition-colors duration-100"
-               (click)="openEdit(item, $event)">
-            <span class="flex-1 text-[13px] text-(--text) truncate leading-none min-w-0">
-              {{ item.name }}
-            </span>
-            @if (item.frequency !== 'MONTHLY') {
-              <span class="text-[9px] text-(--text-muted) shrink-0 leading-none">
-                {{ shortFreq(item.frequency) }}
-              </span>
-            }
-            <span class="text-[9px] font-mono text-(--text-muted) w-5.5 text-right shrink-0 tabular-nums leading-none">
-              {{ formatDay(item.dayOfMonth) }}
-            </span>
-            <span class="font-mono tabular-nums text-[11px] w-17 text-right shrink-0 leading-none"
-                  [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
-              {{ item.monthlyEquivalentCents | klarMoney }}
-            </span>
+    <!-- Items -->
+    @if (!isCollapsed(group.categoryId)) {
+    <div class="px-2 py-3 space-y-2">
+      @for (item of group.items; track item.id) {
+      <div class="flex items-center h-12 gap-4 cursor-pointer rounded-md px-3
+                          hover:bg-(--surface) border border-transparent hover:border-(--border-subtle)
+                          transition-all duration-150" (click)="!planspielActive() && openEdit(item, $event)">
+        <!-- Icon -->
+        <!-- <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"> -->
+        <app-brand-icon [name]="item.name" [size]="24" [style.color]="freqColor(item.frequency)" />
+        <!-- </div> -->
+
+        <!-- Calendar badge for day of month -->
+        @if (item.dayOfMonth) {
+        <div class="w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-(--border)">
+          <div class="bg-accent h-3 flex items-center justify-center">
+            <span class="text-[7px] font-bold text-white leading-none">TAG</span>
           </div>
+          <div class="bg-transparent flex items-center justify-center h-[calc(100%-12px)]">
+            <span class="font-mono text-[13px] tabular-nums text-(--text) leading-none">{{ item.dayOfMonth }}</span>
+          </div>
+        </div>
         }
-      }
 
+        <!-- Name -->
+        <div class="flex-1 min-w-0">
+          <div class="text-[14px] text-(--text) truncate">{{ item.name }}</div>
+        </div>
+
+        <!-- Amount + Chevron -->
+        <div class="flex items-center gap-3">
+          <span class="font-mono tabular-nums text-[14px] min-w-17.5 text-right"
+            [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
+            {{ item.monthlyEquivalentCents | klarMoney }}
+          </span>
+          <klar-icon name="chevron-right" [size]="16" class="text-(--text-muted) shrink-0" />
+        </div>
+      </div>
+      }
+    </div>
     }
   </div>
+
+  }
+</div>
+
+<!-- Frequency legend - fixed footer -->
+@if (enrichedGroups().length > 0) {
+<div
+  class="sticky bottom-0 left-0 right-0 bg-(--bg) border-t border-(--border) px-5 py-2 flex items-center gap-4 shrink-0">
+  <div class="flex items-center gap-1.5">
+    <span class="w-2 h-2 rounded-full" style="background:#22c55e"></span>
+    <span class="text-[10px] text-(--text-muted)">Monatlich</span>
+  </div>
+  <div class="flex items-center gap-1.5">
+    <span class="w-2 h-2 rounded-full" style="background:#3b82f6"></span>
+    <span class="text-[10px] text-(--text-muted)">Quartalsweise</span>
+  </div>
+  <div class="flex items-center gap-1.5">
+    <span class="w-2 h-2 rounded-full" style="background:#a855f7"></span>
+    <span class="text-[10px] text-(--text-muted)">Jährlich</span>
+  </div>
+  <div class="flex items-center gap-1.5">
+    <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>
+    <span class="text-[10px] text-(--text-muted)">Individuell</span>
+  </div>
+</div>
+}
 }
