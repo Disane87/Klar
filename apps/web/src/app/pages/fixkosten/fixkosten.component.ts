@@ -43,8 +43,23 @@ export class FixkostenPageComponent {
 
   readonly memberOptions = computed(() => {
     const ms = this.members();
-    return [{ userId: '', displayName: 'Alle' }, ...ms.map(m => ({ userId: m.userId, displayName: m.displayName }))];
+    return ms.map(m => ({ userId: m.userId, displayName: m.displayName }));
   });
+
+  getHoverCardClasses(): string {
+    const viewportHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    const headerHeight = 48;
+    const availableTop = scrollY;
+    const availableBottom = viewportHeight - scrollY - headerHeight;
+    const cardHeight = 60;
+
+    if (availableTop > cardHeight && availableTop >= availableBottom) {
+      return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+    } else {
+      return 'top-full left-1/2 -translate-x-1/2 mt-2';
+    }
+  }
 
   constructor() {
     this.pageHeader.set({
@@ -124,13 +139,21 @@ export class FixkostenPageComponent {
 
   openEdit(item: FixedCostItem, event: Event): void {
     event.stopPropagation();
-    if (this.planspielActive()) return;
-    this.dialogService.open({
-      title:     'Eintrag bearbeiten',
-      component: RecurringEditDialogComponent,
-      inputs:    { item },
-      width:     'sm',
-    });
+    if (this.planspielActive()) {
+      this.dialogService.open({
+        title:     'Eintrag bearbeiten (Planspiel)',
+        component: RecurringEditDialogComponent,
+        inputs:    { item, planspielMode: true },
+        width:     'sm',
+      });
+    } else {
+      this.dialogService.open({
+        title:     'Eintrag bearbeiten',
+        component: RecurringEditDialogComponent,
+        inputs:    { item, planspielMode: false },
+        width:     'sm',
+      });
+    }
   }
 
   // ── Enriched groups (filtered by member, planspiel-aware) ─────────────────────
@@ -253,6 +276,38 @@ grouped.set(key, {
     if (ratio >= 15) return 'text-(--color-income)';
     if (ratio >= 5) return 'text-(--color-surplus)';
     if (ratio >= 0) return 'text-yellow-400';
+    return 'text-(--color-expense)';
+  });
+
+  readonly optimalSavingsCents = computed(() => {
+    const income = this.incomeTotalCents();
+    if (income <= 0) return 0;
+    return Math.round(income * 0.2);
+  });
+
+  readonly savingsGapCents = computed(() => {
+    return this.surplusCents() - this.optimalSavingsCents();
+  });
+
+  readonly savingsGapPercent = computed(() => {
+    const income = this.incomeTotalCents();
+    if (income <= 0) return 0;
+    return Math.round((this.savingsGapCents() / Math.abs(income)) * 100);
+  });
+
+  readonly savingsRating = computed(() => {
+    const ratio = this.savingsGapPercent();
+    if (ratio >= 5) return 'Super';
+    if (ratio >= 0) return 'Gut';
+    if (ratio >= -5) return 'Knapp';
+    return 'Zu wenig';
+  });
+
+  readonly savingsRatingColor = computed(() => {
+    const ratio = this.savingsGapPercent();
+    if (ratio >= 5) return 'text-(--color-income)';
+    if (ratio >= 0) return 'text-(--color-income)';
+    if (ratio >= -5) return 'text-yellow-400';
     return 'text-(--color-expense)';
   });
 

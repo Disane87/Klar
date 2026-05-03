@@ -10,6 +10,7 @@ import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
+import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 import { safeDayOfMonth } from '@klar/shared';
@@ -23,12 +24,14 @@ import { safeDayOfMonth } from '@klar/shared';
 })
 export class RecurringEditDialogComponent {
   item = input.required<FixedCostItem>();
+  planspielMode = input<boolean>(false);
 
   private dialog     = inject(KlarDialogService);
   private store      = inject(OverviewStore);
   private household  = inject(HouseholdStore);
   private recurring  = inject(RecurringTransactionsService);
   private toast      = inject(KlarToastService);
+  private planspielStore = inject(PlanspielStore);
   protected cats     = inject(CategoriesStore);
 
   readonly name       = signal('');
@@ -72,8 +75,6 @@ export class RecurringEditDialogComponent {
 
   async save(): Promise<void> {
     if (!this.isValid() || this.saving()) return;
-    const hid = this.household.activeId();
-    if (!hid) return;
 
     const monthlyCents = this.parseMonthly(this.monthly());
     const freq         = this.frequency();
@@ -84,37 +85,63 @@ export class RecurringEditDialogComponent {
 
     this.saving.set(true);
     this.err.set('');
-    try {
-      await this.recurring.patch(hid, this.item().id, {
-        name:        this.name().trim(),
+
+    if (this.planspielMode()) {
+      this.planspielStore.updateEntry(this.item().id, {
+        label:        this.name().trim(),
         amountCents: actualCents,
         categoryId:  this.categoryId(),
         frequency:   freq,
-        dayOfMonth:  clampedDay,
       });
-      this.store.reload();
       this.dialog.close();
-      this.toast.success('Gespeichert');
-    } catch {
-      this.err.set('Speichern fehlgeschlagen. Bitte erneut versuchen.');
-    } finally {
+      this.toast.success('Im Planspiel gespeichert');
       this.saving.set(false);
+    } else {
+      const hid = this.household.activeId();
+      if (!hid) return;
+      try {
+        await this.recurring.patch(hid, this.item().id, {
+          name:        this.name().trim(),
+          amountCents: actualCents,
+          categoryId:  this.categoryId(),
+          frequency:   freq,
+          dayOfMonth:  clampedDay,
+        });
+        this.store.reload();
+        this.dialog.close();
+        this.toast.success('Gespeichert');
+      } catch {
+        this.err.set('Speichern fehlgeschlagen. Bitte erneut versuchen.');
+      } finally {
+        this.saving.set(false);
+      }
     }
   }
 
   async remove(): Promise<void> {
-    const hid = this.household.activeId();
-    if (!hid || this.saving()) return;
+    if (this.saving()) return;
+
     this.saving.set(true);
-    try {
-      await this.recurring.delete(hid, this.item().id);
-      this.store.reload();
+    this.err.set('');
+
+    if (this.planspielMode()) {
+      this.planspielStore.removeEntry(this.item().id);
       this.dialog.close();
-      this.toast.success('Gelöscht');
-    } catch {
-      this.err.set('Löschen fehlgeschlagen.');
-    } finally {
+      this.toast.success('Im Planspiel entfernt');
       this.saving.set(false);
+    } else {
+      const hid = this.household.activeId();
+      if (!hid) return;
+      try {
+        await this.recurring.delete(hid, this.item().id);
+        this.store.reload();
+        this.dialog.close();
+        this.toast.success('Gelöscht');
+      } catch {
+        this.err.set('Löschen fehlgeschlagen.');
+      } finally {
+        this.saving.set(false);
+      }
     }
   }
 

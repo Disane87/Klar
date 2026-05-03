@@ -60,14 +60,48 @@
             style="margin-top:1px; margin-left:2px;"></span>
         </button>
       </label>
-      <select class="text-[11px] bg-(--surface) border border-(--border) rounded px-2 py-1 text-(--text)
-                       hover:border-(--border-subtle) focus:outline-none focus:border-accent
-                       font-mono tabular-nums appearance-none cursor-pointer pr-6" [value]="memberFilter() ?? ''"
-        (change)="memberFilter.set($any($event.target).value || null)">
+      <div class="flex items-center gap-1">
+        <!-- Alle button -->
+        <div class="relative">
+          <button type="button"
+            class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-150 peer"
+            [class.border-(--color-accent)]="memberFilter() === null"
+            [class.bg-(--color-accent)]="memberFilter() === null"
+            [class.text-(--zinc-950)]="memberFilter() === null"
+            [class.border-(--border)]="memberFilter() !== null"
+            [class.bg-(--surface-2)]="memberFilter() !== null"
+            [class.text-(--text-2)]="memberFilter() !== null"
+            (click)="memberFilter.set(null)">
+            <iconify-icon icon="lucide:users" width="14" height="14" />
+          </button>
+          <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
+               [ngClass]="getHoverCardClasses()">
+            <div class="text-[11px] font-medium text-(--text)">Alle</div>
+            <div class="text-[9px] text-(--text-muted)">{{ memberFilter() === null ? 'Filter aktiv' : 'Klicken zum Filtern' }}</div>
+          </div>
+        </div>
+        <!-- Member buttons -->
         @for (opt of memberOptions(); track opt.userId) {
-        <option [value]="opt.userId">{{ opt.displayName }}</option>
+        <div class="relative">
+          <button type="button"
+            class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-150 peer"
+            [class.border-(--color-accent)]="memberFilter() === opt.userId"
+            [class.bg-(--color-accent)]="memberFilter() === opt.userId"
+            [class.text-(--zinc-950)]="memberFilter() === opt.userId"
+            [class.border-(--border)]="memberFilter() !== opt.userId"
+            [class.bg-(--surface-2)]="memberFilter() !== opt.userId"
+            [class.text-(--text-2)]="memberFilter() !== opt.userId"
+            (click)="memberFilter.set(memberFilter() === opt.userId ? null : opt.userId)">
+            {{ opt.displayName.charAt(0).toUpperCase() }}
+          </button>
+          <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
+               [ngClass]="getHoverCardClasses()">
+            <div class="text-[11px] font-medium text-(--text)">{{ opt.displayName }}</div>
+            <div class="text-[9px] text-(--text-muted)">{{ memberFilter() === opt.userId ? 'Filter aktiv' : 'Klicken zum Filtern' }}</div>
+          </div>
+        </div>
         }
-      </select>
+      </div>
       <button class="flex items-center gap-1.5 text-[11px] text-(--text-muted) hover:text-(--text) transition-colors"
         (click)="exportPdf()">
         <klar-icon name="download" [size]="12" />
@@ -75,54 +109,65 @@
       </button>
     </div>
   </div>
-  <div class="grid grid-cols-3 gap-3 mb-4 max-md:grid-cols-1 max-md:gap-2">
-    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Einnahmen</span>
-        <span class="text-[9px] uppercase tracking-wider text-(--text-muted)">brutto</span>
+  <div class="grid grid-cols-4 gap-3 mb-4 max-md:grid-cols-2 max-md:gap-2">
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
+      <iconify-icon icon="lucide:wallet" width="28" height="28" class="text-(--color-income) shrink-0" />
+      <div class="min-w-0">
+        <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Einnahmen</div>
+        <div class="font-mono text-base tabular-nums text-(--color-income) max-md:text-[15px]">
+          {{ incomeTotalCents() | klarMoney }}
+        </div>
+        @if (incomeBracket().label !== '–') {
+        <div class="text-[9px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</div>
+        }
       </div>
-      <div class="font-mono text-base tabular-nums text-(--color-income) mt-1.5 max-md:text-[15px]">
-        {{ incomeTotalCents() | klarMoney }}
-      </div>
-      @if (incomeBracket().label !== '–') {
-      <div class="mt-1 flex items-center gap-1.5">
-        <span class="text-[9px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</span>
-        <span class="text-[8px] text-(--text-muted)">{{ incomeBracket().desc }}</span>
-      </div>
-      }
     </div>
-    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Ausgaben</span>
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
+      <iconify-icon icon="lucide:credit-card" width="28" height="28" class="text-(--color-expense) shrink-0" />
+      <div class="min-w-0">
+        <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Ausgaben</div>
+        <div class="font-mono text-base tabular-nums text-(--color-expense) max-md:text-[15px]">
+          {{ expenseTotalCents() | klarMoney }}
+        </div>
+        @if (expenseRatio() !== null) {
+        <div class="flex items-center gap-1">
+          <iconify-icon
+            [icon]="expenseRatio()! <= 70 ? 'lucide:trending-down' : expenseRatio()! <= 100 ? 'lucide:minus' : 'lucide:trending-up'"
+            width="12" height="12" [class]="expenseRatingColor()"></iconify-icon>
+          <span class="font-mono text-[9px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
+          <span class="text-[9px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
+        </div>
+        }
       </div>
-      <div class="font-mono text-base tabular-nums text-(--color-expense) mt-1.5 max-md:text-[15px]">
-        {{ expenseTotalCents() | klarMoney }}
-      </div>
-      @if (expenseRatio() !== null) {
-      <div class="mt-1 flex items-center gap-1.5">
-        <iconify-icon
-          [icon]="expenseRatio()! <= 70 ? 'lucide:trending-down' : expenseRatio()! <= 100 ? 'lucide:minus' : 'lucide:trending-up'"
-          width="12" height="12" [class]="expenseRatingColor()"></iconify-icon>
-        <span class="font-mono text-[9px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
-        <span class="text-[9px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
-      </div>
-      }
     </div>
-    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Überschuss</span>
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
+      <iconify-icon icon="lucide:piggy-bank" width="28" height="28" [ngClass]="surplusCents() | klarMoneyClass" class="shrink-0" />
+      <div class="min-w-0">
+        <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Überschuss</div>
+        <div class="font-mono text-base tabular-nums max-md:text-[15px]" [ngClass]="surplusCents() | klarMoneyClass">
+          {{ surplusCents() | klarMoney }}
+        </div>
+        @if (surplusRatio() !== null) {
+        <div class="flex items-center gap-1">
+          <iconify-icon [icon]="surplusCents() >= 0 ? 'lucide:arrow-up-right' : 'lucide:arrow-down-right'" width="12"
+            height="12" [class]="surplusRatingColor()"></iconify-icon>
+          <span class="font-mono text-[9px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
+          <span class="text-[9px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
+        </div>
+        }
       </div>
-      <div class="font-mono text-base tabular-nums mt-1.5 max-md:text-[15px]" [ngClass]="surplusCents() | klarMoneyClass">
-        {{ surplusCents() | klarMoney }}
+    </div>
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
+      <iconify-icon icon="lucide:target" width="28" height="28" [ngClass]="savingsGapCents() >= 0 ? 'text-(--color-income)' : 'text-(--color-expense)'" class="shrink-0" />
+      <div class="min-w-0">
+        <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Ideale Quote</div>
+        <div class="font-mono text-base tabular-nums max-md:text-[15px]" [ngClass]="savingsGapCents() >= 0 ? 'text-(--color-income)' : 'text-(--color-expense)'">
+          {{ optimalSavingsCents() | klarMoney }}
+        </div>
+        <div class="text-[9px] text-(--text-muted)">
+          Aktuell: <span [ngClass]="savingsRatingColor()" class="font-mono">{{ surplusRatio() !== null ? surplusRatio() : 0 }}%</span> · Ziel: 20%
+        </div>
       </div>
-      @if (surplusRatio() !== null) {
-      <div class="mt-1 flex items-center gap-1.5">
-        <iconify-icon [icon]="surplusCents() >= 0 ? 'lucide:arrow-up-right' : 'lucide:arrow-down-right'" width="12"
-          height="12" [class]="surplusRatingColor()"></iconify-icon>
-        <span class="font-mono text-[9px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
-        <span class="text-[9px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
-      </div>
-      }
     </div>
   </div>
 
@@ -154,7 +199,7 @@
       @for (item of group.items; track item.id) {
       <div class="flex items-center h-12 gap-4 cursor-pointer rounded-md px-3
                           hover:bg-(--surface) border border-transparent hover:border-(--border-subtle)
-                          transition-all duration-150" (click)="!planspielActive() && openEdit(item, $event)">
+                          transition-all duration-150" (click)="openEdit(item, $event)">
         <!-- Icon -->
         <!-- <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"> -->
         <app-brand-icon [name]="item.name" [size]="24" [style.color]="freqColor(item.frequency)" />

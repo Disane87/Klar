@@ -3,6 +3,11 @@
 /* Tell Tailwind v4 where to scan for utility classes */
 @source "../**/*.{html,ts}";
 
+/* Layout constants */
+:root {
+  --header-height: 61px;
+}
+
 /* Class-based dark mode — add class="dark" or data-theme="light" to <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
