@@ -6,7 +6,7 @@
     "build": "ng build",
     "dev": "ng serve --port 4200",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --coverage",
+    "test": "vitest run --coverage --coverage.thresholds.lines=30",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "clean": "rimraf dist .angular"
