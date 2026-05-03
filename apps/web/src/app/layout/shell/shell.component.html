@@ -34,18 +34,18 @@
 </div>
 
 <!-- Mobile bottom nav — hidden on desktop -->
-<nav class="fixed bottom-0 left-0 right-0 pb-(--safe-bottom) border-t border-(--border) bg-(--surface) grid grid-cols-5 z-[100] md:hidden">
+<nav class="fixed bottom-0 left-0 right-0 pb-(--safe-bottom) border-t border-(--border) bg-(--surface) flex items-center justify-around z-[100] md:hidden">
   @for (tab of tabs; track tab.id) {
     <a [routerLink]="tab.route" routerLinkActive="active"
-       class="flex flex-col items-center justify-center gap-1 py-2.5 text-(--text-muted) [&.active]:text-surplus no-underline min-h-14 transition-colors duration-100">
+       class="flex flex-col items-center justify-center gap-1 py-3 px-2 text-(--text-muted) [&.active]:text-(--color-accent) no-underline min-w-14 transition-colors duration-150">
       @if (tab.primary) {
-        <div class="size-9 rounded-(--radius) bg-accent text-(--zinc-950) flex items-center justify-center -mt-1.5">
-          <klar-icon [name]="tab.icon" [size]="18" [stroke]="2" />
+        <div class="size-10 rounded-full bg-(--surface-2) border border-(--border) flex items-center justify-center">
+          <klar-icon [name]="tab.icon" [size]="20" [stroke]="2" class="text-(--color-accent)" />
         </div>
       } @else {
-        <klar-icon [name]="tab.icon" [size]="18" [stroke]="1.6" />
+        <klar-icon [name]="tab.icon" [size]="20" [stroke]="1.5" class="[&.active]:stroke-2" />
       }
-      <span class="text-[9px] tracking-[0.08em] uppercase font-medium">{{ tab.label }}</span>
+      <span class="text-[10px] tracking-[0.05em] font-medium">{{ tab.label }}</span>
     </a>
   }
 </nav>

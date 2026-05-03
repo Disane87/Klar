@@ -293,19 +293,16 @@ input, select, textarea {
 
 @media (max-width: 767px) {
   .klar-dialog-panel {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: auto !important;
-    transform: none !important;
-    padding: 0;
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
   }
 
   .klar-dialog-panel .panel {
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    max-height: 90dvh;
-    padding-bottom: env(safe-area-inset-bottom);
+    width: 100%;
+    max-height: calc(100dvh - 120px);
+    border-radius: var(--radius-lg);
+    margin: 0;
   }
 }
 
