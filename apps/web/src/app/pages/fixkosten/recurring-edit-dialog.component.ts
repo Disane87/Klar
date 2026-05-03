@@ -102,6 +102,22 @@ export class RecurringEditDialogComponent {
     }
   }
 
+  async remove(): Promise<void> {
+    const hid = this.household.activeId();
+    if (!hid || this.saving()) return;
+    this.saving.set(true);
+    try {
+      await this.recurring.delete(hid, this.item().id);
+      this.store.reload();
+      this.dialog.close();
+      this.toast.success('Gelöscht');
+    } catch {
+      this.err.set('Löschen fehlgeschlagen.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   cancel(): void { this.dialog.close(); }
 
   private centsToDisplay(cents: number): string {

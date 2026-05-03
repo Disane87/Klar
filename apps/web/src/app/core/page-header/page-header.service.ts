@@ -11,9 +11,11 @@ export interface PageHeaderConfig {
   subtitle?:      string;
   showAdd?:       boolean;
   showPlanspiel?: boolean;
+  showExport?:    boolean;
   addLabel?:      string;
   onAdd?:         () => void;
   onPlanspiel?:   () => void;
+  onExport?:      () => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,9 +24,11 @@ export class PageHeaderService {
   readonly subtitle      = signal<string | undefined>(undefined);
   readonly showAdd       = signal(false);
   readonly showPlanspiel = signal(false);
+  readonly showExport    = signal(false);
   readonly addLabel      = signal('Buchung');
   readonly onAdd         = signal<(() => void) | null>(null);
   readonly onPlanspiel   = signal<(() => void) | null>(null);
+  readonly onExport      = signal<(() => void) | null>(null);
   readonly stats         = signal<PageStat[]>([]);
   readonly chipLabel     = signal<string | null>(null);
 
@@ -33,9 +37,11 @@ export class PageHeaderService {
     this.subtitle.set(config.subtitle);
     this.showAdd.set(config.showAdd ?? false);
     this.showPlanspiel.set(config.showPlanspiel ?? false);
+    this.showExport.set(config.showExport ?? false);
     this.addLabel.set(config.addLabel ?? 'Buchung');
     this.onAdd.set(config.onAdd ?? null);
     this.onPlanspiel.set(config.onPlanspiel ?? null);
+    this.onExport.set(config.onExport ?? null);
     this.stats.set([]);
     this.chipLabel.set(null);
   }

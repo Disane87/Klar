@@ -4,9 +4,13 @@ import { calculateMonthlyOverview, type RecurringFrequency, type OverviewResult 
 export interface PlanEntry {
   id: string;
   label: string;
-  amountCents: number; // signed: positive = income, negative = expense
+  amountCents: number;
   frequency: RecurringFrequency;
-  color: string; // hex color string for visual grouping
+  color: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryType?: string;
+  categorySortOrder?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +33,22 @@ export class PlanspielStore {
 
   readonly surplusPositive = computed(() => this.result().surplusCents >= 0);
   readonly isEmpty = computed(() => this.entries().length === 0);
+
+  /** Seed entries from Fixkosten data (replaces current entries) */
+  loadFromFixkosten(items: { name: string; amountCents: number; monthlyEquivalentCents: number; frequency: RecurringFrequency; categoryId: string; categoryName: string; categoryColor: string; categoryType: string; categorySortOrder: number }[]): void {
+    const seeded = items.map(item => ({
+      id: crypto.randomUUID(),
+      label: item.name,
+      amountCents: item.monthlyEquivalentCents,
+      frequency: item.frequency,
+      color: item.categoryColor,
+      categoryId: item.categoryId,
+      categoryName: item.categoryName,
+      categoryType: item.categoryType,
+      categorySortOrder: item.categorySortOrder,
+    }));
+    this.entries.set(seeded);
+  }
 
   addEntry(entry: Omit<PlanEntry, 'id'>): void {
     this.entries.update(list => [

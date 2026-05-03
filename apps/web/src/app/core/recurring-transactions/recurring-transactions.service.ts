@@ -3,6 +3,19 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import type { RecurringFrequency } from '@klar/shared';
 
+export interface CreateRecurringTransactionRequest {
+  name:        string;
+  amountCents: number;
+  categoryId:  string;
+  frequency:   RecurringFrequency;
+  dayOfMonth?: number | null;
+  startDate:   string;
+  projectId?:  string | null;
+  visibility?: string;
+  note?:       string | null;
+  isActive?:   boolean;
+}
+
 export interface UpdateRecurringTransactionRequest {
   name?:        string;
   amountCents?: number;
@@ -11,9 +24,42 @@ export interface UpdateRecurringTransactionRequest {
   dayOfMonth?:  number | null;
 }
 
+export interface RecurringTransactionResponse {
+  id:               string;
+  householdId:      string;
+  createdByUserId:  string;
+  name:             string;
+  amountCents:     number;
+  categoryId:       string;
+  projectId:        string | null;
+  frequency:        RecurringFrequency;
+  customDays:       number | null;
+  dayOfMonth:       number | null;
+  startDate:        string;
+  endDate:          string | null;
+  visibility:       string;
+  isVariable:       boolean;
+  note:             string | null;
+  isActive:         boolean;
+  createdAt:        string;
+  updatedAt:        string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RecurringTransactionsService {
   private http = inject(HttpClient);
+
+  create(
+    householdId: string,
+    body: CreateRecurringTransactionRequest,
+  ): Promise<RecurringTransactionResponse> {
+    return firstValueFrom(
+      this.http.post<RecurringTransactionResponse>(
+        `/api/v1/households/${householdId}/recurring-transactions`,
+        body,
+      ),
+    );
+  }
 
   patch(
     householdId: string,
@@ -24,6 +70,14 @@ export class RecurringTransactionsService {
       this.http.patch<void>(
         `/api/v1/households/${householdId}/recurring-transactions/${id}`,
         body,
+      ),
+    );
+  }
+
+  delete(householdId: string, id: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(
+        `/api/v1/households/${householdId}/recurring-transactions/${id}`,
       ),
     );
   }
