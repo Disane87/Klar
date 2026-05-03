@@ -21,11 +21,13 @@ export class TopBarComponent {
   monthChip     = input('April 2026');
   showPlanspiel = input(false);
   showAdd       = input(false);
+  showExport     = input(false);
   addLabel      = input('Buchung');
   stats         = input<PageStat[]>([]);
 
   addClick       = output<void>();
   planspielClick = output<void>();
+  exportClick    = output<void>();
 
   statColor(tone: PageStat['tone']): string {
     switch (tone) {

@@ -13,10 +13,12 @@
         [monthChip]="pageHeader.chipLabel() ?? monthChip()"
         [showPlanspiel]="pageHeader.showPlanspiel()"
         [showAdd]="pageHeader.showAdd()"
+        [showExport]="pageHeader.showExport()"
         [addLabel]="pageHeader.addLabel()"
         [stats]="pageHeader.stats()"
         (addClick)="pageHeader.onAdd()?.()"
         (planspielClick)="pageHeader.onPlanspiel()?.()"
+        (exportClick)="pageHeader.onExport()?.()"
       />
       <!-- Mobile header — title + month chip + user, hidden on desktop -->
       <header class="flex h-12 px-4 border-b border-(--border) bg-(--surface) items-center justify-between shrink-0 md:hidden">

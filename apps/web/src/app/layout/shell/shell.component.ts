@@ -22,7 +22,7 @@ const BOTTOM_TABS: BottomTab[] = [
   { id: 'fixkosten', label: 'Fixkosten', icon: 'fixkosten', route: '/app/fixkosten' },
   { id: 'buchen',    label: 'Buchen',    icon: 'plus',      route: '/app/buchungen', primary: true },
   { id: 'projekte',  label: 'Projekte',  icon: 'folder',    route: '/app/projekte' },
-  { id: 'mehr',      label: 'Mehr',      icon: 'haushalt',  route: '/app/haushalt' },
+  { id: 'tresor',    label: 'Tresor',    icon: 'tresor',    route: '/app/tresor' },
 ];
 
 @Component({

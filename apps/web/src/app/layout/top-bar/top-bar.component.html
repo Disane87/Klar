@@ -1,18 +1,19 @@
-<header class="w-full h-13 border-b border-(--border) px-5 flex items-center justify-between shrink-0">
-  <div class="flex items-baseline gap-3">
-    <span class="text-sm font-medium tracking-[-0.01em]">{{ title() }}</span>
+<header class="w-full border-b border-(--border) px-5 py-3 flex items-center justify-between shrink-0">
+  <div class="flex items-center h-9">
+    <span class="text-[15px] font-medium tracking-[-0.01em] flex items-center">{{ title() }}</span>
     @if (subtitle()) {
-      <span class="text-(--text-muted) klar-label">{{ subtitle() }}</span>
+      <span class="text-[11px] text-(--text-muted) flex items-center ml-3">{{ subtitle() }}</span>
     }
   </div>
 
-  <div class="flex items-center gap-3">
+  <div class="flex items-center h-9 gap-3">
+    <!-- Stats as cards -->
     @for (stat of stats(); track $index) {
-      <div class="flex flex-col items-end gap-0.5">
-        <span class="text-[8px] uppercase tracking-[0.1em] text-(--text-muted) font-medium leading-none">
+      <div class="bg-(--surface) rounded border border-(--border) px-3 py-2 flex items-center">
+        <span class="text-[9px] uppercase tracking-wider text-(--text-muted) mr-3">
           {{ stat.label }}
         </span>
-        <span class="text-[11px] font-mono tabular-nums leading-none" [ngClass]="statColor(stat.tone)">
+        <span class="text-[14px] font-mono tabular-nums" [ngClass]="statColor(stat.tone)">
           {{ stat.valueCents | klarMoney }}
         </span>
       </div>
@@ -28,6 +29,12 @@
       <button hlmBtn variant="default" size="sm" type="button" (click)="addClick.emit()">
         <klar-icon name="plus" [size]="14" />
         {{ addLabel() }}
+      </button>
+    }
+    @if (showExport()) {
+      <button hlmBtn variant="outline" size="sm" type="button" (click)="exportClick.emit()">
+        <klar-icon name="download" [size]="14" />
+        PDF
       </button>
     }
     <klar-header-user />

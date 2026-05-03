@@ -15,11 +15,11 @@ const MAIN_ITEMS: NavItem[] = [
   { id: 'monat',     label: 'Monat',         icon: 'trending',      route: '/app/monat' },
   { id: 'projekte',  label: 'Projekte',      icon: 'folder',        route: '/app/projekte' },
   { id: 'buchungen', label: 'Buchungen',     icon: 'receipt',       route: '/app/buchungen' },
-  { id: 'wieder',    label: 'Wiederkehrend', icon: 'wiederkehrend', route: '/app/wiederkehrend' },
 ];
 
 const SYS_ITEMS: NavItem[] = [
-  { id: 'tresor',   label: 'Tresor',         icon: 'shield',   route: '/app/tresor' },
+  { id: 'haushalt', label: 'Haushalt',   icon: 'haushalt', route: '/app/haushalt' },
+  { id: 'tresor',   label: 'Tresor',      icon: 'tresor',   route: '/app/tresor' },
   { id: 'settings', label: 'Einstellungen',  icon: 'settings', route: '/app/settings' },
 ];
 
