@@ -29,7 +29,11 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
+# pnpm links direct deps into apps/api/node_modules — copy both and add NODE_PATH
+# so Node.js finds packages like reflect-metadata that aren't hoisted to root
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+ENV NODE_PATH=/app/apps/api/node_modules
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/apps/api/dist ./dist
