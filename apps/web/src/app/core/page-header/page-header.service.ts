@@ -1,5 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 
+export interface PageStat {
+  label: string;
+  valueCents: number;
+  tone: 'surplus' | 'income' | 'expense' | 'neutral';
+}
+
 export interface PageHeaderConfig {
   title:          string;
   subtitle?:      string;
@@ -19,6 +25,8 @@ export class PageHeaderService {
   readonly addLabel      = signal('Buchung');
   readonly onAdd         = signal<(() => void) | null>(null);
   readonly onPlanspiel   = signal<(() => void) | null>(null);
+  readonly stats         = signal<PageStat[]>([]);
+  readonly chipLabel     = signal<string | null>(null);
 
   set(config: PageHeaderConfig): void {
     this.title.set(config.title);
@@ -28,5 +36,7 @@ export class PageHeaderService {
     this.addLabel.set(config.addLabel ?? 'Buchung');
     this.onAdd.set(config.onAdd ?? null);
     this.onPlanspiel.set(config.onPlanspiel ?? null);
+    this.stats.set([]);
+    this.chipLabel.set(null);
   }
 }

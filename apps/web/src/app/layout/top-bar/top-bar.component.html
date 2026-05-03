@@ -6,7 +6,17 @@
     }
   </div>
 
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-3">
+    @for (stat of stats(); track stat.label) {
+      <div class="flex flex-col items-end gap-0.5">
+        <span class="text-[8px] uppercase tracking-[0.1em] text-(--text-muted) font-medium leading-none">
+          {{ stat.label }}
+        </span>
+        <span class="text-[11px] font-mono tabular-nums leading-none" [ngClass]="statColor(stat.tone)">
+          {{ stat.valueCents | klarMoney }}
+        </span>
+      </div>
+    }
     <klar-month-chip [label]="monthChip()" />
     @if (showPlanspiel()) {
       <button hlmBtn variant="ghost" size="sm" type="button" (click)="planspielClick.emit()">
