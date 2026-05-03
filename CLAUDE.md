@@ -5,115 +5,119 @@ Vollständige Produktanforderungen: `SPEC.md`
 
 ---
 
-## 🚀 Produktions-Deployment
-
-Der Portainer-Stack auf dem Unraid-Host (`klar.disane.dev`) ist die **primäre Integrationstest-Umgebung**. Nach jedem Commit baut die CI ein neues Image (`ghcr.io/disane87/klar:latest`), das dann manuell im Portainer-Stack neu deployed wird. Lokale Unit-Tests ersetzen das nicht — echte Integrationstests laufen in Prod.
-
----
-
 ## ⚡ PFLICHT-TOOLS — IMMER AKTIV
 
-Diese Tools sind bei JEDER Session und JEDEM Task zu verwenden. Keine Ausnahmen.
+### Session-Start
 
-### Session-Start (jedes Mal zuerst)
-```
+```bash
+git status && git branch --show-current
 memory_search(query="klar app completed phases decisions")
 memory_search(query="klar app patterns that worked")
 memory_search(query="klar app current phase status")
 ```
+
 Ergebnisse mit Score > 0.7 sind verbindlich — nicht neu entscheiden was bereits entschieden wurde.
 
-### Vor jedem Task
-```
-memory_search(query="[task-spezifisches Stichwort] klar app")
-```
+### Skills — Wann welcher
 
-### Superpowers Skills (triggern automatisch, aber explizit nutzen)
-- `writing-plans` — vor jeder Phase, Tasks à 5–15 Min aufbrechen
-- `subagent-driven-development` — für die eigentliche Implementierung
-- `test-driven-development` — RED → GREEN → REFACTOR, kein Code vor Tests
-- `requesting-code-review` — nach jedem Modul vor Freigabe
-- `dispatching-parallel-agents` — Frontend + Backend parallel wenn möglich
+| Skill | Wann verwenden |
+|---|---|
+| `writing-plans` | Vor jeder Phase — Tasks à 5–15 Min aufbrechen |
+| `gstack` | Scaffolding + große Features (mehrere neue Module) — *nicht* für einzelne Fixes |
+| `subagent-driven-development` | **Jede** Implementierungs-Task — nie direkt im Hauptcontext coden |
+| `dispatching-parallel-agents` | Frontend + Backend immer parallel wenn möglich |
+| `interface-design` | Vor jeder neuen UI-Komponente/Seite — Design zuerst, dann Code |
+| `test-driven-development` | RED → GREEN → REFACTOR — kein Code vor Tests |
+| `systematic-debugging` | Bei jedem Bug-Fix — Skill zuerst aufrufen, nie ad-hoc debuggen |
+| `requesting-code-review` | Nach jedem Modul — vor Merge/Freigabe |
 
-### Ruflo Swarm (jede Phase)
-Swarm-Konfiguration aus `AGENTS.md` verwenden.
-Einfache Phasen: 4 Agents. Standard: 6. Komplex: 8.
+### Ruflo Swarm — Token-effiziente Koordination
+
+- `swarm_init` + `swarm_status` — Swarm starten/überwachen (Konfiguration aus `AGENTS.md`)
+- `memory_store` / `memory_search` — Kontext zwischen Agents teilen, nie doppelt laden
+- `agent_spawn` — parallele Agents für unabhängige Tasks
+- `hooks_route` — Task-Routing nach Typ (Frontend/Backend/Test/Review)
+
+**Swarm-Größe:** Einfache Phasen: 4 · Standard: 6 · Komplex: 8
+
+**Token-Sparregeln:**
+- Hauptcontext nur für Koordination — kein Code direkt im Hauptcontext schreiben
+- Subagents bekommen minimalen Kontext (nur was sie brauchen)
+- Zwischenergebnisse via `memory_store` teilen, nicht in den Hauptcontext zurückgeben
+- Parallele Agents für unabhängige Module — nie sequenziell wenn parallel möglich
+
+### Workflow — immer in dieser Reihenfolge
+
+1. **Session-Start** — `git status`, memory_search, aktuellen Stand erfassen
+2. **Plan** (`writing-plans`) — Tasks aufbrechen, Swarm-Größe festlegen
+3. **UI-Design** (`interface-design`) — vor UI-Arbeit: Design zuerst
+4. **Swarm** (`swarm_init`) — Agents initialisieren
+5. **Parallel-Implementierung** (`dispatching-parallel-agents` + `gstack`) — Frontend + Backend gleichzeitig
+6. **Tests** (`test-driven-development`) — alle 8 Test-Ebenen grün
+7. **Review** (`requesting-code-review`) — Code-Review vor Merge
+8. **Commit** — nach jedem abgeschlossenen Modul (nicht nach jedem File)
+9. **Memory** — Entscheidungen + Patterns speichern
 
 ### Nach jedem erfolgreichen Task
-```
-memory_store(
-  key="klar-[phase]-[modul]",
-  value="[was gebaut, Entscheidungen, Gotchas]",
-  namespace="klar-app"
-)
-```
 
-### Nach jedem Pattern das funktioniert hat
 ```
-memory_store(
-  key="pattern-[beschreibung]",
-  value="[konkreter Code/Ansatz]",
-  namespace="patterns"
-)
+memory_store(key="klar-[phase]-[modul]", value="[was gebaut, Entscheidungen, Gotchas]", namespace="klar-app")
+memory_store(key="pattern-[beschreibung]", value="[konkreter Ansatz]", namespace="patterns")
 ```
 
 ---
+
+## Git/Commit-Strategie
+
+- **Branch-Naming:** `feat/[modul]`, `fix/[beschreibung]`, `phase/[n]-[beschreibung]`
+- **Commit-Zeitpunkt:** nach jedem abgeschlossenen Modul mit grünen Tests — nie mitten in halbfertigem Feature
+- **Commit-Größe:** ein Modul = ein Commit; niemals WIP-Commits
+- **PR vor Merge** in main — kein direkter Push auf main
+- Niemals `--force-push` auf shared Branches
+- Niemals `--no-verify` — Hook-Problem beheben statt umgehen
+
+---
+
+## Security
+
+- **Vor jeder Session:** Dependabot-Alerts prüfen → `github.com/Disane87/Klar/security/dependabot`
+- **High/Critical:** sofort fixen — niemals mit offenen High/Critical CVEs shippen
+- **Moderate:** innerhalb derselben Phase fixen
+- **`pnpm audit`** vor jedem Commit auf main
+- **Dependencies aktuell halten** — `pnpm update --interactive` regelmäßig ausführen
+- **Ausnahme:** Spartan UI — pinned, nie auto-updaten (Beta, Breaking Changes möglich)
 
 ---
 
 ## Stack
 
-| Schicht | Technologie | Version |
-|---|---|---|
-| Runtime | Node.js | 22 LTS |
-| Package Manager | pnpm | 10 |
-| Build | Turborepo | latest |
-| Frontend | Angular | 21 (Zoneless, Signal Forms, Vitest default) |
-| UI Components | Spartan UI (spartan.ng — shadcn/ui für Angular) | pinned — Beta, nie auto-updaten |
-| Styling | Tailwind CSS | 4 |
-| PWA | @angular/pwa (Angular Service Worker) | — |
-| State | Angular Signals + `resource()` nativ | kein NgRx, kein Elf |
-| Backend | NestJS + Fastify | 11.1.x |
-| ORM | Prisma | latest |
-| Datenbank | PostgreSQL | 16 |
-| Auth | Passport-Local + Passport-OIDC + API-Key | — |
-| Kryptographie | Argon2id | — |
-| JWT | RS256, eigenes Key-Pair | — |
-| Date | Temporal API nativ | kein date-fns, kein Luxon |
-| Validation | zod (shared) + class-validator (NestJS DTOs) | — |
-| Tests | Vitest + Supertest + Playwright | — |
-| Docs | @nestjs/swagger + zod-openapi | — |
-| CI/CD | GitHub Actions | — |
-| Deploy | Docker Compose + Traefik | — |
+| Schicht | Technologie |
+|---|---|
+| Runtime | Node.js 22 LTS, pnpm 10, Turborepo |
+| Frontend | Angular 21 (Zoneless, Signal Forms, Vitest) |
+| UI | Spartan UI (spartan.ng) — pinned, **nie auto-updaten** |
+| Styling | Tailwind CSS 4 |
+| State | Angular Signals + `resource()` — kein NgRx, kein Elf |
+| Backend | NestJS 11 + Fastify |
+| ORM | Prisma + PostgreSQL 16 |
+| Auth | Passport-Local + Passport-OIDC + API-Key, Argon2id, JWT RS256 |
+| Date | Temporal API — kein date-fns, kein Luxon |
+| Validation | zod (shared) + class-validator (NestJS DTOs) |
+| Tests | Vitest + Supertest + Playwright |
+| Deploy | GitHub Actions, Docker Compose + Traefik |
 
 ---
 
 ## Repo-Struktur
 
 ```
-/apps
-  /api                    — NestJS Backend
-  /web                    — Angular Frontend
-/packages
-  /shared                 — zod-Schemas, TS-Types, Berechnungs-Funktionen
-  /shared-frontend        — ResourceStore<T>, ApiClient, Interceptors, Helpers
-/prisma
-  schema.prisma
-  migrations/
-  seed.ts
-/docker
-  docker-compose.dev.yml  — nur Postgres
-  docker-compose.prod.yml — Postgres + API + Web + Traefik
-/.github
-  workflows/
-    ci.yml                — lint → test → build (schlägt fehl bei Coverage-Unterschreitung)
-    deploy.yml            — SSH → docker compose pull → up
-/docs
-  pocketid-setup.md
-  api-reference.md        — generiert aus OpenAPI JSON
-SPEC.md
-CLAUDE.md
-README.md
+/apps/api               — NestJS Backend
+/apps/web               — Angular Frontend
+/packages/shared        — zod-Schemas, TS-Types, Berechnungs-Funktionen
+/packages/shared-frontend — ResourceStore<T>, ApiClient, Interceptors
+/prisma                 — schema.prisma, migrations/, seed.ts
+/docker                 — docker-compose.dev.yml / prod.yml
+SPEC.md, CLAUDE.md, AGENTS.md
 ```
 
 ---
@@ -121,547 +125,102 @@ README.md
 ## Commands
 
 ```bash
-# Setup
 pnpm install
-pnpm --filter api keys:generate          # JWT RS256 Key-Pair einmalig
+pnpm --filter api keys:generate          # JWT RS256 Key-Pair (einmalig)
 docker compose -f docker/docker-compose.dev.yml up -d
-pnpm --filter api prisma:migrate
-pnpm --filter api prisma:seed
-
-# Entwicklung
-pnpm dev                                 # alle Apps parallel via turbo
-pnpm --filter api dev
-pnpm --filter web dev
-
-# Tests
-pnpm test                                # alle Unit-Tests
+pnpm --filter api prisma:migrate && pnpm --filter api prisma:seed
+pnpm dev                                 # alle Apps parallel
+pnpm test                                # Unit-Tests
 pnpm --filter api test:integration       # gegen Test-DB (DATABASE_TEST_URL)
 pnpm --filter api test:e2e               # Supertest
 pnpm --filter web e2e                    # Playwright
-
-# Build & Deploy
+pnpm audit                               # Security-Check vor Commit
 pnpm build
-docker compose -f docker/docker-compose.prod.yml build
 ```
 
 ---
 
-## TypeScript-Konventionen (gilt überall)
+## TypeScript-Konventionen
 
-- `strict: true`, kein `any`, kein `as` ohne Begründungs-Kommentar
-- Beträge IMMER `amountCents: number` (Integer, signed: positiv = Einnahme, negativ = Ausgabe)
-- Datum intern `Temporal.PlainDate`, über die API ISO-String `YYYY-MM-DD`
-- Budget-Monat IMMER als `YYYY-MM-01` normalisiert
-- E-Mail IMMER lowercase gespeichert und verglichen
+- `strict: true`, kein `any`, kein `as` ohne Begründungskommentar
+- Geldbeträge: `amountCents: number` (Integer, signed: positiv=Einnahme, negativ=Ausgabe)
+- Datum intern: `Temporal.PlainDate`, API-Transfer: ISO `YYYY-MM-DD`
+- Budget-Monat: IMMER `YYYY-MM-01` normalisiert
+- E-Mail: IMMER lowercase gespeichert und verglichen
 - Kein `console.log` — pino (Backend) / Angular Logger (Frontend)
 
-### Utility-Types (packages/shared)
+### Utility-Types (packages/shared) — Single Source of Truth
 
-Single Source of Truth für alle DTOs und abgeleitete Typen.
+`CreateDto<T>`, `UpdateDto<T>`, `PaginatedResponse<T>` — nie manuell schreiben, immer ableiten
 
-```ts
-// Prisma-Model-Felder die nie im Create/Update vorkommen
-type ServerManaged = 'id' | 'createdAt' | 'updatedAt';
+### Berechnungs-Funktionen (packages/shared) — nie duplizieren
 
-export type CreateDto<T extends Record<ServerManaged, unknown>> =
-  Omit<T, ServerManaged>;
-
-export type UpdateDto<T extends Record<ServerManaged, unknown>> =
-  Partial<Omit<T, ServerManaged>>;
-
-export type PaginatedResponse<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
-
-// Abgeleitet — nie manuell schreiben
-export type CreateTransactionDto = CreateDto<Transaction>;
-export type UpdateTransactionDto = UpdateDto<Transaction>;
-export type CreateProjectDto    = CreateDto<Project>;
-// etc.
-```
-
-### Berechnungs-Funktionen (packages/shared)
-
-Werden in Frontend UND Backend importiert. Niemals duplizieren.
-
-```ts
-export function calculateMonthlyOverview(input: OverviewInput): OverviewResult
-export function toMonthlyEquivalent(amountCents: number, freq: RecurringFrequency): number
-export function safeDayOfMonth(year: number, month: number, day: number): number
-export function sumByCents(items: { amountCents: number }[]): number
-export function averageIncome(entries: IncomeEntry[]): number
-export function currentYearMonth(): string  // 'YYYY-MM'
-export function toHttpParams(obj: Record<string, unknown>): HttpParams
-```
+`calculateMonthlyOverview`, `toMonthlyEquivalent`, `safeDayOfMonth`, `sumByCents`, `averageIncome`, `currentYearMonth`, `toHttpParams`
 
 ---
 
 ## Frontend-Patterns (Angular 21)
 
-### Zoneless + Signal Forms
+### Kernregeln
 
-Angular 21 ist **zoneless by default** — kein `Zone.js`, kein `NgZone.run()`, kein `ChangeDetectorRef.markForCheck()`.
+- **Zoneless**: kein `Zone.js`, `NgZone.run()`, `ChangeDetectorRef.markForCheck()`
+- **Signal Forms** statt Reactive Forms (`FormGroup`, `FormBuilder` verboten)
+- **ResourceStore\<T\>** (`packages/shared-frontend`) — Basis für alle Domain-Stores
+- **ApiClient** (`packages/shared-frontend`) — alle HTTP-Calls über diesen Service
 
-Formulare mit **Signal Forms** (nicht Reactive Forms):
+### HTTP-Interceptors (automatisch aktiv)
 
-```ts
-import { signalForm, signalFormField, Validators } from '@angular/forms/signal';
+- `AuthInterceptor` — fügt Bearer-Token hinzu
+- `RefreshInterceptor` — fängt 401, versucht Token-Refresh
+- `ErrorInterceptor` — mappt HTTP-Fehler auf Toast-Notifications (RFC 7807)
 
-readonly form = signalForm({
-  name:       signalFormField('', [Validators.required]),
-  amountCents: signalFormField(0,  [Validators.min(1)]),
-  categoryId: signalFormField('', [Validators.required]),
-});
+### Design-System
 
-// Template
-<input [sfField]="form.name" />
-@if (form.name.invalid() && form.name.touched()) {
-  <span>Pflichtfeld</span>
-}
-<button [disabled]="form.invalid()" (click)="submit()">Speichern</button>
-```
+- Zahlen: IMMER `font-mono` + `tabular-nums`
+- Farben: `text-success`/`text-danger`/`text-muted-foreground` — kein hardcoded Hex
+- Kategorie-Gruppen: linke Border 2px in Kategorie-Farbe, kein filled Background
+- Section-Headers: `text-[10px] uppercase tracking-widest text-muted-foreground`
+- Finance-Tabellen: kompakt `py-1.5 px-4`
+- Dark Mode: `dark:` von Anfang an — nie nachrüsten
 
-### ResourceStore<T> — Basis für alle Domain-Stores
+### Spartan UI → klar-\* — PFLICHT-Pipeline
 
-```ts
-// packages/shared-frontend/resource-store.ts
+**Reihenfolge für jedes UI-Control:**
+1. spartan.ng prüfen — gibt es ein Brain-Package?
+2. Wenn ja: in `apps/web/src/app/shared/ui/hlm/` als `hlm-*` Wrapper kapseln
+3. Daraus eine `klar-*` Komponente in `apps/web/src/app/shared/ui/` erstellen
+4. In Feature-Komponenten **nur** `klar-*` verwenden — niemals `hlm-*` direkt importieren
 
-export abstract class ResourceStore<T, TFilter extends object = Record<string, never>> {
-  protected abstract http: HttpClient;
-  protected abstract endpointUrl: Signal<string>;
-  protected abstract filter: Signal<TFilter>;
+**Verfügbare klar-\* Komponenten (`shared/ui/`):**
+`<klar-error-bar>`, `<klar-empty-state>`, `<klar-month-picker>`, `<klar-form-field>`, `<klar-section-header>`, `<klar-icon-button>`, `<klar-stat-card>`, `<klar-skeleton-rows>`, `<klar-skeleton-cards>`, `<klar-month-chip>`
 
-  private _mutating = signal(false);
+**Verfügbare hlm-\* Direktiven (direkt nutzbar in klar-\* Templates, nicht in Features):**
+`[hlmBtn]`, `[hlmInput]`, `[hlmLabel]`, `[hlmError]`, `[hlmSelect]`, `[hlmBadge]`, `<hlm-checkbox>`, `<hlm-spinner>`, `<hlm-calendar>`, `KlarDialogService`, `[klarLoadingBtn]`
 
-  protected _resource = resource<T[], { url: string; filter: TFilter }>({
-    request: () => ({ url: this.endpointUrl(), filter: this.filter() }),
-    loader: ({ request }) =>
-      firstValueFrom(
-        this.http.get<T[]>(request.url, {
-          params: toHttpParams(request.filter)
-        })
-      ).then(data => z.array(this.schema()).parse(data)) // runtime-Validierung
-  });
-
-  // Abstrakt — jeder Store definiert sein zod-Schema
-  protected abstract schema(): z.ZodType<T>;
-
-  // Öffentliche Signals
-  readonly items     = this._resource.value;
-  readonly loading   = computed(() => this._resource.isLoading() || this._mutating());
-  readonly error     = this._resource.error;
-  readonly isEmpty   = computed(() => (this.items()?.length ?? 0) === 0);
-
-  // Geschützte Mutation-Helper
-  protected async mutate<R>(
-    fn: () => Promise<R>,
-    options?: {
-      optimistic?: (current: T[]) => T[];
-    }
-  ): Promise<R> {
-    if (options?.optimistic) {
-      this._resource.update(curr => options.optimistic!(curr ?? []));
-    }
-    this._mutating.set(true);
-    try {
-      const result = await fn();
-      this._resource.reload();
-      return result;
-    } catch (err) {
-      if (options?.optimistic) this._resource.reload(); // revert
-      throw err;
-    } finally {
-      this._mutating.set(false);
-    }
-  }
-}
-```
-
-### Domain-Store — erbt ResourceStore<T>
-
-```ts
-@Injectable({ providedIn: 'root' })
-export class TransactionStore extends ResourceStore<Transaction, TransactionFilter> {
-  protected override http        = inject(HttpClient);
-  private            household   = inject(HouseholdStore);
-
-  protected override endpointUrl = computed(() =>
-    `/api/v1/households/${this.household.activeId()}/transactions`
-  );
-  protected override filter      = signal<TransactionFilter>({ month: currentYearMonth() });
-  protected override schema      = () => TransactionSchema; // aus packages/shared
-
-  // Domain-Computed
-  readonly totalExpenses = computed(() => sumByCents((this.items() ?? []).filter(t => t.amountCents < 0)));
-  readonly totalIncome   = computed(() => sumByCents((this.items() ?? []).filter(t => t.amountCents > 0)));
-
-  // Domain-Mutations
-  readonly create = (dto: CreateTransactionDto) =>
-    this.mutate(
-      () => this.api.post<Transaction, CreateTransactionDto>(this.endpointUrl(), dto),
-      { optimistic: curr => [...curr, { ...dto, id: tempId(), _pending: true } as T] }
-    );
-
-  readonly update = (id: string, dto: UpdateTransactionDto) =>
-    this.mutate(() => this.api.patch(`${this.endpointUrl()}/${id}`, dto));
-
-  readonly remove = (id: string) =>
-    this.mutate(
-      () => this.api.delete(`${this.endpointUrl()}/${id}`),
-      { optimistic: curr => curr.filter(t => (t as Transaction).id !== id) }
-    );
-
-  // Filter-Mutation
-  readonly setMonth = (month: string) => this.filter.update(f => ({ ...f, month }));
-}
-```
-
-### Template-Pattern
-
-```html
-@if (store.loading()) {
-  <app-skeleton-rows />
-} @else if (store.error()) {
-  <app-error-state [error]="store.error()" (retry)="store.reload()" />
-} @else if (store.isEmpty()) {
-  <app-empty-state message="Noch keine Buchungen" />
-} @else {
-  @for (tx of store.items()!; track tx.id) {
-    <app-transaction-row [tx]="tx" />
-  }
-}
-
-<button [disabled]="store.loading()" (click)="create()">
-  @if (store.loading()) { … } @else { + Buchung }
-</button>
-```
-
-### ApiClient (packages/shared-frontend)
-
-```ts
-@Injectable({ providedIn: 'root' })
-export class ApiClient {
-  private http = inject(HttpClient);
-
-  get<TRes>(url: string, params?: object): Promise<TRes> {
-    return firstValueFrom(this.http.get<TRes>(url, { params: toHttpParams(params ?? {}) }));
-  }
-
-  post<TRes, TBody>(url: string, body: TBody): Promise<TRes> {
-    return firstValueFrom(this.http.post<TRes>(url, body));
-  }
-
-  patch<TRes, TBody>(url: string, body: TBody): Promise<TRes> {
-    return firstValueFrom(this.http.patch<TRes>(url, body));
-  }
-
-  delete(url: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(url));
-  }
-}
-```
-
-### HTTP-Interceptors
-
-```
-AuthInterceptor        — fügt Authorization: Bearer <token> hinzu
-RefreshInterceptor     — fängt 401, versucht Token-Refresh, wiederholt Request
-ErrorInterceptor       — mappt HTTP-Fehler auf Toast-Notifications (RFC 7807)
-```
-
-```ts
-// ErrorInterceptor — zentrales Fehler-Handling
-export const errorInterceptor: HttpInterceptorFn = (req, next) =>
-  next(req).pipe(
-    catchError((err: HttpErrorResponse) => {
-      const toast = inject(ToastService);
-      const msg = (err.error as ProblemDetail)?.detail ?? 'Ein Fehler ist aufgetreten.';
-      if (err.status === 401) {
-        // RefreshInterceptor hat schon versucht — jetzt logout
-        inject(AuthStore).logout();
-      } else if (err.status !== 422) {
-        // 422 zeigen Forms selbst (Validation-Errors)
-        toast.error(msg);
-      }
-      return throwError(() => err);
-    })
-  );
-```
-
-### Design-System-Regeln (Frontend)
-
-**Zahlen:** IMMER `font-family: var(--font-mono)` + `font-variant-numeric: tabular-nums`
-
-**Farben über Tailwind-Semantik:**
-```
-Income / Positiv  → text-success, border-success, bg-success/10
-Expense / Negativ → text-danger,  border-danger,  bg-danger/10
-Überschuss        → text-success prominent, bg-success/15
-Neutral           → text-muted-foreground
-Accent (UI)       → text-primary, border-primary
-```
-
-**Kategorie-Gruppen:** linke Border 2px in Kategorie-Farbe (aus DB), kein filled Background
-
-**Section-Headers:** `text-[10px] uppercase tracking-widest text-muted-foreground`
-
-**Spacing Finance-Tabellen:** kompakt (`py-1.5 px-4`) — kein Standard-Tailwind-Padding
-
-**Dark Mode:** Tailwind `dark:` von Anfang an auf jeder Komponente — niemals nachrüsten
-
-**Kein hardcoded Color-Hex in Komponenten** — nur Tailwind-Klassen oder CSS-Variablen
-
-### Spartan UI Controls — IMMER verwenden
-
-Für JEDES UI-Control: zuerst spartan.ng prüfen. Wenn ein Brain-Package existiert, dieses verwenden und in `apps/web/src/app/shared/ui/hlm/` kapseln.
-
-Verfügbare hlm-Wrapper (Spartan-Basis):
-- `[hlmBtn]` auf `<button>` — HlmButtonDirective (6 Varianten: default, accent, outline, ghost, subtle, destructive)
-- `[hlmInput]` auf `<input>` / `<textarea>` — HlmInputDirective
-- `[hlmLabel]` auf `<label>` — HlmLabelDirective
-- `[hlmError]` auf beliebigen Elementen — HlmErrorDirective
-- `[hlmSelect]` auf `<select>` — HlmSelectNativeDirective
-- `[hlmBadge]` auf beliebigen Elementen — HlmBadgeDirective
-- `<hlm-checkbox>` — HlmCheckboxComponent (BrnCheckbox-basiert)
-- `<hlm-spinner>` — HlmSpinnerComponent
-- `KlarDialogService.open(config)` — CDK Dialog mit spartan Panel-Styling
-- `button[hlmBtn][klarLoadingBtn]` — HlmLoadingBtnDirective; `[klarLoadingBtn]="loading()"` setzt disabled + aria-busy
-
-Klar Shared UI-Components (`apps/web/src/app/shared/ui/`):
-- `<klar-error-bar [message]="..." (retry)="..." />` — Fehlerleiste mit Retry-Button
-- `<klar-empty-state [message]="..." [icon]="..." />` — Leer-Zustand mit Icon
-- `<klar-month-picker [month]="..." (monthChange)="..." />` — Monats-Navigation (YYYY-MM)
-- `<klar-form-field [label]="..." [for]="..." [error]="..." />` — Label + Input-Slot + Fehlertext
-- `<klar-section-header [title]="..." />` — Section-Label (10px uppercase) + ng-content Action-Slot
-- `<klar-icon-button [icon]="..." [label]="..." [danger]="..." />` — Icon-only Button (44px Touch-Target)
-- `<klar-stat-card [label]="..." [valueCents]="..." [sub]="..." [tone]="income|expense|auto|neutral" />` — KPI-Karte
-- `<klar-skeleton-rows [count]="5" />` — Skeleton für Listen-Zeilen (Datum|Beschreibung|Betrag)
-- `<klar-skeleton-cards [count]="4" />` — Skeleton für Stat-Karten
-- `<hlm-calendar [month]="'YYYY-MM'" (monthChange)="..." [(date)]="selectedDate" />` — Monatskalender-Grid, Spartan-Stil, Mo-So, heute hervorgehoben, Wochen-Navigation
-- `<klar-month-chip [label]="'Mai 2026'" />` — Display-only Monats-Chip (h-7, gleiche Höhe wie `hlmBtn size="sm"`)
-
-Klar Shared Pipes (`apps/web/src/app/shared/pipes/`):
-- `{{ cents | klarMoney }}` — KlarMoneyPipe: Cent → de-DE EUR (z.B. `1.234,56 €`)
-- `[ngClass]="cents | klarMoneyClass"` — KlarMoneyClassPipe: positiv→`text-success`, negativ→`text-danger`, null→`text-muted-foreground`
-
-**Keine eigenen Control-Implementierungen.** Kein hand-codiertes Dropdown-Verhalten, Fokus-Trapping etc.
+**Klar Shared Pipes (`shared/pipes/`):**
+`klarMoney` (Cent → de-DE EUR), `klarMoneyClass` (positiv/negativ/null → CSS-Klasse)
 
 ---
 
 ## Mobile-First & PWA
 
-### Grundregel: Mobile-First
+### Grundregel: Mobile-first (Base = Mobile, Breakpoints fügen Desktop hinzu)
 
-Base-Styles gelten für Mobile (`< 768px`). Breakpoints fügen Desktop-Komplexität hinzu — niemals umgekehrt.
+### iOS/Safari — Hard Rules (nicht optional)
 
-```html
-<!-- Falsch: Desktop-first -->
-<div class="flex-row md:flex-col">
-
-<!-- Richtig: Mobile-first -->
-<div class="flex-col md:flex-row">
-```
-
-### iOS/Safari Hard Rules
-
-Diese Regeln sind nicht optional — sie verhindern konkrete Safari-Bugs:
-
-- ❌ `font-size < 16px` auf `<input>`, `<select>`, `<textarea>` → Safari zoomt automatisch rein. IMMER `text-base` (16px) minimum auf Form-Elementen.
-- ❌ `100vh` → falsch auf iOS (ignoriert Browser-Chrome). IMMER `100dvh` (dynamic viewport height, iOS 15.4+, unser Mindest-Target).
-- ❌ `position: fixed` ohne Safe-Area-Insets → überdeckt Notch/Home-Indicator.
-- ❌ Touch-Targets unter 44×44px — Apple HIG Minimum. Buttons/Icons immer `min-h-[44px] min-w-[44px]`.
-- ❌ `:hover`-only Interaktionen — Touch kennt kein Hover. Immer auch `:active` / Tap-State definieren.
-
-### Safe Area Insets
-
-Für alle fixed/sticky Elemente die an Bildschirmränder stoßen:
-
-```html
-<!-- Tailwind 4 arbitrary values -->
-<nav class="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)]">
-<header class="sticky top-0 pt-[env(safe-area-inset-top)]">
-
-<!-- Für den Body-Container -->
-<main class="min-h-[100dvh] px-[env(safe-area-inset-left)] 
-             pb-[calc(env(safe-area-inset-bottom)+4rem)]">
-```
-
-In `styles.css` global:
-
-```css
-:root {
-  --safe-top:    env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left:   env(safe-area-inset-left, 0px);
-  --safe-right:  env(safe-area-inset-right, 0px);
-}
-```
+- `font-size ≥ 16px` auf allen Form-Elementen (sonst Safari-Zoom)
+- `100dvh` statt `100vh`
+- `position: fixed` immer mit `env(safe-area-inset-*)` Padding
+- Touch-Targets: `min-h-[44px] min-w-[44px]`
+- Immer `:active` neben `:hover` definieren
 
 ### Responsive Navigation
 
-```
-Mobile  (< 768px)  → Bottom Navigation Bar (4 Icons + Label)
-Tablet  (768–1023px) → Sidebar 160px collapsible
-Desktop (≥ 1024px) → Sidebar 200px permanent (wie im Mockup)
-```
+- Mobile `< 768px`: Bottom Navigation Bar (4 Icons)
+- Tablet `768–1023px`: Sidebar 160px collapsible
+- Desktop `≥ 1024px`: Sidebar 200px permanent
 
-**Bottom Nav Struktur (Mobile):**
-
-```html
-<!-- Nur auf Mobile sichtbar -->
-<nav class="fixed bottom-0 left-0 right-0 md:hidden
-            border-t border-border bg-background
-            pb-[env(safe-area-inset-bottom)]
-            grid grid-cols-4">
-  @for (item of navItems(); track item.route) {
-    <a [routerLink]="item.route" routerLinkActive="text-primary"
-       class="flex flex-col items-center gap-1 py-2 min-h-[56px]
-              text-muted-foreground transition-colors">
-      <app-icon [name]="item.icon" class="size-5" />
-      <span class="text-[10px] tracking-wide uppercase">{{ item.label }}</span>
-    </a>
-  }
-</nav>
-
-<!-- Bottom-Nav Spacer — verhindert Content-Überlagerung -->
-<div class="h-[calc(56px+env(safe-area-inset-bottom))] md:hidden"></div>
-```
-
-**Nav-Items (Mobile):** Fixkosten · Cashflow · Projekte · Mehr (→ Sheet mit restlichen Punkten)
-
-### Responsive Datentabellen
-
-Die Fixkosten-Tabelle ist zu breit für Mobile. Pattern:
-
-```html
-<!-- Desktop: Tabellen-Ansicht -->
-<div class="hidden md:block">
-  <app-fixkosten-table [overview]="store.overview()" />
-</div>
-
-<!-- Mobile: Card-List-Ansicht -->
-<div class="md:hidden space-y-2">
-  @for (group of store.overview()?.groups; track group.categoryId) {
-    <app-fixkosten-card-group [group]="group" />
-  }
-</div>
-```
-
-Mobile Card-Group: Kategorie-Header mit Zwischensumme, ausklappbare Einzelposten (Disclosure-Pattern via Zard UI Collapsible).
-
-### PWA Setup
-
-`@angular/pwa` via `ng add @angular/pwa` generiert Service Worker + Manifest. Danach anpassen:
-
-**`manifest.webmanifest`:**
-
-```json
-{
-  "name": "Haushaltsbuch",
-  "short_name": "Haushaltsbuch",
-  "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
-  "orientation": "portrait-primary",
-  "start_url": "/",
-  "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-512-maskable.png", "sizes": "512x512",
-      "type": "image/png", "purpose": "maskable" }
-  ]
-}
-```
-
-**`index.html` — iOS-spezifische Meta-Tags (zwingend):**
-
-```html
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Haushaltsbuch">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-<!-- App Icons für iOS (add-to-homescreen) -->
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png">
-
-<!-- Splash Screens (mind. iPhone 14/15 Pro abdecken) -->
-<link rel="apple-touch-startup-image"
-      href="icons/splash-1179x2556.png"
-      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)">
-```
-
-**`ngsw-config.json` — Caching-Strategie:**
-
-```json
-{
-  "assetGroups": [
-    {
-      "name": "app-shell",
-      "installMode": "prefetch",
-      "resources": { "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js"] }
-    },
-    {
-      "name": "assets",
-      "installMode": "lazy",
-      "updateMode": "prefetch",
-      "resources": { "files": ["/icons/**"] }
-    }
-  ],
-  "dataGroups": [
-    {
-      "name": "api-overview",
-      "urls": ["/api/v1/households/*/overview/**"],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 10,
-        "maxAge": "5m",
-        "timeout": "3s"
-      }
-    },
-    {
-      "name": "api-data",
-      "urls": ["/api/v1/**"],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 50,
-        "maxAge": "1m",
-        "timeout": "5s"
-      }
-    }
-  ]
-}
-```
-
-Strategie: `freshness` (network-first, fällt auf Cache zurück bei Timeout) für alle API-Calls. Offline-Indikator im Header wenn Service Worker meldet dass keine Verbindung besteht.
-
-### PWA Install-Prompt (iOS hat kein `beforeinstallprompt`)
-
-```ts
-@Injectable({ providedIn: 'root' })
-export class PwaInstallService {
-  // Android/Chrome: nativer Prompt
-  private deferredPrompt = signal<BeforeInstallPromptEvent | null>(null);
-  readonly canInstallNatively = computed(() => !!this.deferredPrompt());
-
-  // iOS: manuell erklären
-  readonly isIos = computed(() => /iphone|ipad|ipod/i.test(navigator.userAgent));
-  readonly isInStandaloneMode = computed(() =>
-    ('standalone' in navigator && (navigator as any).standalone) ||
-    window.matchMedia('(display-mode: standalone)').matches
-  );
-  readonly shouldShowIosHint = computed(
-    () => this.isIos() && !this.isInStandaloneMode()
-  );
-}
-```
-
-iOS-Hint: einmalig nach erstem Login zeigen (via Zard UI Sheet), mit Screenshot "Share → Zum Home-Bildschirm". Danach in `localStorage` als gesehen markieren (einzige Ausnahme der localStorage-Regel — kein Security-Concern hier).
+**Nav-Items (Mobile):** Fixkosten · Cashflow · Projekte · Mehr
 
 ---
 
@@ -669,573 +228,143 @@ iOS-Hint: einmalig nach erstem Login zeigen (via Zard UI Sheet), mit Screenshot 
 
 ### Modul-Struktur
 
-```
-auth, oidc, users, households, categories, projects,
-recurring-transactions, transactions, budgets, overview,
-api-keys, admin
-```
+`auth, oidc, users, households, categories, projects, recurring-transactions, transactions, budgets, overview, api-keys, admin`
+Pro Modul: `Controller → Service → Repository` (Prisma **nur** im Repository)
 
-Pro Modul: `Controller` → `Service` → `Repository` (Prisma nur im Repository)
-
-### RequestContext — Pflicht für alle Service-Methoden
+### RequestContext — Pflicht als erstes Argument aller Service-Methoden
 
 ```ts
-export type RequestContext = {
-  userId:      string;
-  householdId: string;
-  source:      'web' | 'api-key';
-  apiKeyId?:   string;
-};
+{ userId: string; householdId: string; source: 'web' | 'api-key'; apiKeyId?: string }
 ```
-
-Kein `req`-Zugriff im Service. Macht Services testbar und API-Source-agnostisch.
 
 ### Guards-Hierarchie
 
-```
-JwtAuthGuard          — global für /api/v1/* und /auth/* (außer public Endpoints)
-ApiKeyAuthGuard       — /api/public/v1/*
-HouseholdMemberGuard  — prüft Membership zu :hid, baut RequestContext
-ApiKeyContextGuard    — baut RequestContext aus Key
-AppAdminGuard         — appRole = ADMIN
-@RequireScope('x:y')  — Scope-Check auf public API Endpoints
-```
+- `JwtAuthGuard` — global `/api/v1/*`
+- `ApiKeyAuthGuard` — `/api/public/v1/*`
+- `HouseholdMemberGuard` — prüft Membership, baut RequestContext
+- `ApiKeyContextGuard` — baut RequestContext aus Key
+- `AppAdminGuard` — `appRole = ADMIN`
+- `@RequireScope('x:y')` — Scope-Check auf public Endpoints
 
-### Generic Repository-Pattern
-
-```ts
-abstract class BaseRepository<T> {
-  constructor(protected readonly prisma: PrismaService) {}
-
-  protected abstract model: string; // keyof PrismaClient
-
-  protected async findMany(
-    ctx: RequestContext,
-    where: object = {},
-    options: { include?: object; orderBy?: object } = {}
-  ): Promise<T[]> {
-    return (this.prisma as any)[this.model].findMany({
-      where: { householdId: ctx.householdId, ...where },
-      ...options,
-    });
-  }
-
-  protected async findOneOrThrow(ctx: RequestContext, id: string): Promise<T> {
-    const item = await (this.prisma as any)[this.model].findUnique({
-      where: { id, householdId: ctx.householdId },
-    });
-    if (!item) throw new NotFoundException(`${this.model} ${id} nicht gefunden`);
-    return item;
-  }
-
-  protected async create(ctx: RequestContext, data: object): Promise<T> {
-    return (this.prisma as any)[this.model].create({
-      data: { ...data, householdId: ctx.householdId, createdByUserId: ctx.userId },
-    });
-  }
-
-  protected async update(ctx: RequestContext, id: string, data: object): Promise<T> {
-    await this.findOneOrThrow(ctx, id); // prüft Ownership via householdId
-    return (this.prisma as any)[this.model].update({ where: { id }, data });
-  }
-
-  protected async remove(ctx: RequestContext, id: string): Promise<void> {
-    await this.findOneOrThrow(ctx, id);
-    await (this.prisma as any)[this.model].delete({ where: { id } });
-  }
-}
-```
-
-### Fehlerformat: RFC 7807 Problem Details
-
-```ts
-// Jede Exception wird zu diesem Format gemappt (GlobalExceptionFilter)
-{
-  type: 'https://haushaltsbuch.app/errors/not-found',
-  title: 'Ressource nicht gefunden',
-  status: 404,
-  detail: 'Transaction abc123 nicht gefunden',
-  instance: '/api/v1/households/xyz/transactions/abc123'
-}
-```
+### Fehlerformat: RFC 7807 Problem Details (GlobalExceptionFilter)
 
 ### Prisma
 
 - Middleware: `SET LOCAL app.household_id` vor jedem Query (RLS)
-- `migrate deploy` läuft im Container-Entrypoint vor API-Start
-- Niemals `findMany()` ohne `where: { householdId }` — auch wenn RLS greift
+- `migrate deploy` im Container-Entrypoint vor API-Start
+- Niemals `findMany()` ohne `where: { householdId }`
 - `@db.Date` für alle Datumsfelder ohne Uhrzeit
 
-### Auth-Details
+### Auth
 
-- Erster User der sich registriert → `appRole = ADMIN` (idempotent: check `count == 0`)
-- `Registration` per `REGISTRATION_ENABLED` Env togglebar (default: `true`)
-- OIDC Group-Mapping läuft bei **jedem** Login — nicht nur erstem
+- Erster registrierter User → `appRole = ADMIN`
+- `REGISTRATION_ENABLED` Env togglebar (default: `true`)
+- OIDC Group-Mapping bei **jedem** Login
 - Refresh-Token: httpOnly + Secure + SameSite=Strict Cookie (Path=/auth)
-- Access-Token: 15 min, nur im Memory des SPA
+- Access-Token: 15 min, nur im SPA-Memory
 
 ### API-Keys
 
 - Prefix-Lookup (erste 8 Chars nach `bgb_live_`) → Argon2-Verify
-- Klartext **einmalig** ausgeben, danach nie wieder — niemals loggen
-- `householdId` kommt aus dem Key, **niemals** aus Body/URL (public API)
-- Last-Used: async, throttled 1x/Minute — niemals den Request-Pfad blockieren
+- Klartext **einmalig** ausgeben, danach nie — niemals loggen
+- `householdId` kommt aus dem Key, nie aus Body/URL
+- Last-Used: async, throttled 1x/Minute
 
 ### Pino Redaction
 
-Folgende Felder werden aus Logs entfernt:
-`password`, `currentPassword`, `newPassword`, `passwordHash`,
-`apiKey`, `secret`, `hashedSecret`, `authorization`,
-`token`, `accessToken`, `refreshToken`, `tokenHash`,
-`code`, `codeVerifier`, `state`, `clientSecret`
+`password, currentPassword, newPassword, passwordHash, apiKey, secret, hashedSecret, authorization, token, accessToken, refreshToken, tokenHash, code, codeVerifier, state, clientSecret`
 
 ---
 
-## VS Code Workspace
+## VS Code
 
-Phase 1 erstellt eine vollständige VS Code Entwicklungsumgebung. Alle Dateien gehören ins Repo (checked in).
+Config-Dateien in `.vscode/` (checked in). Wichtigste Scripts:
+- `pnpm --filter api dev:debug` — NestJS mit `--debug 0.0.0.0:9229`
+- Prisma Studio: Task "db: studio" → `http://localhost:5555`
 
-### `.vscode/extensions.json`
-
-```json
-{
-  "recommendations": [
-    "angular.ng-template",
-    "bradlc.vscode-tailwindcss",
-    "prisma.prisma",
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
-    "vitest.explorer",
-    "ms-playwright.playwright",
-    "PKief.material-icon-theme",
-    "usernamehw.errorlens",
-    "christian-kohler.path-intellisense",
-    "mikestead.dotenv",
-    "humao.rest-client",
-    "rangav.vscode-thunder-client"
-  ]
-}
-```
-
-### `.vscode/settings.json`
-
-```json
-{
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "tailwindCSS.experimental.configFile": "apps/web/tailwind.config.ts",
-  "tailwindCSS.includeLanguages": { "typescript": "javascript" },
-  "vitest.enable": true,
-  "vitest.commandLine": "pnpm test",
-  "files.exclude": { "**/node_modules": true, "**/.turbo": true },
-  "search.exclude": { "**/node_modules": true, "**/dist": true },
-  "prisma.showPrismaDataPlatformNotification": false
-}
-```
-
-### `.vscode/tasks.json`
-
-```json
-{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "dev: all",
-      "type": "shell",
-      "command": "pnpm dev",
-      "group": "build",
-      "presentation": { "panel": "new" },
-      "problemMatcher": []
-    },
-    {
-      "label": "dev: api",
-      "type": "shell",
-      "command": "pnpm --filter api dev:debug",
-      "group": "build",
-      "presentation": { "panel": "new" },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "dev: web",
-      "type": "shell",
-      "command": "pnpm --filter web dev",
-      "group": "build",
-      "presentation": { "panel": "new" },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "test: unit",
-      "type": "shell",
-      "command": "pnpm test",
-      "group": "test",
-      "presentation": { "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "test: e2e api",
-      "type": "shell",
-      "command": "pnpm --filter api test:e2e",
-      "group": "test",
-      "presentation": { "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "test: playwright",
-      "type": "shell",
-      "command": "pnpm --filter web e2e",
-      "group": "test",
-      "presentation": { "panel": "new" },
-      "problemMatcher": []
-    },
-    {
-      "label": "db: migrate",
-      "type": "shell",
-      "command": "pnpm --filter api prisma:migrate",
-      "group": "build",
-      "presentation": { "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "db: studio",
-      "type": "shell",
-      "command": "pnpm --filter api prisma:studio",
-      "group": "build",
-      "presentation": { "panel": "new" },
-      "problemMatcher": []
-    },
-    {
-      "label": "docker: dev up",
-      "type": "shell",
-      "command": "docker compose -f docker/docker-compose.dev.yml up -d",
-      "group": "build",
-      "presentation": { "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "docker: dev down",
-      "type": "shell",
-      "command": "docker compose -f docker/docker-compose.dev.yml down",
-      "group": "build",
-      "presentation": { "panel": "shared" },
-      "problemMatcher": []
-    }
-  ]
-}
-```
-
-### `.vscode/launch.json`
-
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug: NestJS API",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "restart": true,
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/apps/api/dist/**/*.js"],
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/**",
-        "!**/node_modules/**"
-      ]
-    },
-    {
-      "name": "Debug: Angular (Chrome)",
-      "type": "chrome",
-      "request": "launch",
-      "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/apps/web/src",
-      "sourceMapPathOverrides": {
-        "webpack:/*": "${webRoot}/*",
-        "/./*": "${webRoot}/*"
-      }
-    },
-    {
-      "name": "Debug: Angular (Safari)",
-      "type": "safari",
-      "request": "launch",
-      "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/apps/web/src"
-    },
-    {
-      "name": "Debug: Vitest (current file)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-      "args": ["run", "${relativeFile}"],
-      "cwd": "${workspaceFolder}",
-      "sourceMaps": true,
-      "smartStep": true
-    },
-    {
-      "name": "Debug: Vitest (all)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-      "args": ["run"],
-      "cwd": "${workspaceFolder}",
-      "sourceMaps": true
-    },
-    {
-      "name": "Debug: E2E API (Supertest)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-      "args": ["run", "--config", "apps/api/vitest.e2e.config.ts"],
-      "cwd": "${workspaceFolder}",
-      "sourceMaps": true,
-      "env": {
-        "NODE_ENV": "test"
-      }
-    },
-    {
-      "name": "Debug: Playwright",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/@playwright/test/cli.js",
-      "args": ["test", "--headed"],
-      "cwd": "${workspaceFolder}/apps/web",
-      "sourceMaps": true
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Full Stack Debug",
-      "configurations": ["Debug: NestJS API", "Debug: Angular (Chrome)"],
-      "presentation": { "order": 1 }
-    }
-  ]
-}
-```
-
-**`apps/api/package.json` muss enthalten:**
-```json
-{
-  "scripts": {
-    "dev:debug": "nest start --watch --debug 0.0.0.0:9229"
-  }
-}
-```
-
-**Prisma Studio** läuft via Task "db: studio" auf `http://localhost:5555` — Browser-UI für die DB, kein extra Tool nötig.
-
-### VS Code Problems Panel — Pflicht
-
-**Nach jeder Datei die geschrieben oder geändert wird:**
-- TypeScript-Fehler im Problems Panel (`Ctrl+Shift+M`) müssen auf 0 sein
-- ESLint-Warnings die auf Code-Qualität hinweisen müssen behoben werden (nicht suppressed)
-- Tailwind-Klassen-Warnungen (unbekannte Utility) müssen aufgelöst werden
-
-**Nie akzeptabel:**
-- `// @ts-ignore` oder `// @ts-expect-error` ohne Kommentar warum
-- `// eslint-disable` ohne Begründung
-- Rote Unterwellungen ignorieren und weitermachen
-
-**Workflow:**
-```
-1. Datei schreiben
-2. Problems Panel prüfen → alle Fehler beheben
-3. Erst dann nächste Datei
-```
-
-Wenn ein Problem nicht lösbar erscheint: `// TODO(problem): <Beschreibung>` + an Marco melden — niemals stillschweigend supprimieren.
+**Problems Panel nach jeder Datei prüfen** — TypeScript-Fehler, ESLint-Warnings, Tailwind-Warnungen auf 0 bringen. Niemals `@ts-ignore`/`eslint-disable` ohne Kommentar.
 
 ---
 
-## Test-Pyramide — Pflicht nach jeder Phase
+## Test-Pyramide (Pflicht nach jeder Phase)
 
-**Keine Phase ist fertig ohne grüne Tests auf allen Ebenen.**
-CI schlägt fehl wenn Coverage-Thresholds unterschritten werden.
+| Ebene | Tool | Ziel |
+|---|---|---|
+| Unit | Vitest | Services mit gemockten Repos, Berechnungs-Funktionen, Guards |
+| Integration | Vitest + echte DB | Repository-Layer, RLS-Policies (Transaction-Rollback je Test) |
+| Security | Supertest | Cross-Tenant (403), revoked Keys (401), Rate-Limit (429) |
+| Contract | zod.parse() | API-Response gegen shared Schema validieren |
+| Snapshot | Vitest | `calculateMonthlyOverview` gegen bekannte Fixtures |
+| Performance | Vitest bench | p95 < 200ms für Overview-Endpoint |
+| E2E | Playwright | Login-Flow, 375px + 1280px, Dark Mode, PWA |
+| Accessibility | axe-playwright | 0 Violations |
 
-### 1. Unit Tests (Vitest, schnell, isoliert)
+**Coverage:** Backend ≥ 80%, Frontend ≥ 70%
+**Phase gilt erst als abgeschlossen wenn alle 8 Ebenen grün sind.**
 
-Für jeden Service mit gemockten Repositories:
-```ts
-// Berechnungs-Funktionen gegen bekannte Fixtures — Cent-Präzision
-describe('toMonthlyEquivalent', () => {
-  it('quarterly: teilt durch 3', () =>
-    expect(toMonthlyEquivalent(-18000, 'QUARTERLY')).toBe(-6000));
-  it('yearly: teilt durch 12', () =>
-    expect(toMonthlyEquivalent(-120000, 'YEARLY')).toBe(-10000));
-});
+---
 
-// zod-Schema-Validierung
-describe('CreateTransactionSchema', () => {
-  it('lehnt Float ab', () =>
-    expect(() => schema.parse({ amountCents: 9.99 })).toThrow());
-});
+## UI-Vollständigkeit — Pflicht
 
-// Guard-Logik isoliert
-// Service-Methoden mit gemocktem Repository
-```
+**Jedes UI-Element muss vollständig funktional sein. Keine Platzhalter, keine halbfertigen Flows.**
 
-### 2. Integration Tests (Vitest + echte Test-DB)
+- ❌ Buttons ohne `(click)`-Handler oder mit leerem Handler
+- ❌ Links die nirgends hinführen (`href="#"`, leere `routerLink`)
+- ❌ Formulare ohne Submit-Logik
+- ❌ Menü-Einträge ohne Route oder Action
+- ❌ Modals/Dialoge die sich nicht schließen lassen
+- ❌ Aktionen ohne Feedback (kein Loading-State, kein Toast, kein Error-State)
+- ❌ CRUD-Seite ohne alle 4 Operationen vollständig verdrahtet
 
-Transaction-Rollback nach jedem Test — kein State-Drift.
-```ts
-beforeEach(async () => { await prisma.$executeRaw`BEGIN` });
-afterEach(async ()  => { await prisma.$executeRaw`ROLLBACK` });
-```
+**Playwright-Test nach jeder UI-Komponente** — jeden Button, jedes Formular, jeden Flow durchklicken. Wenn etwas nicht funktioniert → sofort fixen, nicht weiter machen.
 
-- Repository-Layer echte Postgres-Queries
-- Prisma Migrations korrekt angewendet
-- **RLS-Policies**: `SET LOCAL app.household_id` gesetzt → andere Haushalts-Daten unsichtbar
-
-### 3. Security Tests (Supertest, nach jeder Auth-nahen Phase)
-
-```ts
-describe('Cross-Tenant Security', () => {
-  it('User A kann Haushalt B nicht lesen → 403')
-  it('householdId im Body wird ignoriert → eigener Haushalt bleibt aktiv')
-  it('API-Key read-only: POST → 403')
-  it('API-Key revoked → 401')
-  it('Expired JWT → 401')
-  it('Rate-Limit Login: 11 Versuche → 429')
-  it('OIDC-Linking ohne email_verified → kein Linking')
-})
-```
-
-### 4. Contract Tests (zod-Schema Validation)
-
-API-Response wird gegen zod-Schema aus shared package validiert:
-```ts
-it('GET /transactions response entspricht TransactionSchema', async () => {
-  const res = await request(app).get('/api/v1/households/h1/transactions')
-  z.array(TransactionSchema).parse(res.body) // wirft wenn Kontrakt bricht
-})
-```
-
-### 5. Snapshot Tests (Berechnungs-Logik)
-
-```ts
-it('Fixkosten-Übersicht mit bekannten Fixtures', () => {
-  const result = calculateMonthlyOverview(FIXTURE_APRIL_2026)
-  expect(result).toMatchSnapshot() // schlägt fehl bei unbeabsichtigter Änderung
-})
-// Quartals-Umlegung, Jahres-Umlegung, Ø-Berechnung je eigener Snapshot
-```
-
-### 6. Performance Tests (Vitest bench)
-
-```ts
-bench('Overview-Endpoint unter Last', async () => {
-  await request(app).get('/api/v1/households/h1/overview/fixed')
-}, { time: 1000, iterations: 50 })
-// Schlägt fehl wenn p95 > 200ms
-```
-
-### 7. Playwright Smoke Tests (nach Phasen mit UI)
-
-```ts
-test('Happy Path: Login → Übersicht laden', ...)
-test('Mobile 375px: Bottom Nav sichtbar, Touch-Targets ≥ 44px', ...)
-test('Dark Mode: kein Element mit weißem Hintergrund in dark:', ...)
-test('PWA: App installierbar, Manifest valide', ...)
-```
-
-### 8. Accessibility Tests (axe-playwright, kostenlos)
-
-```ts
-test('Übersicht: keine axe-Violations', async ({ page }) => {
-  const results = await new AxeBuilder({ page }).analyze()
-  expect(results.violations).toEqual([])
-})
-// Prüft: Kontrast-Ratios, ARIA-Labels, Touch-Target-Größen
-```
-
-### Test-Gate nach jeder Phase
-
-```
-[ ] Unit Tests grün, Coverage ≥ 80% Backend / ≥ 70% Frontend
-[ ] Integration Tests grün, RLS-Test explizit bestanden
-[ ] Security Tests grün (nach Auth-Phasen: alle Cross-Tenant-Tests)
-[ ] Contract Tests grün (kein Kontrakt-Bruch)
-[ ] Snapshot Tests grün oder bewusst aktualisiert
-[ ] Performance: p95 < 200ms für Overview-Endpoint
-[ ] Playwright Smoke grün auf 375px + 1280px
-[ ] Accessibility: 0 axe-Violations
-[ ] CI Pipeline grün
-```
-
-**Phase ist erst abgeschlossen wenn alle Checkboxen gesetzt sind.**
-
-### Test-Factories (packages/shared)
-
-```ts
-export const createTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
-  id:              randomId(),
-  householdId:     'test-household',
-  createdByUserId: 'test-user',
-  amountCents:     -5000,
-  categoryId:      'test-category',
-  date:            Temporal.PlainDate.from('2026-04-01').toString(),
-  description:     'Test-Buchung',
-  visibility:      'SHARED',
-  createdAt:       new Date(),
-  updatedAt:       new Date(),
-  ...overrides,
-});
-
-export const FIXTURE_APRIL_2026 = {
-  fixedIncome:    [createTransaction({ amountCents: 345870, /* Festgehalt */ })],
-  variableIncome: [createTransaction({ amountCents: 108111, /* Provision */ })],
-  expenses: [
-    createTransaction({ amountCents: -60000, /* Haushaltsgeld */ }),
-    createTransaction({ amountCents: -29897, /* Strom */ }),
-    // ... alle Posten aus dem Referenzbild
-  ],
-  expectedSurplus: 176510, // 1.765,10 € in Cent
-};
-```
+**Checkliste pro Komponente:**
+- [ ] Alle Buttons haben Handler und führen etwas aus
+- [ ] Alle Formulare validieren + submitten + zeigen Fehler
+- [ ] Loading-States bei async Operationen
+- [ ] Error-States bei fehlgeschlagenen Requests
+- [ ] Empty-States wenn keine Daten vorhanden
+- [ ] Playwright-Test hat die Komponente tatsächlich benutzt
 
 ---
 
 ## Harte Regeln — nie verletzen
 
-- ❌ `householdId` aus Request-Body (internal API) — IMMER aus `:hid` URL-Param
+- ❌ `householdId` aus Request-Body (internal) — IMMER aus `:hid` URL-Param
 - ❌ `householdId` aus Body/Query/URL (public API) — IMMER aus API-Key
-- ❌ `prisma.X.findMany()` ohne `where: { householdId }` — auch wenn RLS greift
+- ❌ `prisma.X.findMany()` ohne `where: { householdId }`
 - ❌ Float für Geldbeträge — nur `amountCents: Int`
 - ❌ API-Key-Klartext loggen oder zweimal ausgeben
-- ❌ `dayOfMonth` ohne `safeDayOfMonth()` — clampt auf Monatsletzten
+- ❌ `dayOfMonth` ohne `safeDayOfMonth()`
 - ❌ Service-Methode ohne `RequestContext` als erstes Argument
 - ❌ OIDC-Linking ohne `email_verified === true`
 - ❌ Passwort entfernen wenn keine OIDC-Identity übrig
 - ❌ Refresh-Token in localStorage — nur httpOnly Cookie
 - ❌ Access-Token in URL-Parametern
-- ❌ Berechnungs-Logik in Frontend/Backend reimplementieren — immer aus `packages/shared`
+- ❌ Berechnungs-Logik in Frontend/Backend — immer aus `packages/shared`
 - ❌ Recurring-Transaktionen persistieren — on-the-fly berechnen
 - ❌ PRIVATE-Beträge anderer User in Aggregate einrechnen
-- ❌ `Zone.js`-Patterns (`NgZone.run()`, `ChangeDetectorRef.markForCheck()`)
-- ❌ Reactive Forms (`FormGroup`, `FormBuilder`) — Signal Forms verwenden
-- ❌ Hardcoded Color-Hex in Komponenten — Tailwind-Klassen oder CSS-Variablen
-- ❌ Zahlen ohne `font-mono` und `tabular-nums` rendern
-- ❌ `font-size < 16px` auf Form-Elementen — iOS Safari zoomt rein
-- ❌ `100vh` — immer `100dvh` verwenden
-- ❌ Fixed/Sticky Elemente ohne Safe-Area-Insets
+- ❌ Zone.js-Patterns oder Reactive Forms
+- ❌ Hardcoded Color-Hex — Tailwind-Klassen oder CSS-Variablen
+- ❌ Zahlen ohne `font-mono` + `tabular-nums`
+- ❌ `font-size < 16px` auf Form-Elementen
+- ❌ `100vh` — immer `100dvh`
+- ❌ Fixed/Sticky ohne Safe-Area-Insets
 - ❌ Touch-Targets unter 44×44px
-- ❌ `:hover`-only States ohne `:active` Fallback
+- ❌ `:hover`-only ohne `:active`
+- ❌ `hlm-*` direkt in Feature-Komponenten — immer über `klar-*` abstrahieren
+- ❌ Commit auf main mit offenen High/Critical CVEs
 
 ---
 
 ## Implementierungs-Phasen
 
-Jede Phase: commiten + lauffähig + Tests grün + Coverage-Threshold erfüllt.
-
 | Phase | Inhalt |
 |---|---|
-| 1 | Skeleton: Monorepo, Compose, `/health`, Angular-Stub + PWA-Setup (`@angular/pwa`, iOS Meta-Tags, Manifest), JWT-Key-Gen, GitHub-Actions Basis |
+| 1 | Skeleton: Monorepo, Compose, `/health`, Angular-Stub + PWA-Setup, JWT-Key-Gen, GitHub-Actions |
 | 2 | Local-Auth: Register (erster=Admin), Login, Refresh, Logout, Rate-Limit |
 | 3 | Households + Invites + RLS: Multi-Tenant-Fundament, Cross-Tenant-E2E-Test |
-| 4 | OIDC: PocketID-Anbindung, Account-Linking (alle Edge-Cases), Group-Mapping, Security-Settings |
+| 4 | OIDC: PocketID-Anbindung, Account-Linking, Group-Mapping, Security-Settings |
 | 5 | Categories + Projects: CRUD, Sichtbarkeits-Validierung |
 | 6 | Recurring Transactions: CRUD, Frequenz-Logik, `safeDayOfMonth` |
 | 7 | Transactions + Budgets: CRUD, Quick-Add, Projekt-Zuordnung |
@@ -1252,4 +381,3 @@ Jede Phase: commiten + lauffähig + Tests grün + Coverage-Threshold erfüllt.
 ## Bei Unsicherheit
 
 Nicht raten. `// TODO(spec): <Frage>` im Code + Frage in Antwort an Marco.
-Spec wird erweitert, Code nicht mit Annahmen gefüllt.
