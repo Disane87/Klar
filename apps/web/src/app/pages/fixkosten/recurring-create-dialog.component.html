@@ -1,0 +1,63 @@
+<div class="flex flex-col gap-4">
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="rcd-name">Name</label>
+    <input id="rcd-name" hlmInput type="text"
+           placeholder="z.B. Miete, Netflix..."
+           [value]="name()"
+           (input)="name.set($any($event.target).value)" />
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="rcd-monthly">Betrag / Monat (€)</label>
+    <input id="rcd-monthly" hlmInput class="font-mono tabular-nums" type="text"
+           inputmode="decimal" placeholder="0,00"
+           [value]="monthly()"
+           (input)="monthly.set($any($event.target).value)" />
+    @if (freqHint()) {
+      <span class="text-[11px] text-(--text-muted)">{{ freqHint() }}</span>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="rcd-category">Kategorie</label>
+    <select id="rcd-category" hlmSelect
+            (change)="categoryId.set($any($event.target).value)">
+      <option value="" disabled selected>Kategorie wählen…</option>
+      @for (cat of cats.active(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="rcd-freq">Frequenz</label>
+    <select id="rcd-freq" hlmSelect
+            (change)="frequency.set($any($event.target).value)">
+      @for (opt of freqOptions; track opt.value) {
+        <option [value]="opt.value" [selected]="opt.value === frequency()">{{ opt.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="rcd-day">Buchungstag (1–31)</label>
+    <input id="rcd-day" hlmInput class="font-mono tabular-nums" type="number"
+           min="1" max="31" placeholder="–"
+           [value]="dayOfMonth()"
+           (input)="dayOfMonth.set($any($event.target).value)" />
+  </div>
+
+  @if (err()) {
+    <p class="text-[12px] text-(--color-expense)">{{ err() }}</p>
+  }
+
+  <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
+    <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
+    <button hlmBtn variant="default" size="sm" type="button"
+            [disabled]="!isValid() || saving()" (click)="save()">
+      @if (saving()) { <hlm-spinner [size]="12" /> }
+      Erstellen
+    </button>
+  </div>
+</div>
