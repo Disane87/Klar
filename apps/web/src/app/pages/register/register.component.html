@@ -1,33 +1,33 @@
-<div class="page">
+<div class="grid grid-cols-2 min-h-[100dvh] bg-[var(--bg)] max-lg:grid-cols-1">
   <!-- Left: brand pane -->
-  <div class="brand-pane">
-    <div class="brand-top">
+  <div class="border-r border-[var(--border)] px-[60px] pb-10 pt-[60px] flex flex-col justify-between bg-[var(--surface)] max-lg:hidden">
+    <div>
       <klar-wordmark [size]="28" />
     </div>
 
-    <div class="brand-center">
-      <div class="klar-label" style="margin-bottom: 18px;">EIN HAUSHALT — KEINE WOLKE</div>
-      <div class="headline">
+    <div>
+      <div class="mb-[18px] text-[var(--label)] text-[var(--text-muted)] tracking-wider">EIN HAUSHALT — KEINE WOLKE</div>
+      <div class="text-[var(--display)] font-medium leading-[1.05] tracking-[-0.025em] mt-[6px]">
         Privatfinanzen,<br/>
-        <span class="klar-serif accent-text">klar genug</span>
+        <span class="italic font-normal font-serif text-[var(--color-surplus)]">klar genug</span>
         {{ ' ' }}für<br/>zwei Erwachsene.
       </div>
-      <div class="tagline">
+      <div class="mt-[22px] text-[var(--body-sm)] text-[var(--text-2)] max-w-[360px] leading-[1.55]">
         Selbstgehostet auf deinem NAS oder Mini-PC. Keine Telemetrie, keine Bank-API,
         kein Algorithmus, der für dich denkt.
       </div>
     </div>
 
-    <div class="trust-badges">
-      <span class="badge-item">
+    <div class="flex gap-[18px] text-[var(--label)] text-[var(--text-muted)]">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="shield" [size]="12" />
         ARGON2ID
       </span>
-      <span class="badge-item">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="lock" [size]="12" />
         100% LOKAL
       </span>
-      <span class="badge-item">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="key" [size]="12" />
         RS256 JWT
       </span>
@@ -35,38 +35,38 @@
   </div>
 
   <!-- Right: form pane -->
-  <div class="form-pane">
-    <div class="form-inner">
-
+  <div class="px-20 py-[60px] flex flex-col justify-center max-lg:px-6 max-lg:py-10">
+    <div class="hidden max-lg:flex max-lg:justify-center max-lg:mb-8">
+      <klar-wordmark [size]="48" />
+    </div>
+    <div class="max-w-[360px] w-full mx-auto">
       @if (success()) {
-        <!-- Success state -->
-        <div class="success-state">
-          <div class="success-icon">
+        <div class="flex flex-col items-start gap-1">
+          <div class="w-14 h-14 rounded-full bg-[color-mix(in_srgb,var(--color-surplus)_12%,transparent)] text-[var(--color-surplus)] flex items-center justify-center mb-4">
             <klar-icon name="mail" [size]="32" />
           </div>
-          <div class="klar-label" style="margin-bottom: 8px;">E-MAIL BESTÄTIGEN</div>
-          <div class="form-title">Fast geschafft!</div>
-          <p class="success-message">
+          <div class="mb-2 text-[var(--label)] text-[var(--text-muted)] tracking-wider">E-MAIL BESTÄTIGEN</div>
+          <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">Fast geschafft!</div>
+          <p class="text-[var(--body-sm)] text-[var(--text-2)] leading-relaxed my-2 mb-5">
             Wir haben dir eine Bestätigungsmail an
-            <strong>{{ email() }}</strong> geschickt.
+            <strong class="text-[var(--text)]">{{ email() }}</strong> geschickt.
             Bitte prüfe dein Postfach und klicke auf den Link.
           </p>
-          <a routerLink="/login" class="link">← Zurück zur Anmeldung</a>
+          <a routerLink="/login" class="text-[var(--color-accent)] no-underline hover:underline">← Zurück zur Anmeldung</a>
         </div>
       } @else {
-        <!-- Register form -->
-        <div class="klar-label" style="margin-bottom: 6px;">KONTO · NEU</div>
-        <div class="form-title">Konto erstellen</div>
-        <div class="form-subtitle">Klar · Dein privates Haushaltsbuch</div>
+        <div class="mb-1.5 text-[var(--label)] text-[var(--text-muted)] tracking-wider">KONTO · NEU</div>
+        <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">Konto erstellen</div>
+        <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Klar · Dein privates Haushaltsbuch</div>
 
         @if (serverError()) {
-          <div class="server-error">
-            <klar-icon name="alert-triangle" [size]="14" />
+          <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
+            <klar-icon name="alert-triangle" [size]="14" class="shrink-0" />
             <span>{{ serverError() }}</span>
           </div>
         }
 
-        <form class="form" (submit)="$event.preventDefault(); submit()">
+        <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); submit()">
           <klar-input
             label="ANZEIGENAME"
             type="text"
@@ -112,9 +112,9 @@
           </button>
         </form>
 
-        <div class="form-footer">
+        <div class="flex justify-between mt-4 text-[var(--label)] text-[var(--text-muted)]">
           <span>Bereits registriert?</span>
-          <a routerLink="/login" class="link">Anmelden ↗</a>
+          <a routerLink="/login" class="text-[var(--color-accent)] no-underline hover:underline">Anmelden ↗</a>
         </div>
       }
     </div>

@@ -1,68 +1,71 @@
-<div class="page">
+<div class="grid grid-cols-2 min-h-[100dvh] bg-[var(--bg)] max-lg:grid-cols-1">
   <!-- Left: brand pane -->
-  <div class="brand-pane">
-    <div class="brand-top">
+  <div class="border-r border-[var(--border)] px-[60px] pb-10 pt-[60px] flex flex-col justify-between bg-[var(--surface)] max-lg:hidden">
+    <div>
       <klar-wordmark [size]="28" />
     </div>
 
-    <div class="brand-center">
-      <div class="klar-label" style="margin-bottom: 18px;">EIN HAUSHALT — KEINE WOLKE</div>
-      <div class="headline">
+    <div>
+      <div class="mb-[18px] text-[var(--label)] text-[var(--text-muted)] tracking-wider">EIN HAUSHALT — KEINE WOLKE</div>
+      <div class="text-[var(--display)] font-medium leading-[1.05] tracking-[-0.025em] mt-[6px]">
         Privatfinanzen,<br/>
-        <span class="klar-serif accent-text">klar genug</span>
+        <span class="italic font-normal font-serif text-[var(--color-surplus)]">klar genug</span>
         {{ ' ' }}für<br/>zwei Erwachsene.
       </div>
-      <div class="tagline">
+      <div class="mt-[22px] text-[var(--body-sm)] text-[var(--text-2)] max-w-[360px] leading-[1.55]">
         Selbstgehostet auf deinem NAS oder Mini-PC. Keine Telemetrie, keine Bank-API,
         kein Algorithmus, der für dich denkt.
       </div>
     </div>
 
-    <div class="trust-badges">
-      <span class="badge-item">
+    <div class="flex gap-[18px] text-[var(--label)] text-[var(--text-muted)]">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="shield" [size]="12" />
         ARGON2ID
       </span>
-      <span class="badge-item">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="lock" [size]="12" />
         100% LOKAL
       </span>
-      <span class="badge-item">
+      <span class="inline-flex items-center gap-[6px]">
         <klar-icon name="key" [size]="12" />
         RS256 JWT
       </span>
     </div>
 
     <!-- Status bar -->
-    <div class="status-bar">
-      <span class="status-left">
-        <span class="status-dot online"></span>
-        haushalt.lan · online · <span class="status-time klar-mono">{{ statusTime() }}</span>
+    <div class="flex items-center justify-between pt-4 border-t border-[var(--border)] mt-4 text-[10px] text-[var(--text-muted)] tracking-widest">
+      <span class="flex items-center gap-[6px]">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-income)]"></span>
+        haushalt.lan · online · <span class="font-mono">{{ statusTime() }}</span>
       </span>
-      <span class="status-version">v1.4.2</span>
+      <span class="font-mono">v1.4.2</span>
     </div>
   </div>
 
   <!-- Right: form pane -->
-  <div class="form-pane">
-    <div class="form-inner">
-      <div class="klar-label" style="margin-bottom: 6px;">SESSION · NEU</div>
-      <div class="form-title">Anmelden</div>
-      <div class="form-subtitle">Klar · Dein privates Haushaltsbuch</div>
+  <div class="px-20 py-[60px] flex flex-col justify-center max-lg:px-6 max-lg:py-10">
+    <div class="hidden max-lg:flex max-lg:justify-center max-lg:mb-8">
+      <klar-wordmark [size]="48" />
+    </div>
+    <div class="max-w-[360px] w-full mx-auto">
+      <div class="mb-1.5 text-[var(--label)] text-[var(--text-muted)] tracking-wider">SESSION · NEU</div>
+      <div class="text-[var(--num-lg)] font-medium tracking-[-0.01em] mb-1">Anmelden</div>
+      <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Klar · Dein privates Haushaltsbuch</div>
 
       @if (serverError()) {
-        <div class="server-error">
-          <klar-icon name="alert-triangle" [size]="14" />
+        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
+          <klar-icon name="alert-triangle" [size]="14" class="shrink-0" />
           <span>{{ serverError() }}</span>
           @if (showResend()) {
-            <button class="resend-link" type="button" (click)="resendVerification()">
+            <button type="button" class="bg-transparent border-none p-0 text-[var(--label)] text-[var(--color-accent)] cursor-pointer text-left hover:underline" (click)="resendVerification()">
               Bestätigungsmail erneut senden
             </button>
           }
         </div>
       }
 
-      <form class="form" (submit)="$event.preventDefault(); submit()">
+      <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); submit()">
         <klar-input
           label="E-MAIL"
           type="email"
@@ -85,14 +88,16 @@
           [error]="submitted() && passwordError() ? passwordError()! : ''"
         />
 
-        <div class="remember-row" (click)="toggleRememberMe()" tabindex="0"
+        <div class="flex items-center gap-2 mt-1" (click)="toggleRememberMe()" tabindex="0"
              (keydown.space)="$event.preventDefault(); toggleRememberMe()">
-          <div class="checkbox" [class.checked]="rememberMe()">
+          <div class="w-3.5 h-3.5 border border-[var(--border)] rounded bg-[var(--surface)] flex items-center justify-center shrink-0"
+               [class.bg-[var(--color-accent)]]="rememberMe()"
+               [class.border-[var(--color-accent)]]="rememberMe()">
             @if (rememberMe()) {
-              <klar-icon name="check" [size]="10" class="check-icon" />
+              <klar-icon name="check" [size]="10" class="text-[var(--color-accent)]" />
             }
           </div>
-          <span class="remember-label">Diesen Browser für 30 Tage merken</span>
+          <span class="text-[var(--label)] text-[var(--text-2)]">Diesen Browser für 30 Tage merken</span>
         </div>
 
         <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="lg" type="submit"
@@ -102,8 +107,10 @@
         </button>
 
         @if (oidc.enabled()) {
-          <div class="oidc-divider">
+          <div class="flex items-center gap-3 text-[var(--label)] text-[var(--text-muted)] text-center">
+            <span class="h-px flex-1 bg-[var(--border)]"></span>
             <span>oder</span>
+            <span class="h-px flex-1 bg-[var(--border)]"></span>
           </div>
 
           <button hlmBtn [klarLoadingBtn]="oidcLoading()" variant="outline" size="md" type="button"
@@ -115,9 +122,9 @@
         }
       </form>
 
-      <div class="form-footer">
+      <div class="flex justify-between mt-4 text-[var(--label)] text-[var(--text-muted)]">
         <span>Kein Konto?</span>
-        <a routerLink="/register" class="link">Registrieren ↗</a>
+        <a routerLink="/register" class="text-[var(--color-accent)] no-underline hover:underline">Registrieren ↗</a>
       </div>
     </div>
   </div>

@@ -26,7 +26,6 @@ import { OidcService } from '../../core/auth/oidc.service';
     KlarInputComponent,
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
 })
 export class LoginComponent implements OnInit {
   private authService = inject(AuthService);

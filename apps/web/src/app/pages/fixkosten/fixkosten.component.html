@@ -75,52 +75,52 @@
       </button>
     </div>
   </div>
-  <div class="grid grid-cols-3 gap-3 mb-4">
-    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+  <div class="grid grid-cols-3 gap-3 mb-4 max-md:grid-cols-1 max-md:gap-2">
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Einnahmen</span>
         <span class="text-[9px] uppercase tracking-wider text-(--text-muted)">brutto</span>
       </div>
-      <div class="font-mono text-[18px] tabular-nums text-(--color-income) mt-2">
+      <div class="font-mono text-base tabular-nums text-(--color-income) mt-1.5 max-md:text-[15px]">
         {{ incomeTotalCents() | klarMoney }}
       </div>
       @if (incomeBracket().label !== '–') {
-      <div class="mt-1.5 flex items-center gap-1.5">
-        <span class="text-[10px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</span>
-        <span class="text-[9px] text-(--text-muted)">{{ incomeBracket().desc }}</span>
+      <div class="mt-1 flex items-center gap-1.5">
+        <span class="text-[9px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</span>
+        <span class="text-[8px] text-(--text-muted)">{{ incomeBracket().desc }}</span>
       </div>
       }
     </div>
-    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Ausgaben</span>
       </div>
-      <div class="font-mono text-[18px] tabular-nums text-(--color-expense) mt-2">
+      <div class="font-mono text-base tabular-nums text-(--color-expense) mt-1.5 max-md:text-[15px]">
         {{ expenseTotalCents() | klarMoney }}
       </div>
       @if (expenseRatio() !== null) {
-      <div class="mt-1.5 flex items-center gap-1.5">
+      <div class="mt-1 flex items-center gap-1.5">
         <iconify-icon
           [icon]="expenseRatio()! <= 70 ? 'lucide:trending-down' : expenseRatio()! <= 100 ? 'lucide:minus' : 'lucide:trending-up'"
           width="12" height="12" [class]="expenseRatingColor()"></iconify-icon>
-        <span class="font-mono text-[10px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
-        <span class="text-[10px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
+        <span class="font-mono text-[9px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
+        <span class="text-[9px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
       </div>
       }
     </div>
-    <div class="bg-(--surface) rounded-md p-4 border border-(--border) shadow-sm">
+    <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] uppercase tracking-widest text-(--text-2)">Überschuss</span>
       </div>
-      <div class="font-mono text-[18px] tabular-nums mt-2" [ngClass]="surplusCents() | klarMoneyClass">
+      <div class="font-mono text-base tabular-nums mt-1.5 max-md:text-[15px]" [ngClass]="surplusCents() | klarMoneyClass">
         {{ surplusCents() | klarMoney }}
       </div>
       @if (surplusRatio() !== null) {
-      <div class="mt-1.5 flex items-center gap-1.5">
+      <div class="mt-1 flex items-center gap-1.5">
         <iconify-icon [icon]="surplusCents() >= 0 ? 'lucide:arrow-up-right' : 'lucide:arrow-down-right'" width="12"
           height="12" [class]="surplusRatingColor()"></iconify-icon>
-        <span class="font-mono text-[10px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
-        <span class="text-[10px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
+        <span class="font-mono text-[9px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
+        <span class="text-[9px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
       </div>
       }
     </div>
