@@ -12,7 +12,16 @@
       "mcp__plugin_playwright_playwright__browser_tabs",
       "mcp__ruflo__memory_search",
       "Bash(pnpm --filter web e2e)",
-      "Bash(pnpm --filter @klar/api prisma:seed)"
+      "Bash(pnpm --filter @klar/api prisma:seed)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Workspace\\\\Klar\\\\apps\\\\web\\\\src\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20)",
+      "Bash(pnpm --filter web exec tsc --noEmit)",
+      "Skill(browse)",
+      "Skill(browse:*)",
+      "Bash(git push *)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(gh run *)",
+      "Bash(pnpm --filter api build)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\denaro"

@@ -10,10 +10,11 @@
         class="hidden md:flex"
         [title]="pageHeader.title()"
         [subtitle]="pageHeader.subtitle() ?? ''"
-        [monthChip]="monthChip()"
+        [monthChip]="pageHeader.chipLabel() ?? monthChip()"
         [showPlanspiel]="pageHeader.showPlanspiel()"
         [showAdd]="pageHeader.showAdd()"
         [addLabel]="pageHeader.addLabel()"
+        [stats]="pageHeader.stats()"
         (addClick)="pageHeader.onAdd()?.()"
         (planspielClick)="pageHeader.onPlanspiel()?.()"
       />
@@ -21,7 +22,7 @@
       <header class="flex h-12 px-4 border-b border-(--border) bg-(--surface) items-center justify-between shrink-0 md:hidden">
         <span class="text-sm font-medium tracking-[-0.01em]">{{ pageHeader.title() }}</span>
         <div class="flex items-center gap-2">
-          <klar-month-chip [label]="monthChip()" />
+          <klar-month-chip [label]="pageHeader.chipLabel() ?? monthChip()" />
           <klar-header-user />
         </div>
       </header>

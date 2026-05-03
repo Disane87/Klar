@@ -1,14 +1,17 @@
 import { Component, input, output } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarMonthChipComponent } from '../../shared/ui/klar-month-chip.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
+import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
+import type { PageStat } from '../../core/page-header/page-header.service';
 
 @Component({
   selector: 'klar-top-bar',
   standalone: true,
   host: { class: 'block w-full' },
-  imports: [KlarMonthChipComponent, KlarIconComponent, HlmButtonDirective, KlarHeaderUserComponent],
+  imports: [NgClass, KlarMonthChipComponent, KlarIconComponent, HlmButtonDirective, KlarHeaderUserComponent, KlarMoneyPipe],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
 })
@@ -19,7 +22,17 @@ export class TopBarComponent {
   showPlanspiel = input(false);
   showAdd       = input(false);
   addLabel      = input('Buchung');
+  stats         = input<PageStat[]>([]);
 
   addClick       = output<void>();
   planspielClick = output<void>();
+
+  statColor(tone: PageStat['tone']): string {
+    switch (tone) {
+      case 'income':  return 'text-(--color-income)';
+      case 'expense': return 'text-(--color-expense)';
+      case 'surplus': return 'text-(--color-surplus)';
+      case 'neutral': return 'text-(--text-muted)';
+    }
+  }
 }

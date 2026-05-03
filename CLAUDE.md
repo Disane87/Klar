@@ -5,6 +5,12 @@ Vollständige Produktanforderungen: `SPEC.md`
 
 ---
 
+## 🚀 Produktions-Deployment
+
+Der Portainer-Stack auf dem Unraid-Host (`klar.disane.dev`) ist die **primäre Integrationstest-Umgebung**. Nach jedem Commit baut die CI ein neues Image (`ghcr.io/disane87/klar:latest`), das dann manuell im Portainer-Stack neu deployed wird. Lokale Unit-Tests ersetzen das nicht — echte Integrationstests laufen in Prod.
+
+---
+
 ## ⚡ PFLICHT-TOOLS — IMMER AKTIV
 
 Diese Tools sind bei JEDER Session und JEDEM Task zu verwenden. Keine Ausnahmen.

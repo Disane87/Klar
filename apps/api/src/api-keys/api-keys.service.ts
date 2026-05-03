@@ -132,7 +132,7 @@ export class ApiKeysService {
   }
 
   /**
-   * Verify a full API key string (used by ApiKeyAuthGuard).
+   * Verify a full API key string.
    * Returns null if invalid — NEVER throw an exception to prevent timing leaks.
    * NEVER log the full key.
    */

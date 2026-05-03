@@ -1,9 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { LowerCasePipe, NgClass } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
@@ -19,24 +18,33 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [LowerCasePipe, NgClass, KlarSkeletonComponent, KlarIconComponent, BrandIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
 export class FixkostenPageComponent {
-  protected store         = inject(OverviewStore);
-  private dialogService   = inject(KlarDialogService);
+  protected store       = inject(OverviewStore);
+  private pageHeader    = inject(PageHeaderService);
+  private dialogService = inject(KlarDialogService);
 
   constructor() {
     const router = inject(Router);
-    inject(PageHeaderService).set({
-      title:          'Fixkosten',
-      subtitle:       'WIEDERKEHRENDE EIN- UND AUSGABEN',
-      showPlanspiel:  true,
-      showAdd:        true,
-      addLabel:       'Buchung',
-      onPlanspiel:    () => router.navigate(['/app/planspiel']),
-      onAdd:          () => router.navigate(['/app/buchungen']),
+    this.pageHeader.set({
+      title:         'Fixkosten',
+      showPlanspiel: true,
+      showAdd:       true,
+      addLabel:      'Buchung',
+      onPlanspiel:   () => router.navigate(['/app/planspiel']),
+      onAdd:         () => router.navigate(['/app/buchungen']),
+    });
+
+    effect(() => {
+      const surplus = this.surplusCents();
+      this.pageHeader.stats.set([{
+        label:      'Überschuss',
+        valueCents: surplus,
+        tone:       surplus >= 0 ? 'surplus' : 'expense',
+      }]);
     });
   }
 
@@ -59,7 +67,7 @@ export class FixkostenPageComponent {
   // ── Edit via dialog ──────────────────────────────────────────────────────────
 
   openEdit(item: FixedCostItem, event: Event): void {
-    event.stopPropagation(); // don't toggle group collapse
+    event.stopPropagation();
     this.dialogService.open({
       title:     'Eintrag bearbeiten',
       component: RecurringEditDialogComponent,
@@ -70,7 +78,6 @@ export class FixkostenPageComponent {
 
   // ── Enriched groups ──────────────────────────────────────────────────────────
 
-  // Backend liefert bereits korrekte Reihenfolge: INCOME → FIXED_INCOME → EXPENSE
   readonly enrichedGroups = computed(() => this.store.fixedCosts()?.groups ?? []);
 
   // ── Summary computed ─────────────────────────────────────────────────────────
@@ -83,27 +90,7 @@ export class FixkostenPageComponent {
     this.enrichedGroups().filter(g => g.totalCents < 0).reduce((s, g) => s + g.totalCents, 0)
   );
 
-  readonly incomeSourceCount = computed(() =>
-    this.enrichedGroups().filter(g => g.totalCents > 0).reduce((s, g) => s + g.items.length, 0)
-  );
-
-  readonly expenseCategoryCount = computed(() =>
-    this.enrichedGroups().filter(g => g.totalCents < 0).length
-  );
-
   readonly surplusCents = computed(() => this.incomeTotalCents() + this.expenseTotalCents());
-
-  readonly surplusPercent = computed(() => {
-    const inc = this.incomeTotalCents();
-    if (inc === 0) return 0;
-    return Math.round((this.surplusCents() / inc) * 1000) / 10;
-  });
-
-  readonly monthDisplay = computed(() => {
-    const [year, month] = this.store.currentMonth().split('-');
-    const date = new Date(Number(year), Number(month) - 1, 1);
-    return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }).toUpperCase();
-  });
 
   // ── Formatting helpers ───────────────────────────────────────────────────────
 
@@ -112,12 +99,12 @@ export class FixkostenPageComponent {
     return String(day).padStart(2, '0') + '.';
   }
 
-  frequencyLabel(freq: RecurringFrequency): string {
+  shortFreq(freq: RecurringFrequency): string {
     switch (freq) {
-      case 'MONTHLY':     return 'Monatlich';
-      case 'QUARTERLY':   return 'Quartalsweise';
-      case 'YEARLY':      return 'Jährlich';
-      case 'CUSTOM_DAYS': return 'Individuell';
+      case 'QUARTERLY':   return '/ Quartal';
+      case 'YEARLY':      return '/ Jahr';
+      case 'CUSTOM_DAYS': return '/ individuell';
+      default:            return '';
     }
   }
 }
