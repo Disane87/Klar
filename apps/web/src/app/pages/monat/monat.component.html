@@ -1,12 +1,13 @@
-<div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+<!-- Calendar anchored at top — does not scroll with content below -->
+<hlm-calendar
+  class="cal-nav-block shrink-0"
+  [month]="store.currentMonth()"
+  [events]="calendarEvents()"
+  (monthChange)="navigateMonth($event)"
+  (dayTap)="onDayTap($event)" />
 
-  <!-- Calendar scheduler -->
-  <hlm-calendar
-    class="cal-nav-block shrink-0"
-    [month]="store.currentMonth()"
-    [events]="calendarEvents()"
-    (monthChange)="navigateMonth($event)"
-    (dayTap)="onDayTap($event)" />
+<!-- Scrollable content below calendar -->
+<div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
 
   <!-- Loading -->
   @if (store.loading()) {
