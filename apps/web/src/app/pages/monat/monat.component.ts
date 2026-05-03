@@ -5,8 +5,6 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
-import { KlarStatCardComponent } from '../../shared/ui/klar-stat-card.component';
-import { KlarSkeletonCardsComponent } from '../../shared/ui/klar-skeleton-cards.component';
 import { HlmCalendarComponent, type CalendarEvent, type CalendarEventMap } from '../../shared/ui/hlm/hlm-calendar.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
@@ -22,8 +20,6 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
     KlarMoneyClassPipe,
     KlarErrorBarComponent,
     KlarEmptyStateComponent,
-    KlarStatCardComponent,
-    KlarSkeletonCardsComponent,
     HlmCalendarComponent,
   ],
   templateUrl: './monat.component.html',
@@ -32,6 +28,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 export class MonatPageComponent {
   protected store  = inject(OverviewStore);
   private txStore  = inject(TransactionsStore);
+  private pageHeader = inject(PageHeaderService);
 
   protected readonly sheetDay = signal<{ date: Date; events: CalendarEvent[] } | null>(null);
 
@@ -45,9 +42,8 @@ export class MonatPageComponent {
 
   constructor() {
     const router = inject(Router);
-    inject(PageHeaderService).set({
+    this.pageHeader.set({
       title:         'Monatsansicht',
-      subtitle:      'WAS DIESER MONAT GEKOSTET HAT',
       showPlanspiel: true,
       showAdd:       true,
       addLabel:      'Buchung',
@@ -55,8 +51,17 @@ export class MonatPageComponent {
       onAdd:         () => router.navigate(['/app/buchungen']),
     });
 
-    // Keep transaction store in sync with the overview month
     effect(() => { this.txStore.setMonth(this.store.currentMonth()); });
+
+    effect(() => {
+      const cf = this.store.cashflow();
+      if (!cf) return;
+      this.pageHeader.stats.set([{
+        label:      'Überschuss',
+        valueCents: cf.surplusCents,
+        tone:       cf.surplusCents >= 0 ? 'surplus' : 'expense',
+      }]);
+    });
   }
 
   protected navigateMonth(month: string): void {
@@ -95,7 +100,6 @@ export class MonatPageComponent {
     return now.getFullYear() === Number(year) && now.getMonth() + 1 === Number(month);
   });
 
-  /** Events keyed by day-of-month for the calendar scheduler */
   protected readonly calendarEvents = computed<CalendarEventMap>(() => {
     const fc = this.store.fixedCosts();
     const transactions = this.txStore.items() ?? [];
@@ -110,7 +114,6 @@ export class MonatPageComponent {
       (map[day] ??= []).push(event);
     };
 
-    // Fixed costs: use dayOfMonth (clamped to month length)
     if (fc) {
       for (const group of fc.groups) {
         for (const item of group.items) {
@@ -127,7 +130,6 @@ export class MonatPageComponent {
       }
     }
 
-    // Transactions: parse date → day
     for (const tx of transactions) {
       const day = new Date(tx.date).getDate();
       push(day, {
@@ -138,7 +140,6 @@ export class MonatPageComponent {
       });
     }
 
-    // Sort each day's events: recurring first, then by amount desc
     for (const day of Object.keys(map)) {
       map[Number(day)].sort((a, b) => {
         if (a.isRecurring !== b.isRecurring) return a.isRecurring ? -1 : 1;
