@@ -73,7 +73,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({
           rootPath: join(process.cwd(), 'web'),
-          exclude: ['/api/(.*)', '/health'],
+          exclude: ['/api/*path', '/health'],
         })]
       : []),
   ],
