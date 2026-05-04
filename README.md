@@ -158,10 +158,6 @@ All configuration is via environment variables. Copy `.env.example` to `.env` an
 | `JWT_PUBLIC_KEY_PATH` | `keys/public.pem` | RS256 public key |
 | `JWT_ACCESS_EXPIRES_IN` | `15m` | Access token TTL |
 | `JWT_REFRESH_EXPIRES_IN` | `30d` | Refresh token TTL |
-| `OIDC_ISSUER_URL` | — | OIDC provider URL (e.g., PocketID) |
-| `OIDC_CLIENT_ID` | — | OIDC client ID |
-| `OIDC_CLIENT_SECRET` | — | OIDC client secret |
-
 ### Application
 
 | Variable | Default | Description |
@@ -169,8 +165,39 @@ All configuration is via environment variables. Copy `.env.example` to `.env` an
 | `PORT` | `3000` | API port |
 | `NODE_ENV` | `development` | `development` or `production` |
 | `REGISTRATION_ENABLED` | `true` | Allow new user registration |
-| `APP_URL` | `http://localhost:4200` | Used in emails / OIDC callbacks |
+| `APP_URL` | `http://localhost:3000` | Used in e-mails and OIDC callbacks |
 | `FRONTEND_URL` | `http://localhost:4200` | CORS origin |
+
+### Mail
+
+| Variable | Default | Description |
+|---|---|---|
+| `MAIL_HOST` | `localhost` | SMTP server hostname |
+| `MAIL_PORT` | `1025` | SMTP port — `465` (SMTPS), `587` (STARTTLS), `1025` (MailDev) |
+| `MAIL_SECURE` | `false` | `true` = TLS on connect (port 465); `false` = plain / STARTTLS |
+| `MAIL_USER` | _(empty)_ | SMTP username — leave empty for MailDev (no auth required) |
+| `MAIL_PASS` | _(empty)_ | SMTP password — leave empty for MailDev |
+| `MAIL_FROM` | `noreply@klar.app` | Sender address |
+| `MAIL_FROM_NAME` | `Klar` | Sender display name |
+
+> [!TIP]
+> **Local dev:** MailDev runs via `docker-compose.dev.yml` on port 1025 (no auth needed). Open the inbox at **http://localhost:1080**.
+> **Production:** Use any SMTP provider — [Resend](https://resend.com), [Postmark](https://postmarkapp.com), or your own server. Set `MAIL_SECURE=true` + `MAIL_PORT=465` for SMTPS, or `MAIL_SECURE=false` + `MAIL_PORT=587` for STARTTLS.
+
+### OIDC / SSO
+
+| Variable | Default | Description |
+|---|---|---|
+| `OIDC_ENABLED` | `false` | Set to `true` to enable OIDC login |
+| `OIDC_PROVIDER_NAME` | `sso` | Display name on the login button |
+| `OIDC_ISSUER_URL` | — | Your OIDC provider URL (e.g. `https://pocketid.example.com`) |
+| `OIDC_CLIENT_ID` | — | Client ID from your OIDC provider |
+| `OIDC_CLIENT_SECRET` | — | Client secret from your OIDC provider |
+| `OIDC_REDIRECT_URI` | `…/auth/oidc/callback` | Must be registered as redirect URI in your provider |
+| `OIDC_SCOPES` | `openid email profile` | Space-separated scopes |
+| `OIDC_REQUIRED_GROUP` | _(empty)_ | Only members of this group may log in |
+| `OIDC_ADMIN_GROUP` | _(empty)_ | Members of this group automatically get the app-admin role |
+| `OIDC_AUTO_JOIN_HOUSEHOLD_ID` | _(empty)_ | New OIDC users are auto-joined to this household |
 
 ---
 
