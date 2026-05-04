@@ -67,6 +67,7 @@ model User {
   lastLoginAt   DateTime?
   totpSecret    String?             // Base32 encoded TOTP secret
   totpEnabled   Boolean   @default(false)
+  avatarUrl     String?             // base64 JPEG data URL (~15KB), stored directly in DB
 
 memberships         HouseholdMembership[]
    oidcIdentities      OidcIdentity[]
