@@ -32,6 +32,12 @@ export class AuthStore {
     this._isInitialized.set(true);
   }
 
+  updateAvatar(avatarUrl: string | null): void {
+    const current = this._user();
+    if (!current) return;
+    this._user.set({ ...current, avatarUrl });
+  }
+
   async initSession(): Promise<void> {
     try {
       const res = await firstValueFrom(this.authService.refresh());
