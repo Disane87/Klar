@@ -4,15 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { AuthStore } from '../../core/auth/auth.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
+import type { ApiKeyListItem } from '../../core/api-keys/api-keys.service';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import type { InviteCode } from '@klar/shared';
+import { MailTemplatesComponent } from './mail-templates/mail-templates.component';
+import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from '../../shared/ui/klar-list.component';
 
 @Component({
   selector: 'app-haushalt',
@@ -24,9 +26,12 @@ import type { InviteCode } from '@klar/shared';
     HlmButtonDirective,
     HlmSpinnerComponent,
     HlmCheckboxComponent,
-    HlmSelectNativeDirective,
     KlarInputComponent,
     KlarIconComponent,
+    MailTemplatesComponent,
+    KlarListComponent,
+    KlarListGroupComponent,
+    KlarListItemComponent,
   ],
   templateUrl: './haushalt.component.html',
   styleUrl: './haushalt.component.css',
@@ -39,7 +44,6 @@ export class HaushaltPageComponent implements OnInit {
 
   readonly availableScopes = AVAILABLE_SCOPES;
   readonly authUserId = computed(() => this.authStore.user()?.id);
-  readonly roleChangePending = signal<Record<string, boolean>>({});
 
   readonly editingName = signal(false);
   readonly newName = signal('');
@@ -52,9 +56,6 @@ export class HaushaltPageComponent implements OnInit {
   readonly deletingHousehold = signal(false);
 
   readonly canManage = computed(() => this.store.isOwner());
-  readonly activeApiKeys = computed(() =>
-    (this.apiKeysStore.keys() ?? []).filter(k => !k.isRevoked)
-  );
   readonly isSoleOwner = computed(() => {
     const members = this.store.members();
     const owners = members.filter(m => m.role === 'OWNER');
@@ -129,35 +130,6 @@ export class HaushaltPageComponent implements OnInit {
     }
   }
 
-  async changeRole(userId: string, rawRole: string, event: Event): Promise<void> {
-    if (rawRole !== 'OWNER' && rawRole !== 'MEMBER') return;
-    const newRole: 'OWNER' | 'MEMBER' = rawRole;
-    const select = event.target as HTMLSelectElement;
-    const oldRole = this.store.members().find(m => m.userId === userId)?.role;
-    select.value = oldRole ?? 'MEMBER';
-
-    const memberName = this.store.members().find(m => m.userId === userId)?.displayName ?? userId;
-    const roleLabel = newRole === 'OWNER' ? 'Owner' : 'Member';
-    const confirmed = window.confirm(
-      `${memberName} zu ${roleLabel} machen?\n\nOwner können Mitglieder einladen, entfernen und Rollen ändern.`,
-    );
-    if (!confirmed) return;
-
-    this.roleChangePending.update(p => ({ ...p, [userId]: true }));
-    try {
-      await this.store.changeRole(userId, newRole);
-      this.toast.success('Rolle geändert');
-    } catch {
-      this.toast.error('Rolle konnte nicht geändert werden');
-    } finally {
-      this.roleChangePending.update(p => {
-        const next = { ...p };
-        delete next[userId];
-        return next;
-      });
-    }
-  }
-
   async joinByCode(): Promise<void> {
     const code = this.joinCode().trim();
     if (!code) return;
@@ -175,6 +147,27 @@ export class HaushaltPageComponent implements OnInit {
 
   formatCode(code: string): string {
     return `${code.slice(0, 4)}-${code.slice(4)}`;
+  }
+
+  formatInviteSublabel(invite: InviteCode): string | undefined {
+    const parts: string[] = [];
+    if (invite.expiresAt) {
+      parts.push(`Ablauf: ${new Date(invite.expiresAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
+    }
+    if (invite.usesRemaining !== null) {
+      parts.push(`Noch ${invite.usesRemaining} Nutzung(en)`);
+    }
+    return parts.length ? parts.join(' · ') : undefined;
+  }
+
+  formatApiKeySublabel(key: ApiKeyListItem): string {
+    const parts: string[] = [];
+    if (key.scopes?.length) parts.push(key.scopes.join(', '));
+    parts.push(`Erstellt ${new Date(key.createdAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
+    if (key.lastUsedAt) {
+      parts.push(`Zuletzt ${new Date(key.lastUsedAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
+    }
+    return parts.join(' · ');
   }
 
   async copyCode(code: string): Promise<void> {

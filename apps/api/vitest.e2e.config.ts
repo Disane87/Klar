@@ -17,8 +17,8 @@ export default defineConfig({
     include: ['src/**/*.e2e.spec.ts'],
     setupFiles: ['./test/e2e-setup.ts'],
     pool: 'forks',
-    poolOptions: {
-      forks: { singleFork: true },
+    poolForks: {
+      singleFork: true,
     },
     testTimeout: 30000,
   },

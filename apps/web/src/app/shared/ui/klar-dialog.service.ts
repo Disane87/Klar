@@ -19,8 +19,7 @@ export class KlarDialogService {
   private cdk = inject(Dialog);
   private ref: DialogRef<unknown, KlarDialogComponent> | null = null;
 
-  /** Stub signal — kept for backwards compatibility with any existing readers */
-  readonly active = signal<null>(null);
+  readonly active = signal<boolean>(false);
 
   open(config: DialogConfig): void {
     this.close();
@@ -33,10 +32,15 @@ export class KlarDialogService {
       panelClass:    'klar-dialog-panel',
       disableClose:  config.disableBackdropClose ?? false,
     });
+    this.active.set(true);
+    this.ref.closed.subscribe({
+      next: () => this.active.set(false),
+    });
   }
 
   close(): void {
     this.ref?.close();
     this.ref = null;
+    this.active.set(false);
   }
 }

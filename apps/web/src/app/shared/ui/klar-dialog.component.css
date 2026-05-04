@@ -1,13 +1,13 @@
 .panel {
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md, 6px);
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
   overflow: hidden;
   width: 100%;
   animation: klar-enter 160ms ease-out both;
-  box-shadow: 0 24px 48px color-mix(in oklab, var(--zinc-950) 40%, transparent);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
 }
 
 .panel-header {
@@ -15,14 +15,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #27272a;
   flex-shrink: 0;
 }
 
 .panel-title {
-  font-size: var(--body-sm);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text);
+  color: #f4f4f5;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

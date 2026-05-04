@@ -1,17 +1,20 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
-import { HlmBadgeDirective } from '../../shared/ui/hlm/hlm-badge.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
-import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarSkeletonRowsComponent } from '../../shared/ui/klar-skeleton-rows.component';
+import {
+  KlarListComponent,
+  KlarListGroupComponent,
+  KlarListItemComponent,
+} from '../../shared/ui/klar-list.component';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { ThemeService, type Theme } from '../../core/theme/theme.service';
@@ -28,14 +31,14 @@ import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
   imports: [
     DatePipe,
     FormsModule,
-    RouterLink,
     HlmButtonDirective,
     HlmInputDirective,
     HlmLabelDirective,
     HlmSpinnerComponent,
-    HlmBadgeDirective,
-    KlarIconComponent,
     KlarSkeletonRowsComponent,
+    KlarListComponent,
+    KlarListGroupComponent,
+    KlarListItemComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -44,6 +47,7 @@ export class SettingsPageComponent {
   protected store = inject(UserSettingsStore);
   protected hhStore = inject(HouseholdStore);
   protected themeService = inject(ThemeService);
+  protected router = inject(Router);
   private authService = inject(AuthService);
   private dialog = inject(KlarDialogService);
   private toast = inject(KlarToastService);
@@ -52,32 +56,18 @@ export class SettingsPageComponent {
   readonly editDisplayName = signal('');
   readonly savingProfile = signal(false);
 
-  readonly initials = computed(() => {
-    const name = this.store.profile()?.displayName ?? '';
-    return name.slice(0, 2).toUpperCase();
-  });
-
-  readonly currentSessions = computed(() =>
-    this.store.sessions().filter(s => s.isCurrent),
-  );
-  readonly otherSessions = computed(() =>
-    this.store.sessions().filter(s => !s.isCurrent),
-  );
+  readonly currentSessions = computed(() => this.store.sessions().filter(s => s.isCurrent));
+  readonly otherSessions   = computed(() => this.store.sessions().filter(s => !s.isCurrent));
 
   constructor() {
-    inject(PageHeaderService).set({
-      title: 'Einstellungen',
-      subtitle: 'PROFIL & APP',
-    });
+    inject(PageHeaderService).set({ title: 'Einstellungen', subtitle: 'PROFIL & APP' });
   }
 
   async ngOnInit(): Promise<void> {
     await Promise.all([
       this.store.loadProfile(),
       this.store.loadSessions(),
-    ]).catch(() => {
-      this.toast.error('Einstellungen konnten nicht geladen werden');
-    });
+    ]).catch(() => this.toast.error('Einstellungen konnten nicht geladen werden'));
   }
 
   startEditProfile(): void {
@@ -92,9 +82,7 @@ export class SettingsPageComponent {
   async saveProfile(): Promise<void> {
     this.savingProfile.set(true);
     try {
-      await this.store.updateProfile({
-        displayName: this.editDisplayName(),
-      });
+      await this.store.updateProfile({ displayName: this.editDisplayName() });
       this.editingProfile.set(false);
       this.toast.success('Profil gespeichert');
     } catch {
@@ -148,23 +136,6 @@ export class SettingsPageComponent {
     }
   }
 
-  formatDate(isoString: string): string {
-    const date = new Date(isoString);
-    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-  }
-
-  formatRelativeTime(isoString: string): string {
-    const diff = Date.now() - new Date(isoString).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 2) return 'gerade eben';
-    if (minutes < 60) return `vor ${minutes} Minuten`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `vor ${hours} Stunden`;
-    const days = Math.floor(hours / 24);
-    return `vor ${days} Tagen`;
-  }
-
-  // 2FA methods
   async disableTotp(): Promise<void> {
     try {
       await firstValueFrom(this.authService.disableTotp());
@@ -176,10 +147,21 @@ export class SettingsPageComponent {
   }
 
   openTotpSetup(): void {
-    this.dialog.open({
-      title: '2FA einrichten',
-      component: TotpSetupDialogComponent,
-      width: 'sm',
-    });
+    this.dialog.open({ title: '2FA einrichten', component: TotpSetupDialogComponent, width: 'sm' });
+  }
+
+  formatDate(isoString?: string): string {
+    if (!isoString) return '—';
+    return new Date(isoString).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  formatRelativeTime(isoString: string): string {
+    const diff = Date.now() - new Date(isoString).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 2) return 'gerade eben';
+    if (minutes < 60) return `vor ${minutes} Minuten`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `vor ${hours} Stunden`;
+    return `vor ${Math.floor(hours / 24)} Tagen`;
   }
 }

@@ -281,7 +281,7 @@ input, select, textarea {
 .klar-dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in oklab, var(--zinc-950) 60%, transparent);
+  background: rgba(0, 0, 0, 0.6);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   z-index: 999;

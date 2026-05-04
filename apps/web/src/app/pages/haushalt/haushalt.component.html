@@ -1,308 +1,221 @@
-<div class="page">
+<div class="flex flex-col overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)] animate-[klar-enter_160ms_ease-out_both]">
+  <klar-list>
 
-  <!-- Page Header -->
-  <div class="page-header">
-    <p class="page-super">EINSTELLUNGEN · HAUSHALT</p>
-    <h1 class="page-title">Verwaltung — <em>wer hier wohnt.</em></h1>
-  </div>
-
-  <!-- Name Section -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-label">NAME</span>
-      @if (canManage() && !editingName()) {
-        <button hlmBtn size="sm" variant="ghost" type="button" (click)="startEditName()">Bearbeiten</button>
-      }
-    </div>
-    @if (editingName()) {
-      <div class="edit-row">
-        <klar-input
-          class="flex-1"
-          [ngModel]="newName()"
-          (ngModelChange)="newName.set($event)"
-          placeholder="Haushaltsname"
-        />
-        <button hlmBtn size="sm" variant="default" type="button"
-                [disabled]="savingName()" (click)="saveName()">
-          @if (savingName()) { <hlm-spinner [size]="12" /> }
-          Speichern
-        </button>
-        <button type="button" (click)="cancelEditName()" class="cancel-btn">Abbruch</button>
-      </div>
-    } @else {
-      <div class="name-block">
-        <p class="name-value">{{ store.activeName() }}</p>
-        <p class="name-meta">Haushalt-ID · {{ store.activeId()?.slice(0, 8) }}</p>
-      </div>
-    }
-  </div>
-
-  <!-- Haushalt wechseln (mehrere Haushalte) -->
-  @if (store.households().length > 1) {
-    <div class="section">
-      <div class="section-header">
-        <span class="section-label">MEINE HAUSHALTE</span>
-      </div>
-      <div class="member-list">
-        @for (item of store.households(); track item.household.id) {
-          <button
-            type="button"
-            (click)="store.setActiveHousehold(item.household.id)"
-            class="member-row household-btn"
-            [class.active]="store.activeId() === item.household.id"
-          >
-            <div class="member-info">
-              <p class="member-name">{{ item.household.name }}</p>
-              <p class="member-email">{{ item.role }}</p>
-            </div>
-            @if (store.activeId() === item.household.id) {
-              <klar-icon name="check" [size]="14" class="household-check-icon" />
-            }
+    <!-- ── NAME ──────────────────────────────────────────── -->
+    <klar-list-group label="Name"
+                     [headerActionLabel]="canManage() && !editingName() ? 'Bearbeiten' : undefined"
+                     (headerAction)="startEditName()">
+      @if (editingName()) {
+        <div class="flex gap-2 px-6 py-4 items-center">
+          <klar-input class="flex-1" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
+          <button hlmBtn size="sm" variant="default" type="button"
+                  [disabled]="savingName()" (click)="saveName()">
+            @if (savingName()) { <hlm-spinner [size]="12" /> }
+            Speichern
           </button>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Mitglieder -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-label">MITGLIEDER · {{ store.members().length }}</span>
-    </div>
-    <div class="member-list">
-      @for (member of store.members(); track member.userId) {
-        <div class="member-row">
-          <div class="member-avatar">{{ member.displayName.slice(0, 2).toUpperCase() }}</div>
-          <div class="member-info">
-            <p class="member-name">{{ member.displayName }}</p>
-            <p class="member-email">{{ member.email }}</p>
-          </div>
-          @if (canManage() && member.userId !== authUserId()) {
-            <select hlmSelect class="member-role-select"
-                    [value]="member.role"
-                    [disabled]="!!roleChangePending()[member.userId]"
-                    (change)="changeRole(member.userId, $any($event.target).value, $event)">
-              <option value="MEMBER">MEMBER</option>
-              <option value="OWNER">OWNER</option>
-            </select>
-            <button type="button" class="icon-btn danger" (click)="removeMember(member.userId)" title="Entfernen">
-              <klar-icon name="close" [size]="14" />
-            </button>
-          } @else {
-            <span class="member-role">{{ member.role }}</span>
-          }
+          <button type="button"
+                  class="min-h-11 px-3 text-[12px] bg-transparent border-none cursor-pointer text-(--text-muted) rounded-sm hover:text-(--text) active:text-(--text) transition-colors"
+                  (click)="cancelEditName()">Abbruch</button>
+        </div>
+      } @else {
+        <div class="px-6 pt-4 pb-4">
+          <p class="text-[17px] font-medium">{{ store.activeName() }}</p>
+          <p class="font-mono text-[12px] text-(--text-muted) mt-1">Haushalt-ID · {{ store.activeId()?.slice(0, 8) }}</p>
         </div>
       }
-    </div>
-  </div>
+    </klar-list-group>
 
-  <!-- Einladungen (nur Owner) -->
-  @if (canManage()) {
-    <div class="section">
-      <div class="section-header">
-        <span class="section-label">EINLADUNGEN</span>
+    <!-- ── MEINE HAUSHALTE (wenn mehrere) ───────────────── -->
+    @if (store.households().length > 1) {
+      <klar-list-group label="Meine Haushalte">
+        @for (item of store.households(); track item.household.id) {
+          <klar-list-item icon="house"
+                          [label]="item.household.name"
+                          [sublabel]="item.role"
+                          [badge]="store.activeId() === item.household.id ? 'Aktiv' : undefined"
+                          badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
+                          [navigable]="true"
+                          (itemClick)="store.setActiveHousehold(item.household.id)" />
+        }
+      </klar-list-group>
+    }
+
+    <!-- ── MITGLIEDER ────────────────────────────────────── -->
+    <klar-list-group [label]="'Mitglieder · ' + store.members().length">
+      @for (member of store.members(); track member.userId) {
+        <klar-list-item icon="user"
+                        [label]="member.displayName"
+                        [sublabel]="member.email"
+                        [badge]="member.role"
+                        badgeClass="font-mono uppercase tracking-[0.1em] text-[9px] bg-(--surface-2) text-(--text-muted)"
+                        [trailingActionIcon]="canManage() && member.userId !== authUserId() ? 'close' : undefined"
+                        [trailingActionDanger]="true"
+                        (trailingActionClick)="removeMember(member.userId)" />
+      }
+    </klar-list-group>
+
+    <!-- ── EINLADUNGEN (nur Owner) ──────────────────────── -->
+    @if (canManage()) {
+      <klar-list-group label="Einladungen"
+                       headerActionLabel="+ Code erstellen"
+                       [headerActionDisabled]="creatingInvite()"
+                       (headerAction)="createInvite()"
+                       footnote="Codes laufen nach 30 Tagen automatisch ab und können nur einmal eingelöst werden.">
+
+        @if (newlyCreatedInvite(); as invite) {
+          <div class="mx-6 my-3 px-4 py-3 border border-(--color-income)/30 bg-(--color-income)/6 rounded-[3px] flex flex-col gap-2">
+            <p class="text-[12px] text-(--color-income) font-medium">Neuer Einladungscode — einmalig verwendbar</p>
+            <div class="flex items-center gap-2 bg-(--surface) border border-(--border) px-3 py-2 rounded-xs">
+              <span class="font-mono text-[14px] font-semibold tracking-[0.08em] flex-1">{{ formatCode(invite.code) }}</span>
+              <button type="button"
+                      class="min-w-11 min-h-11 flex items-center justify-center rounded-xs bg-transparent border-none cursor-pointer text-(--text-muted) hover:text-(--text) transition-colors"
+                      (click)="copyCode(invite.code)" title="Kopieren">
+                <klar-icon name="copy" [size]="14" />
+              </button>
+            </div>
+            @if (invite.expiresAt) {
+              <p class="text-[11px] text-(--text-muted)">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
+            }
+          </div>
+        }
+
+        @for (invite of store.invites(); track invite.id) {
+          <klar-list-item icon="ticket"
+                          [label]="formatCode(invite.code)"
+                          [sublabel]="formatInviteSublabel(invite)"
+                          trailingActionIcon="close"
+                          [trailingActionDanger]="true"
+                          (trailingActionClick)="deleteInvite(invite.id)" />
+        }
+      </klar-list-group>
+    }
+
+    <!-- ── BEITRETEN ─────────────────────────────────────── -->
+    <klar-list-group label="Haushalt beitreten"
+                     footnote="Du bekommst den Code von einem Owner deines Haushalts.">
+      <div class="flex gap-2 px-6 py-4 items-center">
+        <klar-input class="flex-1" placeholder="XXXX-XXXX"
+                    [ngModel]="joinCode()" (ngModelChange)="joinCode.set($event)" />
         <button hlmBtn size="sm" variant="outline" type="button"
-                [disabled]="creatingInvite()" (click)="createInvite()">
-          @if (creatingInvite()) { <hlm-spinner [size]="12" /> }
-          + Code erstellen
+                [disabled]="joining()" (click)="joinByCode()">
+          @if (joining()) { <hlm-spinner [size]="12" /> }
+          Beitreten
         </button>
       </div>
+    </klar-list-group>
 
-      @if (newlyCreatedInvite(); as invite) {
-        <div class="newly-created-key">
-          <p class="key-warning">Neuer Einladungscode — einmalig verwendbar</p>
-          <div class="key-value-row">
-            <span class="invite-code">{{ formatCode(invite.code) }}</span>
-            <button type="button" class="icon-btn" (click)="copyCode(invite.code)" title="Kopieren">
+    <!-- ── MAIL-VORLAGEN ─────────────────────────────────── -->
+    <app-mail-templates />
+
+    <!-- ── API-SCHLÜSSEL ─────────────────────────────────── -->
+    <klar-list-group label="API-Schlüssel"
+                     headerActionLabel="+ Neu"
+                     (headerAction)="apiKeysStore.showCreateForm.set(!apiKeysStore.showCreateForm())">
+
+      @if (apiKeysStore.justCreatedKey(); as fullKey) {
+        <div class="mx-6 mt-3 px-4 py-3 border border-(--color-income)/30 bg-(--color-income)/6 rounded-[3px] flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <klar-icon name="alert" [size]="14" class="text-(--color-income) shrink-0" />
+            <p class="text-[12px] text-(--color-income) font-medium">Nur einmal sichtbar — jetzt kopieren.</p>
+          </div>
+          <div class="flex items-center gap-2 bg-(--surface) border border-(--border) px-3 py-2 rounded-xs">
+            <span class="font-mono text-[12px] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{{ fullKey }}</span>
+            <button type="button"
+                    class="min-w-11 min-h-11 flex items-center justify-center rounded-xs bg-transparent border-none cursor-pointer text-(--text-muted) hover:text-(--text) transition-colors"
+                    (click)="copyApiKey(fullKey)" title="Schlüssel kopieren">
               <klar-icon name="copy" [size]="14" />
             </button>
           </div>
-          @if (invite.expiresAt) {
-            <p class="invite-expiry">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
-          }
+          <button hlmBtn size="sm" variant="ghost" type="button" (click)="apiKeysStore.clearJustCreated()">
+            Verstanden
+          </button>
         </div>
       }
 
-      <div class="invite-list">
-        @for (invite of store.invites(); track invite.id) {
-          <div class="invite-row">
-            <div>
-              <p class="invite-code">{{ formatCode(invite.code) }}</p>
-              @if (invite.expiresAt) {
-                <p class="invite-expiry">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
-              }
-              @if (invite.usesRemaining !== null) {
-                <p class="invite-expiry">Noch {{ invite.usesRemaining }} Nutzung(en)</p>
-              }
-            </div>
-            <button type="button" class="icon-btn danger" (click)="deleteInvite(invite.id)" title="Löschen">
-              <klar-icon name="close" [size]="14" />
+      @if (apiKeysStore.showCreateForm()) {
+        <div class="px-6 py-4 border-b border-(--border) bg-(--surface-2)/20 flex flex-col gap-3">
+          <p class="text-[12px] font-medium text-(--text-muted)">Neuer Schlüssel</p>
+          <klar-input
+            placeholder="Name (z.B. Home Assistant)"
+            [ngModel]="apiKeysStore.newKeyName()"
+            (ngModelChange)="apiKeysStore.newKeyName.set($event)"
+          />
+          <div class="flex flex-col gap-1.5">
+            @for (scope of availableScopes; track scope) {
+              <label class="flex items-center gap-2 cursor-pointer min-h-11">
+                <hlm-checkbox
+                  [checked]="apiKeysStore.newKeyScopes().includes(scope)"
+                  (checkedChange)="apiKeysStore.toggleScope(scope)"
+                />
+                <span class="font-mono text-[12px] text-(--text-muted)">{{ scope }}</span>
+              </label>
+            }
+          </div>
+          <div class="flex gap-2 items-center">
+            <button hlmBtn size="sm" variant="default" type="button"
+                    (click)="createApiKey()"
+                    [disabled]="apiKeysStore.creating() || !apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0">
+              @if (apiKeysStore.creating()) { <hlm-spinner [size]="12" /> }
+              Erstellen
             </button>
+            <button type="button"
+                    class="min-h-11 px-3 text-[12px] bg-transparent border-none cursor-pointer text-(--text-muted) rounded-sm hover:text-(--text) active:text-(--text) transition-colors"
+                    (click)="apiKeysStore.showCreateForm.set(false)">Abbruch</button>
           </div>
+        </div>
+      }
+
+      @if (apiKeysStore.loading()) {
+        <p class="px-6 py-4 text-[13px] text-(--text-muted)">Wird geladen…</p>
+      } @else if ((apiKeysStore.keys() ?? []).length === 0) {
+        <p class="px-6 py-4 text-[13px] text-(--text-muted)">Noch keine API-Schlüssel erstellt.</p>
+      } @else {
+        @for (key of (apiKeysStore.keys() ?? []); track key.id) {
+          <klar-list-item icon="key-round"
+                          [label]="key.name"
+                          [sublabel]="formatApiKeySublabel(key)"
+                          [badge]="key.isRevoked ? 'Widerrufen' : undefined"
+                          badgeClass="bg-(--surface-2) text-(--text-muted) font-mono uppercase tracking-[0.08em] text-[9px]"
+                          [disabled]="key.isRevoked"
+                          [trailingActionIcon]="key.isRevoked ? 'trash' : 'lock'"
+                          [trailingActionDanger]="key.isRevoked"
+                          (trailingActionClick)="key.isRevoked ? deleteApiKey(key.id) : revokeApiKey(key.id)" />
         }
-      </div>
-      <p class="invite-note">Codes laufen nach 30 Tagen automatisch ab und können nur einmal eingelöst werden.</p>
-    </div>
-  }
+      }
+    </klar-list-group>
 
-  <!-- Haushalt beitreten -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-label">BEITRETEN</span>
-    </div>
-    <div class="join-row">
-      <klar-input
-        class="flex-1"
-        placeholder="XXXX-XXXX"
-        [ngModel]="joinCode()"
-        (ngModelChange)="joinCode.set($event)"
-      />
-      <button hlmBtn size="sm" variant="outline" type="button"
-              [disabled]="joining()" (click)="joinByCode()">
-        @if (joining()) { <hlm-spinner [size]="12" /> }
-        Beitreten
-      </button>
-    </div>
-    <p class="join-hint">Du bekommst den Code von einem Owner deines Haushalts.</p>
-  </div>
-
-  <!-- API-Schlüssel -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-label">API-SCHLÜSSEL</span>
-      <button hlmBtn size="sm" variant="outline" type="button"
-        (click)="apiKeysStore.showCreateForm.set(!apiKeysStore.showCreateForm())">
-        + Neu
-      </button>
-    </div>
-
-    <!-- Neu erstellter Schlüssel (einmalige Anzeige) -->
-    @if (apiKeysStore.justCreatedKey(); as fullKey) {
-      <div class="newly-created-key">
-        <div class="alert-row">
-          <klar-icon name="alert" [size]="14" class="alert-icon" />
-          <p class="key-warning">Nur einmal sichtbar — jetzt kopieren.</p>
-        </div>
-        <div class="key-value-row">
-          <span class="key-value">{{ fullKey }}</span>
-          <button type="button" class="icon-btn" (click)="copyApiKey(fullKey)" title="Schlüssel kopieren">
-            <klar-icon name="copy" [size]="14" />
-          </button>
-        </div>
-        <button hlmBtn size="sm" variant="ghost" type="button" (click)="apiKeysStore.clearJustCreated()">
-          Verstanden
-        </button>
-      </div>
-    }
-
-    <!-- Neuer Schlüssel Formular -->
-    @if (apiKeysStore.showCreateForm()) {
-      <div class="new-key-form">
-        <p class="section-label">NEUER SCHLÜSSEL</p>
-        <klar-input
-          placeholder="Name (z.B. Home Assistant)"
-          [ngModel]="apiKeysStore.newKeyName()"
-          (ngModelChange)="apiKeysStore.newKeyName.set($event)"
-        />
-        <div class="key-scopes scope-form">
-          @for (scope of availableScopes; track scope) {
-            <label class="scope-label flex items-center gap-2 cursor-pointer">
-              <hlm-checkbox
-                [checked]="apiKeysStore.newKeyScopes().includes(scope)"
-                (checkedChange)="apiKeysStore.toggleScope(scope)"
-              />
-              <span class="scope-text">{{ scope }}</span>
-            </label>
+    <!-- ── GEFAHRENZONE ──────────────────────────────────── -->
+    <klar-list-group label="Gefahrenzone" [danger]="true">
+      <div class="px-6 py-4">
+        <div class="border-l-2 border-(--color-expense)/40 bg-(--color-expense)/4 px-4 py-3 rounded-r-[3px]">
+          @if (canManage() && isSoleOwner()) {
+            <p class="text-[12px] font-semibold text-(--color-expense) mb-1">Haushalt löschen</p>
+            <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+              Löscht diesen Haushalt unwiderruflich. Du bist der einzige Owner — alle Daten gehen verloren.
+            </p>
+            <button hlmBtn size="sm" variant="destructive" type="button" (click)="deleteHousehold()">
+              @if (deletingHousehold()) { <hlm-spinner [size]="12" /> }
+              Haushalt löschen …
+            </button>
+          } @else {
+            <p class="text-[12px] font-semibold text-(--color-expense) mb-1">Haushalt verlassen</p>
+            @if (canManage()) {
+              <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+                Du verlässt diesen Haushalt. Andere Mitglieder bleiben erhalten. Du kannst jederzeit über einen Einladungscode wieder beitreten.
+              </p>
+            } @else {
+              <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+                Du verlässt diesen Haushalt und verlierst den Zugriff auf alle gemeinsamen Daten.
+              </p>
+            }
+            <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
+              @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
+              Haushalt verlassen …
+            </button>
           }
         </div>
-        <div class="form-actions">
-          <button hlmBtn size="sm" variant="default" type="button"
-                (click)="createApiKey()"
-                [disabled]="apiKeysStore.creating() || !apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0">
-            @if (apiKeysStore.creating()) { <hlm-spinner [size]="12" /> }
-            Erstellen
-          </button>
-          <button
-            type="button"
-            (click)="apiKeysStore.showCreateForm.set(false)"
-            class="cancel-btn"
-          >
-            Abbruch
-          </button>
-        </div>
       </div>
-    }
+    </klar-list-group>
 
-    <!-- Bestehende Schlüssel -->
-    @if (apiKeysStore.loading()) {
-      <p class="status-text">Wird geladen…</p>
-    } @else if (activeApiKeys().length === 0) {
-      <p class="status-text">Noch keine API-Schlüssel erstellt.</p>
-    } @else {
-      <div class="api-key-list">
-        @for (key of activeApiKeys(); track key.id) {
-          <div class="api-key-row" [style.opacity]="key.isRevoked ? '0.5' : '1'">
-            <div class="key-info">
-              <p class="key-name" [style.text-decoration]="key.isRevoked ? 'line-through' : 'none'">
-                {{ key.name }}
-              </p>
-              <div class="key-scopes">
-                @for (scope of key.scopes; track scope) {
-                  <span class="scope-badge">{{ scope }}</span>
-                }
-              </div>
-              <p class="key-meta">
-                Erstellt {{ key.createdAt | date:'dd.MM.yyyy' }}
-                @if (key.lastUsedAt) { · Zuletzt {{ key.lastUsedAt | date:'dd.MM.yyyy' }} }
-              </p>
-            </div>
-            <div class="key-actions">
-              @if (!key.isRevoked) {
-                <button type="button" class="icon-btn" (click)="revokeApiKey(key.id)" title="Widerrufen">
-                  <klar-icon name="lock" [size]="14" />
-                </button>
-              }
-              <button type="button" class="icon-btn danger" (click)="deleteApiKey(key.id)" title="Löschen">
-                <klar-icon name="trash" [size]="14" />
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-    }
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
-       GEFAHRENZONE
-       ═══════════════════════════════════════════════ -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-label" style="color: var(--color-expense)">GEFAHRENZONE</span>
-    </div>
-    <div class="danger-zone">
-      @if (canManage() && isSoleOwner()) {
-        <p class="danger-title">Haushalt löschen</p>
-        <p class="danger-desc">Löscht diesen Haushalt unwiderruflich. Du bist der einzige Owner — alle Daten gehen verloren.</p>
-        <button hlmBtn size="sm" variant="destructive" type="button" (click)="deleteHousehold()">
-          @if (deletingHousehold()) { <hlm-spinner [size]="12" /> }
-          Haushalt löschen …
-        </button>
-      } @else if (canManage()) {
-        <p class="danger-title">Haushalt verlassen</p>
-        <p class="danger-desc">Du verlässt diesen Haushalt. Andere Mitglieder bleiben erhalten. Du kannst jederzeit über einen Einladungscode wieder beitreten.</p>
-        <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
-          @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
-          Haushalt verlassen …
-        </button>
-      } @else {
-        <p class="danger-title">Haushalt verlassen</p>
-        <p class="danger-desc">Du verlässt diesen Haushalt und verlierst den Zugriff auf alle gemeinsamen Daten.</p>
-        <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
-          @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
-          Haushalt verlassen …
-        </button>
-      }
-    </div>
-  </div>
-
+  </klar-list>
 </div>

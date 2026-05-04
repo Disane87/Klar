@@ -14,14 +14,14 @@
       "type": "shell",
       "command": "pnpm --filter @klar/api dev",
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "new" }
+      "presentation": { "reveal": "always", "panel": "split" }
     },
     {
       "label": "Dev: Web only",
       "type": "shell",
       "command": "pnpm --filter @klar/web dev",
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "new" }
+      "presentation": { "reveal": "always", "panel": "split" }
     },
     {
       "label": "Test: All",

@@ -20,6 +20,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { OverviewModule } from './overview/overview.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { MailTemplatesModule } from './mail-templates/mail-templates.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -69,6 +70,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     BudgetsModule,
     OverviewModule,
     ApiKeysModule,
+    MailTemplatesModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({
