@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { FastifyRequest, FastifyReply } from 'fastify';
@@ -41,6 +42,8 @@ interface HandoverBody {
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly oidcService: OidcService,
@@ -194,6 +197,7 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state: string,
     @Query('error') error: string | undefined,
+    @Query('iss') iss: string | undefined,
     @Req() req: FastifyRequest,
     @Res() reply: FastifyReply,
   ): Promise<void> {
@@ -214,13 +218,15 @@ export class AuthController {
         state,
         req.ip,
         userAgent,
+        iss,
       );
 
       const params = new URLSearchParams({ code: otpCode });
       if (redirectAfterLogin) params.set('redirect', redirectAfterLogin);
 
       void reply.code(302).header('location', `${frontendBase}/auth/callback?${params.toString()}`).send('');
-    } catch {
+    } catch (err) {
+      this.logger.error(err, 'OIDC callback failed');
       void reply.code(302).header('location', `${frontendBase}/auth/callback?error=${encodeURIComponent('Anmeldung fehlgeschlagen')}`).send('');
     }
   }

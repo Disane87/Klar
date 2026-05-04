@@ -116,6 +116,7 @@ export class OidcService implements OnModuleInit {
     state: string,
     ip?: string,
     userAgent?: string,
+    iss?: string,
   ): Promise<{ otpCode: string; redirectAfterLogin: string | null }> {
     if (!this.isEnabled()) throw new ForbiddenException('OIDC ist nicht aktiviert');
 
@@ -132,13 +133,16 @@ export class OidcService implements OnModuleInit {
     // Exchange code for tokens (PKCE)
     let tokenSet: Awaited<ReturnType<typeof client.callback>>;
     try {
-      tokenSet = await client.callback(redirectUri, { code, state }, {
+      const callbackParams: Record<string, string> = { code, state };
+      if (iss) callbackParams['iss'] = iss;
+
+      tokenSet = await client.callback(redirectUri, callbackParams, {
         code_verifier: storedState.codeVerifier,
         state,
       });
-    } catch {
+    } catch (err) {
       await this.oidcRepo.deleteLoginState(storedState.id);
-      throw new UnauthorizedException('Token-Austausch fehlgeschlagen');
+      throw new UnauthorizedException(`Token-Austausch fehlgeschlagen: ${String(err)}`);
     }
 
     // Delete state immediately — single use
