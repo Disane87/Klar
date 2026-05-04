@@ -47,7 +47,6 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
           'req.body.codeVerifier',
           'req.body.state',
           'req.body.clientSecret',
-          'res.body.avatarUrl',
         ],
       },
     }),
