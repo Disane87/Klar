@@ -72,14 +72,11 @@ import { HouseholdStore } from '../../core/household/household.store';
                   </div>
                 </button>
 
-                <!-- Hidden file input -->
-                <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-                       class="hidden" (change)="onFileSelected($event)" />
-
                 <div class="min-w-0 flex-1">
                   <div class="text-[13px] font-medium text-(--text) truncate">{{ user.displayName }}</div>
                   <div class="mt-0.5 text-[11px] text-(--text-muted) truncate">{{ user.email }}</div>
                   <button type="button" (click)="triggerFileInput()"
+                          [disabled]="uploading()"
                           class="mt-1 text-[10px] uppercase tracking-[0.08em] font-medium
                                  text-(--color-accent) cursor-pointer hover:underline">
                     Foto ändern
@@ -88,6 +85,10 @@ import { HouseholdStore } from '../../core/household/household.store';
               </div>
             </div>
           }
+
+          <!-- Hidden file input — outside @if so viewChild always resolves -->
+          <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+                 class="hidden" (change)="onFileSelected($event)" />
 
           <!-- Household section -->
           @if (householdStore.activeHousehold(); as hh) {
