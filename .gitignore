@@ -50,4 +50,9 @@ apps/web/e2e/.auth/
 buchungen-*.png
 fixkosten-*.png
 *.png
+
+# App assets (tracked despite *.png rule above)
+!apps/web/src/*.png
+!apps/web/src/icons/*.png
 .gstack/
+.superpowers

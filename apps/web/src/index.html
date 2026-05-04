@@ -2,28 +2,49 @@
 <html lang="de" class="">
   <head>
     <meta charset="utf-8" />
-    <title>Klar</title>
+    <title>Klar — Self-Hosted Budget Tracker</title>
     <base href="/" />
 
     <!-- viewport-fit=cover enables safe-area-inset-* on iOS — REQUIRED -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-    <!-- PWA / iOS -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Klar" />
-    <meta name="theme-color" content="#1a1a1e" />
+    <!-- ── OpenGraph / Social ──────────────────────────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:title"       content="Klar — Self-Hosted Budget Tracker" />
+    <meta property="og:description" content="Privacy-first, self-hosted household budget tracker. No cloud, no subscriptions — your data stays on your infrastructure." />
+    <meta property="og:image"       content="/og-image.png" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale"      content="de_DE" />
 
-    <!-- Klar Design System fonts — Swiss Tech -->
+    <!-- Twitter Card -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="Klar — Self-Hosted Budget Tracker" />
+    <meta name="twitter:description" content="Privacy-first, self-hosted household budget tracker. No cloud, no subscriptions — your data stays on your infrastructure." />
+    <meta name="twitter:image"       content="/og-image.png" />
+
+    <!-- SEO -->
+    <meta name="description" content="Privacy-first, self-hosted household budget tracker. No cloud, no subscriptions — your data stays on your infrastructure." />
+
+    <!-- ── PWA / iOS ───────────────────────────────────────────────────── -->
+    <meta name="mobile-web-app-capable"         content="yes" />
+    <meta name="apple-mobile-web-app-capable"   content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title"     content="Klar" />
+    <meta name="theme-color"                    content="#09090b" />
+    <meta name="application-name"               content="Klar" />
+
+    <!-- ── Fonts ───────────────────────────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&display=swap" rel="stylesheet" />
 
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- ── Icons & Manifest ────────────────────────────────────────────── -->
+    <link rel="icon"             type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon"             type="image/x-icon"  href="favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="manifest"         href="manifest.webmanifest" />
 
-    <!-- Apple touch icons (required for iOS add-to-homescreen) -->
+    <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png" />
@@ -33,6 +54,14 @@
       media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
     <link rel="apple-touch-startup-image" href="icons/splash-1290x2796.png"
       media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="icons/splash-1170x2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="icons/splash-1284x2778.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="icons/splash-828x1792.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="icons/splash-1125x2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
   </head>
   <body>
     <app-root></app-root>
