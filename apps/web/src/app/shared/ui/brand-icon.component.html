@@ -1,9 +1,12 @@
-@if (slug(); as s) {
+@if (iconKey(); as ik) {
   <iconify-icon
-    [icon]="'simple-icons:' + s"
+    [icon]="ik"
     [width]="size()"
     [height]="size()"
+    [style.color]="effectiveColor()"
     class="block" />
 } @else {
-  <klar-icon name="tag" [size]="size()" class="block" />
+  <klar-icon name="tag" [size]="size()"
+             [style.color]="effectiveColor()"
+             class="block text-(--text-muted)" />
 }

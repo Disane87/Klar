@@ -48,6 +48,20 @@
            (input)="dayOfMonth.set($any($event.target).value)" />
   </div>
 
+  <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
+    <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>
+
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel>Icon</label>
+      <klar-icon-picker [value]="icon()" (valueChange)="icon.set($event)" />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel>Farbe</label>
+      <klar-color-picker [value]="color()" (valueChange)="color.set($event)" />
+    </div>
+  </div>
+
   @if (err()) {
     <p class="text-[12px] text-expense">{{ err() }}</p>
   }

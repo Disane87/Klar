@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
-import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { PdfReportService } from '../../core/pdf/pdf-report.service';
@@ -15,6 +14,8 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
+import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
+import { KlarListComponent, KlarListGroupComponent, KlarListRowComponent } from '../../shared/ui/klar-list.component';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
@@ -23,7 +24,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
@@ -137,8 +138,7 @@ export class FixkostenPageComponent {
 
   // ── Edit via dialog ──────────────────────────────────────────────────────────
 
-  openEdit(item: FixedCostItem, event: Event): void {
-    event.stopPropagation();
+  openEdit(item: FixedCostItem): void {
     if (this.planspielActive()) {
       this.dialogService.open({
         title:     'Eintrag bearbeiten (Planspiel)',
@@ -154,6 +154,12 @@ export class FixkostenPageComponent {
         width:     'sm',
       });
     }
+  }
+
+  formatItemSublabel(item: FixedCostItem): string {
+    const parts: string[] = [this.freqLabel(item.frequency)];
+    if (item.dayOfMonth) parts.push('Tag ' + item.dayOfMonth);
+    return parts.join(' · ');
   }
 
   // ── Enriched groups (filtered by member, planspiel-aware) ─────────────────────

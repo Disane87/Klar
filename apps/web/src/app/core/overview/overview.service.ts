@@ -16,6 +16,8 @@ export interface FixedCostItem {
   dayOfMonth: number | null;
   createdBy: string | null;
   createdById: string | null;
+  color: string | null;
+  icon: string | null;
 }
 
 export interface FixedCostGroup {

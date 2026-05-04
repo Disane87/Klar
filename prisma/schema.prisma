@@ -172,14 +172,15 @@ model Household {
   name      String
   createdAt DateTime @default(now())
 
-  memberships           HouseholdMembership[]
-  inviteCodes           InviteCode[]
-  categories            Category[]
-  projects              Project[]
+  memberships            HouseholdMembership[]
+  inviteCodes            InviteCode[]
+  categories             Category[]
+  projects               Project[]
   recurringTransactions RecurringTransaction[]
-  transactions          Transaction[]
-  budgets               Budget[]
-  apiKeys               ApiKey[]
+  transactions           Transaction[]
+  budgets                Budget[]
+  apiKeys                ApiKey[]
+  mailTemplates           HouseholdMailTemplate[]
 }
 
 model HouseholdMembership {
@@ -294,6 +295,8 @@ model RecurringTransaction {
   visibility      Visibility         @default(SHARED)
   isVariable      Boolean            @default(false)
   note            String?
+  color           String?            // custom hex color, z.B. "#22c55e"
+  icon            String?            // iconify key, z.B. "simple-icons:spotify" oder "lucide:home"
   isActive        Boolean            @default(true)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
@@ -423,4 +426,36 @@ model AuditLog {
   @@index([householdId])
   @@index([action])
   @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// MAIL TEMPLATES (pro Haushalt)
+// ─────────────────────────────────────────────
+
+enum MailTemplateType {
+  INVITE
+  REMINDER
+  CUSTOM
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  TOTP_ENABLE
+  TOTP_DISABLE
+  API_KEY_CREATED
+}
+
+model HouseholdMailTemplate {
+  id          String         @id @default(cuid())
+  householdId String
+  templateType MailTemplateType
+  name        String         // Anzeigename, z.B. "Einladung an Nachbar"
+  subject     String         // E-Mail-Betreff mit Handlebars-Platzhaltern
+  body        String         // HTML-Body mit Handlebars-Platzhaltern
+  isActive    Boolean       @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, templateType])
+  @@index([householdId])
 }

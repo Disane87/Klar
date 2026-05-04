@@ -17,6 +17,8 @@ export interface CreateRecurringTransactionData {
   visibility: Visibility;
   isVariable: boolean;
   note?: string | null;
+  color?: string | null;
+  icon?: string | null;
   isActive: boolean;
 }
 
@@ -33,6 +35,8 @@ export interface UpdateRecurringTransactionData {
   visibility?: Visibility;
   isVariable?: boolean;
   note?: string | null;
+  color?: string | null;
+  icon?: string | null;
 }
 
 export interface FindAllOpts {

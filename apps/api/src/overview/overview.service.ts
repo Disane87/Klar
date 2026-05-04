@@ -23,6 +23,8 @@ export interface FixedCostsItemResponse {
   dayOfMonth: number | null;
   createdBy: string | null;
   createdById: string | null;
+  color: string | null;
+  icon: string | null;
 }
 
 export interface FixedCostsGroupResponse {
@@ -156,6 +158,8 @@ export class OverviewService {
         dayOfMonth: rt.dayOfMonth,
         createdBy: rt.createdBy?.displayName ?? null,
         createdById: rt.createdByUserId ?? null,
+        color: rt.color ?? null,
+        icon: rt.icon ?? null,
       }));
 
       const totalCents = responseItems.reduce(

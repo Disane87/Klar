@@ -5,6 +5,8 @@ import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
+import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -16,7 +18,7 @@ import { safeDayOfMonth } from '@klar/shared';
 @Component({
   selector: 'app-recurring-create-dialog',
   standalone: true,
-  imports: [HlmButtonDirective, HlmSpinnerComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective],
+  imports: [HlmButtonDirective, HlmSpinnerComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarColorPickerComponent, KlarIconPickerComponent],
   templateUrl: './recurring-create-dialog.component.html',
   styleUrl: './recurring-create-dialog.component.css',
 })
@@ -33,6 +35,8 @@ export class RecurringCreateDialogComponent {
   readonly categoryId = signal('');
   readonly frequency  = signal<RecurringFrequency>('MONTHLY');
   readonly dayOfMonth = signal<string>('');
+  readonly color      = signal<string | null>(null);
+  readonly icon       = signal<string | null>(null);
   readonly saving     = signal(false);
   readonly err        = signal('');
 
@@ -78,6 +82,8 @@ export class RecurringCreateDialogComponent {
         frequency:   freq,
         dayOfMonth:  clampedDay,
         startDate:   new Date().toISOString().slice(0, 10),
+        color:       this.color(),
+        icon:        this.icon(),
         isActive:    true,
       });
       this.store.reload();

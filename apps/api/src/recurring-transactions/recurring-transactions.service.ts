@@ -28,6 +28,8 @@ export interface CreateRecurringTransactionInput {
   visibility?: Visibility;
   isVariable?: boolean;
   note?: string | null;
+  color?: string | null;
+  icon?: string | null;
   isActive?: boolean;
 }
 
@@ -82,6 +84,8 @@ export class RecurringTransactionsService {
       visibility: input.visibility ?? Visibility.SHARED,
       isVariable: input.isVariable ?? false,
       note: input.note ?? null,
+      color: input.color ?? null,
+      icon: input.icon ?? null,
       isActive: input.isActive ?? true,
     });
   }
@@ -124,6 +128,8 @@ export class RecurringTransactionsService {
     if (input.visibility !== undefined) data.visibility = input.visibility;
     if (input.isVariable !== undefined) data.isVariable = input.isVariable;
     if (input.note !== undefined) data.note = input.note;
+    if (input.color !== undefined) data.color = input.color;
+    if (input.icon !== undefined) data.icon = input.icon;
 
     return this.repo.update(existing.id, data);
   }

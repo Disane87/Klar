@@ -13,6 +13,8 @@ export interface CreateRecurringTransactionRequest {
   projectId?:  string | null;
   visibility?: string;
   note?:       string | null;
+  color?:      string | null;
+  icon?:       string | null;
   isActive?:   boolean;
 }
 
@@ -22,6 +24,8 @@ export interface UpdateRecurringTransactionRequest {
   categoryId?:  string;
   frequency?:   RecurringFrequency;
   dayOfMonth?:  number | null;
+  color?:       string | null;
+  icon?:        string | null;
 }
 
 export interface RecurringTransactionResponse {
