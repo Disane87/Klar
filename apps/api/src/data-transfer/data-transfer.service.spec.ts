@@ -133,6 +133,36 @@ describe('DataTransferService', () => {
       ).rejects.toThrow(UnprocessableEntityException);
     });
 
+    it('throws UnprocessableEntityException when project targetId not in household', async () => {
+      const { service, repo } = buildService();
+      const fileWithProject = JSON.stringify({
+        version: '1',
+        exportedAt: '2026-05-04T00:00:00Z',
+        includes: ['transactions'],
+        filters: { startDate: null, endDate: null },
+        transactions: [
+          {
+            amountCents: -1500,
+            date: '2025-04-15',
+            description: 'Rewe',
+            visibility: 'SHARED',
+            category: { name: 'Lebensmittel', type: 'EXPENSE' },
+            project: { name: 'Urlaub' },
+          },
+        ],
+        recurringTransactions: [],
+      });
+      vi.mocked(repo.findCategoriesByNames).mockResolvedValue([mockCat()]);
+      vi.mocked(repo.findCategoryById).mockResolvedValue(mockCat());
+      vi.mocked(repo.findProjectById).mockResolvedValue(null);
+      await expect(
+        service.confirm(ctx, fileWithProject, {
+          categoryMappings: [],
+          projectMappings: [{ sourceName: 'Urlaub', targetId: 'bad-proj-id' }],
+        }),
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
     it('calls createTransaction for each transaction when all resolved', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findCategoriesByNames).mockResolvedValue([mockCat()]);

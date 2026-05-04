@@ -100,6 +100,10 @@ export class DataTransferService {
   async analyze(ctx: RequestContext, fileContent: string): Promise<AnalyzeResult> {
     const file = parseAndValidateFile(fileContent);
 
+    if (file.version !== '1') {
+      throw new BadRequestException(`Version ${file.version} wird nicht unterstützt`);
+    }
+
     const allEntries = [
       ...(file.transactions ?? []).map(t => t.category),
       ...(file.recurringTransactions ?? []).map(r => r.category),
@@ -174,7 +178,33 @@ export class DataTransferService {
       if (!catMap.has(key)) catMap.set(key, c.id);
     }
 
-    // Validate all targetIds exist in the household
+    const allProjNamesInFile = [
+      ...(file.transactions ?? []).flatMap(t => t.project ? [t.project.name] : []),
+      ...(file.recurringTransactions ?? []).flatMap(r => r.project ? [r.project.name] : []),
+    ];
+    const uniqueProjNamesInFile = [...new Set(allProjNamesInFile.map(n => n.toLowerCase()))];
+
+    // Gap 1 + 3: First check that all unresolved categories/projects have mapping entries (→ 400)
+    // Ensure every required category has a mapping
+    for (const entry of uniqueCatKeys) {
+      const key = `${entry.name.toLowerCase()}::${entry.type}`;
+      if (!catMap.has(key)) {
+        throw new BadRequestException(
+          `Mapping für Kategorie "${entry.name}" (${entry.type}) fehlt`,
+        );
+      }
+    }
+
+    // Ensure every required project has a mapping
+    for (const nameLower of uniqueProjNamesInFile) {
+      if (!projMap.has(nameLower)) {
+        throw new BadRequestException(
+          `Mapping für Projekt "${nameLower}" fehlt`,
+        );
+      }
+    }
+
+    // Gap 1 + 2: Then validate targetIds exist in household (→ 422)
     for (const [key, targetId] of catMap) {
       const cat = await this.repo.findCategoryById(ctx.householdId, targetId);
       if (!cat) {
@@ -184,12 +214,12 @@ export class DataTransferService {
       }
     }
 
-    // Ensure every required category has a mapping
-    for (const entry of uniqueCatKeys) {
-      const key = `${entry.name.toLowerCase()}::${entry.type}`;
-      if (!catMap.has(key)) {
-        throw new BadRequestException(
-          `Mapping für Kategorie "${entry.name}" (${entry.type}) fehlt`,
+    // Gap 2: Validate project targetIds exist in household (→ 422)
+    for (const [nameLower, targetId] of projMap) {
+      const proj = await this.repo.findProjectById(ctx.householdId, targetId);
+      if (!proj) {
+        throw new UnprocessableEntityException(
+          `Projekt ${targetId} (Mapping für ${nameLower}) nicht im Haushalt gefunden`,
         );
       }
     }
