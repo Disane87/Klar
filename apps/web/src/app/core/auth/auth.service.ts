@@ -84,4 +84,16 @@ export class AuthService {
   disableTotp(): Observable<void> {
     return this.http.delete<void>(`${BASE}/totp`, { withCredentials: true });
   }
+
+  uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return this.http.post<{ avatarUrl: string }>('/api/v1/users/me/avatar', formData, {
+      withCredentials: true,
+    });
+  }
+
+  deleteAvatar(): Observable<void> {
+    return this.http.delete<void>('/api/v1/users/me/avatar', { withCredentials: true });
+  }
 }
