@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
+import { KlarLogoMarkComponent } from '../../shared/brand/klar-logo-mark.component';
 
 interface NavItem {
   id: string;
@@ -27,7 +27,7 @@ const SYS_ITEMS: NavItem[] = [
   selector: 'klar-side-nav',
   standalone: true,
   host: { class: 'contents' },
-  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarWordmarkComponent],
+  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarLogoMarkComponent],
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.css',
 })
