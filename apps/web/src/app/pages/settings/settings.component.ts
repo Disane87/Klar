@@ -9,7 +9,6 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
-import { KlarSkeletonRowsComponent } from '../../shared/ui/klar-skeleton-rows.component';
 import {
   KlarListComponent,
   KlarListGroupComponent,
@@ -35,7 +34,6 @@ import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
     HlmInputDirective,
     HlmLabelDirective,
     HlmSpinnerComponent,
-    KlarSkeletonRowsComponent,
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,
