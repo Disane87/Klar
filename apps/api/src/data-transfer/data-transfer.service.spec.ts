@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BadRequestException, UnprocessableEntityException } from '@nestjs/common';
+import { CategoryType } from '@prisma/client';
 import { DataTransferService } from './data-transfer.service';
 import type { DataTransferRepository } from './data-transfer.repository';
 import type { RequestContext } from '../common/types/request-context.type';
@@ -7,7 +8,7 @@ import type { RequestContext } from '../common/types/request-context.type';
 const ctx: RequestContext = { userId: 'u1', householdId: 'hh1', source: 'web' };
 
 const mockCat = (overrides = {}) => ({
-  id: 'cat-1', householdId: 'hh1', name: 'Lebensmittel', type: 'EXPENSE',
+  id: 'cat-1', householdId: 'hh1', name: 'Lebensmittel', type: CategoryType.EXPENSE,
   color: '#000', icon: null, isArchived: false, sortOrder: 0, isDefault: false,
   createdAt: new Date(), ...overrides,
 });

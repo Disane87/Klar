@@ -9,7 +9,11 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
+import '@fastify/multipart';
+import type { FastifyRequest } from 'fastify';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -83,5 +87,22 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteAccount(@CurrentUser() payload: JwtPayload) {
     return this.usersService.deleteAccount(payload.sub);
+  }
+
+  @Post('me/avatar')
+  async uploadAvatar(
+    @CurrentUser() payload: JwtPayload,
+    @Req() req: FastifyRequest,
+  ): Promise<{ avatarUrl: string }> {
+    const data = await req.file();
+    if (!data) throw new BadRequestException('Kein Bild übermittelt');
+    const buffer = await data.toBuffer();
+    return this.usersService.uploadAvatar(payload.sub, buffer, data.mimetype);
+  }
+
+  @Delete('me/avatar')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteAvatar(@CurrentUser() payload: JwtPayload): Promise<void> {
+    return this.usersService.deleteAvatar(payload.sub);
   }
 }

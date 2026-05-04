@@ -94,4 +94,8 @@ export class UsersRepository {
   async update(id: string, data: Partial<Pick<User, 'totpSecret' | 'totpEnabled'>>): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });
   }
+
+  async setAvatar(id: string, avatarUrl: string | null): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { avatarUrl } });
+  }
 }
