@@ -6,9 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.integration.spec.ts'],
     pool: 'forks',
-    poolOptions: {
-      forks: { singleFork: true },
-    },
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],

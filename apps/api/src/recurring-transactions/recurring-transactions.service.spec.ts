@@ -13,6 +13,8 @@ const makeRt = (overrides: Partial<RecurringTransaction> = {}): RecurringTransac
   householdId: 'hh1',
   createdByUserId: 'u1',
   name: 'Miete',
+  color: null,
+  icon: null,
   amountCents: -80000,
   categoryId: 'cat-1',
   projectId: null,
