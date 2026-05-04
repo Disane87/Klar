@@ -24,6 +24,7 @@ export type AuthUser = {
   emailVerified: boolean;
   displayName: string;
   appRole: AppRole;
+  avatarUrl?: string | null;
   createdAt: string; // ISO-String für JSON-Transport
 };
 

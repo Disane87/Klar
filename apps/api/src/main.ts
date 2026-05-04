@@ -8,6 +8,8 @@ import { RequestMethod } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const fastifyCookie = require('@fastify/cookie') as Parameters<NestFastifyApplication['register']>[0];
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fastifyMultipart = require('@fastify/multipart') as Parameters<NestFastifyApplication['register']>[0];
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
@@ -17,6 +19,7 @@ async function bootstrap(): Promise<void> {
   );
 
   await app.register(fastifyCookie);
+  await app.register(fastifyMultipart, { limits: { fileSize: 5 * 1024 * 1024 } });
   app.useLogger(app.get(Logger));
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
