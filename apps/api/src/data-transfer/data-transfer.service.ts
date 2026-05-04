@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { KlarExportFileSchema } from '@klar/shared';
 import type { KlarExportFile } from '@klar/shared';
@@ -28,7 +29,11 @@ export interface ImportResult {
 
 function parsePlainDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
+  const result = new Date(Date.UTC(y, m - 1, d));
+  if (isNaN(result.getTime())) {
+    throw new BadRequestException(`Ungültiges Datum: ${iso}`);
+  }
+  return result;
 }
 
 function parseAndValidateFile(fileContent: string): KlarExportFile {
@@ -47,6 +52,8 @@ function parseAndValidateFile(fileContent: string): KlarExportFile {
 
 @Injectable()
 export class DataTransferService {
+  private readonly logger = new Logger(DataTransferService.name);
+
   constructor(private readonly repo: DataTransferRepository) {}
 
   async export(ctx: RequestContext, opts: ExportOpts): Promise<KlarExportFile> {
@@ -198,28 +205,30 @@ export class DataTransferService {
     // Ensure every required project has a mapping
     for (const nameLower of uniqueProjNamesInFile) {
       if (!projMap.has(nameLower)) {
+        const originalName = allProjNamesInFile.find(n => n.toLowerCase() === nameLower) ?? nameLower;
         throw new BadRequestException(
-          `Mapping für Projekt "${nameLower}" fehlt`,
+          `Mapping für Projekt "${originalName}" fehlt`,
         );
       }
     }
 
-    // Gap 1 + 2: Then validate targetIds exist in household (→ 422)
-    for (const [key, targetId] of catMap) {
-      const cat = await this.repo.findCategoryById(ctx.householdId, targetId);
+    // Gap 1 + 2: Then validate user-supplied targetIds exist in household (→ 422)
+    for (const m of mappings.categoryMappings) {
+      const key = `${m.sourceName.toLowerCase()}::${m.sourceType}`;
+      const cat = await this.repo.findCategoryById(ctx.householdId, m.targetId);
       if (!cat) {
         throw new UnprocessableEntityException(
-          `Kategorie ${targetId} (Mapping für ${key}) nicht im Haushalt gefunden`,
+          `Kategorie ${m.targetId} (Mapping für ${key}) nicht im Haushalt gefunden`,
         );
       }
     }
 
-    // Gap 2: Validate project targetIds exist in household (→ 422)
-    for (const [nameLower, targetId] of projMap) {
-      const proj = await this.repo.findProjectById(ctx.householdId, targetId);
+    // Gap 2: Validate user-supplied project targetIds exist in household (→ 422)
+    for (const m of mappings.projectMappings) {
+      const proj = await this.repo.findProjectById(ctx.householdId, m.targetId);
       if (!proj) {
         throw new UnprocessableEntityException(
-          `Projekt ${targetId} (Mapping für ${nameLower}) nicht im Haushalt gefunden`,
+          `Projekt ${m.targetId} (Mapping für ${m.sourceName}) nicht im Haushalt gefunden`,
         );
       }
     }
@@ -249,7 +258,8 @@ export class DataTransferService {
           visibility: tx.visibility,
         });
         txImported++;
-      } catch {
+      } catch (err) {
+        this.logger.warn({ err }, 'import entry skipped due to error');
         skipped++;
       }
     }
@@ -284,7 +294,8 @@ export class DataTransferService {
           icon: rt.icon ?? null,
         });
         rtImported++;
-      } catch {
+      } catch (err) {
+        this.logger.warn({ err }, 'import entry skipped due to error');
         skipped++;
       }
     }

@@ -4,6 +4,7 @@ import { CategoryType } from '@prisma/client';
 import { DataTransferService } from './data-transfer.service';
 import type { DataTransferRepository } from './data-transfer.repository';
 import type { RequestContext } from '../common/types/request-context.type';
+import * as sharedSchemas from '@klar/shared';
 
 const ctx: RequestContext = { userId: 'u1', householdId: 'hh1', source: 'web' };
 
@@ -85,10 +86,24 @@ describe('DataTransferService', () => {
       await expect(service.analyze(ctx, 'not-json')).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException for wrong version', async () => {
+    it('throws BadRequestException with "wird nicht unterstützt" for unsupported version via explicit guard', async () => {
       const { service } = buildService();
-      const bad = JSON.stringify({ version: '2', exportedAt: '', includes: [], filters: {} });
-      await expect(service.analyze(ctx, bad)).rejects.toThrow(BadRequestException);
+      // Mock schema.safeParse to succeed with version '2' so the explicit guard is exercised
+      const fakeFile = {
+        version: '2',
+        exportedAt: '2026-05-04T00:00:00Z',
+        includes: [],
+        filters: { startDate: null, endDate: null },
+        transactions: [],
+        recurringTransactions: [],
+      };
+      vi.spyOn(sharedSchemas.KlarExportFileSchema, 'safeParse').mockReturnValueOnce({
+        success: true,
+        data: fakeFile as never,
+      });
+      await expect(service.analyze(ctx, JSON.stringify(fakeFile))).rejects.toThrow(
+        expect.objectContaining({ message: expect.stringContaining('wird nicht unterstützt') }),
+      );
     });
 
     it('returns resolvedId for matched category', async () => {

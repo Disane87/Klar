@@ -3,7 +3,7 @@ import type { Category, Project, Transaction, RecurringTransaction } from '@pris
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface ExportOpts {
-  include: ('transactions' | 'recurringTransactions')[];
+  include?: ('transactions' | 'recurringTransactions')[];
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
 }
