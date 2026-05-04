@@ -39,6 +39,7 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   lastLoginAt: null,
   totpSecret: null,
   totpEnabled: false,
+  avatarUrl: null,
   ...overrides,
 });
 
