@@ -11,6 +11,7 @@ import {
   UseGuards,
   Req,
   BadRequestException,
+  PayloadTooLargeException,
 } from '@nestjs/common';
 import '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
@@ -94,7 +95,16 @@ export class UsersController {
     @CurrentUser() payload: JwtPayload,
     @Req() req: FastifyRequest,
   ): Promise<{ avatarUrl: string }> {
-    const data = await req.file();
+    let data: Awaited<ReturnType<typeof req.file>>;
+    try {
+      data = await req.file();
+    } catch (e: unknown) {
+      const err = e as { code?: string; statusCode?: number };
+      if (err?.code === 'FST_FILES_LIMIT' || err?.statusCode === 413) {
+        throw new PayloadTooLargeException('Datei zu groß (max. 5 MB)');
+      }
+      throw e;
+    }
     if (!data) throw new BadRequestException('Kein Bild übermittelt');
     const buffer = await data.toBuffer();
     return this.usersService.uploadAvatar(payload.sub, buffer, data.mimetype);
