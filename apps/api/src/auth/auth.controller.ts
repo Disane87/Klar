@@ -201,7 +201,7 @@ export class AuthController {
 
     if (error || !code || !state) {
       const msg = encodeURIComponent(error ?? 'Anmeldung abgebrochen');
-      void reply.redirect(`${frontendBase}/auth/callback?error=${msg}`);
+      void reply.code(302).header('location', `${frontendBase}/auth/callback?error=${msg}`).send('');
       return;
     }
 
@@ -219,9 +219,9 @@ export class AuthController {
       const params = new URLSearchParams({ code: otpCode });
       if (redirectAfterLogin) params.set('redirect', redirectAfterLogin);
 
-      void reply.redirect(`${frontendBase}/auth/callback?${params.toString()}`);
+      void reply.code(302).header('location', `${frontendBase}/auth/callback?${params.toString()}`).send('');
     } catch {
-      void reply.redirect(`${frontendBase}/auth/callback?error=${encodeURIComponent('Anmeldung fehlgeschlagen')}`);
+      void reply.code(302).header('location', `${frontendBase}/auth/callback?error=${encodeURIComponent('Anmeldung fehlgeschlagen')}`).send('');
     }
   }
 
