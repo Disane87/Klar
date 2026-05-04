@@ -2,7 +2,6 @@ import { Component, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarMonthChipComponent } from '../../shared/ui/klar-month-chip.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import type { PageStat } from '../../core/page-header/page-header.service';
@@ -11,7 +10,7 @@ import type { PageStat } from '../../core/page-header/page-header.service';
   selector: 'klar-top-bar',
   standalone: true,
   host: { class: 'block w-full' },
-  imports: [NgClass, KlarMonthChipComponent, KlarIconComponent, HlmButtonDirective, KlarHeaderUserComponent, KlarMoneyPipe],
+  imports: [NgClass, KlarIconComponent, HlmButtonDirective, KlarHeaderUserComponent, KlarMoneyPipe],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
 })
