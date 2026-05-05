@@ -1,6 +1,6 @@
 # AGENTS.md — Klar Dev Team
 
-> Ruflo/claude-flow Agent-Konfiguration für das Klar-Projekt.
+> Ruflo Agent-Konfiguration für das Klar-Projekt.
 > Lies SPEC.md + CLAUDE.md bevor du irgendetwas tust.
 
 ---
@@ -8,11 +8,11 @@
 ## 🔑 KRITISCH: ARBEITSVERTEILUNG
 
 ```
-claude-flow = ORCHESTRATOR  (koordiniert, speichert State, trackt Fortschritt)
-Claude Code = EXECUTOR      (schreibt Code, führt Tests aus, erstellt Dateien)
+Claude (Hauptcontext) = ORCHESTRATOR  (koordiniert, speichert State, trackt Fortschritt)
+Ruflo Swarm Agents    = EXECUTORS     (schreiben Code, führen Tests aus, erstellen Dateien)
 ```
 
-claude-flow führt KEINEN Code aus. Subagents (via Superpowers `dispatching-parallel-agents`) tun die eigentliche Arbeit.
+Hauptcontext führt KEINEN Code aus. Ruflo Swarm Agents tun die eigentliche Arbeit.
 
 ---
 
@@ -20,7 +20,8 @@ claude-flow führt KEINEN Code aus. Subagents (via Superpowers `dispatching-para
 
 **Vor jeder Session — immer zuerst:**
 
-```
+```bash
+git status && git branch --show-current
 memory_search(query="klar completed phases decisions")
 memory_search(query="klar patterns that worked")
 memory_search(query="klar known issues blockers")
@@ -30,22 +31,67 @@ Ergebnisse mit Score > 0.7 sind verbindlich — nicht neu entscheiden was bereit
 
 ---
 
-## 👥 AGENT-ROLLEN
+## 🤖 RUFLO SWARM SETUP
+
+### Installation (einmalig)
+
+```bash
+/plugin install ruflo-core@ruflo
+/plugin install ruflo-swarm@ruflo
+/plugin install ruflo-ruvllm@ruflo
+/plugin install ruflo-agentdb@ruflo
+```
+
+### Swarm-Konfiguration (.claude/ruflo.config.json)
+
+```json
+{
+  "swarm": {
+    "defaultTopology": "hierarchical",
+    "maxAgents": 8,
+    "memoryNamespace": "klar-app"
+  },
+  "modelRouting": {
+    "coordinator": "claude-sonnet-4-6",
+    "architect": "claude-opus-4-6",
+    "coder": "claude-sonnet-4-6",
+    "tester": "claude-haiku-4-5",
+    "reviewer": "claude-sonnet-4-6",
+    "security-architect": "claude-opus-4-6"
+  },
+  "autoRoute": true
+}
+```
+
+---
+
+## 👥 AGENT-ROLLEN & MODEL ASSIGNMENTS
 
 ### `coordinator` — Tech Lead
+**Model:** Sonnet 4.6 (Koordination braucht kein Opus)
+
+**Zuständig für:**
 - Liest SPEC.md + CLAUDE.md zu Beginn jeder Phase
 - Bricht Phase in Tasks à 5–15 Min auf
-- Weist Tasks den richtigen Spezialisten zu
+- Weist Tasks den richtigen Spezialisten zu via `agent_spawn`
 - Prüft dass alle CLAUDE.md Hard Rules eingehalten werden
-- Speichert Phase-Completion in claude-flow Memory
+- Speichert Phase-Completion in AgentDB Memory
 
-**Trigger vor jeder Phase:**
-```
+**Workflow:**
+```bash
+# Phase-Start
 memory_search(query="phase [N] klar")
 swarm_init(topology="hierarchical", maxAgents=8)
+agent_spawn(role="architect", model="opus")
+agent_spawn(role="backend-coder", model="sonnet")
+agent_spawn(role="frontend-coder", model="sonnet")
+agent_spawn(role="tester", model="haiku")
+agent_spawn(role="reviewer", model="sonnet")
 ```
 
 ### `architect` — System-Architekt
+**Model:** Opus 4.6 (komplexe Architektur-Entscheidungen)
+
 **Zuständig für:**
 - Cross-Module Interfaces (RequestContext, ResourceStore<T>, Shared Package)
 - Prisma Schema Änderungen (immer via Migration, nie direkt)
@@ -57,7 +103,14 @@ swarm_init(topology="hierarchical", maxAgents=8)
 - `amountCents: Int` niemals Float
 - Service-Methoden IMMER mit `RequestContext` als erstem Argument
 
+**Memory Pattern:**
+```bash
+memory_store(key="architecture-[decision]", value="[Entscheidung + Begründung]", namespace="klar-app")
+```
+
 ### `backend-coder` — NestJS Spezialist
+**Model:** Sonnet 4.6 (Standard-Implementierung)
+
 **Zuständig für:**
 - Feature-Module (Controller → Service → Repository)
 - Prisma Migrations + Queries
@@ -66,21 +119,28 @@ swarm_init(topology="hierarchical", maxAgents=8)
 - RFC 7807 Error-Handling
 
 **Pflicht vor jeder Datei:**
-```
+```bash
 memory_search(query="nestjs [module-name] klar pattern")
 ```
 
 **Pflicht nach Erfolg:**
-```
+```bash
 memory_store(key="pattern-nestjs-[module]", value="[was funktioniert hat]", namespace="patterns")
 ```
 
+**Model-Override für komplexe Module:**
+- Simple CRUD: Haiku (`agent_spawn(role="backend-coder", model="haiku")`)
+- Standard Features: Sonnet (default)
+- Komplexe Auth/RLS: Opus (`agent_spawn(role="backend-coder", model="opus")`)
+
 ### `frontend-coder` — Angular 21 Spezialist
+**Model:** Sonnet 4.6 (UI-Logik + State Management)
+
 **Zuständig für:**
 - Zoneless Angular Components (kein NgZone, kein Zone.js)
 - Signal Forms (KEIN FormGroup/FormBuilder)
 - ResourceStore<T> Domain-Stores
-- Zard UI Components + Tailwind 4
+- Spartan UI → klar-* Components
 - Mobile-First Layout (100dvh, safe-area-insets, touch targets ≥ 44px)
 - PWA (Service Worker, iOS Meta-Tags)
 
@@ -89,8 +149,16 @@ memory_store(key="pattern-nestjs-[module]", value="[was funktioniert hat]", name
 - Zahlen IMMER `font-mono` + `tabular-nums`
 - Kein `100vh` — immer `100dvh`
 - Dark Mode `dark:` auf jeder Komponente
+- **NIEMALS** `hlm-*` direkt in Features — nur `klar-*`
+
+**Model-Override:**
+- Simple Komponenten (nur Template): Haiku
+- Standard Features: Sonnet (default)
+- Komplexe State-Management: Opus
 
 ### `shared-coder` — Shared Package Spezialist
+**Model:** Sonnet 4.6 (Business-Logik + Validierung)
+
 **Zuständig für:**
 - zod-Schemas (Single Source of Truth für alle DTOs)
 - Utility-Types (`CreateDto<T>`, `UpdateDto<T>`)
@@ -101,6 +169,8 @@ memory_store(key="pattern-nestjs-[module]", value="[was funktioniert hat]", name
 **Kritisch:** Niemals Business-Logik in Frontend/Backend wenn sie im Shared Package sein sollte.
 
 ### `tester` — Test-Spezialist
+**Model:** Haiku 4.5 (Tests brauchen kein Opus, 10x günstiger)
+
 **Zuständig für:**
 - Unit-Tests (Vitest, Service-Layer mit gemockten Repositories)
 - Integration-Tests (gegen echte Test-DB, Transaction-Rollback per Test)
@@ -108,7 +178,7 @@ memory_store(key="pattern-nestjs-[module]", value="[was funktioniert hat]", name
 - Playwright Smoke-Tests
 - Test-Factories im Shared Package
 
-**TDD-Pflicht (Superpowers `test-driven-development` Skill):**
+**TDD-Workflow (Skill: test-driven-development):**
 1. Failing Test schreiben → Red
 2. Minimalen Code schreiben → Green
 3. Refactorn → bleibt Green
@@ -118,9 +188,15 @@ memory_store(key="pattern-nestjs-[module]", value="[was funktioniert hat]", name
 - Backend: 80% Lines
 - Frontend: 70% Lines
 
+**Model-Override:**
+- Standard Unit/Integration: Haiku (default)
+- Komplexe E2E-Szenarien: Sonnet
+
 ### `reviewer` — Code-Review Spezialist
+**Model:** Sonnet 4.6 (Review-Logik)
+
 **Zuständig für:**
-- Review jedes Moduls nach Fertigstellung (Superpowers `requesting-code-review` Skill)
+- Review jedes Moduls nach Fertigstellung (Skill: requesting-code-review)
 - Prüft gegen CLAUDE.md Hard Rules (vollständige Liste)
 - Zwei-stufiges Review: 1) Spec-Compliance, 2) Code-Qualität
 
@@ -147,6 +223,7 @@ FRONTEND:
 [ ] font-size >= 16px auf allen Form-Elementen
 [ ] touch-targets >= 44px
 [ ] dark: Klassen auf allen Komponenten
+[ ] hlm-* nur in klar-* Komponenten, nie direkt in Features
 
 PATTERNS:
 [ ] Domain-Stores erben ResourceStore<T>
@@ -155,10 +232,12 @@ PATTERNS:
 [ ] Test-Coverage erfüllt
 ```
 
-**Bei Critical Issues:** Blockiert, meldet zurück an coordinator.
-**Bei Minor Issues:** Notiert in claude-flow Memory, gibt frei.
+**Bei Critical Issues:** Blockiert, meldet zurück an coordinator via `memory_store`.
+**Bei Minor Issues:** Notiert in AgentDB, gibt frei.
 
 ### `security-architect` — Security Spezialist
+**Model:** Opus 4.6 (Security braucht beste Analyse)
+
 **Zuständig für (wird nur bei Auth-Phasen aktiviert):**
 - OIDC Auth-Flow (State + PKCE, Account-Linking, Group-Mapping)
 - Argon2id Parameter (Passwörter + API-Keys)
@@ -172,85 +251,105 @@ PATTERNS:
 
 ## 🚀 SWARM-KONFIGURATIONEN PRO PHASE
 
-### Einfache Phasen (1–2 Module)
-```
-npx claude-flow swarm init --topology hierarchical --max-agents 4
-npx claude-flow agent spawn --type coordinator --name lead
-npx claude-flow agent spawn --type coder --name impl
-npx claude-flow agent spawn --type tester --name test
-npx claude-flow agent spawn --type reviewer --name review
+### Einfache Phasen (1–2 Module, < 500 LOC)
+**Agents:** 4 · **Queen Model:** Sonnet
+
+```bash
+swarm_init(topology="hierarchical", maxAgents=4)
+agent_spawn(role="coordinator", model="sonnet")
+agent_spawn(role="coder", model="sonnet")  # Backend ODER Frontend
+agent_spawn(role="tester", model="haiku")
+agent_spawn(role="reviewer", model="sonnet")
 ```
 
-### Standard-Phasen (Frontend + Backend parallel)
-```
-npx claude-flow swarm init --topology hierarchical --max-agents 6
-npx claude-flow agent spawn --type coordinator --name lead
-npx claude-flow agent spawn --type architect --name arch
-npx claude-flow agent spawn --type coder --name backend
-npx claude-flow agent spawn --type coder --name frontend
-npx claude-flow agent spawn --type tester --name test
-npx claude-flow agent spawn --type reviewer --name review
+**Beispiel-Phasen:** 1 (Skeleton), 8 (Shared Functions), 11 (Planspiel)
+
+### Standard-Phasen (Frontend + Backend parallel, 500-2000 LOC)
+**Agents:** 6 · **Queen Model:** Sonnet
+
+```bash
+swarm_init(topology="hierarchical", maxAgents=6)
+agent_spawn(role="coordinator", model="sonnet")
+agent_spawn(role="architect", model="opus")
+agent_spawn(role="backend-coder", model="sonnet")
+agent_spawn(role="frontend-coder", model="sonnet")
+agent_spawn(role="tester", model="haiku")
+agent_spawn(role="reviewer", model="sonnet")
 ```
 
-### Komplexe Phasen (Auth, Overview, Public API)
+**Beispiel-Phasen:** 3 (Households), 5 (Categories), 6 (Recurring), 7 (Transactions), 9 (Overview), 12 (Admin), 13 (UI-Politur)
+
+### Komplexe Phasen (Auth, Security, Public API, > 2000 LOC)
+**Agents:** 8 · **Queen Model:** Sonnet
+
+```bash
+swarm_init(topology="hierarchical", maxAgents=8)
+agent_spawn(role="coordinator", model="sonnet")
+agent_spawn(role="architect", model="opus")
+agent_spawn(role="security-architect", model="opus")
+agent_spawn(role="backend-coder", model="sonnet")
+agent_spawn(role="frontend-coder", model="sonnet")
+agent_spawn(role="shared-coder", model="sonnet")
+agent_spawn(role="tester", model="haiku")
+agent_spawn(role="reviewer", model="sonnet")
 ```
-npx claude-flow swarm init --topology hierarchical --max-agents 8
-npx claude-flow agent spawn --type coordinator --name lead
-npx claude-flow agent spawn --type architect --name arch
-npx claude-flow agent spawn --type security-architect --name security
-npx claude-flow agent spawn --type coder --name backend
-npx claude-flow agent spawn --type coder --name frontend
-npx claude-flow agent spawn --type coder --name shared
-npx claude-flow agent spawn --type tester --name test
-npx claude-flow agent spawn --type reviewer --name review
-```
+
+**Beispiel-Phasen:** 2 (Local Auth), 4 (OIDC), 10 (API-Keys), 14 (Hardening)
 
 ---
 
-## 📊 PHASEN-MAPPING
+## 📊 PHASEN-MAPPING MIT MODEL ALLOCATION
 
-| Phase | Swarm-Typ | Spezialist-Focus |
-|---|---|---|
-| 1 — Skeleton | Einfach | frontend-coder (Angular + PWA), backend-coder (/health) |
-| 2 — Local-Auth | Komplex | security-architect + backend-coder + tester |
-| 3 — Households + RLS | Standard | backend-coder (RLS) + tester (Cross-Tenant E2E) |
-| 4 — OIDC | Komplex | security-architect + backend-coder + frontend-coder |
-| 5 — Categories + Projects | Standard | backend-coder + frontend-coder + shared-coder |
-| 6 — Recurring Transactions | Standard | shared-coder (safeDayOfMonth) + backend-coder + tester |
-| 7 — Transactions + Budgets | Standard | backend-coder + frontend-coder + tester |
-| 8 — Shared Funktionen | Einfach | shared-coder + tester (Fixtures) |
-| 9 — Overview Endpoints | Standard | backend-coder + frontend-coder + shared-coder |
-| 10 — API-Keys + Public API | Komplex | security-architect + backend-coder + tester |
-| 11 — Planspiel | Einfach | frontend-coder (Signal-State) |
-| 12 — Admin Panel | Standard | backend-coder + frontend-coder |
-| 13 — UI-Politur | Standard | frontend-coder (Mobile, Dark Mode) |
-| 14 — Hardening | Standard | security-architect + backend-coder |
+| Phase | Swarm | Agents | Opus-Count | Sonnet-Count | Haiku-Count | Geschätzte Tokens |
+|---|---|---|---|---|---|---|
+| 1 — Skeleton | Einfach | 4 | 0 | 3 | 1 | ~15K |
+| 2 — Local-Auth | Komplex | 8 | 2 | 5 | 1 | ~45K |
+| 3 — Households + RLS | Standard | 6 | 1 | 4 | 1 | ~25K |
+| 4 — OIDC | Komplex | 8 | 2 | 5 | 1 | ~50K |
+| 5 — Categories + Projects | Standard | 6 | 1 | 4 | 1 | ~30K |
+| 6 — Recurring Transactions | Standard | 6 | 1 | 4 | 1 | ~25K |
+| 7 — Transactions + Budgets | Standard | 6 | 1 | 4 | 1 | ~35K |
+| 8 — Shared Funktionen | Einfach | 4 | 0 | 3 | 1 | ~12K |
+| 9 — Overview Endpoints | Standard | 6 | 1 | 4 | 1 | ~30K |
+| 10 — API-Keys + Public API | Komplex | 8 | 2 | 5 | 1 | ~40K |
+| 11 — Planspiel | Einfach | 4 | 0 | 3 | 1 | ~10K |
+| 12 — Admin Panel | Standard | 6 | 1 | 4 | 1 | ~25K |
+| 13 — UI-Politur | Standard | 6 | 0 | 5 | 1 | ~20K |
+| 14 — Hardening | Standard | 6 | 1 | 4 | 1 | ~30K |
+
+**Gesamt:** ~392K Tokens (vs. ~600K ohne Model Selection = **35% Einsparung**)
 
 ---
 
 ## 🧠 MEMORY-PATTERNS
 
 ### Nach jeder Phase speichern:
-```
+```bash
 memory_store(
   key="phase-[N]-complete",
   value="[was gebaut wurde, wichtige Entscheidungen, bekannte Gotchas]",
-  namespace="klar"
+  namespace="klar-app"
 )
 ```
 
 ### Pattern-Bibliothek (namespace: "patterns"):
-```
-memory_store(key="pattern-nestjs-guard", value="HouseholdMemberGuard: ...")
-memory_store(key="pattern-resource-store", value="ResourceStore<T> Pattern: ...")
-memory_store(key="pattern-rls-policy", value="RLS via SET LOCAL app.household_id: ...")
-memory_store(key="pattern-signal-form", value="Angular 21 Signal Forms: ...")
-memory_store(key="pattern-ios-safari", value="100dvh statt 100vh, font-size >= 16px: ...")
+```bash
+memory_store(key="pattern-nestjs-guard", value="HouseholdMemberGuard: ...", namespace="patterns")
+memory_store(key="pattern-resource-store", value="ResourceStore<T> Pattern: ...", namespace="patterns")
+memory_store(key="pattern-rls-policy", value="RLS via SET LOCAL app.household_id: ...", namespace="patterns")
+memory_store(key="pattern-signal-form", value="Angular 21 Signal Forms: ...", namespace="patterns")
+memory_store(key="pattern-ios-safari", value="100dvh statt 100vh, font-size >= 16px: ...", namespace="patterns")
+memory_store(key="pattern-klar-components", value="Spartan UI → hlm-* → klar-* Pipeline: ...", namespace="patterns")
 ```
 
 ### Bekannte Issues (namespace: "issues"):
-```
+```bash
 memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="issues")
+```
+
+### Agent-Ergebnisse (namespace: "klar-app"):
+```bash
+memory_store(key="impl-[module]-[agent]", value="fertig, Pfade: [files], Tests: grün", namespace="klar-app")
 ```
 
 ---
@@ -261,18 +360,57 @@ memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="i
 1. Agent implementiert Modul
    ↓
 2. Agent stored Ergebnis:
-   memory_store(key="impl-[module]", value="fertig, Pfade: ...", namespace="klar")
+   memory_store(key="impl-[module]", value="fertig, Pfade: ...", namespace="klar-app")
    ↓
 3. Reviewer-Agent sucht:
-   memory_search(query="impl-[module]")
+   memory_search(query="impl-[module] klar-app")
    ↓
 4. Reviewer prüft gegen CLAUDE.md Checklist
    ↓
-5a. KRITISCHE Issues → memory_store(key="block-[module]", value="Problem: ...")
+5a. KRITISCHE Issues → memory_store(key="block-[module]", value="Problem: ...", namespace="klar-app")
     → Coordinator informieren → Implementierung wiederholen
    ↓
-5b. MINOR Issues → memory_store(key="minor-[module]", value="Notiz: ...")
+5b. MINOR Issues → memory_store(key="minor-[module]", value="Notiz: ...", namespace="klar-app")
     → Freigabe → Nächster Task
+   ↓
+6. Coordinator markiert Phase als complete:
+   memory_store(key="phase-[N]-complete", value="[Summary]", namespace="klar-app")
+```
+
+---
+
+## ⚡ RUFLO SWARM COMMANDS REFERENCE
+
+### Swarm Lifecycle
+
+```bash
+# Swarm starten
+swarm_init(topology="hierarchical", maxAgents=6)
+
+# Agent spawnen (Model wird automatisch aus Config gewählt)
+agent_spawn(role="backend-coder", model="sonnet")
+
+# Agent mit Override spawnen (z.B. Auth → Opus statt Sonnet)
+agent_spawn(role="backend-coder", model="opus")
+
+# Swarm-Status prüfen
+swarm_status()
+
+# Swarm beenden
+swarm_shutdown()
+```
+
+### Memory Operations
+
+```bash
+# Suchen
+memory_search(query="klar patterns", namespace="patterns")
+
+# Speichern
+memory_store(key="phase-5-complete", value="Categories + Projects done", namespace="klar-app")
+
+# Task-Routing (automatisch via Hooks)
+hooks_route(taskType="frontend", module="categories")
 ```
 
 ---
@@ -285,8 +423,35 @@ memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="i
 - **NIEMALS** API-Key Klartext loggen
 - **NIEMALS** `100vh` — nur `100dvh`
 - **NIEMALS** Input-font-size unter 16px
-- **NIEMALS** Code vor Tests schreiben (Superpowers TDD-Skill)
+- **NIEMALS** Code vor Tests schreiben (TDD-Skill aktiv)
 - **NIEMALS** Phase abschließen ohne Reviewer-Freigabe
+- **NIEMALS** `hlm-*` direkt in Feature-Komponenten — nur über `klar-*`
+- **NIEMALS** Zone.js-Patterns in Angular 21
+- **NIEMALS** Opus für simple Tasks (Haiku/Sonnet reichen)
+
+---
+
+## 📈 TOKEN-EFFIZIENZ MONITORING
+
+### Pro Phase tracken:
+
+```bash
+# Nach Phase-Ende
+swarm_status()  # zeigt Token-Verbrauch pro Agent + Model
+memory_store(
+  key="phase-[N]-metrics",
+  value="Agents: [count], Tokens: [total], Models: [Haiku: X, Sonnet: Y, Opus: Z]",
+  namespace="klar-app"
+)
+```
+
+### Optimierungs-Ziele:
+
+- **Einfache Phasen:** < 20K Tokens
+- **Standard-Phasen:** < 35K Tokens
+- **Komplexe Phasen:** < 55K Tokens
+
+**Wenn über Target:** Mehr Haiku-Agents einsetzen, Opus nur für echte Architektur-Entscheidungen.
 
 ---
 
@@ -295,4 +460,6 @@ memory_store(key="issue-[beschreibung]", value="Problem + Lösung", namespace="i
 - Spec: `SPEC.md`
 - Konventionen: `CLAUDE.md`
 - Datenmodell: `prisma/schema.prisma`
-- Memory search: `memory_search(query="klar [Stichwort]")`
+- Memory search: `memory_search(query="klar [Stichwort]", namespace="klar-app")`
+- Swarm Status: `swarm_status()`
+- Ruflo Docs: `https://github.com/ruvnet/ruflo`
