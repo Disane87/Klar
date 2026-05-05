@@ -1106,6 +1106,9 @@ export const createTransaction = (
 - ❌ Fixed/Sticky Elemente ohne Safe-Area-Insets
 - ❌ Touch-Targets unter 44×44px
 - ❌ `:hover`-only States ohne `:active` Fallback
+- ❌ Code ohne Tests committen — jede neue Datei bekommt sofort eine `.spec.ts`
+- ❌ `pnpm test` schlägt fehl (Coverage < 70% Backend / < 70% Frontend) — erst fixen, dann committen
+- ❌ Linter-Fehler ignorieren — `pnpm lint` muss vor jedem Commit grün sein
 
 ---
 
