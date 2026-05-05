@@ -1,25 +1,23 @@
-<div class="flex flex-col gap-4 p-6 min-w-[320px] max-w-[480px]">
-  <h2 class="text-base font-semibold">Import bestätigen</h2>
-
-  <p class="text-sm text-muted-foreground">
+<div class="flex flex-col gap-4 p-6">
+  <p class="text-sm text-(--text-muted)">
     {{ analyzeResult().summary.transactions }} Buchungen ·
     {{ analyzeResult().summary.recurringTransactions }} Fixkosten
   </p>
 
   @if (unresolvedCategories().length > 0) {
-    <div class="flex flex-col gap-2">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Kategorien zuordnen</p>
+    <div class="flex flex-col gap-3">
+      <p class="text-[10px] uppercase tracking-widest text-(--text-muted)">Kategorien zuordnen</p>
       @for (m of unresolvedCategories(); track m.source.name) {
-        <div class="flex items-center gap-3">
-          <span class="flex-1 truncate text-sm">
+        <div class="flex flex-col gap-1">
+          <label class="text-[13px] font-medium">
             {{ m.source.name }}
-            <span class="text-muted-foreground">({{ m.source.type }})</span>
-          </span>
-          <select hlmSelect
-                  class="min-h-[44px] min-w-[160px]"
-                  [ngModel]="categorySelections()[m.source.name + '::' + m.source.type]"
-                  (ngModelChange)="setCategoryMapping(m.source.name + '::' + m.source.type, $event)">
-            <option value="">— wählen —</option>
+            <span class="text-(--text-muted) font-normal">({{ m.source.type }})</span>
+          </label>
+          <select
+            class="w-full rounded border border-(--border) bg-(--surface-1) text-[1rem] text-(--text) px-3 py-2 min-h-11 focus:outline-none focus:ring-1 focus:ring-accent"
+            [ngModel]="categorySelections()[m.source.name + '::' + m.source.type]"
+            (ngModelChange)="setCategoryMapping(m.source.name + '::' + m.source.type, $event)">
+            <option value="">— Kategorie wählen —</option>
             @for (cat of analyzeResult().availableCategories; track cat.id) {
               <option [value]="cat.id">{{ cat.name }}</option>
             }
@@ -30,16 +28,16 @@
   }
 
   @if (unresolvedProjects().length > 0) {
-    <div class="flex flex-col gap-2">
-      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Projekte zuordnen</p>
+    <div class="flex flex-col gap-3">
+      <p class="text-[10px] uppercase tracking-widest text-(--text-muted)">Projekte zuordnen</p>
       @for (m of unresolvedProjects(); track m.source.name) {
-        <div class="flex items-center gap-3">
-          <span class="flex-1 truncate text-sm">{{ m.source.name }}</span>
-          <select hlmSelect
-                  class="min-h-[44px] min-w-[160px]"
-                  [ngModel]="projectSelections()[m.source.name]"
-                  (ngModelChange)="setProjectMapping(m.source.name, $event)">
-            <option value="">— wählen —</option>
+        <div class="flex flex-col gap-1">
+          <label class="text-[13px] font-medium">{{ m.source.name }}</label>
+          <select
+            class="w-full rounded border border-(--border) bg-(--surface-1) text-[1rem] text-(--text) px-3 py-2 min-h-11 focus:outline-none focus:ring-1 focus:ring-accent"
+            [ngModel]="projectSelections()[m.source.name]"
+            (ngModelChange)="setProjectMapping(m.source.name, $event)">
+            <option value="">— Projekt wählen —</option>
             @for (proj of analyzeResult().availableProjects; track proj.id) {
               <option [value]="proj.id">{{ proj.name }}</option>
             }
