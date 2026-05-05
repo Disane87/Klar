@@ -32,10 +32,20 @@
       "Bash(pnpm --filter @klar/api lint)",
       "Bash(sort -t: -k2 -nr)",
       "Bash(pnpm exec *)",
-      "Bash(pnpm --filter web exec tsc --noEmit -p apps/web/tsconfig.app.json)"
+      "Bash(pnpm --filter web exec tsc --noEmit -p apps/web/tsconfig.app.json)",
+      "Bash(pnpm --filter api prisma:generate)",
+      "Bash(git -C c:/Workspace/Klar log --oneline -5 -- apps/web/src/app/pages/settings/data-import.component.ts apps/web/src/app/pages/settings/data-import.component.html)",
+      "Bash(pnpm --filter api lint)",
+      "Bash(pnpm --filter api test -- --run)",
+      "Bash(npx skills *)",
+      "Bash(git show *)",
+      "Bash(cp prisma/schema.prisma /tmp/schema-full.prisma)",
+      "Read(//tmp/**)",
+      "Bash(cp /tmp/schema-orig.prisma prisma/schema.prisma)"
     ],
     "additionalDirectories": [
-      "C:\\Workspace\\denaro"
+      "C:\\Workspace\\denaro",
+      "\\tmp"
     ]
   },
   "enabledPlugins": {
