@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/Disane87/Klar/compare/v1.2.1...v1.2.2) (2026-05-05)
+
+
+### Bug Fixes
+
+* **shell:** make update banner span full viewport width ([6d20342](https://github.com/Disane87/Klar/commit/6d20342106d757860d618c3bc0b03997b3877e1f))
+
 ## [1.2.1](https://github.com/Disane87/Klar/compare/v1.2.0...v1.2.1) (2026-05-05)
 
 
