@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/Disane87/Klar/compare/v1.2.2...v1.2.3) (2026-05-05)
+
+
+### Bug Fixes
+
+* **web:** keep stores reactive after mutations ([6712b94](https://github.com/Disane87/Klar/commit/6712b9436f0247121205cb745b62953d807688e3))
+
 ## [1.2.2](https://github.com/Disane87/Klar/compare/v1.2.1...v1.2.2) (2026-05-05)
 
 
