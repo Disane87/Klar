@@ -87,16 +87,26 @@ export class AuthService {
 
   uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
     return new Observable(observer => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d')!;
+        const size = Math.min(img.width, img.height);
+        const sx = (img.width - size) / 2;
+        const sy = (img.height - size) / 2;
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 128, 128);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         this.http.post<{ avatarUrl: string }>('/api/v1/users/me/avatar',
-          { data: dataUrl, mimetype: file.type },
+          { data: dataUrl },
           { withCredentials: true },
         ).subscribe(observer);
       };
-      reader.onerror = () => observer.error(reader.error);
-      reader.readAsDataURL(file);
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); observer.error(new Error('Bild konnte nicht geladen werden')); };
+      img.src = objectUrl;
     });
   }
 

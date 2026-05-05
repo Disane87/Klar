@@ -6,7 +6,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import sharp from 'sharp';
 import type { User } from '@prisma/client';
 import { AppRole } from '@prisma/client';
 import type { AuthUser, UserProfile, OidcIdentityItem, SessionItem } from '@klar/shared';
@@ -188,18 +187,15 @@ export class UsersService {
     this.auditService.log({ action: 'user.delete', userId });
   }
 
-  async uploadAvatar(userId: string, buffer: Buffer, mimetype: string): Promise<{ avatarUrl: string }> {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowed.includes(mimetype)) {
-      throw new BadRequestException('Nur JPEG, PNG, WebP oder GIF erlaubt');
+  async uploadAvatar(userId: string, dataUrl: string): Promise<{ avatarUrl: string }> {
+    if (!dataUrl.startsWith('data:image/jpeg;base64,')) {
+      throw new BadRequestException('Ungültiges Bildformat');
     }
-    const resized = await sharp(buffer)
-      .resize(128, 128, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    const avatarUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
-    await this.repo.setAvatar(userId, avatarUrl);
-    return { avatarUrl };
+    if (dataUrl.length > 200 * 1024) {
+      throw new BadRequestException('Datei zu groß');
+    }
+    await this.repo.setAvatar(userId, dataUrl);
+    return { avatarUrl: dataUrl };
   }
 
   async deleteAvatar(userId: string): Promise<void> {

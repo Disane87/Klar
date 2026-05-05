@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import type { AuthUser } from '@klar/shared';
@@ -32,6 +32,7 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private authStore = inject(AuthStore);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   readonly oidc = inject(OidcService);
 
   readonly email = signal('');
@@ -68,6 +69,8 @@ export class LoginComponent implements OnInit {
   readonly formValid = computed(() => !this.emailError() && !this.passwordError());
 
   async ngOnInit(): Promise<void> {
+    const inviteToken = this.route.snapshot.queryParamMap.get('invite');
+    if (inviteToken) sessionStorage.setItem('pendingInviteToken', inviteToken);
     await this.oidc.loadConfig();
   }
 
@@ -93,7 +96,12 @@ export class LoginComponent implements OnInit {
         this.tempToken.set(res.tempToken);
       } else if (res.accessToken && res.user) {
         this.authStore.setSession(res.user as AuthUser, res.accessToken);
-        await this.router.navigate(['/app']);
+        const pendingToken = sessionStorage.getItem('pendingInviteToken');
+        if (pendingToken) {
+          await this.router.navigate(['/join', pendingToken]);
+        } else {
+          await this.router.navigate(['/app']);
+        }
       }
     } catch (err: unknown) {
       this.handleLoginError(err);
@@ -113,7 +121,12 @@ export class LoginComponent implements OnInit {
         this.authService.verifyTotp(this.tempToken(), this.totpCode(), this.rememberMe()),
       );
       this.authStore.setSession(res.user, res.accessToken);
-      await this.router.navigate(['/app']);
+      const pendingToken = sessionStorage.getItem('pendingInviteToken');
+      if (pendingToken) {
+        await this.router.navigate(['/join', pendingToken]);
+      } else {
+        await this.router.navigate(['/app']);
+      }
     } catch {
       this.totpError.set('Ungültiger Code. Bitte versuche es erneut.');
     } finally {

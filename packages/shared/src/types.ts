@@ -84,23 +84,26 @@ export type HouseholdMember = {
   avatarUrl?: string | null;
 };
 
-export type InviteCode = {
+export type InvitationLink = {
   id: string;
   householdId: string;
-  code: string;
+  token: string;
+  email: string | null;
   createdByUserId: string | null;
   expiresAt: string | null;
-  usesRemaining: number | null;
+  usedAt: string | null;
+  usedByUserId: string | null;
   createdAt: string;
+  link: string;
 };
 
-export type CreateInviteRequest = {
+export type CreateInviteLinkRequest = {
   expiresInDays?: number;
-  maxUses?: number;
 };
 
-export type JoinHouseholdRequest = {
-  code: string;
+export type InviteTokenInfo = {
+  householdName: string;
+  expiresAt: string | null;
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────

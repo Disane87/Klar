@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import type { HouseholdWithRole, Household, HouseholdMember, InviteCode } from '@klar/shared';
+import type { HouseholdWithRole, Household, HouseholdMember, InvitationLink } from '@klar/shared';
 import { HouseholdService } from './household.service';
 
 @Injectable({ providedIn: 'root' })
@@ -11,7 +11,7 @@ export class HouseholdStore {
   private _households = signal<HouseholdWithRole[]>([]);
   private _activeId = signal<string | null>(null);
   private _members = signal<HouseholdMember[]>([]);
-  private _invites = signal<InviteCode[]>([]);
+  private _invites = signal<InvitationLink[]>([]);
   private _loading = signal(false);
   private _isInitialized = signal(false);
 
@@ -80,12 +80,23 @@ export class HouseholdStore {
     this._invites.set(await this.householdService.listInvites(id));
   }
 
-  async createInvite(opts: { expiresInDays?: number; maxUses?: number } = {}): Promise<InviteCode> {
+  async createInvite(opts: { expiresInDays?: number } = {}): Promise<InvitationLink> {
     const id = this._activeId();
     if (!id) throw new Error('Kein aktiver Haushalt');
     const invite = await this.householdService.createInvite(id, opts);
     this._invites.update(list => [invite, ...list]);
     return invite;
+  }
+
+  async sendInviteEmail(inviteId: string, email: string): Promise<void> {
+    const id = this._activeId();
+    if (!id) return;
+    await this.householdService.sendInviteEmail(id, inviteId, email);
+  }
+
+  async joinByToken(token: string): Promise<void> {
+    await this.householdService.joinByToken(token);
+    await this.loadHouseholds();
   }
 
   async deleteInvite(inviteId: string): Promise<void> {
@@ -119,12 +130,6 @@ export class HouseholdStore {
       ),
     );
     return updated;
-  }
-
-  async joinByCode(code: string): Promise<void> {
-    await this.householdService.joinByCode(code);
-    await this.loadHouseholds();
-    await this.router.navigate(['/app']);
   }
 
   async leave(): Promise<void> {

@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
@@ -25,8 +25,9 @@ import { AuthService } from '../../core/auth/auth.service';
   ],
   templateUrl: './register.component.html',
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
 
   readonly email = signal('');
   readonly displayName = signal('');
@@ -70,6 +71,11 @@ export class RegisterComponent {
       !this.passwordError() &&
       !this.confirmPasswordError(),
   );
+
+  ngOnInit(): void {
+    const inviteToken = this.route.snapshot.queryParamMap.get('invite');
+    if (inviteToken) sessionStorage.setItem('pendingInviteToken', inviteToken);
+  }
 
   async submit(): Promise<void> {
     this.submitted.set(true);

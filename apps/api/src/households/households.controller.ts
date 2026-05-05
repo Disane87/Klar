@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ReqContext } from '../common/decorators/req-context.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import type { JwtPayload } from '../common/types/jwt-payload.type';
 import type { RequestContext } from '../common/types/request-context.type';
 import { HouseholdRole } from '@prisma/client';
@@ -19,8 +20,8 @@ import { HouseholdMemberGuard } from './guards/household-member.guard';
 import { HouseholdsService } from './households.service';
 
 interface RenameBody { name: string }
-interface JoinBody { code: string }
-interface CreateInviteBody { expiresInDays?: number; maxUses?: number }
+interface CreateInviteLinkBody { expiresInDays?: number }
+interface SendInviteEmailBody { email: string }
 
 @Controller()
 export class HouseholdsController {
@@ -31,15 +32,6 @@ export class HouseholdsController {
     return this.householdsService.listForUser(user.sub);
   }
 
-  @Post('households/join')
-  @HttpCode(HttpStatus.OK)
-  joinHousehold(
-    @CurrentUser() user: JwtPayload,
-    @Body() body: JoinBody,
-  ) {
-    return this.householdsService.joinByCode(user.sub, body.code);
-  }
-
   @Get('households/:hid')
   @UseGuards(HouseholdMemberGuard)
   getHousehold(@ReqContext() ctx: RequestContext) {
@@ -48,10 +40,7 @@ export class HouseholdsController {
 
   @Patch('households/:hid')
   @UseGuards(HouseholdMemberGuard)
-  renameHousehold(
-    @ReqContext() ctx: RequestContext,
-    @Body() body: RenameBody,
-  ) {
+  renameHousehold(@ReqContext() ctx: RequestContext, @Body() body: RenameBody) {
     return this.householdsService.rename(ctx, body.name);
   }
 
@@ -64,10 +53,7 @@ export class HouseholdsController {
   @Delete('households/:hid/members/:uid')
   @UseGuards(HouseholdMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeMember(
-    @ReqContext() ctx: RequestContext,
-    @Param('uid') targetUserId: string,
-  ) {
+  removeMember(@ReqContext() ctx: RequestContext, @Param('uid') targetUserId: string) {
     return this.householdsService.removeMember(ctx, targetUserId);
   }
 
@@ -82,33 +68,53 @@ export class HouseholdsController {
     return this.householdsService.changeRole(ctx, targetUserId, role);
   }
 
+  // ─── Invitation Links ────────────────────────────────────────────────────
+
   @Get('households/:hid/invites')
   @UseGuards(HouseholdMemberGuard)
   listInvites(@ReqContext() ctx: RequestContext) {
-    return this.householdsService.listInvites(ctx);
+    return this.householdsService.listInviteLinks(ctx);
   }
 
   @Post('households/:hid/invites')
   @UseGuards(HouseholdMemberGuard)
-  createInvite(
+  createInvite(@ReqContext() ctx: RequestContext, @Body() body: CreateInviteLinkBody) {
+    return this.householdsService.createInviteLink(ctx, { expiresInDays: body.expiresInDays });
+  }
+
+  @Post('households/:hid/invites/:iid/send')
+  @UseGuards(HouseholdMemberGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  sendInviteEmail(
     @ReqContext() ctx: RequestContext,
-    @Body() body: CreateInviteBody,
+    @Param('iid') inviteId: string,
+    @Body() body: SendInviteEmailBody,
   ) {
-    const expiresAt = body.expiresInDays
-      ? new Date(Date.now() + body.expiresInDays * 86_400_000)
-      : undefined;
-    return this.householdsService.createInvite(ctx, { expiresAt, maxUses: body.maxUses });
+    return this.householdsService.sendInviteLinkEmail(ctx, inviteId, body.email);
   }
 
   @Delete('households/:hid/invites/:iid')
   @UseGuards(HouseholdMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteInvite(
-    @ReqContext() ctx: RequestContext,
-    @Param('iid') inviteId: string,
-  ) {
-    return this.householdsService.deleteInvite(ctx, inviteId);
+  deleteInvite(@ReqContext() ctx: RequestContext, @Param('iid') inviteId: string) {
+    return this.householdsService.deleteInviteLink(ctx, inviteId);
   }
+
+  // ─── Public: Join by Token ───────────────────────────────────────────────
+
+  @Public()
+  @Get('join/:token')
+  getInviteInfo(@Param('token') token: string) {
+    return this.householdsService.getInviteInfo(token);
+  }
+
+  @Post('join/:token')
+  @HttpCode(HttpStatus.OK)
+  joinByToken(@CurrentUser() user: JwtPayload, @Param('token') token: string) {
+    return this.householdsService.joinByToken(user.sub, token);
+  }
+
+  // ─── Household Lifecycle ─────────────────────────────────────────────────
 
   @Delete('households/:hid/leave')
   @UseGuards(HouseholdMemberGuard)

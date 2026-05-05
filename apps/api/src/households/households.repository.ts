@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Household, HouseholdMembership } from '@prisma/client';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole, MailTemplateType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface CreateWithOwnerData {
@@ -35,6 +35,13 @@ export class HouseholdsRepository {
   findMembership(userId: string, householdId: string): Promise<HouseholdMembership | null> {
     return this.prisma.householdMembership.findUnique({
       where: { userId_householdId: { userId, householdId } },
+    });
+  }
+
+  findCallerWithUser(userId: string, householdId: string): Promise<(HouseholdMembership & { user: { displayName: string } }) | null> {
+    return this.prisma.householdMembership.findUnique({
+      where: { userId_householdId: { userId, householdId } },
+      include: { user: { select: { displayName: true } } },
     });
   }
 
@@ -115,7 +122,23 @@ export class HouseholdsRepository {
 
   async deleteHousehold(householdId: string): Promise<void> {
     await this.prisma.householdMembership.deleteMany({ where: { householdId } });
-    await this.prisma.inviteCode.deleteMany({ where: { householdId } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.prisma as any).invitationLink.deleteMany({ where: { householdId } });
     await this.prisma.household.delete({ where: { id: householdId } });
+  }
+
+  async seedDefaultTemplates(householdId: string): Promise<void> {
+    await this.prisma.householdMailTemplate.upsert({
+      where: { householdId_templateType: { householdId, templateType: MailTemplateType.INVITE } },
+      create: {
+        householdId,
+        templateType: MailTemplateType.INVITE,
+        name: 'Einladungslink',
+        subject: '{{inviterName}} lädt dich zu "{{householdName}}" ein — Klar',
+        body: '<p>Hallo,</p><p><strong>{{inviterName}}</strong> lädt dich ein, dem Haushalt <strong>{{householdName}}</strong> beizutreten.</p><p><a href="{{inviteUrl}}">Einladung annehmen</a></p>',
+        isActive: true,
+      },
+      update: {},
+    });
   }
 }

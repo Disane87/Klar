@@ -18,7 +18,7 @@ import type { JwtPayload } from '../common/types/jwt-payload.type';
 
 interface UpdateProfileBody { displayName?: string; email?: string }
 interface ChangePasswordBody { currentPassword: string; newPassword: string }
-interface UploadAvatarBody { data: string; mimetype: string }
+interface UploadAvatarBody { data: string }
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -93,10 +93,7 @@ export class UsersController {
     @Body() body: UploadAvatarBody,
   ): Promise<{ avatarUrl: string }> {
     if (!body?.data) throw new BadRequestException('Kein Bild übermittelt');
-    const base64 = body.data.includes(',') ? body.data.split(',')[1] : body.data;
-    const buffer = Buffer.from(base64, 'base64');
-    if (buffer.length > 5 * 1024 * 1024) throw new BadRequestException('Datei zu groß (max. 5 MB)');
-    return this.usersService.uploadAvatar(payload.sub, buffer, body.mimetype);
+    return this.usersService.uploadAvatar(payload.sub, body.data);
   }
 
   @Delete('me/avatar')

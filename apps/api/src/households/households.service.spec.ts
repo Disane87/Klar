@@ -3,14 +3,29 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  GoneException,
   NotFoundException,
 } from '@nestjs/common';
 import { HouseholdRole } from '@prisma/client';
 import { HouseholdsService } from './households.service';
 import type { HouseholdsRepository } from './households.repository';
-import type { InviteCodeRepository } from './invite-code.repository';
+import type { InvitationLinkRepository } from './invitation-link.repository';
 import type { AuditService } from '../audit/audit.service';
-import type { Household, HouseholdMembership, InviteCode } from '@prisma/client';
+import type { MailService } from '../mail/mail.service';
+import type { Household, HouseholdMembership } from '@prisma/client';
+
+// Local type mirroring InvitationLink until Prisma client regenerates
+type InvitationLink = {
+  id: string;
+  householdId: string;
+  token: string;
+  email: string | null;
+  createdByUserId: string | null;
+  expiresAt: Date | null;
+  usedAt: Date | null;
+  usedByUserId: string | null;
+  createdAt: Date;
+};
 
 const makeHousehold = (overrides: Partial<Household> = {}): Household => ({
   id: 'h-1',
@@ -30,13 +45,15 @@ const makeMembership = (
   ...overrides,
 });
 
-const makeInvite = (overrides: Partial<InviteCode> = {}): InviteCode => ({
+const makeInviteLink = (overrides: Partial<InvitationLink> = {}): InvitationLink => ({
   id: 'inv-1',
   householdId: 'h-1',
-  code: 'ABCD1234',
+  token: 'abc123token',
+  email: null,
   createdByUserId: 'u-1',
-  expiresAt: null,
-  usesRemaining: null,
+  expiresAt: new Date(Date.now() + 7 * 86_400_000),
+  usedAt: null,
+  usedByUserId: null,
   createdAt: new Date(),
   ...overrides,
 });
@@ -46,24 +63,34 @@ const makeRepo = (): HouseholdsRepository =>
     createWithOwner: vi.fn(),
     findById: vi.fn(),
     findMembership: vi.fn(),
+    findCallerWithUser: vi.fn(),
     findMembershipsByUser: vi.fn(),
     findMembershipsByHousehold: vi.fn(),
     addMember: vi.fn(),
     removeMember: vi.fn(),
     updateName: vi.fn(),
+    countOwners: vi.fn(),
+    countMembers: vi.fn(),
+    updateMemberRole: vi.fn(),
+    deleteHousehold: vi.fn(),
+    seedDefaultTemplates: vi.fn(),
   }) as unknown as HouseholdsRepository;
 
-const makeInviteRepo = (): InviteCodeRepository =>
+const makeInviteLinkRepo = (): InvitationLinkRepository =>
   ({
     create: vi.fn(),
-    findByCode: vi.fn(),
+    findByToken: vi.fn(),
     findByHousehold: vi.fn(),
     consumeAndJoin: vi.fn(),
     delete: vi.fn(),
-  }) as unknown as InviteCodeRepository;
+    deleteByHousehold: vi.fn(),
+  }) as unknown as InvitationLinkRepository;
 
 const makeAudit = (): AuditService =>
   ({ log: vi.fn() }) as unknown as AuditService;
+
+const makeMailService = (): MailService =>
+  ({ sendInviteEmail: vi.fn() }) as unknown as MailService;
 
 const makeCtx = (overrides: object = {}) => ({
   userId: 'u-1',
@@ -72,22 +99,33 @@ const makeCtx = (overrides: object = {}) => ({
   ...overrides,
 });
 
+const fakeAppConfig = { frontendUrl: 'http://localhost:4200', registrationEnabled: true };
+
 let repo: HouseholdsRepository;
-let inviteRepo: InviteCodeRepository;
+let inviteLinkRepo: InvitationLinkRepository;
 let audit: AuditService;
+let mailService: MailService;
 let service: HouseholdsService;
 
 beforeEach(() => {
   repo = makeRepo();
-  inviteRepo = makeInviteRepo();
+  inviteLinkRepo = makeInviteLinkRepo();
   audit = makeAudit();
-  service = new HouseholdsService(repo, inviteRepo, audit);
+  mailService = makeMailService();
+  service = new HouseholdsService(
+    repo,
+    inviteLinkRepo,
+    audit,
+    mailService,
+    fakeAppConfig as never,
+  );
 });
 
 describe('HouseholdsService', () => {
   describe('createDefault', () => {
     it('creates household with default name when none provided', async () => {
       vi.mocked(repo.createWithOwner).mockResolvedValue(makeHousehold());
+      vi.mocked(repo.seedDefaultTemplates).mockResolvedValue(undefined);
 
       const result = await service.createDefault('u-1');
 
@@ -97,6 +135,7 @@ describe('HouseholdsService', () => {
 
     it('uses provided name when given', async () => {
       vi.mocked(repo.createWithOwner).mockResolvedValue(makeHousehold({ name: 'Custom Name' }));
+      vi.mocked(repo.seedDefaultTemplates).mockResolvedValue(undefined);
 
       await service.createDefault('u-1', 'Custom Name');
 
@@ -170,52 +209,60 @@ describe('HouseholdsService', () => {
     });
   });
 
-  describe('createInvite', () => {
+  describe('createInviteLink', () => {
     it('throws ForbiddenException when caller is not OWNER', async () => {
       vi.mocked(repo.findMembership).mockResolvedValue(
         makeMembership({ role: HouseholdRole.MEMBER }),
       );
 
-      await expect(service.createInvite(makeCtx())).rejects.toThrow(ForbiddenException);
+      await expect(service.createInviteLink(makeCtx())).rejects.toThrow(ForbiddenException);
     });
 
-    it('creates invite when caller is OWNER', async () => {
+    it('creates invite link when caller is OWNER', async () => {
       vi.mocked(repo.findMembership).mockResolvedValue(makeMembership({ role: HouseholdRole.OWNER }));
-      vi.mocked(inviteRepo.create).mockResolvedValue(makeInvite());
+      vi.mocked(inviteLinkRepo.create).mockResolvedValue(makeInviteLink());
 
-      const result = await service.createInvite(makeCtx());
+      const result = await service.createInviteLink(makeCtx());
 
-      expect(result.code).toBe('ABCD1234');
+      expect(result.token).toBe('abc123token');
+      expect(result.link).toContain('/join/abc123token');
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'member.invited' }));
     });
   });
 
-  describe('joinByCode', () => {
-    it('throws NotFoundException for unknown code', async () => {
-      vi.mocked(inviteRepo.consumeAndJoin).mockRejectedValue(new Error('INVITE_NOT_FOUND'));
+  describe('joinByToken', () => {
+    it('throws NotFoundException for unknown token', async () => {
+      vi.mocked(inviteLinkRepo.consumeAndJoin).mockRejectedValue(new Error('INVITE_NOT_FOUND'));
 
-      await expect(service.joinByCode('u-2', 'XXXX1234')).rejects.toThrow(NotFoundException);
+      await expect(service.joinByToken('u-2', 'badtoken')).rejects.toThrow(NotFoundException);
     });
 
-    it('throws BadRequestException for expired code', async () => {
-      vi.mocked(inviteRepo.consumeAndJoin).mockRejectedValue(new Error('INVITE_EXPIRED'));
+    it('throws GoneException for used token', async () => {
+      vi.mocked(inviteLinkRepo.consumeAndJoin).mockRejectedValue(new Error('INVITE_USED'));
 
-      await expect(service.joinByCode('u-2', 'XXXX1234')).rejects.toThrow(BadRequestException);
+      await expect(service.joinByToken('u-2', 'badtoken')).rejects.toThrow(GoneException);
+    });
+
+    it('throws GoneException for expired token', async () => {
+      vi.mocked(inviteLinkRepo.consumeAndJoin).mockRejectedValue(new Error('INVITE_EXPIRED'));
+
+      await expect(service.joinByToken('u-2', 'badtoken')).rejects.toThrow(GoneException);
     });
 
     it('throws BadRequestException when already a member', async () => {
-      vi.mocked(inviteRepo.consumeAndJoin).mockRejectedValue(new Error('ALREADY_MEMBER'));
+      vi.mocked(inviteLinkRepo.consumeAndJoin).mockRejectedValue(new Error('ALREADY_MEMBER'));
 
-      await expect(service.joinByCode('u-2', 'XXXX1234')).rejects.toThrow(BadRequestException);
+      await expect(service.joinByToken('u-2', 'badtoken')).rejects.toThrow(BadRequestException);
     });
 
-    it('normalizes code (strips dashes, uppercases) before joining', async () => {
-      vi.mocked(inviteRepo.consumeAndJoin).mockResolvedValue({ householdId: 'h-1' });
+    it('joins successfully with valid token', async () => {
+      vi.mocked(inviteLinkRepo.consumeAndJoin).mockResolvedValue({ householdId: 'h-1' });
       vi.mocked(repo.findMembership).mockResolvedValue(makeMembership({ userId: 'u-2' }));
 
-      await service.joinByCode('u-2', 'abcd-1234');
+      const result = await service.joinByToken('u-2', 'abc123token');
 
-      expect(inviteRepo.consumeAndJoin).toHaveBeenCalledWith('ABCD1234', 'u-2');
+      expect(result.userId).toBe('u-2');
+      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'member.joined' }));
     });
   });
 
@@ -262,6 +309,39 @@ describe('HouseholdsService', () => {
           HouseholdRole.MEMBER,
         ),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('getInviteInfo', () => {
+    it('throws NotFoundException for unknown token', async () => {
+      vi.mocked(inviteLinkRepo.findByToken).mockResolvedValue(null);
+
+      await expect(service.getInviteInfo('unknown')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws GoneException for used invite', async () => {
+      vi.mocked(inviteLinkRepo.findByToken).mockResolvedValue(
+        makeInviteLink({ usedAt: new Date() }),
+      );
+
+      await expect(service.getInviteInfo('abc123token')).rejects.toThrow(GoneException);
+    });
+
+    it('throws GoneException for expired invite', async () => {
+      vi.mocked(inviteLinkRepo.findByToken).mockResolvedValue(
+        makeInviteLink({ expiresAt: new Date(Date.now() - 1000) }),
+      );
+
+      await expect(service.getInviteInfo('abc123token')).rejects.toThrow(GoneException);
+    });
+
+    it('returns household info for valid invite', async () => {
+      vi.mocked(inviteLinkRepo.findByToken).mockResolvedValue(makeInviteLink());
+      vi.mocked(repo.findById).mockResolvedValue(makeHousehold());
+
+      const result = await service.getInviteInfo('abc123token');
+
+      expect(result.householdName).toBe('Mein Haushalt');
     });
   });
 });

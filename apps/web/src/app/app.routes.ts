@@ -10,6 +10,11 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'join/:token',
+    loadComponent: () =>
+      import('./pages/join/join.component').then(m => m.JoinComponent),
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>

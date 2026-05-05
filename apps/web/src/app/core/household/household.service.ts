@@ -5,8 +5,9 @@ import type {
   Household,
   HouseholdMember,
   HouseholdWithRole,
-  InviteCode,
-  CreateInviteRequest,
+  InvitationLink,
+  CreateInviteLinkRequest,
+  InviteTokenInfo,
 } from '@klar/shared';
 
 const BASE = '/api/v1/households';
@@ -41,21 +42,31 @@ export class HouseholdService {
     );
   }
 
-  listInvites(hid: string): Promise<InviteCode[]> {
-    return firstValueFrom(this.http.get<InviteCode[]>(`${BASE}/${hid}/invites`));
+  listInvites(hid: string): Promise<InvitationLink[]> {
+    return firstValueFrom(this.http.get<InvitationLink[]>(`${BASE}/${hid}/invites`));
   }
 
-  createInvite(hid: string, body: CreateInviteRequest = {}): Promise<InviteCode> {
-    return firstValueFrom(this.http.post<InviteCode>(`${BASE}/${hid}/invites`, body));
+  createInvite(hid: string, body: CreateInviteLinkRequest = {}): Promise<InvitationLink> {
+    return firstValueFrom(this.http.post<InvitationLink>(`${BASE}/${hid}/invites`, body));
   }
 
   deleteInvite(hid: string, inviteId: string): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${BASE}/${hid}/invites/${inviteId}`));
   }
 
-  joinByCode(code: string): Promise<{ householdId: string }> {
+  sendInviteEmail(hid: string, inviteId: string, email: string): Promise<void> {
     return firstValueFrom(
-      this.http.post<{ householdId: string }>(`${BASE}/join`, { code }),
+      this.http.post<void>(`${BASE}/${hid}/invites/${inviteId}/send`, { email }),
+    );
+  }
+
+  getInviteInfo(token: string): Promise<InviteTokenInfo> {
+    return firstValueFrom(this.http.get<InviteTokenInfo>(`/api/v1/join/${token}`));
+  }
+
+  joinByToken(token: string): Promise<{ householdId: string; id: string }> {
+    return firstValueFrom(
+      this.http.post<{ householdId: string; id: string }>(`/api/v1/join/${token}`, {}),
     );
   }
 

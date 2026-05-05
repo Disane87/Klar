@@ -83,17 +83,8 @@ export class OnboardingComponent {
   async joinHousehold(): Promise<void> {
     this.submitted.set(true);
     if (this.codeError() || this.loading()) return;
-
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      await this.householdStore.joinByCode(this.inviteCode().trim());
-    } catch (err: unknown) {
-      const msg = (err as { error?: { detail?: string } }).error?.detail;
-      this.error.set(msg ?? 'Ungültiger oder abgelaufener Einladungscode.');
-    } finally {
-      this.loading.set(false);
-    }
+    // Redirect to the join page — the token is the invitation link token
+    await this.router.navigate(['/join', this.inviteCode().trim()]);
   }
 
   async logout(): Promise<void> {

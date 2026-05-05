@@ -57,53 +57,14 @@
 
     <!-- ── EINLADUNGEN (nur Owner) ──────────────────────── -->
     @if (canManage()) {
-      <klar-list-group label="Einladungen"
-                       headerActionLabel="+ Code erstellen"
-                       [headerActionDisabled]="creatingInvite()"
-                       (headerAction)="createInvite()"
-                       footnote="Codes laufen nach 30 Tagen automatisch ab und können nur einmal eingelöst werden.">
-
-        @if (newlyCreatedInvite(); as invite) {
-          <div class="mx-6 my-3 px-4 py-3 border border-(--color-income)/30 bg-(--color-income)/6 rounded-[3px] flex flex-col gap-2">
-            <p class="text-[12px] text-(--color-income) font-medium">Neuer Einladungscode — einmalig verwendbar</p>
-            <div class="flex items-center gap-2 bg-(--surface) border border-(--border) px-3 py-2 rounded-xs">
-              <span class="font-mono text-[14px] font-semibold tracking-[0.08em] flex-1">{{ formatCode(invite.code) }}</span>
-              <button type="button"
-                      class="min-w-11 min-h-11 flex items-center justify-center rounded-xs bg-transparent border-none cursor-pointer text-(--text-muted) hover:text-(--text) transition-colors"
-                      (click)="copyCode(invite.code)" title="Kopieren">
-                <klar-icon name="copy" [size]="14" />
-              </button>
-            </div>
-            @if (invite.expiresAt) {
-              <p class="text-[11px] text-(--text-muted)">Ablauf: {{ invite.expiresAt | date:'dd.MM.yyyy' }}</p>
-            }
-          </div>
-        }
-
-        @for (invite of store.invites(); track invite.id) {
-          <klar-list-item icon="ticket"
-                          [label]="formatCode(invite.code)"
-                          [sublabel]="formatInviteSublabel(invite)"
-                          trailingActionIcon="close"
-                          [trailingActionDanger]="true"
-                          (trailingActionClick)="deleteInvite(invite.id)" />
-        }
+      <klar-list-group label="Einladungen">
+        <klar-list-item icon="user-plus"
+                        label="Mitglied einladen"
+                        sublabel="Einmaligen Einladungslink erstellen und teilen"
+                        [navigable]="true"
+                        (itemClick)="openInviteDialog()" />
       </klar-list-group>
     }
-
-    <!-- ── BEITRETEN ─────────────────────────────────────── -->
-    <klar-list-group label="Haushalt beitreten"
-                     footnote="Du bekommst den Code von einem Owner deines Haushalts.">
-      <div class="flex gap-2 px-6 py-4 items-center">
-        <klar-input class="flex-1" placeholder="XXXX-XXXX"
-                    [ngModel]="joinCode()" (ngModelChange)="joinCode.set($event)" />
-        <button hlmBtn size="sm" variant="outline" type="button"
-                [disabled]="joining()" (click)="joinByCode()">
-          @if (joining()) { <hlm-spinner [size]="12" /> }
-          Beitreten
-        </button>
-      </div>
-    </klar-list-group>
 
     <!-- ── MAIL-VORLAGEN ─────────────────────────────────── -->
     <app-mail-templates />
