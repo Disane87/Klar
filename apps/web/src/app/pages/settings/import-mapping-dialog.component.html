@@ -1,0 +1,59 @@
+<div class="flex flex-col gap-4 p-6 min-w-[320px] max-w-[480px]">
+  <h2 class="text-base font-semibold">Import bestätigen</h2>
+
+  <p class="text-sm text-muted-foreground">
+    {{ analyzeResult().summary.transactions }} Buchungen ·
+    {{ analyzeResult().summary.recurringTransactions }} Fixkosten
+  </p>
+
+  @if (unresolvedCategories().length > 0) {
+    <div class="flex flex-col gap-2">
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Kategorien zuordnen</p>
+      @for (m of unresolvedCategories(); track m.source.name) {
+        <div class="flex items-center gap-3">
+          <span class="flex-1 truncate text-sm">
+            {{ m.source.name }}
+            <span class="text-muted-foreground">({{ m.source.type }})</span>
+          </span>
+          <select hlmSelect
+                  class="min-h-[44px] min-w-[160px]"
+                  [ngModel]="categorySelections()[m.source.name + '::' + m.source.type]"
+                  (ngModelChange)="setCategoryMapping(m.source.name + '::' + m.source.type, $event)">
+            <option value="">— wählen —</option>
+            @for (cat of analyzeResult().availableCategories; track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  }
+
+  @if (unresolvedProjects().length > 0) {
+    <div class="flex flex-col gap-2">
+      <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Projekte zuordnen</p>
+      @for (m of unresolvedProjects(); track m.source.name) {
+        <div class="flex items-center gap-3">
+          <span class="flex-1 truncate text-sm">{{ m.source.name }}</span>
+          <select hlmSelect
+                  class="min-h-[44px] min-w-[160px]"
+                  [ngModel]="projectSelections()[m.source.name]"
+                  (ngModelChange)="setProjectMapping(m.source.name, $event)">
+            <option value="">— wählen —</option>
+            @for (proj of analyzeResult().availableProjects; track proj.id) {
+              <option [value]="proj.id">{{ proj.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="flex justify-end gap-2 pt-2">
+    <button type="button" hlmBtn variant="ghost" (click)="dialog.close()">Abbruch</button>
+    <button type="button" hlmBtn [disabled]="!canConfirm() || saving()" (click)="confirm()">
+      @if (saving()) { <hlm-spinner [size]="14" class="mr-1" /> }
+      Importieren
+    </button>
+  </div>
+</div>

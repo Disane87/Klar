@@ -1,0 +1,43 @@
+<div class="dialog-body">
+  <div class="flex flex-col gap-2">
+    <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Inhalte</p>
+
+    <label class="flex min-h-[44px] cursor-pointer items-center gap-2">
+      <hlm-checkbox
+        [checked]="includeTransactions()"
+        (checkedChange)="includeTransactions.set($event === true)" />
+      <span class="text-sm">Buchungen</span>
+    </label>
+
+    <label class="flex min-h-[44px] cursor-pointer items-center gap-2">
+      <hlm-checkbox
+        [checked]="includeRecurring()"
+        (checkedChange)="includeRecurring.set($event === true)" />
+      <span class="text-sm">Fixkosten</span>
+    </label>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Zeitraum (optional)</p>
+    <div class="flex flex-wrap gap-3">
+      <div class="flex flex-col gap-1">
+        <label hlmLabel for="export-start">Von</label>
+        <input hlmInput id="export-start" type="date" class="min-h-[44px] text-base"
+               [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label hlmLabel for="export-end">Bis</label>
+        <input hlmInput id="export-end" type="date" class="min-h-[44px] text-base"
+               [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" />
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" hlmBtn [disabled]="exporting()" (click)="export()">
+      @if (exporting()) { <hlm-spinner [size]="12" class="mr-1" /> }
+      Exportieren
+    </button>
+    <button type="button" hlmBtn variant="ghost" (click)="dialog.close()">Abbrechen</button>
+  </div>
+</div>

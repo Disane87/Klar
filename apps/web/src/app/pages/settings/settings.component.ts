@@ -7,6 +7,9 @@ import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
+import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
+import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import {
@@ -22,6 +25,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ChangePasswordDialogComponent } from './change-password-dialog.component';
 import { DeleteAccountDialogComponent } from './delete-account-dialog.component';
 import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
+import { DataExportComponent } from './data-export.component';
+import { DataImportComponent } from './data-import.component';
 
 @Component({
   selector: 'app-settings',
@@ -37,6 +42,11 @@ import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,
+    DataExportComponent,
+    DataImportComponent,
+    HlmToggleGroupDirective,
+    HlmToggleGroupItemDirective,
+    KlarIconComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -56,6 +66,12 @@ export class SettingsPageComponent {
 
   readonly currentSessions = computed(() => this.store.sessions().filter(s => s.isCurrent));
   readonly otherSessions   = computed(() => this.store.sessions().filter(s => !s.isCurrent));
+
+  readonly themeOptions: { value: Theme; label: string }[] = [
+    { value: 'light',  label: 'Hell' },
+    { value: 'dark',   label: 'Dunkel' },
+    { value: 'system', label: 'System' },
+  ];
 
   constructor() {
     inject(PageHeaderService).set({ title: 'Einstellungen', subtitle: 'PROFIL & APP' });
@@ -146,6 +162,14 @@ export class SettingsPageComponent {
 
   openTotpSetup(): void {
     this.dialog.open({ title: '2FA einrichten', component: TotpSetupDialogComponent, width: 'sm' });
+  }
+
+  openExport(): void {
+    this.dialog.open({ title: 'Daten exportieren', component: DataExportComponent, width: 'sm' });
+  }
+
+  openImport(): void {
+    this.dialog.open({ title: 'Daten importieren', component: DataImportComponent, width: 'sm' });
   }
 
   formatDate(isoString?: string): string {

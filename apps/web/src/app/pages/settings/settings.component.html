@@ -77,24 +77,17 @@
 
     <!-- ── DARSTELLUNG ────────────────────────────────────── -->
     <klar-list-group label="Darstellung">
-      <klar-list-item icon="sun"
-                      label="Hell"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'light' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('light')" />
-      <klar-list-item icon="moon"
-                      label="Dunkel"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'dark' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('dark')" />
-      <klar-list-item icon="monitor"
-                      label="System"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'system' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('system')" />
+      <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
+        <klar-icon name="sun" [size]="16" class="shrink-0 text-(--text-muted)" />
+        <span class="flex-1 min-w-0 text-[13px] font-medium">Farbschema</span>
+        <div hlmToggleGroup type="single"
+             [value]="themeService.theme()"
+             (valueChange)="setTheme($event)">
+          @for (opt of themeOptions; track opt.value) {
+            <button type="button" hlmToggleGroupItem [value]="opt.value" class="min-h-8 px-2.5">{{ opt.label }}</button>
+          }
+        </div>
+      </div>
       <klar-list-item icon="languages"
                       label="Sprache"
                       value="Deutsch" />
@@ -138,6 +131,20 @@
                         [trailingActionDanger]="true"
                         (trailingActionClick)="revokeSession(session.id)" />
       }
+    </klar-list-group>
+
+    <!-- ── IMPORT / EXPORT ────────────────────────────────── -->
+    <klar-list-group label="Import / Export">
+      <klar-list-item icon="download"
+                      label="Exportieren"
+                      sublabel="Buchungen und Fixkosten als JSON herunterladen"
+                      [navigable]="true"
+                      (itemClick)="openExport()" />
+      <klar-list-item icon="upload"
+                      label="Importieren"
+                      sublabel="Klar-Export-Datei (.json) importieren"
+                      [navigable]="true"
+                      (itemClick)="openImport()" />
     </klar-list-group>
 
     <!-- ── APP-INFOS ──────────────────────────────────────── -->

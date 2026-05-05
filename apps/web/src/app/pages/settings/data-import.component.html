@@ -1,0 +1,19 @@
+<div class="flex flex-col gap-4">
+  <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Daten importieren</p>
+
+  @if (fileError()) {
+    <klar-error-bar [message]="fileError()" />
+  }
+
+  <input #fileInput type="file" accept=".json" class="sr-only" (change)="onFileSelected($event)" />
+
+  <button type="button" hlmBtn variant="outline" class="min-h-[44px] self-start"
+          [disabled]="analyzing()" (click)="fileInput.click()">
+    @if (analyzing()) { <hlm-spinner [size]="14" class="mr-1" /> }
+    JSON-Datei wählen
+  </button>
+
+  <p class="text-xs text-muted-foreground">
+    Klar-Export-Datei (.json). Kategorien und Projekte werden automatisch zugeordnet.
+  </p>
+</div>
