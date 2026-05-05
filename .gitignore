@@ -39,6 +39,10 @@ agentdb.rvf
 agentdb.rvf.lock
 .swarm/
 .claude-flow/
+
+# Claude local config & lock files
+.claude/ruflo.config.json
+.claude/scheduled_tasks.lock
 .playwright*/
 screen-*
 
@@ -56,3 +60,11 @@ fixkosten-*.png
 !apps/web/src/icons/*.png
 .gstack/
 .superpowers
+
+# Build artifacts (TypeScript compiled output in scripts/)
+apps/api/scripts/*.js
+apps/api/scripts/*.js.map
+apps/api/scripts/*.d.ts
+apps/api/vitest.config.js
+apps/api/vitest.config.js.map
+apps/api/vitest.config.d.ts
