@@ -19,6 +19,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err: unknown) => {
       if (!(err instanceof HttpErrorResponse)) return throwError(() => err);
 
+      // Skip toast for external requests (e.g. GitHub API) — handle silently
+      if (req.url.startsWith('http')) return throwError(() => err);
+
       // 401 is handled by refreshInterceptor; 422 is handled by forms
       if (err.status === 401 || err.status === 422) return throwError(() => err);
 

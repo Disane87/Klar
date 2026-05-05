@@ -24,10 +24,12 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((err: unknown) => {
+      const isExternal = req.url.startsWith('http');
       if (
         !(err instanceof HttpErrorResponse) ||
         err.status !== 401 ||
-        req.url.includes('/auth/refresh')
+        req.url.includes('/auth/refresh') ||
+        isExternal
       ) {
         return throwError(() => err);
       }
