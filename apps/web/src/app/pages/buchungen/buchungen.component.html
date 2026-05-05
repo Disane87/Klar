@@ -88,8 +88,11 @@
           </div>
 
           <span class="tx-info">
-            <span class="tx-desc">{{ tx.description }}</span>
+            <span class="tx-desc" [class.tx-desc-planned]="tx.isPlanned">{{ tx.description }}</span>
             <span class="tx-badges">
+              @if (tx.isPlanned) {
+                <span class="tx-badge tx-badge-planned">GEPLANT</span>
+              }
               @if (tx.visibility === 'PRIVATE') {
                 <span class="tx-badge tx-badge-private">PRIVAT</span>
               }

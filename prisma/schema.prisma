@@ -340,6 +340,11 @@ model Transaction {
   createdByUserId        String?    // nullable (Account-Delete)
   // positiv = Einnahme (INCOME), negativ = Ausgabe (EXPENSE)
   amountCents            Int
+  // Wenn die Buchung geplant war und realisiert wurde, hält dieses Feld den
+  // ursprünglich geplanten Betrag — Differenz zu amountCents = Abweichung.
+  plannedAmountCents     Int?
+  // true = nur geplant (zählt nicht in realisierte Cashflow-/Projekt-Summen)
+  isPlanned              Boolean    @default(false)
   categoryId             String
   projectId              String?
   date                   DateTime   @db.Date
@@ -360,6 +365,7 @@ model Transaction {
   @@index([householdId, categoryId])
   @@index([householdId, projectId])
   @@index([householdId, visibility])
+  @@index([householdId, isPlanned])
   @@index([createdByUserId])
   @@index([recurringTransactionId])
 }

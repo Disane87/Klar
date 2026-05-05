@@ -63,6 +63,12 @@ export interface ProjectOverviewItem {
   spentCents: number;
   incomeCents: number;
   balanceCents: number;
+  /** Sum of planned-only entries (still anticipated, not yet realized). */
+  plannedSpentCents: number;
+  plannedIncomeCents: number;
+  /** Sum of (amountCents - plannedAmountCents) over realized entries that
+   *  archive a previous plan — total deviation across the project. */
+  deviationCents: number;
   transactionCount: number;
 }
 
@@ -217,11 +223,13 @@ export class OverviewService {
       orderBy: [{ createdAt: 'asc' }],
     });
 
-    // Load transactions in the month
+    // Load transactions in the month — planned entries don't represent actual
+    // cashflow, so they're excluded from the monthly cashflow calculation.
     const txs = await this.prisma.transaction.findMany({
       where: {
         householdId: ctx.householdId,
         date: { gte: firstDay, lte: lastDay },
+        isPlanned: false,
       },
       orderBy: [{ date: 'asc' }],
     });
@@ -284,66 +292,68 @@ export class OverviewService {
 
     const projectIds = projects.map((p) => p.id);
 
-    // Fetch transaction counts, income totals and expense totals in parallel
-    const [countAggs, incomeAggs, expenseAggs] = await Promise.all([
-      this.prisma.transaction.groupBy({
-        by: ['projectId'],
-        where: { householdId: ctx.householdId, projectId: { in: projectIds } },
-        _count: { id: true },
-      }),
-      this.prisma.transaction.groupBy({
-        by: ['projectId'],
-        where: {
-          householdId: ctx.householdId,
-          projectId: { in: projectIds },
-          amountCents: { gt: 0 },
-        },
-        _sum: { amountCents: true },
-      }),
-      this.prisma.transaction.groupBy({
-        by: ['projectId'],
-        where: {
-          householdId: ctx.householdId,
-          projectId: { in: projectIds },
-          amountCents: { lt: 0 },
-        },
-        _sum: { amountCents: true },
-      }),
-    ]);
+    // Load all transactions for these projects (small set; cheaper to aggregate
+    // in JS than to issue 5 separate groupBy queries split by sign + isPlanned).
+    const txs = await this.prisma.transaction.findMany({
+      where: { householdId: ctx.householdId, projectId: { in: projectIds } },
+      select: {
+        projectId: true,
+        amountCents: true,
+        plannedAmountCents: true,
+        isPlanned: true,
+      },
+    });
 
-    const countMap = new Map<string, number>();
-    for (const row of countAggs) {
-      if (row.projectId !== null) countMap.set(row.projectId, row._count.id);
-    }
+    type Agg = {
+      count: number;
+      realizedIncome: number;
+      realizedSpent: number;
+      plannedIncome: number;
+      plannedSpent: number;
+      deviation: number;
+    };
+    const aggMap = new Map<string, Agg>();
+    const blank = (): Agg => ({
+      count: 0,
+      realizedIncome: 0,
+      realizedSpent: 0,
+      plannedIncome: 0,
+      plannedSpent: 0,
+      deviation: 0,
+    });
 
-    const incomeMap = new Map<string, number>();
-    for (const row of incomeAggs) {
-      if (row.projectId !== null) {
-        incomeMap.set(row.projectId, row._sum.amountCents ?? 0);
+    for (const tx of txs) {
+      if (!tx.projectId) continue;
+      const a = aggMap.get(tx.projectId) ?? blank();
+      a.count += 1;
+      if (tx.isPlanned) {
+        if (tx.amountCents > 0) a.plannedIncome += tx.amountCents;
+        else                    a.plannedSpent  += Math.abs(tx.amountCents);
+      } else {
+        if (tx.amountCents > 0) a.realizedIncome += tx.amountCents;
+        else                    a.realizedSpent  += Math.abs(tx.amountCents);
+        if (tx.plannedAmountCents !== null) {
+          a.deviation += tx.amountCents - tx.plannedAmountCents;
+        }
       }
-    }
-
-    const expenseMap = new Map<string, number>();
-    for (const row of expenseAggs) {
-      if (row.projectId !== null) {
-        // Store as positive number (expenses are negative in DB)
-        expenseMap.set(row.projectId, Math.abs(row._sum.amountCents ?? 0));
-      }
+      aggMap.set(tx.projectId, a);
     }
 
     const result: ProjectOverviewItem[] = projects.map((p: Project) => {
-      const incomeCents = incomeMap.get(p.id) ?? 0;
-      const spentCents = expenseMap.get(p.id) ?? 0;
+      const a = aggMap.get(p.id) ?? blank();
       return {
         id: p.id,
         name: p.name,
         color: p.color,
         status: p.status,
         totalBudgetCents: p.totalBudgetCents,
-        spentCents,
-        incomeCents,
-        balanceCents: incomeCents - spentCents,
-        transactionCount: countMap.get(p.id) ?? 0,
+        spentCents:        a.realizedSpent,
+        incomeCents:       a.realizedIncome,
+        balanceCents:      a.realizedIncome - a.realizedSpent,
+        plannedSpentCents: a.plannedSpent,
+        plannedIncomeCents: a.plannedIncome,
+        deviationCents:    a.deviation,
+        transactionCount:  a.count,
       };
     });
 

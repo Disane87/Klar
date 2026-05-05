@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
@@ -6,7 +6,7 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { HouseholdStore } from '../../core/household/household.store';
-import { ProjectsService, type ProjectStatus } from '../../core/projects/projects.service';
+import { ProjectsService, type ProjectStatus, type ProjectResponse } from '../../core/projects/projects.service';
 import { ProjekteStore } from '../../core/overview/projekte.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 
@@ -87,7 +87,7 @@ const DEFAULT_COLOR = '#6366f1';
         <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
         <klar-button tone="primary" size="sm"
                      [disabled]="!isValid()" [loading]="saving()" (click)="save()">
-          Erstellen
+          {{ item() ? 'Speichern' : 'Erstellen' }}
         </klar-button>
       </div>
     </div>
@@ -100,6 +100,8 @@ export class ProjectCreateDialogComponent {
   private store     = inject(ProjekteStore);
   private toast     = inject(KlarToastService);
 
+  readonly item = input<ProjectResponse | null>(null);
+
   readonly name        = signal('');
   readonly description = signal('');
   readonly budget      = signal('');
@@ -109,6 +111,7 @@ export class ProjectCreateDialogComponent {
   readonly color       = signal<string | null>(DEFAULT_COLOR);
   readonly saving      = signal(false);
   readonly err         = signal('');
+  private initialized  = false;
 
   readonly statusOptions: { value: ProjectStatus; label: string }[] = [
     { value: 'ACTIVE',    label: 'Aktiv' },
@@ -118,28 +121,50 @@ export class ProjectCreateDialogComponent {
 
   readonly isValid = computed(() => this.name().trim().length > 0);
 
+  ngOnInit(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+    const it = this.item();
+    if (!it) return;
+    this.name.set(it.name);
+    this.description.set(it.description ?? '');
+    this.budget.set(it.totalBudgetCents != null ? (it.totalBudgetCents / 100).toFixed(2).replace('.', ',') : '');
+    this.startDate.set(it.startDate ?? '');
+    this.endDate.set(it.endDate ?? '');
+    this.status.set(it.status);
+    this.color.set(it.color);
+  }
+
   async save(): Promise<void> {
     if (!this.isValid() || this.saving()) return;
     const hid = this.household.activeId();
     if (!hid) return;
 
+    const body = {
+      name:             this.name().trim(),
+      color:            this.color() ?? DEFAULT_COLOR,
+      description:      this.description().trim() || null,
+      status:           this.status(),
+      totalBudgetCents: this.parseBudget(this.budget()),
+      startDate:        this.startDate() || null,
+      endDate:          this.endDate() || null,
+    };
+
     this.saving.set(true);
     this.err.set('');
     try {
-      await this.projects.create(hid, {
-        name:             this.name().trim(),
-        color:            this.color() ?? DEFAULT_COLOR,
-        description:      this.description().trim() || null,
-        status:           this.status(),
-        totalBudgetCents: this.parseBudget(this.budget()),
-        startDate:        this.startDate() || null,
-        endDate:          this.endDate() || null,
-      });
+      const existing = this.item();
+      if (existing) {
+        await this.projects.patch(hid, existing.id, body);
+        this.toast.success('Projekt aktualisiert');
+      } else {
+        await this.projects.create(hid, body);
+        this.toast.success('Projekt erstellt');
+      }
       this.store.reload();
       this.dialog.close();
-      this.toast.success('Projekt erstellt');
     } catch {
-      this.err.set('Erstellen fehlgeschlagen. Bitte erneut versuchen.');
+      this.err.set('Speichern fehlgeschlagen. Bitte erneut versuchen.');
     } finally {
       this.saving.set(false);
     }

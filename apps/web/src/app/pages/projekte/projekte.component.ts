@@ -3,7 +3,6 @@ import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { ProjekteStore } from '../../core/overview/projekte.store';
-import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
@@ -23,7 +22,6 @@ import type { ProjectOverviewItem } from '../../core/overview/overview.service';
 })
 export class ProjektePageComponent {
   protected store = inject(ProjekteStore);
-  private txStore  = inject(TransactionsStore);
   private router   = inject(Router);
   private dialogService = inject(KlarDialogService);
 
@@ -47,8 +45,7 @@ export class ProjektePageComponent {
   }
 
   openProject(project: ProjectOverviewItem): void {
-    this.txStore.projectFilter.set(project.id);
-    void this.router.navigate(['/app/buchungen']);
+    void this.router.navigate(['/app/projekte', project.id]);
   }
 
   progressPercent(item: ProjectOverviewItem): number {

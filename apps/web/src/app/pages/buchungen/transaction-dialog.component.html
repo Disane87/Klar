@@ -9,11 +9,26 @@
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="td-amount">Betrag (€, negativ = Ausgabe)</label>
+    <label hlmLabel for="td-amount">
+      {{ isPlanned() ? 'Geplanter Betrag' : 'Betrag' }} (€, negativ = Ausgabe)
+    </label>
     <input id="td-amount" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="-50,00"
            [value]="amount()"
            (input)="amount.set($any($event.target).value)" />
+
+    @if (realizingNow() && tx() && deviationCents() !== null) {
+      <span class="text-[11px] text-(--text-muted) font-mono tabular-nums">
+        Plan: {{ centsToDisplay(tx()!.amountCents) }} €
+        @if (deviationCents() !== 0) {
+          · Abweichung
+          <span [class.text-(--color-expense)]="(deviationCents() ?? 0) < 0"
+                [class.text-(--color-income)]="(deviationCents() ?? 0) > 0">
+            {{ (deviationCents() ?? 0) > 0 ? '+' : '' }}{{ centsToDisplay(deviationCents() ?? 0) }} €
+          </span>
+        }
+      </span>
+    }
   </div>
 
   <div class="flex flex-col gap-1.5">
@@ -41,6 +56,20 @@
       <option value="SHARED" [selected]="visibility() === 'SHARED'">Geteilt</option>
       <option value="PRIVATE" [selected]="visibility() === 'PRIVATE'">Privat</option>
     </select>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label hlmLabel for="td-status">Status</label>
+    <select id="td-status" hlmSelect
+            (change)="isPlanned.set($any($event.target).value === 'true')">
+      <option value="false" [selected]="!isPlanned()">Realisiert</option>
+      <option value="true"  [selected]="isPlanned()">Geplant</option>
+    </select>
+    @if (realizingNow()) {
+      <span class="text-[11px] text-(--text-muted)">
+        Wird realisiert — Plan wird archiviert.
+      </span>
+    }
   </div>
 
   @if (err()) {

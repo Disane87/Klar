@@ -34,8 +34,10 @@ export class TransactionsController {
     @Query('categoryId') categoryId?: string,
     @Query('projectId') projectId?: string,
     @Query('month') month?: string,
+    @Query('isPlanned') isPlanned?: string,
   ) {
-    const items = await this.service.list(ctx, { categoryId, projectId, month });
+    const planned = isPlanned === undefined ? undefined : isPlanned === 'true';
+    const items = await this.service.list(ctx, { categoryId, projectId, month, isPlanned: planned });
     return items.map(tx => this.service.toResponse(tx));
   }
 

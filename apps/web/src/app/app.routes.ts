@@ -80,6 +80,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'projekte/:id',
+        loadComponent: () =>
+          import('./pages/projekte/project-detail.component').then(
+            m => m.ProjectDetailPageComponent,
+          ),
+      },
+      {
         path: 'buchungen',
         loadComponent: () =>
           import('./pages/buchungen/buchungen.component').then(

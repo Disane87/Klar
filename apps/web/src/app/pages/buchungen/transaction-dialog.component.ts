@@ -21,6 +21,10 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 })
 export class TransactionDialogComponent {
   tx = input<Transaction | null>(null);
+  /** Pre-filled project id for create mode (used by project detail page). */
+  presetProjectId = input<string | null>(null);
+  /** When true, the new transaction is created as a planned entry (default false). */
+  presetPlanned = input<boolean>(false);
 
   private dialog    = inject(KlarDialogService);
   private household = inject(HouseholdStore);
@@ -35,10 +39,27 @@ export class TransactionDialogComponent {
   readonly date        = signal('');   // YYYY-MM-DD
   readonly categoryId  = signal('');
   readonly visibility  = signal<'SHARED' | 'PRIVATE'>('SHARED');
+  readonly isPlanned   = signal(false);
+  readonly projectId   = signal<string | null>(null);
   readonly saving      = signal(false);
   readonly err         = signal('');
 
   readonly isEditMode = computed(() => this.tx() !== null);
+
+  /** When editing a planned tx and the user toggles to realized, we show the
+   *  archived plan + abweichung hint. */
+  readonly realizingNow = computed(() => {
+    const t = this.tx();
+    return !!t && t.isPlanned && !this.isPlanned();
+  });
+
+  readonly deviationCents = computed(() => {
+    const t = this.tx();
+    if (!t || !this.realizingNow()) return null;
+    const newAmount = this.parseCents(this.amount());
+    if (isNaN(newAmount)) return null;
+    return newAmount - t.amountCents;
+  });
 
   constructor() {
     effect(() => {
@@ -49,12 +70,16 @@ export class TransactionDialogComponent {
         this.date.set(t.date);
         this.categoryId.set(t.categoryId ?? '');
         this.visibility.set(t.visibility);
+        this.isPlanned.set(t.isPlanned);
+        this.projectId.set(t.projectId ?? null);
       } else {
         this.description.set('');
         this.amount.set('');
         this.date.set(new Date().toISOString().slice(0, 10));
         this.categoryId.set('');
         this.visibility.set('SHARED');
+        this.isPlanned.set(this.presetPlanned());
+        this.projectId.set(this.presetProjectId());
       }
     });
   }
@@ -78,6 +103,8 @@ export class TransactionDialogComponent {
       date:        this.date(),
       categoryId:  this.categoryId(),
       visibility:  this.visibility(),
+      isPlanned:   this.isPlanned(),
+      projectId:   this.projectId(),
     };
 
     this.saving.set(true);
@@ -121,7 +148,7 @@ export class TransactionDialogComponent {
 
   cancel(): void { this.dialog.close(); }
 
-  private centsToDisplay(cents: number): string {
+  protected centsToDisplay(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',');
   }
 

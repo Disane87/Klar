@@ -258,11 +258,13 @@ describe('OverviewService', () => {
       const project = makeProject();
       vi.mocked(prisma.project.findMany).mockResolvedValue([project] as never);
 
-      // groupBy mocks: count, income sum, expense sum
-      vi.mocked(prisma.transaction.groupBy)
-        .mockResolvedValueOnce([{ projectId: 'proj-1', _count: { id: 3 } }] as never)
-        .mockResolvedValueOnce([{ projectId: 'proj-1', _sum: { amountCents: 10000 } }] as never)
-        .mockResolvedValueOnce([{ projectId: 'proj-1', _sum: { amountCents: -4000 } }] as never);
+      // Realized: 1× +10000 income, 1× -4000 expense (with archived plan -3000 → +1000 deviation)
+      // Planned:  1× -2000 expense
+      vi.mocked(prisma.transaction.findMany).mockResolvedValue([
+        { projectId: 'proj-1', amountCents: 10000, plannedAmountCents: null,  isPlanned: false },
+        { projectId: 'proj-1', amountCents: -4000, plannedAmountCents: -3000, isPlanned: false },
+        { projectId: 'proj-1', amountCents: -2000, plannedAmountCents: null,  isPlanned: true  },
+      ] as never);
 
       const result = await service.getProjects(ctx);
 
@@ -274,6 +276,9 @@ describe('OverviewService', () => {
       expect(item.incomeCents).toBe(10000);
       expect(item.spentCents).toBe(4000);
       expect(item.balanceCents).toBe(6000);
+      expect(item.plannedSpentCents).toBe(2000);
+      expect(item.plannedIncomeCents).toBe(0);
+      expect(item.deviationCents).toBe(-1000);
       expect(item.totalBudgetCents).toBe(200000);
     });
 

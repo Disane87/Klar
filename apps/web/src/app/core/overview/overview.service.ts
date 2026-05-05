@@ -56,6 +56,11 @@ export interface ProjectOverviewItem {
   spentCents: number;
   incomeCents: number;
   balanceCents: number;
+  plannedSpentCents: number;
+  plannedIncomeCents: number;
+  /** Sum of (amountCents - plannedAmountCents) over realized entries that
+   *  archive a previous plan. Negative = mehr ausgegeben, positiv = gespart. */
+  deviationCents: number;
   transactionCount: number;
 }
 

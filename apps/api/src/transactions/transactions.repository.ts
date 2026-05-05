@@ -6,6 +6,8 @@ export interface CreateTransactionData {
   householdId: string;
   createdByUserId: string;
   amountCents: number;
+  plannedAmountCents?: number | null;
+  isPlanned?: boolean;
   categoryId: string;
   projectId?: string | null;
   date: Date;
@@ -16,6 +18,8 @@ export interface CreateTransactionData {
 
 export interface UpdateTransactionData {
   amountCents?: number;
+  plannedAmountCents?: number | null;
+  isPlanned?: boolean;
   categoryId?: string;
   projectId?: string | null;
   date?: Date;
@@ -29,6 +33,7 @@ export interface FindAllOpts {
   projectId?: string;
   month?: string; // 'YYYY-MM'
   userId?: string;
+  isPlanned?: boolean;
 }
 
 @Injectable()
@@ -61,6 +66,7 @@ export class TransactionsRepository {
         ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
         ...(opts.projectId ? { projectId: opts.projectId } : {}),
         ...(opts.month ? { date: dateFilter } : {}),
+        ...(opts.isPlanned !== undefined ? { isPlanned: opts.isPlanned } : {}),
         ...visibilityFilter,
       },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],

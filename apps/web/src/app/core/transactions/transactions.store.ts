@@ -10,6 +10,8 @@ export interface Transaction {
   categoryId: string | null;
   projectId: string | null;
   amountCents: number;
+  plannedAmountCents: number | null;
+  isPlanned: boolean;
   description: string;
   date: string; // YYYY-MM-DD
   visibility: 'SHARED' | 'PRIVATE';
@@ -66,13 +68,13 @@ export class TransactionsStore {
 
   readonly totalIncomeCents = computed(() =>
     (this.items() ?? [])
-      .filter(t => t.amountCents > 0)
+      .filter(t => !t.isPlanned && t.amountCents > 0)
       .reduce((s, t) => s + t.amountCents, 0),
   );
 
   readonly totalExpenseCents = computed(() =>
     (this.items() ?? [])
-      .filter(t => t.amountCents < 0)
+      .filter(t => !t.isPlanned && t.amountCents < 0)
       .reduce((s, t) => s + t.amountCents, 0),
   );
 

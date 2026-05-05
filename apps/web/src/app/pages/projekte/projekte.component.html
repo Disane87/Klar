@@ -96,9 +96,18 @@
             </div>
           </div>
 
-          <!-- Transaction count -->
+          <!-- Transaction count + planned/deviation hints -->
           <div class="tx-count">
             {{ item.transactionCount }}&nbsp;{{ item.transactionCount === 1 ? 'Buchung' : 'Buchungen' }}
+            @if (item.plannedSpentCents > 0 || item.plannedIncomeCents > 0) {
+              · <span class="text-(--color-accent)">{{ item.plannedSpentCents | klarMoney }} geplant</span>
+            }
+            @if (item.deviationCents !== 0) {
+              · <span [class.text-(--color-income)]="item.deviationCents > 0"
+                      [class.text-(--color-expense)]="item.deviationCents < 0">
+                Abw. {{ item.deviationCents > 0 ? '+' : '' }}{{ item.deviationCents | klarMoney }}
+              </span>
+            }
           </div>
 
         </div>

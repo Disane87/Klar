@@ -17,6 +17,8 @@ export { Visibility };
 
 export interface CreateTransactionInput {
   amountCents: number;
+  plannedAmountCents?: number | null;
+  isPlanned?: boolean;
   categoryId: string;
   projectId?: string | null;
   date: string; // ISO YYYY-MM-DD
@@ -31,6 +33,7 @@ export interface ListOpts {
   categoryId?: string;
   projectId?: string;
   month?: string; // 'YYYY-MM'
+  isPlanned?: boolean;
 }
 
 function parsePlainDate(iso: string): Date {
@@ -59,6 +62,8 @@ export class TransactionsService {
       householdId: ctx.householdId,
       createdByUserId: ctx.userId,
       amountCents: input.amountCents,
+      plannedAmountCents: input.plannedAmountCents ?? null,
+      isPlanned: input.isPlanned ?? false,
       categoryId: input.categoryId,
       projectId: input.projectId ?? null,
       date: parsePlainDate(input.date),
@@ -89,6 +94,21 @@ export class TransactionsService {
     if (input.recurringTransactionId !== undefined) {
       data.recurringTransactionId = input.recurringTransactionId;
     }
+    if (input.plannedAmountCents !== undefined) {
+      data.plannedAmountCents = input.plannedAmountCents;
+    }
+
+    // Auto-archive on planned -> realized transition: preserve the original
+    // planned amount so the deviation (current amountCents - plannedAmountCents)
+    // is visible in the UI. Client may override by passing plannedAmountCents.
+    if (input.isPlanned !== undefined) {
+      data.isPlanned = input.isPlanned;
+      const wasPlanned = existing.isPlanned;
+      const becomesRealized = wasPlanned && !input.isPlanned;
+      if (becomesRealized && input.plannedAmountCents === undefined) {
+        data.plannedAmountCents = existing.amountCents;
+      }
+    }
 
     return this.repo.update(existing.id, data);
   }
@@ -104,6 +124,8 @@ export class TransactionsService {
       householdId: tx.householdId,
       createdByUserId: tx.createdByUserId,
       amountCents: tx.amountCents,
+      plannedAmountCents: tx.plannedAmountCents,
+      isPlanned: tx.isPlanned,
       categoryId: tx.categoryId,
       projectId: tx.projectId,
       date: tx.date.toISOString().slice(0, 10),

@@ -38,6 +38,17 @@ export interface ProjectResponse {
 export class ProjectsService {
   private http = inject(HttpClient);
 
+  list(householdId: string, status?: string): Promise<ProjectResponse[]> {
+    const params: Record<string, string> = {};
+    if (status) params['status'] = status;
+    return firstValueFrom(
+      this.http.get<ProjectResponse[]>(
+        `/api/v1/households/${householdId}/projects`,
+        { params },
+      ),
+    );
+  }
+
   create(householdId: string, body: CreateProjectRequest): Promise<ProjectResponse> {
     return firstValueFrom(
       this.http.post<ProjectResponse>(

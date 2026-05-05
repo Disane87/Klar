@@ -1,0 +1,214 @@
+<div class="page">
+
+  <!-- Back bar -->
+  <div class="back-bar">
+    <button type="button" class="back-btn" (click)="back()" aria-label="Zurück zu Projekten">
+      <klar-icon name="chevron-left" [size]="16" />
+      <span>Projekte</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="hero">
+      <klar-skeleton height="22px" width="60%" />
+      <klar-skeleton height="14px" width="35%" />
+      <klar-skeleton height="6px" width="100%" />
+    </div>
+    <div class="stat-strip">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="stat">
+          <klar-skeleton height="10px" width="60px" />
+          <klar-skeleton height="20px" width="80%" />
+        </div>
+      }
+    </div>
+  }
+
+  @else if (error()) {
+    <klar-error-bar message="Fehler beim Laden des Projekts." (retry)="projectResource.reload()" />
+  }
+
+  @else if (notFound()) {
+    <klar-empty-state message="Projekt nicht gefunden" ctaLabel="Zurück zur Übersicht" (ctaClick)="back()" />
+  }
+
+  @else if (project(); as p) {
+
+    <!-- Hero -->
+    <div class="hero" [style.--project-color]="p.color">
+      <div class="hero-top">
+        <div class="hero-name-wrap">
+          <span class="hero-color-dot"></span>
+          <h1 class="hero-name">{{ p.name }}</h1>
+        </div>
+        <span class="status-badge"
+              [class.badge-active]="p.status === 'ACTIVE'"
+              [class.badge-completed]="p.status === 'COMPLETED'"
+              [class.badge-archived]="p.status === 'ARCHIVED'">
+          {{ statusLabel(p.status) }}
+        </span>
+      </div>
+
+      @if (p.description) {
+        <p class="hero-desc">{{ p.description }}</p>
+      }
+
+      @if (formatRange()) {
+        <p class="hero-range">{{ formatRange() }}</p>
+      }
+
+      @if (stats(); as s) {
+        @if (s.totalBudgetCents !== null) {
+          <div class="progress-wrap">
+            <div class="progress-bar-track">
+              <!-- planned segment (muted, behind) -->
+              <div class="progress-bar-planned" [style.width.%]="plannedProgressPercent()"></div>
+              <!-- realized segment (full color, on top) -->
+              <div class="progress-bar-fill" [style.width.%]="progressPercent()"></div>
+            </div>
+            <span class="progress-label">
+              {{ progressPercent() }}&nbsp;% realisiert
+              @if (plannedProgressPercent() > progressPercent()) {
+                · {{ plannedProgressPercent() }}&nbsp;% inkl. geplant
+              }
+              · von {{ s.totalBudgetCents | klarMoney }}
+            </span>
+          </div>
+        }
+      }
+
+      <div class="hero-actions">
+        <klar-button tone="primary" size="sm" (click)="openCreateTransaction(false)">
+          + Buchung
+        </klar-button>
+        <klar-button tone="ghost" size="sm" (click)="openCreateTransaction(true)">
+          + Geplant
+        </klar-button>
+        <klar-button tone="ghost" size="sm" (click)="openEdit()">Bearbeiten</klar-button>
+        @if (p.status !== 'ARCHIVED') {
+          <klar-button tone="ghost" size="sm" [disabled]="deleting()" (click)="archive()">Archivieren</klar-button>
+        }
+        <klar-button tone="danger" size="sm" [disabled]="deleting()" (click)="remove()">Löschen</klar-button>
+      </div>
+    </div>
+
+    <!-- Stat strip -->
+    @if (stats(); as s) {
+      <div class="stat-strip">
+        <div class="stat">
+          <span class="stat-label">BUDGET</span>
+          <span class="stat-value font-mono tabular-nums">
+            {{ s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—' }}
+          </span>
+        </div>
+        <div class="stat-rule"></div>
+        <div class="stat">
+          <span class="stat-label">GEPLANT</span>
+          <span class="stat-value font-mono tabular-nums text-muted-foreground">
+            {{ -(s.plannedSpentCents) + s.plannedIncomeCents | klarMoney }}
+          </span>
+        </div>
+        <div class="stat-rule"></div>
+        <div class="stat">
+          <span class="stat-label">AUSGABEN</span>
+          <span class="stat-value font-mono tabular-nums" [ngClass]="(-s.spentCents) | klarMoneyClass">
+            {{ -s.spentCents | klarMoney }}
+          </span>
+        </div>
+        <div class="stat-rule"></div>
+        <div class="stat">
+          <span class="stat-label">EINNAHMEN</span>
+          <span class="stat-value font-mono tabular-nums" [ngClass]="s.incomeCents | klarMoneyClass">
+            {{ s.incomeCents | klarMoney }}
+          </span>
+        </div>
+        <div class="stat-rule"></div>
+        <div class="stat">
+          <span class="stat-label">BILANZ</span>
+          <span class="stat-value font-mono tabular-nums" [ngClass]="s.balanceCents | klarMoneyClass">
+            {{ s.balanceCents | klarMoney }}
+          </span>
+          @if (s.deviationCents !== 0) {
+            <span class="stat-sub font-mono tabular-nums"
+                  [class.text-(--color-income)]="s.deviationCents > 0"
+                  [class.text-(--color-expense)]="s.deviationCents < 0">
+              Abw. {{ s.deviationCents > 0 ? '+' : '' }}{{ s.deviationCents | klarMoney }}
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Planned section -->
+    @if (plannedTx().length > 0) {
+      <div class="tx-section">
+        <div class="tx-section-header">
+          <span class="tx-section-title">Geplant</span>
+          <span class="tx-section-count">
+            {{ plannedTx().length }}&nbsp;{{ plannedTx().length === 1 ? 'Eintrag' : 'Einträge' }}
+          </span>
+        </div>
+        <div class="tx-list">
+          @for (t of plannedTx(); track t.id) {
+            <div class="tx-row tx-row-planned" (click)="openEditTransaction(t)">
+              <div class="tx-date-brand">
+                <app-brand-icon [name]="t.description ?? ''" [size]="12" />
+                <span class="tx-date">{{ formatDate(t.date) }}</span>
+              </div>
+              <span class="tx-info">
+                <span class="tx-desc">{{ t.description }}</span>
+                <span class="tx-badge tx-badge-planned">GEPLANT</span>
+              </span>
+              <span class="tx-amount font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
+                {{ t.amountCents | klarMoney }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Realized section -->
+    <div class="tx-section">
+      <div class="tx-section-header">
+        <span class="tx-section-title">Realisiert</span>
+        <span class="tx-section-count">
+          {{ realizedTx().length }}&nbsp;{{ realizedTx().length === 1 ? 'Eintrag' : 'Einträge' }}
+        </span>
+      </div>
+
+      @if (realizedTx().length === 0) {
+        <klar-empty-state message="Noch keine realisierten Buchungen für dieses Projekt" />
+      } @else {
+        <div class="tx-list">
+          @for (t of realizedTx(); track t.id) {
+            <div class="tx-row" (click)="openEditTransaction(t)">
+              <div class="tx-date-brand">
+                <app-brand-icon [name]="t.description ?? ''" [size]="12" />
+                <span class="tx-date">{{ formatDate(t.date) }}</span>
+              </div>
+              <span class="tx-info">
+                <span class="tx-desc">{{ t.description }}</span>
+                @if (deviationFor(t); as d) {
+                  <span class="tx-badge tx-badge-deviation"
+                        [class.dev-positive]="d > 0"
+                        [class.dev-negative]="d < 0"
+                        [class.dev-zero]="d === 0">
+                    Abw. {{ d > 0 ? '+' : '' }}{{ d | klarMoney }}
+                  </span>
+                }
+                @if (t.visibility === 'PRIVATE') {
+                  <span class="tx-badge tx-badge-private">PRIVAT</span>
+                }
+              </span>
+              <span class="tx-amount font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
+                {{ t.amountCents | klarMoney }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+</div>

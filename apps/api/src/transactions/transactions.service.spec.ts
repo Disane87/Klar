@@ -13,6 +13,8 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   householdId: 'hh1',
   createdByUserId: 'u1',
   amountCents: -5000,
+  plannedAmountCents: null,
+  isPlanned: false,
   categoryId: 'cat-1',
   projectId: null,
   date: new Date('2026-04-01'),

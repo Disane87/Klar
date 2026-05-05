@@ -232,6 +232,11 @@ export type Transaction = {
   householdId: string;
   createdByUserId: string | null;
   amountCents: number; // signed int: positive = income, negative = expense
+  /** Set when a planned entry was realized — preserves the original planned
+   *  amount so the deviation (amountCents - plannedAmountCents) is visible. */
+  plannedAmountCents: number | null;
+  /** true = planned only (not yet realized; excluded from cashflow). */
+  isPlanned: boolean;
   categoryId: string;
   projectId: string | null;
   date: string; // YYYY-MM-DD
@@ -244,6 +249,8 @@ export type Transaction = {
 
 export type CreateTransactionRequest = {
   amountCents: number;
+  plannedAmountCents?: number | null;
+  isPlanned?: boolean;
   categoryId: string;
   date: string; // YYYY-MM-DD
   description?: string | null;

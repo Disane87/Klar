@@ -162,6 +162,16 @@
   background: color-mix(in oklab, var(--color-variable, #a78bfa) 12%, transparent);
 }
 
+.tx-badge-planned {
+  color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 14%, transparent);
+}
+
+.tx-desc-planned {
+  color: var(--text-2);
+  font-style: italic;
+}
+
 .tx-amount {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
