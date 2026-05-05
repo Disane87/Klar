@@ -1,0 +1,15 @@
+{
+    "modelRouting": {
+        "simple": "claude-haiku-4-5",
+        "standard": "claude-sonnet-4-6",
+        "complex": "claude-opus-4-6"
+    },
+    "autoRoute": true,
+    "subagentDefaults": {
+        "tester": "claude-haiku-4-5",
+        "formatter": "claude-haiku-4-5",
+        "simple-coder": "claude-haiku-4-5",
+        "standard-coder": "claude-sonnet-4-6",
+        "architect": "claude-opus-4-6"
+    }
+}
