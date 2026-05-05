@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BrnPopoverImports } from '@spartan-ng/brain/popover';
 import { KlarIconComponent } from '../icons/klar-icon.component';
+import { KlarAvatarComponent } from './klar-avatar.component';
 import { AuthStore } from '../../core/auth/auth.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -10,25 +11,19 @@ import { HouseholdStore } from '../../core/household/household.store';
 @Component({
   selector: 'klar-header-user',
   standalone: true,
-  imports: [BrnPopoverImports, RouterLink, KlarIconComponent],
+  imports: [BrnPopoverImports, RouterLink, KlarIconComponent, KlarAvatarComponent],
   template: `
     <brn-popover align="end" [sideOffset]="8">
 
-      <!-- Trigger: 32px flat-initials or photo -->
+      <!-- Trigger: 32px avatar -->
       <button brnPopoverTrigger type="button"
-              class="flex size-8 items-center justify-center rounded-full overflow-hidden
-                     transition-opacity hover:opacity-80 active:opacity-60
-                     border border-[color-mix(in_oklab,var(--color-accent)_35%,transparent)]
-                     bg-[color-mix(in_oklab,var(--color-accent)_10%,var(--surface-2))]"
+              class="flex items-center justify-center rounded-full overflow-hidden
+                     transition-opacity hover:opacity-80 active:opacity-60"
               [title]="authStore.user()?.displayName ?? ''">
-        @if (authStore.user()?.avatarUrl) {
-          <img [src]="authStore.user()!.avatarUrl!"
-               class="size-8 object-cover" alt="Avatar" />
-        } @else {
-          <span class="font-mono text-[11px] font-semibold text-(--color-accent)">
-            {{ initials() }}
-          </span>
-        }
+        <klar-avatar [avatarUrl]="authStore.user()?.avatarUrl"
+                     [seed]="authStore.user()?.displayName ?? ''"
+                     [initials]="initials()"
+                     [size]="32" />
       </button>
 
       <ng-template brnPopoverContent>
@@ -42,23 +37,17 @@ import { HouseholdStore } from '../../core/household/household.store';
 
                 <!-- 40px avatar with upload overlay -->
                 <button type="button"
-                        class="relative size-10 rounded-full shrink-0 overflow-hidden
-                               border border-[color-mix(in_oklab,var(--color-accent)_35%,transparent)]
-                               bg-[color-mix(in_oklab,var(--color-accent)_10%,var(--surface-2))]
-                               group cursor-pointer"
+                        class="relative rounded-full shrink-0 overflow-hidden group cursor-pointer"
                         (click)="triggerFileInput()"
                         [disabled]="uploading()"
                         title="Foto ändern">
-                  @if (user.avatarUrl) {
-                    <img [src]="user.avatarUrl" class="size-10 object-cover" alt="Avatar" />
-                  } @else {
-                    <span class="font-mono text-[13px] font-semibold text-(--color-accent)">
-                      {{ initials() }}
-                    </span>
-                  }
+                  <klar-avatar [avatarUrl]="user.avatarUrl"
+                               [seed]="user.displayName"
+                               [initials]="initials()"
+                               [size]="40" />
                   <!-- Hover overlay -->
                   <div class="absolute inset-0 bg-black/50 flex items-center justify-center
-                               opacity-0 group-hover:opacity-100 transition-opacity">
+                               opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                     @if (uploading()) {
                       <div class="size-3 border border-white/50 border-t-white rounded-full animate-spin"></div>
                     } @else {

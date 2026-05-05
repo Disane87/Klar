@@ -45,6 +45,10 @@ export class HaushaltPageComponent implements OnInit {
   readonly availableScopes = AVAILABLE_SCOPES;
   readonly authUserId = computed(() => this.authStore.user()?.id);
 
+  readonly pendingInvites = computed(() =>
+    this.store.invites().filter(i => !i.usedAt && !!i.email)
+  );
+
   readonly editingName = signal(false);
   readonly newName = signal('');
   readonly savingName = signal(false);
@@ -67,7 +71,10 @@ export class HaushaltPageComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    await this.store.loadMembers();
+    await Promise.all([
+      this.store.loadMembers(),
+      this.canManage() ? this.store.loadInvites() : Promise.resolve(),
+    ]);
   }
 
   startEditName(): void {
@@ -119,6 +126,34 @@ export class HaushaltPageComponent implements OnInit {
       parts.push(`Zuletzt ${new Date(key.lastUsedAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
     }
     return parts.join(' · ');
+  }
+
+  inviteStatus(invite: { expiresAt?: string | null; usedAt?: string | null }): 'offen' | 'abgelaufen' {
+    if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) return 'abgelaufen';
+    return 'offen';
+  }
+
+  inviteSubLabel(invite: { email?: string | null; expiresAt?: string | null; createdAt: string }): string {
+    const parts: string[] = [];
+    if (invite.email) parts.push(invite.email);
+    if (invite.expiresAt) {
+      const d = new Date(invite.expiresAt);
+      if (d < new Date()) {
+        parts.push(`Abgelaufen ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
+      } else {
+        parts.push(`Bis ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`);
+      }
+    }
+    return parts.join(' · ');
+  }
+
+  async deleteInvite(inviteId: string): Promise<void> {
+    try {
+      await this.store.deleteInvite(inviteId);
+      this.toast.success('Einladung gelöscht');
+    } catch {
+      this.toast.error('Einladung konnte nicht gelöscht werden');
+    }
   }
 
   async copyApiKey(key: string): Promise<void> {

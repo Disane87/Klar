@@ -1,11 +1,12 @@
 import { Component, computed, input, output } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { KlarIconComponent } from '../icons/klar-icon.component';
+import { KlarAvatarComponent } from './klar-avatar.component';
 
 @Component({
   selector: 'klar-list-item',
   standalone: true,
-  imports: [NgClass, NgTemplateOutlet, KlarIconComponent],
+  imports: [NgClass, NgTemplateOutlet, KlarIconComponent, KlarAvatarComponent],
   host: { class: 'block border-b border-(--border)/40 last:border-b-0' },
   template: `
     @if (navigable()) {
@@ -28,16 +29,18 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
     }
 
     <ng-template #row>
-      <!-- Leading: status dot, avatar, or icon -->
+      <!-- Leading: status dot, avatar (url or seed), or icon -->
       @if (dotColor()) {
         <div class="size-2 rounded-full shrink-0"
              [ngClass]="dotColor() === 'income'
                ? 'bg-(--color-income) shadow-[0_0_4px_var(--color-income)]'
                : 'bg-(--text-muted)'"></div>
-      } @else if (avatarUrl()) {
-        <img [src]="avatarUrl()!" alt=""
-             class="size-7 rounded-full object-cover shrink-0
-                    border border-[color-mix(in_oklab,var(--color-accent)_25%,transparent)]" />
+      } @else if (avatarUrl() !== undefined || avatarSeed()) {
+        <klar-avatar [avatarUrl]="avatarUrl()"
+                     [seed]="avatarSeed() ?? ''"
+                     [size]="28"
+                     [tooltip]="label()"
+                     [tooltipSub]="sublabel()" />
       } @else if (icon()) {
         <klar-icon [name]="icon()!" [size]="16"
                    class="shrink-0"
@@ -96,6 +99,7 @@ export class KlarListItemComponent {
   sublabel  = input<string>();
   icon      = input<string>();
   avatarUrl = input<string | null>();
+  avatarSeed = input<string>();
   dotColor  = input<'income' | 'muted'>();
   value      = input<string>();
   valueClass = input<string>();

@@ -75,6 +75,9 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     const inviteToken = this.route.snapshot.queryParamMap.get('invite');
     if (inviteToken) sessionStorage.setItem('pendingInviteToken', inviteToken);
+
+    const emailParam = this.route.snapshot.queryParamMap.get('email');
+    if (emailParam) this.email.set(emailParam);
   }
 
   async submit(): Promise<void> {

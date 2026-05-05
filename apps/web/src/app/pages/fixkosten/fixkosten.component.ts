@@ -16,6 +16,7 @@ import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component'
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarListComponent, KlarListGroupComponent, KlarListRowComponent } from '../../shared/ui/klar-list.component';
+import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
@@ -24,7 +25,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })

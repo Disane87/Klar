@@ -87,6 +87,7 @@
           @for (opt of memberOptions(); track opt.userId) {
           <div class="relative">
             <button type="button"
+              [title]="opt.displayName"
               class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-150 peer"
               [class.border-(--color-accent)]="memberFilter() === opt.userId"
               [class.bg-(--color-accent)]="memberFilter() === opt.userId"
@@ -95,11 +96,10 @@
               [class.bg-(--surface-2)]="memberFilter() !== opt.userId"
               [class.text-(--text-2)]="memberFilter() !== opt.userId"
               (click)="memberFilter.set(memberFilter() === opt.userId ? null : opt.userId)">
-              @if (opt.avatarUrl) {
-                <img [src]="opt.avatarUrl" class="size-full object-cover rounded-full" alt="" />
-              } @else {
-                {{ opt.displayName.charAt(0).toUpperCase() }}
-              }
+              <klar-avatar [avatarUrl]="opt.avatarUrl"
+                           [seed]="opt.displayName"
+                           [noBorder]="true"
+                           [size]="24" />
             </button>
             <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
                  [ngClass]="getHoverCardClasses()">

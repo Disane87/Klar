@@ -102,6 +102,17 @@ export class JoinComponent implements OnInit {
       const info = await this.householdService.getInviteInfo(token);
       this.householdName.set(info.householdName);
       this.expiresAt.set(info.expiresAt);
+
+      // Smart redirect: if invite has a specific email, route to login or register automatically
+      if (info.email && !this.authStore.isAuthenticated()) {
+        sessionStorage.setItem(PENDING_INVITE_KEY, token);
+        if (info.userExists) {
+          await this.router.navigate(['/login'], { queryParams: { email: info.email } });
+        } else {
+          await this.router.navigate(['/register'], { queryParams: { email: info.email } });
+        }
+        return;
+      }
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
       if (status === 410) this.error.set('Dieser Einladungslink wurde bereits verwendet oder ist abgelaufen.');

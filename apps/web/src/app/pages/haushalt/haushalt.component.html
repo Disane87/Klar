@@ -41,7 +41,7 @@
     }
 
     <!-- ── MITGLIEDER ────────────────────────────────────── -->
-    <klar-list-group [label]="'Mitglieder · ' + store.members().length">
+    <klar-list-group [label]="'Mitglieder · ' + (store.members().length + pendingInvites().length)">
       @for (member of store.members(); track member.userId) {
         <klar-list-item [avatarUrl]="member.avatarUrl ?? undefined"
                         [icon]="member.avatarUrl ? undefined : 'user'"
@@ -52,6 +52,18 @@
                         [trailingActionIcon]="canManage() && member.userId !== authUserId() ? 'close' : undefined"
                         [trailingActionDanger]="true"
                         (trailingActionClick)="removeMember(member.userId)" />
+      }
+      @for (invite of pendingInvites(); track invite.id) {
+        <klar-list-item [avatarSeed]="invite.email ?? ''"
+                        [label]="invite.email!"
+                        [sublabel]="inviteSubLabel(invite)"
+                        [badge]="inviteStatus(invite) === 'abgelaufen' ? 'Abgelaufen' : 'Eingeladen'"
+                        [badgeClass]="inviteStatus(invite) === 'abgelaufen'
+                          ? 'bg-(--surface-2) text-(--text-muted) font-mono uppercase tracking-[0.08em] text-[9px]'
+                          : 'bg-(--color-income)/15 text-(--color-income) font-mono uppercase tracking-[0.08em] text-[9px]'"
+                        [trailingActionIcon]="canManage() ? 'trash' : undefined"
+                        [trailingActionDanger]="true"
+                        (trailingActionClick)="deleteInvite(invite.id)" />
       }
     </klar-list-group>
 

@@ -12,6 +12,7 @@ import { HouseholdRole } from '@prisma/client';
 import type { RequestContext } from '../common/types/request-context.type';
 import { HouseholdsRepository } from './households.repository';
 import { InvitationLinkRepository } from './invitation-link.repository';
+import { UsersRepository } from '../users/users.repository';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../mail/mail.service';
 import { appConfig } from '../config/app.config';
@@ -40,6 +41,8 @@ export interface InviteLinkWithUrl extends InvitationLink {
 export interface InviteTokenInfo {
   householdName: string;
   expiresAt: string | null;
+  email?: string | null;
+  userExists?: boolean;
 }
 
 @Injectable()
@@ -47,6 +50,7 @@ export class HouseholdsService {
   constructor(
     private readonly repo: HouseholdsRepository,
     private readonly inviteLinkRepo: InvitationLinkRepository,
+    private readonly usersRepo: UsersRepository,
     private readonly auditService: AuditService,
     private readonly mailService: MailService,
     @Inject(appConfig.KEY) private readonly app: ConfigType<typeof appConfig>,
@@ -211,6 +215,8 @@ export class HouseholdsService {
       inviteUrl,
       link.expiresAt ?? undefined,
     );
+
+    await this.inviteLinkRepo.updateEmail(link.id, email.toLowerCase());
   }
 
   async listInviteLinks(ctx: RequestContext): Promise<InviteLinkWithUrl[]> {
@@ -233,10 +239,17 @@ export class HouseholdsService {
     if (link.expiresAt && link.expiresAt < new Date()) throw new GoneException('Einladungslink ist abgelaufen');
 
     const household = await this.repo.findById(link.householdId);
-    return {
+    const result: InviteTokenInfo = {
       householdName: household?.name ?? 'Klar',
       expiresAt: link.expiresAt?.toISOString() ?? null,
     };
+
+    if (link.email) {
+      result.email = link.email;
+      result.userExists = await this.usersRepo.existsByEmail(link.email.toLowerCase());
+    }
+
+    return result;
   }
 
   async joinByToken(userId: string, token: string): Promise<HouseholdMembership> {

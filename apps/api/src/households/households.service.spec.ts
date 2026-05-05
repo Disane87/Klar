@@ -10,6 +10,7 @@ import { HouseholdRole } from '@prisma/client';
 import { HouseholdsService } from './households.service';
 import type { HouseholdsRepository } from './households.repository';
 import type { InvitationLinkRepository } from './invitation-link.repository';
+import type { UsersRepository } from '../users/users.repository';
 import type { AuditService } from '../audit/audit.service';
 import type { MailService } from '../mail/mail.service';
 import type { Household, HouseholdMembership } from '@prisma/client';
@@ -82,6 +83,7 @@ const makeInviteLinkRepo = (): InvitationLinkRepository =>
     findByToken: vi.fn(),
     findByHousehold: vi.fn(),
     consumeAndJoin: vi.fn(),
+    updateEmail: vi.fn().mockResolvedValue(undefined),
     delete: vi.fn(),
     deleteByHousehold: vi.fn(),
   }) as unknown as InvitationLinkRepository;
@@ -91,6 +93,9 @@ const makeAudit = (): AuditService =>
 
 const makeMailService = (): MailService =>
   ({ sendInviteEmail: vi.fn() }) as unknown as MailService;
+
+const makeUsersRepo = (): UsersRepository =>
+  ({ existsByEmail: vi.fn().mockResolvedValue(false) }) as unknown as UsersRepository;
 
 const makeCtx = (overrides: object = {}) => ({
   userId: 'u-1',
@@ -103,6 +108,7 @@ const fakeAppConfig = { frontendUrl: 'http://localhost:4200', registrationEnable
 
 let repo: HouseholdsRepository;
 let inviteLinkRepo: InvitationLinkRepository;
+let usersRepo: UsersRepository;
 let audit: AuditService;
 let mailService: MailService;
 let service: HouseholdsService;
@@ -110,11 +116,13 @@ let service: HouseholdsService;
 beforeEach(() => {
   repo = makeRepo();
   inviteLinkRepo = makeInviteLinkRepo();
+  usersRepo = makeUsersRepo();
   audit = makeAudit();
   mailService = makeMailService();
   service = new HouseholdsService(
     repo,
     inviteLinkRepo,
+    usersRepo,
     audit,
     mailService,
     fakeAppConfig as never,

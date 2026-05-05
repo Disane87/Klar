@@ -455,6 +455,20 @@ Alle UI-Controls basieren auf Spartan UI (`spartan.ng`). Spartan-Direktiven sind
 | `HlmSpinnerComponent` | `<hlm-spinner>` | Lade-Indikator |
 | `HlmErrorDirective` | `[hlmError]` | Fehler-Meldungen unter Feldern |
 
+#### Klar-eigene UI-Komponenten (`apps/web/src/app/shared/ui/`)
+
+Für Muster die über Spartan UI hinausgehen gibt es klar-eigene Basiskomponenten. **Vor jedem neuen UI-Element prüfen ob eine dieser Komponenten passt oder generalisiert werden kann.**
+
+| Komponente | Selector | Inputs | Verwendung |
+|---|---|---|---|
+| `KlarAvatarComponent` | `<klar-avatar>` | `avatarUrl`, `seed`, `initials`, `size`, `tooltip`, `tooltipSub` | User-/Einladungs-Avatar mit Initials-Fallback und Hovercard — **immer statt inline img/initials verwenden** |
+| `KlarListComponent` | `<klar-list>` | — | Container für klar-list-group Blöcke |
+| `KlarListGroupComponent` | `<klar-list-group>` | `label`, `headerActionLabel`, `danger` | Abschnitt mit Header + optionaler Action |
+| `KlarListItemComponent` | `<klar-list-item>` | `label`, `sublabel`, `icon`, `avatarUrl`, `avatarSeed`, `badge`, `value`, `navigable`, `trailingActionIcon`, … | Zeile in einer Liste |
+| `KlarInputComponent` | `<klar-input>` | `type`, `placeholder`, `disabled`, `ngModel` | Styled Input-Wrapper |
+
+**Regel:** Wenn ähnliche UI-Strukturen an ≥ 2 Stellen vorkommen → sofort in eine `klar-*`-Komponente kapseln, nicht duplizieren.
+
 #### Nutzungs-Pattern
 
 ```html
@@ -1177,6 +1191,7 @@ export const createTransaction = (
 
 ## Harte Regeln — nie verletzen
 
+- ❌ **Features halb fertig committen** — jedes Feature muss Ende-zu-Ende funktionieren bevor es committed wird. Kein Frontend-Code ohne funktionierende Backend-Anbindung, kein Backend-Endpoint ohne Datenpersistenz, kein UI-Flow ohne vollständigen Datenpfad. Jede Schicht (Repository → Service → Controller → Frontend) muss vollständig und verifiziert sein.
 - ❌ `householdId` aus Request-Body (internal API) — IMMER aus `:hid` URL-Param
 - ❌ `householdId` aus Body/Query/URL (public API) — IMMER aus API-Key
 - ❌ `prisma.X.findMany()` ohne `where: { householdId }` — auch wenn RLS greift
@@ -1192,6 +1207,8 @@ export const createTransaction = (
 - ❌ Recurring-Transaktionen persistieren — on-the-fly berechnen
 - ❌ PRIVATE-Beträge anderer User in Aggregate einrechnen
 - ❌ UI-Controls ohne Spartan-Basis — Workflow: (1) Spartan UI prüfen (`spartan.ng`), (2) passendes `hlm*`-Direktive/Komponente aus `apps/web/src/app/shared/ui/hlm/` verwenden, (3) in eigene `app-*`-Komponente kapseln wie die bestehenden `hlm-input`, `hlm-button`, `hlm-select` etc. — niemals nackte native `<select>`, `<input>`, `<button>` ohne `hlm*`-Direktive in Templates schreiben
+- ❌ Avatar/Initials inline rendern — immer `<klar-avatar>` verwenden; vor Neuimplementierung prüfen ob eine bestehende `klar-*`-Komponente passt
+- ❌ UI-Strukturen duplizieren wenn ≥ 2 Verwendungen — in `klar-*`-Komponente kapseln und beim Code-Durchlauf aktiv nach Generalisierungspotenzialen suchen
 - ❌ `Zone.js`-Patterns (`NgZone.run()`, `ChangeDetectorRef.markForCheck()`)
 - ❌ Reactive Forms (`FormGroup`, `FormBuilder`) — Signal Forms verwenden
 - ❌ Hardcoded Color-Hex in Komponenten — Tailwind-Klassen oder CSS-Variablen

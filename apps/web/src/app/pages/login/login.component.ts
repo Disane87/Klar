@@ -71,6 +71,10 @@ export class LoginComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const inviteToken = this.route.snapshot.queryParamMap.get('invite');
     if (inviteToken) sessionStorage.setItem('pendingInviteToken', inviteToken);
+
+    const emailParam = this.route.snapshot.queryParamMap.get('email');
+    if (emailParam) this.email.set(emailParam);
+
     await this.oidc.loadConfig();
   }
 

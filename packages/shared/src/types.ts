@@ -104,6 +104,8 @@ export type CreateInviteLinkRequest = {
 export type InviteTokenInfo = {
   householdName: string;
   expiresAt: string | null;
+  email?: string | null;
+  userExists?: boolean;
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────

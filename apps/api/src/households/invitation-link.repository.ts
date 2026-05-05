@@ -39,6 +39,10 @@ export class InvitationLinkRepository {
     return this.prisma.invitationLink.findUnique({ where: { token } });
   }
 
+  async updateEmail(id: string, email: string): Promise<void> {
+    await this.prisma.invitationLink.update({ where: { id }, data: { email } });
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.invitationLink.delete({ where: { id } });
   }
