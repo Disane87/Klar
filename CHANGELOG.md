@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Disane87/Klar/compare/v1.1.0...v1.2.0) (2026-05-05)
+
+
+### Features
+
+* **system-page:** markdown changelog with scroll and last-checked timestamp ([216003f](https://github.com/Disane87/Klar/commit/216003f44fe59de1732a230106da7853d1b12718))
+
 # [1.1.0](https://github.com/Disane87/Klar/compare/v1.0.0...v1.1.0) (2026-05-05)
 
 
