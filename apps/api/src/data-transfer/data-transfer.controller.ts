@@ -28,8 +28,8 @@ export class DataTransferController {
     @Query('include') includeRaw: string | undefined,
     @Query('startDate') startDate: string | undefined,
     @Query('endDate') endDate: string | undefined,
-    @Res() reply: FastifyReply,
-  ): Promise<void> {
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<unknown> {
     const include = includeRaw
       ? (includeRaw.split(',').map(s => s.trim()) as ('transactions' | 'recurringTransactions')[])
       : (['transactions', 'recurringTransactions'] as ('transactions' | 'recurringTransactions')[]);
@@ -38,8 +38,8 @@ export class DataTransferController {
     const date = new Date().toISOString().slice(0, 10);
     reply
       .header('Content-Type', 'application/json')
-      .header('Content-Disposition', `attachment; filename="klar-export-${date}.json"`)
-      .send(data);
+      .header('Content-Disposition', `attachment; filename="klar-export-${date}.json"`);
+    return data;
   }
 
   @Post('import/analyze')
