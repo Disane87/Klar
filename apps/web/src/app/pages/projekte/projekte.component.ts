@@ -9,6 +9,8 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
+import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import type { ProjectOverviewItem } from '../../core/overview/overview.service';
 
 @Component({
@@ -23,6 +25,7 @@ export class ProjektePageComponent {
   protected store = inject(ProjekteStore);
   private txStore  = inject(TransactionsStore);
   private router   = inject(Router);
+  private dialogService = inject(KlarDialogService);
 
   constructor() {
     inject(PageHeaderService).set({
@@ -30,14 +33,17 @@ export class ProjektePageComponent {
       subtitle:      'ZIELE & SONDERPROJEKTE',
       showPlanspiel: false,
       showAdd:       true,
-      addLabel:      'Buchung',
+      addLabel:      'Projekt',
       onAdd:         () => this.openCreate(),
     });
   }
 
   openCreate(): void {
-    this.txStore.clearFilters();
-    this.router.navigate(['/app/buchungen']);
+    this.dialogService.open({
+      title:     'Projekt erstellen',
+      component: ProjectCreateDialogComponent,
+      width:     'sm',
+    });
   }
 
   openProject(project: ProjectOverviewItem): void {
