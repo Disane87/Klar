@@ -31,7 +31,8 @@
       "Bash(pnpm --filter web exec vitest run src/app/core/household/household.store.spec.ts)",
       "Bash(pnpm --filter @klar/api lint)",
       "Bash(sort -t: -k2 -nr)",
-      "Bash(pnpm exec *)"
+      "Bash(pnpm exec *)",
+      "Bash(pnpm --filter web exec tsc --noEmit -p apps/web/tsconfig.app.json)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\denaro"

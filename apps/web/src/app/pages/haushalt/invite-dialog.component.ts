@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
-import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { HouseholdStore } from '../../core/household/household.store';
 import type { InvitationLink } from '@klar/shared';
@@ -11,7 +10,7 @@ import type { InvitationLink } from '@klar/shared';
 @Component({
   selector: 'app-invite-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmSpinnerComponent, KlarInputComponent, KlarIconComponent],
+  imports: [FormsModule, KlarButtonComponent, HlmSpinnerComponent, KlarInputComponent],
   template: `
     <div class="flex flex-col gap-6 p-1">
       @if (loading()) {
