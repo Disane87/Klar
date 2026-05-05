@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/Disane87/Klar/compare/v1.4.0...v1.4.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* remove unused KlarIconComponent import and update allowed bash commands in settings ([407b012](https://github.com/Disane87/Klar/commit/407b012054cf0ff7969d495b248bbe9fc9bb028f))
+
 # [1.4.0](https://github.com/Disane87/Klar/compare/v1.3.0...v1.4.0) (2026-05-05)
 
 
