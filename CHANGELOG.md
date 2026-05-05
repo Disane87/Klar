@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Disane87/Klar/compare/v1.4.2...v1.5.0) (2026-05-05)
+
+
+### Features
+
+* **web:** show invite hint on login page when joining via invite link ([f77cec9](https://github.com/Disane87/Klar/commit/f77cec9a0fb03313034953b3a15663811b30d4de))
+
 ## [1.4.2](https://github.com/Disane87/Klar/compare/v1.4.1...v1.4.2) (2026-05-05)
 
 
