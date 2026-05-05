@@ -42,8 +42,6 @@ import { DataImportComponent } from './data-import.component';
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,
-    DataExportComponent,
-    DataImportComponent,
     HlmToggleGroupDirective,
     HlmToggleGroupItemDirective,
     KlarIconComponent,

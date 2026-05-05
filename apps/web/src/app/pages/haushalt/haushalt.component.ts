@@ -1,5 +1,4 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
@@ -22,7 +21,6 @@ import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
   imports: [
-    DatePipe,
     FormsModule,
     HlmButtonDirective,
     HlmSpinnerComponent,
