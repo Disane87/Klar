@@ -18,9 +18,10 @@ const MAIN_ITEMS: NavItem[] = [
 ];
 
 const SYS_ITEMS: NavItem[] = [
-  { id: 'haushalt', label: 'Haushalt',   icon: 'haushalt', route: '/app/haushalt' },
-  { id: 'tresor',   label: 'Tresor',      icon: 'tresor',   route: '/app/tresor' },
-  { id: 'settings', label: 'Einstellungen',  icon: 'settings', route: '/app/settings' },
+  { id: 'haushalt', label: 'Haushalt',      icon: 'haushalt', route: '/app/haushalt' },
+  { id: 'tresor',   label: 'Tresor',        icon: 'tresor',   route: '/app/tresor' },
+  { id: 'settings', label: 'Einstellungen', icon: 'settings', route: '/app/settings' },
+  { id: 'health',   label: 'System',        icon: 'pulse',    route: '/app/health' },
 ];
 
 @Component({

@@ -113,6 +113,13 @@ export const routes: Routes = [
             m => m.SettingsPageComponent,
           ),
       },
+      {
+        path: 'health',
+        loadComponent: () =>
+          import('./pages/health/health.component').then(
+            m => m.HealthPageComponent,
+          ),
+      },
     ],
   },
   {

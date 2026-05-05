@@ -17,6 +17,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 # Build shared, web, and api
 FROM base AS builder
 WORKDIR /app
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
 COPY --from=deps /app .
 COPY . .
 RUN pnpm --filter @klar/shared build
@@ -29,6 +31,8 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
 # pnpm links direct deps into apps/api/node_modules — copy both and add NODE_PATH
 # so Node.js finds packages like reflect-metadata that aren't hoisted to root
 COPY --from=builder /app/node_modules ./node_modules

@@ -20,4 +20,8 @@ describe('HealthController', () => {
     const { timestamp } = controller.check();
     expect(new Date(timestamp).toISOString()).toBe(timestamp);
   });
+
+  it('returns a version string', () => {
+    expect(typeof controller.check().version).toBe('string');
+  });
 });

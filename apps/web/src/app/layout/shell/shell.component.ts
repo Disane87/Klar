@@ -8,6 +8,7 @@ import { KlarMonthChipComponent } from '../../shared/ui/klar-month-chip.componen
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewStore } from '../../core/overview/overview.store';
+import { UpdateBannerComponent } from '../../core/version/update-banner.component';
 
 interface BottomTab {
   id: string;
@@ -32,6 +33,7 @@ const BOTTOM_TABS: BottomTab[] = [
     RouterOutlet, RouterLink, RouterLinkActive,
     SideNavComponent, TopBarComponent, KlarIconComponent,
     KlarToastContainerComponent, KlarMonthChipComponent, KlarHeaderUserComponent,
+    UpdateBannerComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
