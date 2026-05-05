@@ -7,7 +7,7 @@
   (dayTap)="onDayTap($event)" />
 
 <!-- Scrollable content below calendar -->
-<div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+<div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-16">
 
   <!-- Loading -->
   @if (store.loading()) {
@@ -137,7 +137,7 @@
 
   <div class="fixed bottom-0 left-0 right-0 z-201 md:hidden
               flex flex-col rounded-t-2xl border-t border-(--border)
-              bg-(--surface) pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+              bg-(--surface) pb-4">
 
     <div class="flex justify-center pt-3 pb-2 shrink-0">
       <div class="w-10 h-1 rounded-full bg-(--border)"></div>
