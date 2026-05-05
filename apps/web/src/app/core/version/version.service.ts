@@ -80,6 +80,8 @@ export class VersionService {
 
   readonly releasesLoading = computed(() => this._releasesResource.isLoading());
 
+  readonly lastCheckedAt = signal<Date | null>(null);
+
   constructor() {
     // Dismiss banner if user has already seen this version
     effect(() => {
@@ -103,5 +105,6 @@ export class VersionService {
   reload(): void {
     this._healthResource.reload();
     this._releasesResource.reload();
+    this.lastCheckedAt.set(new Date());
   }
 }

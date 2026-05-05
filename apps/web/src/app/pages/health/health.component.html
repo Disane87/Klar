@@ -80,7 +80,7 @@
       <div class="min-w-0">
         <div class="text-[10px] uppercase tracking-widest text-(--text-muted) font-medium">Zuletzt geprüft</div>
         <div class="font-semibold text-sm mt-0.5 text-(--text)">
-          Beim Öffnen dieser Seite
+          {{ formatDateTime(version.lastCheckedAt()) }}
         </div>
       </div>
     </div>
@@ -129,7 +129,10 @@
               </div>
             </div>
             @if (release.body) {
-              <div class="px-4 py-3 text-sm text-(--text-2) whitespace-pre-wrap leading-relaxed font-mono text-[12px]">{{ release.body }}</div>
+              <div
+                class="klar-markdown px-4 py-3 text-sm text-(--text-2) leading-relaxed max-h-80 overflow-y-auto"
+                [innerHTML]="renderMarkdown(release.body)"
+              ></div>
             } @else {
               <div class="px-4 py-3 text-xs text-(--text-muted) italic">Keine Beschreibung.</div>
             }

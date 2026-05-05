@@ -318,3 +318,76 @@ input, select, textarea {
 .dialog-actions { display: flex; gap: 8px; align-items: center; padding-top: 4px; }
 .field-error { font-size: var(--label); color: var(--color-expense); margin-top: 2px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Markdown rendering (release notes) ─────────────────────────── */
+.klar-markdown h1,
+.klar-markdown h2,
+.klar-markdown h3,
+.klar-markdown h4 {
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 0.75rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
+}
+.klar-markdown h1 { font-size: 1rem; }
+.klar-markdown h2 { font-size: 0.95rem; }
+.klar-markdown h3 { font-size: 0.875rem; }
+.klar-markdown h4 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.klar-markdown > *:first-child { margin-top: 0; }
+.klar-markdown > *:last-child { margin-bottom: 0; }
+.klar-markdown p { margin: 0.4rem 0; }
+.klar-markdown ul,
+.klar-markdown ol { margin: 0.4rem 0; padding-left: 1.25rem; }
+.klar-markdown ul { list-style: disc; }
+.klar-markdown ol { list-style: decimal; }
+.klar-markdown li { margin: 0.15rem 0; }
+.klar-markdown li > ul,
+.klar-markdown li > ol { margin: 0.15rem 0; }
+.klar-markdown a { color: var(--accent, #60a5fa); text-decoration: underline; text-underline-offset: 2px; }
+.klar-markdown a:hover { opacity: 0.85; }
+.klar-markdown code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+.klar-markdown pre {
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.klar-markdown pre code { background: transparent; border: 0; padding: 0; }
+.klar-markdown blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+.klar-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0.75rem 0;
+}
+.klar-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.8125rem;
+}
+.klar-markdown th,
+.klar-markdown td {
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+.klar-markdown th { background: var(--surface-2); font-weight: 600; }
+.klar-markdown img { max-width: 100%; border-radius: 6px; }

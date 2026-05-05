@@ -92,6 +92,8 @@ memory_store(key="pattern-[beschreibung]", value="[konkreter Ansatz]", namespace
 - **Direkt auf `main`** committen — kein Feature-Branch-Overhead als Solo-Entwickler
 - **Commit-Zeitpunkt:** nach jedem abgeschlossenen Modul mit grünen Tests — nie mitten in halbfertigem Feature
 - **Commit-Größe:** ein Modul = ein Commit; niemals WIP-Commits
+- **Commit-Sprache:** IMMER Englisch — Subject + Body in Englisch, auch wenn Konversation auf Deutsch läuft
+- **Kein Co-Author:** niemals `Co-Authored-By: Claude` o.ä. an Commits anhängen
 - Feature-Branches nur für größere Experimente die eventuell weggeworfen werden
 - Niemals `--no-verify` — Hook-Problem beheben statt umgehen
 
