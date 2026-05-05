@@ -425,6 +425,7 @@ hooks_route(taskType="frontend", module="categories")
 - **NIEMALS** Input-font-size unter 16px
 - **NIEMALS** Code vor Tests schreiben (TDD-Skill aktiv)
 - **NIEMALS** Phase abschließen ohne Reviewer-Freigabe
+- **NIEMALS** Feature-Branches erstellen — direkt auf `main` committen (Solo-Entwickler)
 - **NIEMALS** `hlm-*` direkt in Feature-Komponenten — nur über `klar-*`
 - **NIEMALS** Zone.js-Patterns in Angular 21
 - **NIEMALS** Opus für simple Tasks (Haiku/Sonnet reichen)

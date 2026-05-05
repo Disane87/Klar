@@ -89,11 +89,10 @@ memory_store(key="pattern-[beschreibung]", value="[konkreter Ansatz]", namespace
 
 ## Git/Commit-Strategie
 
-- **Branch-Naming:** `feat/[modul]`, `fix/[beschreibung]`, `phase/[n]-[beschreibung]`
+- **Direkt auf `main`** committen — kein Feature-Branch-Overhead als Solo-Entwickler
 - **Commit-Zeitpunkt:** nach jedem abgeschlossenen Modul mit grünen Tests — nie mitten in halbfertigem Feature
 - **Commit-Größe:** ein Modul = ein Commit; niemals WIP-Commits
-- **PR vor Merge** in main — kein direkter Push auf main
-- Niemals `--force-push` auf shared Branches
+- Feature-Branches nur für größere Experimente die eventuell weggeworfen werden
 - Niemals `--no-verify` — Hook-Problem beheben statt umgehen
 
 ---
