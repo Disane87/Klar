@@ -1,10 +1,11 @@
-<div class="flex h-dvh overflow-hidden bg-(--bg)">
+<div class="flex flex-col h-dvh overflow-hidden bg-(--bg)">
+  <klar-update-banner />
+  <div class="flex flex-1 overflow-hidden min-h-0">
   <!-- Desktop sidebar — hidden on mobile -->
   <klar-side-nav class="hidden md:flex" />
 
   <!-- Main content -->
   <div class="flex-1 flex flex-col overflow-hidden min-w-0">
-    <klar-update-banner />
     @if (pageHeader.title()) {
       <!-- Desktop top bar -->
       <klar-top-bar
@@ -31,6 +32,7 @@
       </header>
     }
     <router-outlet />
+  </div>
   </div>
 </div>
 
