@@ -40,7 +40,11 @@
       "@prisma/client",
       "@prisma/engines",
       "argon2",
-      "prisma"
-    ]
+      "prisma",
+      "@swc/core"
+    ],
+    "overrides": {
+      "fastify": "^5.8.5"
+    }
   }
 }
