@@ -9,12 +9,12 @@
       <p class="text-[10px] uppercase tracking-widest text-(--text-muted)">Kategorien zuordnen</p>
       @for (m of unresolvedCategories(); track m.source.name) {
         <div class="flex flex-col gap-1">
-          <label class="text-[13px] font-medium">
+          <label hlmLabel>
             {{ m.source.name }}
-            <span class="text-(--text-muted) font-normal">({{ m.source.type }})</span>
+            <span class="text-muted-foreground font-normal normal-case tracking-normal">({{ m.source.type }})</span>
           </label>
-          <select
-            class="w-full rounded border border-(--border) bg-(--surface-1) text-[1rem] text-(--text) px-3 py-2 min-h-11 focus:outline-none focus:ring-1 focus:ring-accent"
+          <select hlmSelect
+            class="w-full min-h-11 scheme-dark"
             [ngModel]="categorySelections()[m.source.name + '::' + m.source.type]"
             (ngModelChange)="setCategoryMapping(m.source.name + '::' + m.source.type, $event)">
             <option value="">— Kategorie wählen —</option>
@@ -32,9 +32,9 @@
       <p class="text-[10px] uppercase tracking-widest text-(--text-muted)">Projekte zuordnen</p>
       @for (m of unresolvedProjects(); track m.source.name) {
         <div class="flex flex-col gap-1">
-          <label class="text-[13px] font-medium">{{ m.source.name }}</label>
-          <select
-            class="w-full rounded border border-(--border) bg-(--surface-1) text-[1rem] text-(--text) px-3 py-2 min-h-11 focus:outline-none focus:ring-1 focus:ring-accent"
+          <label hlmLabel>{{ m.source.name }}</label>
+          <select hlmSelect
+            class="w-full min-h-11 scheme-dark"
             [ngModel]="projectSelections()[m.source.name]"
             (ngModelChange)="setProjectMapping(m.source.name, $event)">
             <option value="">— Projekt wählen —</option>

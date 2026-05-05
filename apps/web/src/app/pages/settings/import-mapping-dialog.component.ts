@@ -1,6 +1,8 @@
 import { Component, inject, input, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
+import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -11,7 +13,7 @@ import type { AnalyzeResponse, ConfirmBody } from '../../core/data-transfer/data
 @Component({
   selector: 'app-import-mapping-dialog',
   standalone: true,
-  imports: [FormsModule, HlmButtonDirective, HlmSpinnerComponent],
+  imports: [FormsModule, HlmButtonDirective, HlmLabelDirective, HlmSelectNativeDirective, HlmSpinnerComponent],
   templateUrl: './import-mapping-dialog.component.html',
 })
 export class ImportMappingDialogComponent {
