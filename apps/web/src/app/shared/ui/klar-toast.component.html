@@ -1,16 +1,34 @@
-<div class="container">
+<div class="fixed bottom-[max(24px,calc(24px+var(--safe-bottom)))] right-6 z-9999 flex flex-col gap-2 min-w-75 max-w-100">
   @for (toast of service.toasts(); track toast.id) {
-    <div class="toast" [class]="'tone-' + toast.tone">
-      <span class="icon-wrap">
-        <klar-icon [name]="toneIcon(toast)" [size]="14" />
+    <div
+      class="flex items-center gap-3 bg-(--surface) border border-(--border) rounded-(--radius) px-4 py-3 shadow-lg border-l-2"
+      [ngClass]="{
+        'border-l-(--color-income)': toast.tone === 'success',
+        'border-l-(--color-expense)': toast.tone === 'error',
+        'border-l-accent': toast.tone === 'info'
+      }"
+    >
+      <span
+        class="shrink-0"
+        [ngClass]="{
+          'text-(--color-income)': toast.tone === 'success',
+          'text-(--color-expense)': toast.tone === 'error',
+          'text-accent': toast.tone === 'info'
+        }"
+      >
+        <klar-icon [name]="toneIcon(toast)" [size]="16" />
       </span>
-      <div class="body">
-        <div class="title">{{ toast.title }}</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium leading-none">{{ toast.title }}</div>
         @if (toast.body) {
-          <div class="sub">{{ toast.body }}</div>
+          <div class="text-xs text-(--text-2) mt-1">{{ toast.body }}</div>
         }
       </div>
-      <button class="close" (click)="service.dismiss(toast.id)" aria-label="Schließen">
+      <button
+        class="shrink-0 flex items-center justify-center text-(--text-muted) hover:text-(--text-1) transition-colors bg-transparent border-none cursor-pointer p-0"
+        (click)="service.dismiss(toast.id)"
+        aria-label="Schließen"
+      >
         <klar-icon name="x" [size]="14" />
       </button>
     </div>

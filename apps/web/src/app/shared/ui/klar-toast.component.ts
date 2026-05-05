@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { KlarToastService, Toast } from './klar-toast.service';
 import { KlarIconComponent } from '../icons/klar-icon.component';
 
 @Component({
   selector: 'klar-toast-container',
   standalone: true,
-  imports: [KlarIconComponent],
+  imports: [KlarIconComponent, NgClass],
   templateUrl: './klar-toast.component.html',
-  styleUrl: './klar-toast.component.css',
 })
 export class KlarToastContainerComponent {
   protected service = inject(KlarToastService);
