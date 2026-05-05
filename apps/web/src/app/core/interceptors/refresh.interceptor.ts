@@ -25,10 +25,17 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((err: unknown) => {
       const isExternal = req.url.startsWith('http');
+      // Auth endpoints that legitimately return 401 on bad credentials —
+      // never try to refresh on those; the 401 IS the answer.
+      const isAuthEntrypoint =
+        req.url.includes('/auth/login') ||
+        req.url.includes('/auth/refresh') ||
+        req.url.includes('/auth/totp/verify') ||
+        req.url.includes('/auth/register');
       if (
         !(err instanceof HttpErrorResponse) ||
         err.status !== 401 ||
-        req.url.includes('/auth/refresh') ||
+        isAuthEntrypoint ||
         isExternal
       ) {
         return throwError(() => err);
