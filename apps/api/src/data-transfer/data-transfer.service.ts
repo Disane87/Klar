@@ -7,7 +7,8 @@ import {
 import { KlarExportFileSchema } from '@klar/shared';
 import type { KlarExportFile } from '@klar/shared';
 import type { RequestContext } from '../common/types/request-context.type';
-import type { DataTransferRepository, ExportOpts } from './data-transfer.repository';
+import { DataTransferRepository } from './data-transfer.repository';
+import type { ExportOpts } from './data-transfer.repository';
 
 export interface AnalyzeResult {
   summary: { transactions: number; recurringTransactions: number };
