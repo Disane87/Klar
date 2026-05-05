@@ -23,11 +23,15 @@ const mockMember = {
 
 const mockInvite = {
   id: 'inv-1',
-  code: 'ABCD1234',
   householdId: 'hh-1',
-  createdAt: '2026-01-01',
+  token: 'abc123token',
+  email: null,
+  createdByUserId: 'u-1',
   expiresAt: '2026-05-07',
-  usesRemaining: null,
+  usedAt: null,
+  usedByUserId: null,
+  createdAt: '2026-01-01',
+  link: 'https://klar.app/join/abc123token',
 };
 
 describe('HouseholdService', () => {
@@ -42,7 +46,7 @@ describe('HouseholdService', () => {
   beforeEach(() => {
     httpClient = {
       get: vi.fn().mockReturnValue(of([mockHousehold])),
-      post: vi.fn().mockReturnValue(of({ householdId: 'hh-1' })),
+      post: vi.fn().mockReturnValue(of({ householdId: 'hh-1', id: 'm-1' })),
       patch: vi.fn().mockReturnValue(of(mockHousehold)),
       delete: vi.fn().mockReturnValue(of(undefined)),
     };
@@ -58,7 +62,7 @@ describe('HouseholdService', () => {
 
   describe('listMyHouseholds()', () => {
     it('should GET households', async () => {
-      const result = await service.listMyHouseholds();
+      await service.listMyHouseholds();
       expect(httpClient.get).toHaveBeenCalledWith('/api/v1/households');
     });
   });
@@ -80,7 +84,7 @@ describe('HouseholdService', () => {
   describe('listMembers()', () => {
     it('should GET members', async () => {
       httpClient.get.mockReturnValue(of([mockMember]));
-      const result = await service.listMembers('hh-1');
+      await service.listMembers('hh-1');
       expect(httpClient.get).toHaveBeenCalledWith('/api/v1/households/hh-1/members');
     });
   });
@@ -110,8 +114,8 @@ describe('HouseholdService', () => {
   describe('createInvite()', () => {
     it('should POST invite', async () => {
       httpClient.post.mockReturnValue(of(mockInvite));
-      await service.createInvite('hh-1', { maxUses: 5 });
-      expect(httpClient.post).toHaveBeenCalledWith('/api/v1/households/hh-1/invites', { maxUses: 5 });
+      await service.createInvite('hh-1', { expiresInDays: 7 });
+      expect(httpClient.post).toHaveBeenCalledWith('/api/v1/households/hh-1/invites', { expiresInDays: 7 });
     });
   });
 
@@ -122,10 +126,28 @@ describe('HouseholdService', () => {
     });
   });
 
-  describe('joinByCode()', () => {
-    it('should POST join code', async () => {
-      await service.joinByCode('ABCD1234');
-      expect(httpClient.post).toHaveBeenCalledWith('/api/v1/households/join', { code: 'ABCD1234' });
+  describe('sendInviteEmail()', () => {
+    it('should POST invite email', async () => {
+      await service.sendInviteEmail('hh-1', 'inv-1', 'alice@test.com');
+      expect(httpClient.post).toHaveBeenCalledWith(
+        '/api/v1/households/hh-1/invites/inv-1/send',
+        { email: 'alice@test.com' },
+      );
+    });
+  });
+
+  describe('getInviteInfo()', () => {
+    it('should GET invite info by token', async () => {
+      httpClient.get.mockReturnValue(of({ householdName: 'Test HH', expiresAt: null }));
+      await service.getInviteInfo('abc123token');
+      expect(httpClient.get).toHaveBeenCalledWith('/api/v1/join/abc123token');
+    });
+  });
+
+  describe('joinByToken()', () => {
+    it('should POST join by token', async () => {
+      await service.joinByToken('abc123token');
+      expect(httpClient.post).toHaveBeenCalledWith('/api/v1/join/abc123token', {});
     });
   });
 
