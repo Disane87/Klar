@@ -33,6 +33,12 @@ services:
         condition: service_healthy
     ports:
       - "${PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-klar}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-klar}
