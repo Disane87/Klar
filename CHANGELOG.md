@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/Disane87/Klar/compare/v1.2.3...v1.2.4) (2026-05-05)
+
+
+### Bug Fixes
+
+* **web:** adjust iOS PWA safe-area handling ([#9](https://github.com/Disane87/Klar/issues/9)) ([d69c417](https://github.com/Disane87/Klar/commit/d69c417349a860dacc44a150aa1592396713671c))
+
 ## [1.2.3](https://github.com/Disane87/Klar/compare/v1.2.2...v1.2.3) (2026-05-05)
 
 
