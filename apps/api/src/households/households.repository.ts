@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { Household, HouseholdMembership } from '@prisma/client';
-import { HouseholdRole, MailTemplateType } from '@prisma/client';
+import { HouseholdRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { DEFAULT_MAIL_TEMPLATES } from '../mail-templates/default-mail-templates';
 
 interface CreateWithOwnerData {
   name: string;
@@ -128,17 +129,16 @@ export class HouseholdsRepository {
   }
 
   async seedDefaultTemplates(householdId: string): Promise<void> {
-    await this.prisma.householdMailTemplate.upsert({
-      where: { householdId_templateType: { householdId, templateType: MailTemplateType.INVITE } },
-      create: {
+    await this.prisma.householdMailTemplate.createMany({
+      data: DEFAULT_MAIL_TEMPLATES.map(t => ({
         householdId,
-        templateType: MailTemplateType.INVITE,
-        name: 'Einladungslink',
-        subject: '{{inviterName}} lädt dich zu "{{householdName}}" ein — Klar',
-        body: '<p>Hallo,</p><p><strong>{{inviterName}}</strong> lädt dich ein, dem Haushalt <strong>{{householdName}}</strong> beizutreten.</p><p><a href="{{inviteUrl}}">Einladung annehmen</a></p>',
-        isActive: true,
-      },
-      update: {},
+        templateType: t.templateType,
+        name:         t.name,
+        subject:      t.subject,
+        body:         t.body,
+        isActive:     true,
+      })),
+      skipDuplicates: true,
     });
   }
 }

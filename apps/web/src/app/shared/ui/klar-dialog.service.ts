@@ -7,12 +7,14 @@ export interface DialogConfig {
   title: string;
   component: Type<unknown>;
   inputs?: Record<string, unknown>;
-  width?: 'sm' | 'md' | 'lg';
+  width?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Makes the dialog fill most of the viewport height */
+  height?: 'auto' | 'tall';
   /** If true, clicking the backdrop does not close the dialog */
   disableBackdropClose?: boolean;
 }
 
-const WIDTH_MAP = { sm: '400px', md: '520px', lg: '680px' } as const;
+const WIDTH_MAP = { sm: '400px', md: '520px', lg: '680px', xl: '980px' } as const;
 
 @Injectable({ providedIn: 'root' })
 export class KlarDialogService {
@@ -23,10 +25,13 @@ export class KlarDialogService {
 
   open(config: DialogConfig): void {
     this.close();
+    const isTall = config.height === 'tall';
     this.ref = this.cdk.open(KlarDialogComponent, {
-      data:          { width: 'md', ...config },
+      data:          { width: 'md', height: 'auto', ...config },
       maxWidth:      WIDTH_MAP[config.width ?? 'md'],
       width:         '100%',
+      height:        isTall ? '88dvh' : undefined,
+      maxHeight:     isTall ? '88dvh' : undefined,
       hasBackdrop:   true,
       backdropClass: 'klar-dialog-backdrop',
       panelClass:    'klar-dialog-panel',

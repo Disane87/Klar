@@ -106,19 +106,21 @@ export class MailTemplatesComponent {
 
   openEditDialog(template: HouseholdMailTemplate): void {
     this.dialog.open({
-      title: template.name,
+      title:    template.name,
       component: MailTemplateEditDialogComponent,
-      inputs: { template, isNew: false },
-      width: 'md',
+      inputs:   { template, isNew: false },
+      width:    'xl',
+      height:   'tall',
     });
   }
 
   openCreateDialog(): void {
     this.dialog.open({
-      title: 'Neue Vorlage',
+      title:    'Neue Vorlage',
       component: MailTemplateEditDialogComponent,
-      inputs: { isNew: true },
-      width: 'md',
+      inputs:   { isNew: true },
+      width:    'xl',
+      height:   'tall',
     });
   }
 }

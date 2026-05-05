@@ -1,10 +1,21 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewChild,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
 import { HlmSpinnerComponent } from '../../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
+import { KlarCodeEditorComponent } from '../../../shared/ui/klar-code-editor.component';
 import { HouseholdStore } from '../../../core/household/household.store';
 import {
   type HouseholdMailTemplate,
@@ -13,21 +24,70 @@ import {
 } from '../../../core/mail-template/mail-template.service';
 import { KlarToastService } from '../../../shared/ui/klar-toast.service';
 
+interface Placeholder {
+  key: string;
+  label: string;
+  example: string;
+}
+
+const PLACEHOLDERS: Record<MailTemplateType, Placeholder[]> = {
+  INVITE: [
+    { key: 'displayName',   label: 'Anzeigename',     example: 'Max Mustermann' },
+    { key: 'householdName', label: 'Haushalt',         example: 'Familie Mustermann' },
+    { key: 'inviteLink',    label: 'Einladungslink',   example: 'https://klar.app/invite/abc123' },
+    { key: 'expiresAt',     label: 'Ablaufdatum',      example: '01.06.2026' },
+  ],
+  REMINDER: [
+    { key: 'displayName',   label: 'Anzeigename', example: 'Max Mustermann' },
+    { key: 'householdName', label: 'Haushalt',     example: 'Familie Mustermann' },
+  ],
+  CUSTOM: [
+    { key: 'displayName',   label: 'Anzeigename', example: 'Max Mustermann' },
+    { key: 'householdName', label: 'Haushalt',     example: 'Familie Mustermann' },
+  ],
+  EMAIL_VERIFY: [
+    { key: 'displayName', label: 'Anzeigename',        example: 'Max Mustermann' },
+    { key: 'verifyUrl',   label: 'Bestätigungslink',   example: 'https://klar.app/verify/abc123' },
+  ],
+  PASSWORD_RESET: [
+    { key: 'displayName', label: 'Anzeigename', example: 'Max Mustermann' },
+    { key: 'resetUrl',    label: 'Reset-Link',  example: 'https://klar.app/reset/abc123' },
+  ],
+  TOTP_ENABLE:  [{ key: 'displayName', label: 'Anzeigename', example: 'Max Mustermann' }],
+  TOTP_DISABLE: [{ key: 'displayName', label: 'Anzeigename', example: 'Max Mustermann' }],
+  API_KEY_CREATED: [
+    { key: 'displayName', label: 'Anzeigename', example: 'Max Mustermann' },
+    { key: 'keyName',     label: 'Key-Name',    example: 'Mein API-Key' },
+  ],
+};
+
+function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
+  let result = text;
+  for (const p of placeholders) {
+    result = result.replaceAll(`{{${p.key}}}`, p.example);
+  }
+  return result;
+}
+
 @Component({
   selector: 'app-mail-template-edit-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
     HlmButtonDirective,
     HlmInputDirective,
     HlmLabelDirective,
     HlmSpinnerComponent,
+    KlarCodeEditorComponent,
   ],
+  host: { class: 'flex flex-col h-full' },
   template: `
-    <div class="flex flex-col gap-4">
-      <div class="grid grid-cols-2 gap-4">
+    <!-- Top fields -->
+    <div class="flex flex-col gap-3 pb-4 border-b border-(--border) flex-shrink-0">
+      <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label hlmLabel>Typ</label>
+          <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Typ</label>
           <select hlmInput [(ngModel)]="formTemplateType" [disabled]="!isNew()">
             <option value="INVITE">Einladung</option>
             <option value="REMINDER">Erinnerung</option>
@@ -40,36 +100,118 @@ import { KlarToastService } from '../../../shared/ui/klar-toast.service';
           </select>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label hlmLabel>Name</label>
+          <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Name</label>
           <input hlmInput [(ngModel)]="formName" placeholder="Meine Einladung" />
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label hlmLabel>Betreff</label>
+        <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Betreff</label>
         <input hlmInput [(ngModel)]="formSubject"
-               [placeholder]="getDefaultSubject(formTemplateType)" />
+               [placeholder]="defaultSubject()" />
+      </div>
+    </div>
+
+    <!-- Main area: editor + right panel -->
+    <div class="flex flex-1 gap-3 min-h-0 pt-4">
+
+      <!-- Left: code editor -->
+      <div class="flex flex-col flex-[3] min-h-0 gap-1.5">
+        <span class="text-[11px] uppercase tracking-widest text-(--text-muted) flex-shrink-0">
+          HTML-Inhalt (Handlebars)
+        </span>
+        <div class="flex-1 min-h-0 rounded border border-(--border) overflow-hidden">
+          <klar-code-editor
+            #editor
+            [initialValue]="formBody()"
+            (valueChange)="formBody.set($event)"
+            class="h-full" />
+        </div>
       </div>
 
-      <div class="flex flex-col gap-1.5">
-        <label hlmLabel>Inhalt (Handlebars HTML)</label>
-        <textarea
-          [(ngModel)]="formBody"
-          class="w-full min-h-48 bg-(--surface-2) border border-(--border) rounded-md px-3 py-2 text-[13px] font-mono text-(--text) focus:outline-none focus:ring-1 focus:ring-accent resize-y"
-          [placeholder]="getDefaultBody(formTemplateType)"
-          spellcheck="false">
-        </textarea>
-      </div>
+      <!-- Right: placeholders + preview -->
+      <div class="flex flex-col flex-[2] min-h-0 gap-3">
 
+        <!-- Placeholder section -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-widest text-(--text-muted)">
+              Platzhalter
+            </span>
+            <span class="text-[11px] text-(--text-muted)">
+              Klicken zum Einfügen
+            </span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            @for (p of placeholders(); track p.key) {
+              <button
+                type="button"
+                (click)="insertPlaceholder(p.key)"
+                class="inline-flex items-center px-2 py-1 rounded text-xs font-mono
+                       bg-(--surface-2) border border-(--border) text-(--text-muted)
+                       hover:border-(--accent) hover:text-(--accent) transition-colors cursor-pointer">
+                {{ '{{' + p.key + '}}' }}
+              </button>
+            }
+          </div>
+          <div class="grid grid-cols-1 gap-0.5 mt-1">
+            @for (p of placeholders(); track p.key) {
+              <div class="flex items-baseline gap-2 text-xs">
+                <code class="font-mono text-(--text-muted) w-32 shrink-0 truncate">{{ '{{' + p.key + '}}' }}</code>
+                <span class="text-(--text-muted) opacity-60 truncate">{{ p.label }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-(--border) flex-shrink-0"></div>
+
+        <!-- Preview section -->
+        <div class="flex flex-col gap-2 flex-1 min-h-0">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] uppercase tracking-widest text-(--text-muted)">Vorschau</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-(--surface-2) border border-(--border) text-(--text-muted)">
+              Testdaten
+            </span>
+          </div>
+
+          <!-- Subject preview -->
+          @if (previewSubject()) {
+            <div class="flex flex-col gap-0.5 flex-shrink-0">
+              <span class="text-[10px] text-(--text-muted) uppercase tracking-wider">Betreff</span>
+              <div class="px-2.5 py-1.5 rounded bg-(--surface-2) border border-(--border)
+                          text-[12px] text-(--text) font-medium truncate">
+                {{ previewSubject() }}
+              </div>
+            </div>
+          }
+
+          <!-- Body preview in iframe-like container -->
+          <div class="flex-1 min-h-0 rounded border border-(--border) bg-white overflow-auto">
+            <div class="text-[12px] text-black p-3 [&_a]:text-blue-600 [&_h1]:text-xl
+                        [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold
+                        [&_p]:my-2 [&_a]:underline preview-body"
+                 [innerHTML]="safePreviewHtml()">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between pt-4 mt-4 border-t border-(--border) flex-shrink-0">
       @if (err()) {
         <p class="text-[12px] text-(--color-expense)">{{ err() }}</p>
+      } @else {
+        <span></span>
       }
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
+      <div class="flex gap-2">
         <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
         <button hlmBtn variant="default" size="sm" type="button"
                 [disabled]="saving()" (click)="onSave()">
-          @if (saving()) { <hlm-spinner [size]="12" /> }
+          @if (saving()) { <hlm-spinner [size]="12" class="mr-1" /> }
           Speichern
         </button>
       </div>
@@ -77,10 +219,13 @@ import { KlarToastService } from '../../../shared/ui/klar-toast.service';
   `,
 })
 export class MailTemplateEditDialogComponent {
+  @ViewChild('editor') private editorRef?: KlarCodeEditorComponent;
+
   private mailTemplateService = inject(MailTemplateService);
   private toast               = inject(KlarToastService);
   private hhStore             = inject(HouseholdStore);
   private dialog              = inject(KlarDialogService);
+  private sanitizer           = inject(DomSanitizer);
 
   readonly template = input<HouseholdMailTemplate>();
   readonly isNew    = input(false);
@@ -88,70 +233,23 @@ export class MailTemplateEditDialogComponent {
   readonly saving = signal(false);
   readonly err    = signal('');
 
-  formTemplateType: MailTemplateType = 'INVITE';
-  formName    = '';
-  formSubject = '';
-  formBody    = '';
+  formTemplateType = 'INVITE' as MailTemplateType;
+  readonly formName    = signal('');
+  readonly formSubject = signal('');
+  readonly formBody    = signal('');
 
-  constructor() {
-    effect(() => {
-      const t = this.template();
-      if (t) {
-        this.formTemplateType = t.templateType;
-        this.formName         = t.name;
-        this.formSubject      = t.subject;
-        this.formBody         = t.body;
-      }
-    });
-  }
+  readonly placeholders = computed(() => PLACEHOLDERS[this.formTemplateType] ?? []);
 
-  cancel(): void { this.dialog.close(); }
+  readonly previewSubject = computed(() =>
+    fillPlaceholders(this.formSubject(), this.placeholders())
+  );
 
-  async onSave(): Promise<void> {
-    const hid = this.hhStore.activeId();
-    if (!hid) return;
+  readonly safePreviewHtml = computed<SafeHtml>(() => {
+    const filled = fillPlaceholders(this.formBody(), this.placeholders());
+    return this.sanitizer.bypassSecurityTrustHtml(filled);
+  });
 
-    if (!this.formName.trim()) {
-      this.toast.error('Name ist erforderlich');
-      return;
-    }
-    if (!this.formSubject.trim()) {
-      this.toast.error('Betreff ist erforderlich');
-      return;
-    }
-    if (!this.formBody.trim()) {
-      this.toast.error('Inhalt ist erforderlich');
-      return;
-    }
-
-    this.saving.set(true);
-    this.err.set('');
-    try {
-      if (this.isNew()) {
-        await this.mailTemplateService.createTemplate(hid, '', {
-          templateType: this.formTemplateType,
-          name:         this.formName,
-          subject:      this.formSubject,
-          body:         this.formBody,
-        });
-        this.toast.success('Vorlage erstellt');
-      } else {
-        await this.mailTemplateService.updateTemplate(hid, '', this.formTemplateType, {
-          name:    this.formName,
-          subject: this.formSubject,
-          body:    this.formBody,
-        });
-        this.toast.success('Vorlage gespeichert');
-      }
-      this.dialog.close();
-    } catch {
-      this.err.set('Vorlage konnte nicht gespeichert werden');
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  getDefaultSubject(type: MailTemplateType): string {
+  readonly defaultSubject = computed(() => {
     const defaults: Record<MailTemplateType, string> = {
       INVITE:          'Einladung zu {{householdName}} — Klar',
       REMINDER:        'Erinnerung: {{householdName}} — Klar',
@@ -162,20 +260,59 @@ export class MailTemplateEditDialogComponent {
       TOTP_DISABLE:    '2FA deaktiviert — Klar',
       API_KEY_CREATED: 'Neuer API-Key erstellt — Klar',
     };
-    return defaults[type] ?? '';
+    return defaults[this.formTemplateType] ?? '';
+  });
+
+  constructor() {
+    effect(() => {
+      const t = this.template();
+      if (t) {
+        this.formTemplateType = t.templateType;
+        this.formName.set(t.name);
+        this.formSubject.set(t.subject);
+        this.formBody.set(t.body);
+      }
+    });
   }
 
-  getDefaultBody(type: MailTemplateType): string {
-    const defaults: Record<MailTemplateType, string> = {
-      INVITE:          '<h1>Hallo {{displayName}}</h1><p>Du wurdest zu {{householdName}} eingeladen.</p>',
-      REMINDER:        '<h1>Hallo {{displayName}}</h1><p>Vergiss nicht, deine Fixkosten zu aktualisieren!</p>',
-      CUSTOM:          '<h1>Hallo {{displayName}}</h1><p>Deine Nachricht...</p>',
-      EMAIL_VERIFY:    '<h1>Hallo {{displayName}}</h1><p>Bitte bestätige deine E-Mail-Adresse.</p><a href="{{verifyUrl}}">Bestätigen</a>',
-      PASSWORD_RESET:  '<h1>Hallo {{displayName}}</h1><p>Du kannst dein Passwort zurücksetzen.</p><a href="{{resetUrl}}">Passwort zurücksetzen</a>',
-      TOTP_ENABLE:     '<h1>Hallo {{displayName}}</h1><p>2FA wurde für dein Konto aktiviert.</p>',
-      TOTP_DISABLE:    '<h1>Hallo {{displayName}}</h1><p>2FA wurde für dein Konto deaktiviert.</p>',
-      API_KEY_CREATED: '<h1>Hallo {{displayName}}</h1><p>Ein neuer API-Key wurde erstellt: {{keyName}}</p>',
-    };
-    return defaults[type] ?? '';
+  insertPlaceholder(key: string): void {
+    this.editorRef?.insertAtCursor(`{{${key}}}`);
+  }
+
+  cancel(): void { this.dialog.close(); }
+
+  async onSave(): Promise<void> {
+    const hid = this.hhStore.activeId();
+    if (!hid) return;
+
+    const name    = this.formName().trim();
+    const subject = this.formSubject().trim();
+    const body    = this.formBody().trim();
+
+    if (!name)    { this.toast.error('Name ist erforderlich');    return; }
+    if (!subject) { this.toast.error('Betreff ist erforderlich'); return; }
+    if (!body)    { this.toast.error('Inhalt ist erforderlich');  return; }
+
+    this.saving.set(true);
+    this.err.set('');
+    try {
+      if (this.isNew()) {
+        await this.mailTemplateService.createTemplate(hid, '', {
+          templateType: this.formTemplateType,
+          name, subject, body,
+        });
+        this.toast.success('Vorlage erstellt');
+      } else {
+        await this.mailTemplateService.updateTemplate(hid, '', this.formTemplateType, {
+          name, subject, body,
+        });
+        this.toast.success('Vorlage gespeichert');
+      }
+      this.dialog.close();
+    } catch {
+      this.err.set('Vorlage konnte nicht gespeichert werden');
+    } finally {
+      this.saving.set(false);
+    }
   }
 }

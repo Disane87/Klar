@@ -52,3 +52,13 @@
   padding: 20px;
   max-height: calc(100dvh - 120px);
 }
+
+/* Tall variant: panel fills the CDK container height */
+.panel--tall {
+  height: 100%;
+}
+
+.panel--tall .panel-body {
+  max-height: none;
+  overflow: hidden;
+}
