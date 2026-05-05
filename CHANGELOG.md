@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/Disane87/Klar/compare/v1.7.0...v1.8.0) (2026-05-05)
+
+
+### Features
+
+* **projects:** project detail page with planned/realized transactions ([71c1f20](https://github.com/Disane87/Klar/commit/71c1f20c32ea475c094fb5ab605b243974b63d53))
+
 # [1.7.0](https://github.com/Disane87/Klar/compare/v1.6.0...v1.7.0) (2026-05-05)
 
 
