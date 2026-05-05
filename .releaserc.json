@@ -25,7 +25,7 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "docker buildx build --push --platform linux/amd64 --file apps/api/Dockerfile --build-arg APP_VERSION=${nextRelease.version} --tag ghcr.io/${GHCR_OWNER}/klar:${nextRelease.version} --tag ghcr.io/${GHCR_OWNER}/klar:${nextRelease.gitTag} --tag ghcr.io/${GHCR_OWNER}/klar:latest --cache-from type=gha,scope=klar --cache-to type=gha,mode=max,scope=klar ."
+        "publishCmd": "docker buildx build --push --platform linux/amd64 --file apps/api/Dockerfile --build-arg APP_VERSION=${nextRelease.version} --tag ghcr.io/disane87/klar:${nextRelease.version} --tag ghcr.io/disane87/klar:${nextRelease.gitTag} --tag ghcr.io/disane87/klar:latest --cache-from type=gha,scope=klar --cache-to type=gha,mode=max,scope=klar ."
       }
     ],
     [
