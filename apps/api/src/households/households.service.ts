@@ -7,7 +7,7 @@ import {
   GoneException,
   Inject,
 } from '@nestjs/common';
-import type { Household, HouseholdMembership } from '@prisma/client';
+import type { Household, HouseholdMembership, InvitationLink } from '@prisma/client';
 import { HouseholdRole } from '@prisma/client';
 import type { RequestContext } from '../common/types/request-context.type';
 import { HouseholdsRepository } from './households.repository';
@@ -16,19 +16,6 @@ import { AuditService } from '../audit/audit.service';
 import { MailService } from '../mail/mail.service';
 import { appConfig } from '../config/app.config';
 import type { ConfigType } from '@nestjs/config';
-
-// Local type until Prisma client regenerates
-type InvitationLink = {
-  id: string;
-  householdId: string;
-  token: string;
-  email: string | null;
-  createdByUserId: string | null;
-  expiresAt: Date | null;
-  usedAt: Date | null;
-  usedByUserId: string | null;
-  createdAt: Date;
-};
 
 export interface HouseholdWithRole {
   household: Household;

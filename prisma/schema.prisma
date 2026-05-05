@@ -174,7 +174,7 @@ model Household {
   createdAt DateTime @default(now())
 
   memberships            HouseholdMembership[]
-  inviteCodes            InviteCode[]
+  invitationLinks        InvitationLink[]
   categories             Category[]
   projects               Project[]
   recurringTransactions RecurringTransaction[]
@@ -199,19 +199,21 @@ model HouseholdMembership {
   @@index([userId])
 }
 
-model InviteCode {
+model InvitationLink {
   id              String    @id @default(cuid())
   householdId     String
-  code            String    @unique
-  createdByUserId String?   // nullable (Account-Delete)
+  token           String    @unique
+  email           String?
+  createdByUserId String?
   expiresAt       DateTime?
-  usesRemaining   Int?      // null = unbegrenzt
+  usedAt          DateTime?
+  usedByUserId    String?
   createdAt       DateTime  @default(now())
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId])
-  @@index([code])
+  @@index([token])
 }
 
 // ─────────────────────────────────────────────

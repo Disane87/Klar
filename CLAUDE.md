@@ -1097,6 +1097,7 @@ export const createTransaction = (
 - ❌ Berechnungs-Logik in Frontend/Backend reimplementieren — immer aus `packages/shared`
 - ❌ Recurring-Transaktionen persistieren — on-the-fly berechnen
 - ❌ PRIVATE-Beträge anderer User in Aggregate einrechnen
+- ❌ UI-Controls ohne Spartan-Basis — Workflow: (1) Spartan UI prüfen (`spartan.ng`), (2) passendes `hlm*`-Direktive/Komponente aus `apps/web/src/app/shared/ui/hlm/` verwenden, (3) in eigene `app-*`-Komponente kapseln wie die bestehenden `hlm-input`, `hlm-button`, `hlm-select` etc. — niemals nackte native `<select>`, `<input>`, `<button>` ohne `hlm*`-Direktive in Templates schreiben
 - ❌ `Zone.js`-Patterns (`NgZone.run()`, `ChangeDetectorRef.markForCheck()`)
 - ❌ Reactive Forms (`FormGroup`, `FormBuilder`) — Signal Forms verwenden
 - ❌ Hardcoded Color-Hex in Komponenten — Tailwind-Klassen oder CSS-Variablen
@@ -1109,6 +1110,42 @@ export const createTransaction = (
 - ❌ Code ohne Tests committen — jede neue Datei bekommt sofort eine `.spec.ts`
 - ❌ `pnpm test` schlägt fehl (Coverage < 70% Backend / < 70% Frontend) — erst fixen, dann committen
 - ❌ Linter-Fehler ignorieren — `pnpm lint` muss vor jedem Commit grün sein
+- ❌ `as any` / `as unknown` als dauerhafter Workaround — nur wenn Prisma-Client noch nicht regeneriert wurde; sobald Schema aktualisiert ist, sofort entfernen
+- ❌ Prisma-Schema und Migrationen auseinanderlaufen lassen — nach jeder Migration: Schema anpassen + `prisma:generate` ausführen, sonst kein Commit
+
+---
+
+## Feature-Completeness-Strategie — VERBINDLICH
+
+**Warum:** Unfertige Features entstehen wenn Migrations/Schema/Code nicht synchron gehalten werden, oder wenn Buttons/Flows ohne E2E-Test committed werden.
+
+### Definition of Done — jedes Feature muss alle Punkte erfüllen bevor Commit
+
+1. **Backend vollständig:** Controller-Route → Service → Repository — alle drei Schichten implementiert
+2. **Prisma-Schema aktuell:** Jede neue Tabelle hat ein Model im Schema; `prisma:generate` danach ausgeführt; kein `as any` auf Prisma-Client-Aufrufen
+3. **Frontend vollständig:** Button/Link ruft tatsächlich eine Funktion auf; Funktion kommuniziert mit API; Ergebnis wird im UI angezeigt oder Fehler wird getoastet
+4. **Happy Path manuell getestet:** Der Flow wurde einmal durchgeklickt — nicht nur "kompiliert"
+5. **Tests grün:** `pnpm test` und `pnpm lint` fehlerfrei
+
+### Erkennungsmerkmale für unfertige Features — sofort blocken
+
+- `TODO`, `FIXME`, `// stub`, `// placeholder` im committed Code
+- `as any` auf Prisma-Client-Operationen (Zeichen: Schema nicht aktuell)
+- Buttons/Links die `(click)="..."` haben aber die Methode nichts tut oder nur `console.log`
+- API-Endpunkte im Controller die noch keinen Service-Aufruf haben
+- Migration ohne zugehöriges Schema-Model
+
+### Checkliste vor jedem Commit (mental durchgehen)
+
+```
+[ ] Alle neuen Migrations haben ein passendes Prisma-Model?
+[ ] prisma:generate ausgeführt nach Schema-Änderung?
+[ ] Kein `as any` auf Prisma-Client-Aufrufen?
+[ ] Alle Buttons/Links die im UI sichtbar sind, tun auch etwas?
+[ ] pnpm build fehlerfrei?
+[ ] pnpm test fehlerfrei?
+[ ] pnpm lint fehlerfrei?
+```
 
 ---
 

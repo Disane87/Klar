@@ -131,7 +131,7 @@ afterEach(async () => {
   await prisma.recurringTransaction.deleteMany();
   await prisma.category.deleteMany();
   await prisma.project.deleteMany();
-  await prisma.inviteCode.deleteMany();
+  await prisma.invitationLink.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.householdMembership.deleteMany();
   await prisma.household.deleteMany();
