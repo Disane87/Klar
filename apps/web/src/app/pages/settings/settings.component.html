@@ -77,24 +77,16 @@
 
     <!-- ── DARSTELLUNG ────────────────────────────────────── -->
     <klar-list-group label="Darstellung">
-      <klar-list-item icon="sun"
-                      label="Hell"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'light' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('light')" />
-      <klar-list-item icon="moon"
-                      label="Dunkel"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'dark' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('dark')" />
-      <klar-list-item icon="monitor"
-                      label="System"
-                      [navigable]="true"
-                      [badge]="themeService.theme() === 'system' ? 'Aktiv' : undefined"
-                      badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
-                      (itemClick)="setTheme('system')" />
+      <div class="px-4 py-3">
+        <div hlmToggleGroup type="single"
+             [value]="themeService.theme()"
+             (valueChange)="setTheme($event)"
+             class="w-full">
+          @for (opt of themeOptions; track opt.value) {
+            <button type="button" hlmToggleGroupItem [value]="opt.value">{{ opt.label }}</button>
+          }
+        </div>
+      </div>
       <klar-list-item icon="languages"
                       label="Sprache"
                       value="Deutsch" />
