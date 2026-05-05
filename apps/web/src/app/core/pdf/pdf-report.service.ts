@@ -15,6 +15,7 @@ export interface FixkostenPdfData {
   expenseRating: string;
   surplusRating: string;
   incomeBracket: { label: string; desc: string };
+  showCreator: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -144,17 +145,26 @@ export class PdfReportService {
       y += 9;
 
       // ── Items table ───────────────────────────────────────────────────────────
-      const rows = group.items.map(item => [
-        item.name,
-        this.frequencyLabel(item.frequency),
-        item.dayOfMonth ? `${String(item.dayOfMonth).padStart(2, '0')}.` : '–',
-        this.formatCents(item.monthlyEquivalentCents),
-      ]);
+      const rows = group.items.map(item => {
+        const base = [
+          item.name,
+          this.frequencyLabel(item.frequency),
+          item.dayOfMonth ? `${String(item.dayOfMonth).padStart(2, '0')}.` : '–',
+        ];
+        if (data.showCreator) base.push(item.createdBy ?? '–');
+        base.push(this.formatCents(item.monthlyEquivalentCents));
+        return base;
+      });
+
+      const head = data.showCreator
+        ? [['Name', 'Frequenz', 'Buchungstag', 'Von', 'Monatsäquivalent']]
+        : [['Name', 'Frequenz', 'Buchungstag', 'Monatsäquivalent']];
+      const amountColIdx = data.showCreator ? 4 : 3;
 
       autoTable(doc, {
         startY: y,
         margin: { left: marginL, right: marginR },
-        head: [['Name', 'Frequenz', 'Buchungstag', 'Monatsäquivalent']],
+        head,
         body: rows,
         theme: 'plain',
         styles: {
@@ -171,14 +181,22 @@ export class PdfReportService {
           textColor: MUTED,
           cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
         },
-        columnStyles: {
-          0: { cellWidth: 'auto' },
-          1: { cellWidth: 28, halign: 'center' },
-          2: { cellWidth: 22, halign: 'center' },
-          3: { cellWidth: 38, halign: 'right', font: 'courier' },
-        },
+        columnStyles: data.showCreator
+          ? {
+              0: { cellWidth: 'auto' },
+              1: { cellWidth: 24, halign: 'center' },
+              2: { cellWidth: 20, halign: 'center' },
+              3: { cellWidth: 26, halign: 'left' },
+              4: { cellWidth: 34, halign: 'right', font: 'courier' },
+            }
+          : {
+              0: { cellWidth: 'auto' },
+              1: { cellWidth: 28, halign: 'center' },
+              2: { cellWidth: 22, halign: 'center' },
+              3: { cellWidth: 38, halign: 'right', font: 'courier' },
+            },
         didParseCell: (hookData) => {
-          if (hookData.section === 'body' && hookData.column.index === 3) {
+          if (hookData.section === 'body' && hookData.column.index === amountColIdx) {
             const raw = hookData.cell.raw as string;
             if (raw.startsWith('-')) {
               hookData.cell.styles.textColor = RED;

@@ -194,6 +194,14 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Desktop: scale up the entire UI to match what 120% browser zoom looks like.
+   Mobile/tablet stay at 16px so iOS auto-zoom rules and tap targets remain valid. */
+@media (min-width: 1024px) {
+  html {
+    font-size: 20px;
+  }
+}
+
 /* Prevent iOS Safari auto-zoom on focus — HARD RULE */
 input, select, textarea {
   font-size: 1rem;

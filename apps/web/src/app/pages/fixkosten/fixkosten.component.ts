@@ -69,7 +69,7 @@ export class FixkostenPageComponent {
       showPlanspiel: false,
       showAdd:       true,
       showExport:    false,
-      addLabel:      'Buchung',
+      addLabel:      'Fixkosten',
       onAdd:         () => this.openCreate(),
     });
 
@@ -380,18 +380,34 @@ grouped.set(key, {
     const data = this.store.fixedCosts();
     if (!data) return;
 
+    const filterUserId = this.memberFilter();
+    const scopeName = filterUserId
+      ? (this.members().find(m => m.userId === filterUserId)?.displayName ?? 'Haushalt')
+      : (this.householdStore.activeName() || 'Haushalt');
+
+    const groups = filterUserId
+      ? data.groups
+          .map(g => {
+            const items = g.items.filter(i => i.createdById === filterUserId);
+            const totalCents = items.reduce((s, i) => s + i.monthlyEquivalentCents, 0);
+            return { ...g, items, totalCents };
+          })
+          .filter(g => g.items.length > 0)
+      : data.groups;
+
     this.pdfReport.exportFixkosten({
-      groups:             data.groups,
+      groups,
       incomeTotalCents:   this.incomeTotalCents(),
       expenseTotalCents:  this.expenseTotalCents(),
       surplusCents:       this.surplusCents(),
-      householdName:      this.householdStore.activeName() || 'Haushalt',
+      householdName:      scopeName,
       month:              this.store.currentMonth(),
       expenseRatio:       this.expenseRatio(),
       surplusRatio:       this.surplusRatio(),
       expenseRating:      this.expenseRating(),
       surplusRating:      this.surplusRating(),
       incomeBracket:      this.incomeBracket(),
+      showCreator:        !filterUserId,
     });
   }
 }
