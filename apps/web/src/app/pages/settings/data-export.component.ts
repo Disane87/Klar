@@ -1,10 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -15,11 +14,10 @@ import { DataTransferService } from '../../core/data-transfer/data-transfer.serv
   standalone: true,
   imports: [
     FormsModule,
-    HlmButtonDirective,
+    KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
     HlmCheckboxComponent,
-    HlmSpinnerComponent,
   ],
   templateUrl: './data-export.component.html',
 })

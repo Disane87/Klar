@@ -2,8 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import * as QRCode from 'qrcode';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmLoadingBtnDirective } from '../../shared/ui/hlm/hlm-loading-btn.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -13,7 +12,7 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
 @Component({
   selector: 'app-totp-setup-dialog',
   standalone: true,
-  imports: [FormsModule, HlmButtonDirective, HlmInputDirective, HlmLoadingBtnDirective],
+  imports: [FormsModule, KlarButtonComponent, HlmInputDirective],
   template: `
     <div class="flex flex-col gap-4">
       <div class="text-center">
@@ -47,14 +46,14 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
       </div>
 
       <div class="flex gap-2">
-        <button hlmBtn variant="outline" class="flex-1" (click)="dialog.close()">
+        <klar-button tone="outline" class="flex-1" (click)="dialog.close()">
           Abbrechen
-        </button>
-        <button hlmBtn variant="default" class="flex-1" 
-                [klarLoadingBtn]="saving()" [disabled]="code().length < 6"
-                (click)="enable()">
+        </klar-button>
+        <klar-button tone="primary" class="flex-1"
+                     [loading]="saving()" [disabled]="code().length < 6"
+                     (click)="enable()">
           2FA aktivieren
-        </button>
+        </klar-button>
       </div>
     </div>
   `,

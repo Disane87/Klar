@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -22,8 +21,7 @@ import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
   imports: [
     FormsModule,
-    HlmButtonDirective,
-    HlmSpinnerComponent,
+    KlarButtonComponent,
     HlmCheckboxComponent,
     KlarInputComponent,
     KlarIconComponent,

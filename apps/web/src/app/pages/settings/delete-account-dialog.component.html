@@ -14,10 +14,9 @@
     <p class="dialog-error">{{ error() }}</p>
   }
   <div class="dialog-actions">
-    <button hlmBtn variant="destructive" [disabled]="!canDelete() || deleting()" (click)="confirm()">
-      @if (deleting()) { <hlm-spinner [size]="12" /> }
+    <klar-button tone="danger" [disabled]="!canDelete()" [loading]="deleting()" (click)="confirm()">
       Konto unwiderruflich löschen
-    </button>
-    <button hlmBtn variant="ghost" type="button" (click)="dialog.close()">Abbrechen</button>
+    </klar-button>
+    <klar-button tone="ghost" (click)="dialog.close()">Abbrechen</klar-button>
   </div>
 </div>

@@ -7,11 +7,10 @@
 
   <input #fileInput type="file" accept=".json" class="sr-only" (change)="onFileSelected($event)" />
 
-  <button type="button" hlmBtn variant="outline" class="min-h-[44px] self-start"
-          [disabled]="analyzing()" (click)="fileInput.click()">
-    @if (analyzing()) { <hlm-spinner [size]="14" class="mr-1" /> }
+  <klar-button tone="outline" class="self-start"
+               [loading]="analyzing()" (click)="fileInput.click()">
     JSON-Datei wählen
-  </button>
+  </klar-button>
 
   <p class="text-xs text-muted-foreground">
     Klar-Export-Datei (.json). Kategorien und Projekte werden automatisch zugeordnet.

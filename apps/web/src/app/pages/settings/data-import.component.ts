@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -12,7 +11,7 @@ import { ImportMappingDialogComponent } from './import-mapping-dialog.component'
 @Component({
   selector: 'app-data-import',
   standalone: true,
-  imports: [HlmButtonDirective, HlmSpinnerComponent, KlarErrorBarComponent],
+  imports: [KlarButtonComponent, KlarErrorBarComponent],
   templateUrl: './data-import.component.html',
 })
 export class DataImportComponent {

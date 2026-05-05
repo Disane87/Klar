@@ -3,10 +3,9 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
 import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -35,10 +34,9 @@ import { DataImportComponent } from './data-import.component';
   imports: [
     DatePipe,
     FormsModule,
-    HlmButtonDirective,
+    KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
-    HlmSpinnerComponent,
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,

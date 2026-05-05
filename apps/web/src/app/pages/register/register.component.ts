@@ -4,9 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmLoadingBtnDirective } from '../../shared/ui/hlm/hlm-loading-btn.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -18,9 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
     RouterLink,
     KlarWordmarkComponent,
     KlarIconComponent,
-    HlmButtonDirective,
-    HlmLoadingBtnDirective,
-    HlmSpinnerComponent,
+    KlarButtonComponent,
     KlarInputComponent,
   ],
   templateUrl: './register.component.html',

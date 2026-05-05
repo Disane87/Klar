@@ -68,19 +68,13 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="md" type="submit"
-                class="w-full">
-          @if (loading()) { <hlm-spinner /> }
+        <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
           Beitreten
-        </button>
+        </klar-button>
 
-        <button
-          type="button"
-          (click)="setMode('choose')"
-          class="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2 min-h-[44px]"
-        >
+        <klar-button tone="link" class="w-full" (click)="setMode('choose')">
           ← Zurück
-        </button>
+        </klar-button>
       </form>
     }
 
@@ -95,19 +89,13 @@
           <p class="text-xs text-danger">{{ error() }}</p>
         }
 
-        <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="md" type="submit"
-                class="w-full">
-          @if (loading()) { <hlm-spinner /> }
+        <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
           Weiter
-        </button>
+        </klar-button>
 
-        <button
-          type="button"
-          (click)="setMode('choose')"
-          class="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2 min-h-[44px]"
-        >
+        <klar-button tone="link" class="w-full" (click)="setMode('choose')">
           ← Zurück
-        </button>
+        </klar-button>
       </form>
     }
   </div>

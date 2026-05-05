@@ -10,10 +10,9 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
-import { HlmSpinnerComponent } from '../../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
 import { KlarCodeEditorComponent } from '../../../shared/ui/klar-code-editor.component';
 import { HouseholdStore } from '../../../core/household/household.store';
@@ -75,10 +74,9 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    HlmButtonDirective,
+    KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
-    HlmSpinnerComponent,
     KlarCodeEditorComponent,
   ],
   host: { class: 'flex flex-col h-full' },
@@ -208,12 +206,10 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
         <span></span>
       }
       <div class="flex gap-2">
-        <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
-        <button hlmBtn variant="default" size="sm" type="button"
-                [disabled]="saving()" (click)="onSave()">
-          @if (saving()) { <hlm-spinner [size]="12" class="mr-1" /> }
+        <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
+        <klar-button tone="primary" size="sm" [loading]="saving()" (click)="onSave()">
           Speichern
-        </button>
+        </klar-button>
       </div>
     </div>
   `,

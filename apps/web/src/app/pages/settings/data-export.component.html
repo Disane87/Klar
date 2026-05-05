@@ -34,10 +34,9 @@
   </div>
 
   <div class="dialog-actions">
-    <button type="button" hlmBtn [disabled]="exporting()" (click)="export()">
-      @if (exporting()) { <hlm-spinner [size]="12" class="mr-1" /> }
+    <klar-button tone="primary" [loading]="exporting()" (click)="export()">
       Exportieren
-    </button>
-    <button type="button" hlmBtn variant="ghost" (click)="dialog.close()">Abbrechen</button>
+    </klar-button>
+    <klar-button tone="ghost" (click)="dialog.close()">Abbrechen</klar-button>
   </div>
 </div>

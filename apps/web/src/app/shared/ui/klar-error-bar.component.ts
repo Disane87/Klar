@@ -1,19 +1,19 @@
 import { Component, input, output } from '@angular/core';
 import { KlarIconComponent } from '../icons/klar-icon.component';
-import { HlmButtonDirective } from './hlm/hlm-button.directive';
+import { KlarButtonComponent } from './klar-button.component';
 
 @Component({
   selector: 'klar-error-bar',
   standalone: true,
-  imports: [KlarIconComponent, HlmButtonDirective],
+  imports: [KlarIconComponent, KlarButtonComponent],
   template: `
     <div class="flex items-center gap-2 rounded border border-destructive/30 bg-destructive/5
                 px-4 py-2.5 text-sm text-destructive">
       <klar-icon name="alert-circle" [size]="14" />
       <span class="flex-1">{{ message() }}</span>
-      <button type="button" hlmBtn variant="destructive" size="sm" (click)="retry.emit()">
+      <klar-button tone="danger" size="sm" (click)="retry.emit()">
         Erneut versuchen
-      </button>
+      </klar-button>
     </div>
   `,
 })

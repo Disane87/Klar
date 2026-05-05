@@ -8,14 +8,10 @@
       @if (editingName()) {
         <div class="flex gap-2 px-6 py-4 items-center">
           <klar-input class="flex-1" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
-          <button hlmBtn size="sm" variant="default" type="button"
-                  [disabled]="savingName()" (click)="saveName()">
-            @if (savingName()) { <hlm-spinner [size]="12" /> }
+          <klar-button size="sm" tone="primary" [loading]="savingName()" (click)="saveName()">
             Speichern
-          </button>
-          <button type="button"
-                  class="min-h-11 px-3 text-[12px] bg-transparent border-none cursor-pointer text-(--text-muted) rounded-sm hover:text-(--text) active:text-(--text) transition-colors"
-                  (click)="cancelEditName()">Abbruch</button>
+          </klar-button>
+          <klar-button size="sm" tone="link" (click)="cancelEditName()">Abbruch</klar-button>
         </div>
       } @else {
         <div class="px-6 pt-4 pb-4">
@@ -100,9 +96,9 @@
               <klar-icon name="copy" [size]="14" />
             </button>
           </div>
-          <button hlmBtn size="sm" variant="ghost" type="button" (click)="apiKeysStore.clearJustCreated()">
+          <klar-button size="sm" tone="ghost" (click)="apiKeysStore.clearJustCreated()">
             Verstanden
-          </button>
+          </klar-button>
         </div>
       }
 
@@ -126,15 +122,12 @@
             }
           </div>
           <div class="flex gap-2 items-center">
-            <button hlmBtn size="sm" variant="default" type="button"
-                    (click)="createApiKey()"
-                    [disabled]="apiKeysStore.creating() || !apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0">
-              @if (apiKeysStore.creating()) { <hlm-spinner [size]="12" /> }
+            <klar-button size="sm" tone="primary"
+                         [disabled]="!apiKeysStore.newKeyName().trim() || apiKeysStore.newKeyScopes().length === 0"
+                         [loading]="apiKeysStore.creating()" (click)="createApiKey()">
               Erstellen
-            </button>
-            <button type="button"
-                    class="min-h-11 px-3 text-[12px] bg-transparent border-none cursor-pointer text-(--text-muted) rounded-sm hover:text-(--text) active:text-(--text) transition-colors"
-                    (click)="apiKeysStore.showCreateForm.set(false)">Abbruch</button>
+            </klar-button>
+            <klar-button size="sm" tone="link" (click)="apiKeysStore.showCreateForm.set(false)">Abbruch</klar-button>
           </div>
         </div>
       }
@@ -167,10 +160,9 @@
             <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
               Löscht diesen Haushalt unwiderruflich. Du bist der einzige Owner — alle Daten gehen verloren.
             </p>
-            <button hlmBtn size="sm" variant="destructive" type="button" (click)="deleteHousehold()">
-              @if (deletingHousehold()) { <hlm-spinner [size]="12" /> }
+            <klar-button size="sm" tone="danger" [loading]="deletingHousehold()" (click)="deleteHousehold()">
               Haushalt löschen …
-            </button>
+            </klar-button>
           } @else {
             <p class="text-[12px] font-semibold text-(--color-expense) mb-1">Haushalt verlassen</p>
             @if (canManage()) {
@@ -182,10 +174,9 @@
                 Du verlässt diesen Haushalt und verlierst den Zugriff auf alle gemeinsamen Daten.
               </p>
             }
-            <button hlmBtn size="sm" variant="destructive" type="button" (click)="leaveHousehold()">
-              @if (leavingHousehold()) { <hlm-spinner [size]="12" /> }
+            <klar-button size="sm" tone="danger" [loading]="leavingHousehold()" (click)="leaveHousehold()">
               Haushalt verlassen …
-            </button>
+            </klar-button>
           }
         </div>
       </div>

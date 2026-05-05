@@ -49,17 +49,14 @@
 
   <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
     @if (isEditMode()) {
-      <button hlmBtn variant="destructive" size="sm" type="button"
-              [disabled]="saving()" (click)="remove()">
-        @if (saving()) { <hlm-spinner [size]="12" /> }
+      <klar-button tone="danger" size="sm" [loading]="saving()" (click)="remove()">
         Löschen
-      </button>
+      </klar-button>
     }
-    <button hlmBtn variant="ghost" size="sm" type="button" (click)="cancel()">Abbrechen</button>
-    <button hlmBtn variant="default" size="sm" type="button"
-            [disabled]="!isValid() || saving()" (click)="save()">
-      @if (saving()) { <hlm-spinner [size]="12" /> }
+    <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
+    <klar-button tone="primary" size="sm"
+                 [disabled]="!isValid()" [loading]="saving()" (click)="save()">
       {{ isEditMode() ? 'Speichern' : 'Anlegen' }}
-    </button>
+    </klar-button>
   </div>
 </div>

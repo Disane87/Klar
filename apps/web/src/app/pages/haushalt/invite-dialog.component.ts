@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -11,7 +11,7 @@ import type { InvitationLink } from '@klar/shared';
 @Component({
   selector: 'app-invite-dialog',
   standalone: true,
-  imports: [FormsModule, HlmButtonDirective, HlmSpinnerComponent, KlarInputComponent, KlarIconComponent],
+  imports: [FormsModule, KlarButtonComponent, HlmSpinnerComponent, KlarInputComponent, KlarIconComponent],
   template: `
     <div class="flex flex-col gap-6 p-1">
       @if (loading()) {
@@ -31,15 +31,11 @@ import type { InvitationLink } from '@klar/shared';
               (ngModelChange)="emailInput.set($event)"
               [disabled]="sendingEmail()"
             />
-            <button
-              hlmBtn
-              variant="default"
-              [disabled]="!emailInput().trim() || sendingEmail()"
-              (click)="sendEmail()"
-              class="shrink-0 min-h-[44px]"
-            >
-              @if (sendingEmail()) { <hlm-spinner size="sm" /> } @else { Senden }
-            </button>
+            <klar-button tone="primary" class="shrink-0"
+                         [disabled]="!emailInput().trim()" [loading]="sendingEmail()"
+                         (click)="sendEmail()">
+              Senden
+            </klar-button>
           </div>
           <p class="text-xs text-muted-foreground">Empfänger erhält den Einladungslink per E-Mail</p>
         </div>
@@ -61,23 +57,16 @@ import type { InvitationLink } from '@klar/shared';
                 [value]="invite()!.link"
                 readonly
               />
-              <button hlmBtn variant="outline" (click)="copyLink()" class="shrink-0 min-w-[44px] min-h-[44px]">
-                <klar-icon name="copy" [size]="16" />
-              </button>
+              <klar-button tone="outline" icon="copy" class="shrink-0" (click)="copyLink()" />
             </div>
             <div class="flex gap-2">
-              <button hlmBtn variant="secondary" class="flex-1 min-h-[44px]" (click)="shareLink()">
-                <klar-icon name="share-2" [size]="16" class="mr-2" />
+              <klar-button tone="secondary" icon="share-2" class="flex-1" (click)="shareLink()">
                 Teilen
-              </button>
-              <button hlmBtn variant="secondary" class="flex-1 min-h-[44px]" [disabled]="regenerating()" (click)="regenerate()">
-                @if (regenerating()) {
-                  <hlm-spinner size="sm" class="mr-2" />
-                } @else {
-                  <klar-icon name="refresh-cw" [size]="16" class="mr-2" />
-                }
+              </klar-button>
+              <klar-button tone="secondary" icon="refresh-cw" class="flex-1"
+                           [loading]="regenerating()" (click)="regenerate()">
                 Neu generieren
-              </button>
+              </klar-button>
             </div>
             <p class="text-xs text-muted-foreground">
               Einmalig verwendbar

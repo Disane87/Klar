@@ -105,11 +105,9 @@
             [error]="submitted() && confirmPasswordError() ? confirmPasswordError()! : ''"
           />
 
-          <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="lg" type="submit"
-                  class="w-full" (click)="submit()">
-            @if (loading()) { <hlm-spinner /> }
+          <klar-button tone="primary" size="lg" type="submit" class="w-full" [loading]="loading()" (click)="submit()">
             Registrieren →
-          </button>
+          </klar-button>
         </form>
 
         <div class="flex justify-between mt-4 text-[var(--label)] text-[var(--text-muted)]">

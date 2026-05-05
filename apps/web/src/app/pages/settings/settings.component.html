@@ -13,14 +13,10 @@
                    [ngModel]="editDisplayName()" (ngModelChange)="editDisplayName.set($event)" />
           </div>
           <div class="flex gap-2 items-center">
-            <button hlmBtn size="sm" variant="default" type="button"
-                    [disabled]="savingProfile()" (click)="saveProfile()">
-              @if (savingProfile()) { <hlm-spinner [size]="12" /> }
+            <klar-button size="sm" tone="primary" [loading]="savingProfile()" (click)="saveProfile()">
               Speichern
-            </button>
-            <button type="button"
-                    class="min-h-11 px-3 text-[12px] bg-transparent border-none cursor-pointer text-(--text-muted) rounded-sm hover:text-(--text) active:text-(--text) transition-colors"
-                    (click)="cancelEditProfile()">Abbruch</button>
+            </klar-button>
+            <klar-button size="sm" tone="link" (click)="cancelEditProfile()">Abbruch</klar-button>
           </div>
         </div>
       } @else {

@@ -2,9 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmLoadingBtnDirective } from '../../shared/ui/hlm/hlm-loading-btn.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -19,9 +17,7 @@ type Mode = 'choose' | 'create' | 'join';
   imports: [
     FormsModule,
     KlarWordmarkComponent,
-    HlmButtonDirective,
-    HlmLoadingBtnDirective,
-    HlmSpinnerComponent,
+    KlarButtonComponent,
     KlarInputComponent,
     KlarIconComponent,
   ],

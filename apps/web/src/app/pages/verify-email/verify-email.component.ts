@@ -2,14 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-verify-email',
   standalone: true,
-  imports: [RouterLink, KlarIconComponent, HlmButtonDirective, HlmSpinnerComponent],
+  imports: [RouterLink, KlarIconComponent, KlarButtonComponent],
   templateUrl: './verify-email.component.html',
   styleUrl: './verify-email.component.css',
 })

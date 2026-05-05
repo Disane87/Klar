@@ -48,10 +48,9 @@
   }
 
   <div class="flex justify-end gap-2 pt-2">
-    <button type="button" hlmBtn variant="ghost" (click)="dialog.close()">Abbruch</button>
-    <button type="button" hlmBtn [disabled]="!canConfirm() || saving()" (click)="confirm()">
-      @if (saving()) { <hlm-spinner [size]="14" class="mr-1" /> }
+    <klar-button tone="ghost" (click)="dialog.close()">Abbruch</klar-button>
+    <klar-button tone="primary" [disabled]="!canConfirm()" [loading]="saving()" (click)="confirm()">
       Importieren
-    </button>
+    </klar-button>
   </div>
 </div>

@@ -1,9 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
@@ -11,7 +10,7 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
 @Component({
   selector: 'app-change-password-dialog',
   standalone: true,
-  imports: [FormsModule, HlmButtonDirective, HlmInputDirective, HlmLabelDirective, HlmSpinnerComponent],
+  imports: [FormsModule, KlarButtonComponent, HlmInputDirective, HlmLabelDirective],
   templateUrl: './change-password-dialog.component.html',
 })
 export class ChangePasswordDialogComponent {

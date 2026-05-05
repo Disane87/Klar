@@ -19,12 +19,12 @@
 
     <!-- Stat badges -->
     @for (stat of stats(); track $index) {
-      <div class="flex items-center gap-2 px-3 py-1.5
+      <div class="flex items-center gap-2 h-7 px-3
                   rounded border border-(--border) bg-(--surface)">
-        <span class="text-[9px] uppercase tracking-widest text-(--text-muted)">
+        <span class="text-[9px] uppercase tracking-widest text-(--text-muted) leading-none">
           {{ stat.label }}
         </span>
-        <span class="text-[14px] font-mono tabular-nums leading-none"
+        <span class="text-[13px] font-mono tabular-nums leading-none"
               [ngClass]="statColor(stat.tone)">
           {{ stat.valueCents | klarMoney }}
         </span>
@@ -33,22 +33,19 @@
 
     <!-- Action buttons -->
     @if (showPlanspiel()) {
-      <button hlmBtn variant="ghost" size="sm" type="button" (click)="planspielClick.emit()">
-        <klar-icon name="planspiel" [size]="14" />
+      <klar-button tone="ghost" size="sm" icon="planspiel" (click)="planspielClick.emit()">
         Planspiel
-      </button>
+      </klar-button>
     }
     @if (showExport()) {
-      <button hlmBtn variant="outline" size="sm" type="button" (click)="exportClick.emit()">
-        <klar-icon name="download" [size]="14" />
+      <klar-button tone="outline" size="sm" icon="download" (click)="exportClick.emit()">
         PDF
-      </button>
+      </klar-button>
     }
     @if (showAdd()) {
-      <button hlmBtn variant="default" size="sm" type="button" (click)="addClick.emit()">
-        <klar-icon name="plus" [size]="14" />
+      <klar-button tone="primary" size="sm" icon="plus" (click)="addClick.emit()">
         {{ addLabel() }}
-      </button>
+      </klar-button>
     }
 
     <klar-header-user />

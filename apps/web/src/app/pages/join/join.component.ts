@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
-import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { AuthStore } from '../../core/auth/auth.store';
@@ -14,7 +14,7 @@ export const PENDING_INVITE_KEY = 'pendingInviteToken';
 @Component({
   selector: 'app-join',
   standalone: true,
-  imports: [RouterLink, KlarWordmarkComponent, HlmButtonDirective, HlmSpinnerComponent, KlarIconComponent],
+  imports: [RouterLink, KlarWordmarkComponent, KlarButtonComponent, HlmSpinnerComponent, KlarIconComponent],
   template: `
     <div class="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 py-12 pt-[calc(3rem+var(--safe-top))]">
       <div class="w-full max-w-sm flex flex-col items-center gap-8">
@@ -30,14 +30,14 @@ export const PENDING_INVITE_KEY = 'pendingInviteToken';
             <klar-icon name="alert-circle" [size]="40" class="text-destructive mx-auto mb-3 block" />
             <p class="text-sm font-medium text-foreground">Einladung nicht verfügbar</p>
             <p class="text-xs text-muted-foreground mt-1">{{ error() }}</p>
-            <a hlmBtn variant="outline" class="mt-4 w-full min-h-[44px]" routerLink="/login">Zur Anmeldung</a>
+            <klar-button tone="outline" class="mt-4 w-full" routerLink="/login">Zur Anmeldung</klar-button>
           </div>
         } @else if (joined()) {
           <div class="w-full rounded-xl border border-success/40 bg-success/10 p-6 text-center">
             <klar-icon name="check-circle" [size]="40" class="text-success mx-auto mb-3 block" />
             <p class="text-sm font-medium text-foreground">Haushalt beigetreten!</p>
             <p class="text-xs text-muted-foreground mt-1">Du bist jetzt Mitglied von <strong>{{ householdName() }}</strong></p>
-            <button hlmBtn variant="default" class="mt-4 w-full min-h-[44px]" (click)="goToApp()">Zur App</button>
+            <klar-button tone="primary" class="mt-4 w-full" (click)="goToApp()">Zur App</klar-button>
           </div>
         } @else {
           <div class="w-full rounded-xl border border-border bg-card p-6 text-center">
@@ -48,19 +48,18 @@ export const PENDING_INVITE_KEY = 'pendingInviteToken';
             }
 
             @if (isLoggedIn()) {
-              <button hlmBtn variant="default" class="mt-6 w-full min-h-[44px]" [disabled]="joining()" (click)="join()">
-                @if (joining()) { <hlm-spinner size="sm" class="mr-2" /> }
+              <klar-button tone="primary" class="mt-6 w-full" [loading]="joining()" (click)="join()">
                 Haushalt beitreten
-              </button>
+              </klar-button>
             } @else {
               <p class="text-sm text-muted-foreground mt-4">Melde dich an oder registriere dich, um beizutreten.</p>
               <div class="flex flex-col gap-2 mt-4">
-                <a hlmBtn variant="default" class="w-full min-h-[44px]" [routerLink]="['/register']" [queryParams]="{ invite: token() }">
+                <klar-button tone="primary" class="w-full" [routerLink]="['/register']" [queryParams]="{ invite: token() }">
                   Registrieren &amp; beitreten
-                </a>
-                <a hlmBtn variant="outline" class="w-full min-h-[44px]" [routerLink]="['/login']" [queryParams]="{ invite: token() }">
+                </klar-button>
+                <klar-button tone="outline" class="w-full" [routerLink]="['/login']" [queryParams]="{ invite: token() }">
                   Anmelden &amp; beitreten
-                </a>
+                </klar-button>
               </div>
             }
           </div>

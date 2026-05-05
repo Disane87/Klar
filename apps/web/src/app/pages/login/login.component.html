@@ -63,9 +63,9 @@
           <klar-icon name="alert-triangle" [size]="14" class="shrink-0" />
           <span>{{ serverError() }}</span>
           @if (showResend()) {
-            <button type="button" class="bg-transparent border-none p-0 text-[var(--label)] text-[var(--color-accent)] cursor-pointer text-left hover:underline" (click)="resendVerification()">
+            <klar-button tone="link" (click)="resendVerification()">
               Bestätigungsmail erneut senden
-            </button>
+            </klar-button>
           }
         </div>
       }
@@ -88,14 +88,12 @@
             name="totpCode"
             autocomplete="one-time-code"
           />
-          <button hlmBtn [klarLoadingBtn]="totpLoading()" variant="default" size="lg" type="submit"
-                  class="w-full">
-            @if (totpLoading()) { <hlm-spinner /> }
+          <klar-button tone="primary" size="lg" type="submit" class="w-full" [loading]="totpLoading()">
             Anmelden →
-          </button>
-          <button type="button" class="bg-transparent border-none p-0 text-[var(--label)] text-[var(--color-accent)] cursor-pointer hover:underline" (click)="backToPassword()">
+          </klar-button>
+          <klar-button tone="link" (click)="backToPassword()">
             ← Zurück zur Anmeldung
-          </button>
+          </klar-button>
         </form>
       } @else {
         <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); submit()">
@@ -133,11 +131,9 @@
           <span class="text-[var(--label)] text-[var(--text-2)]">Diesen Browser für 30 Tage merken</span>
         </div>
 
-        <button hlmBtn [klarLoadingBtn]="loading()" variant="default" size="lg" type="submit"
-                class="w-full" (click)="submit()">
-          @if (loading()) { <hlm-spinner /> }
+        <klar-button tone="primary" size="lg" type="submit" class="w-full" [loading]="loading()" (click)="submit()">
           Anmelden →
-        </button>
+        </klar-button>
 
         @if (oidc.enabled()) {
           <div class="flex items-center gap-3 text-[var(--label)] text-[var(--text-muted)] text-center">
@@ -146,12 +142,10 @@
             <span class="h-px flex-1 bg-[var(--border)]"></span>
           </div>
 
-          <button hlmBtn [klarLoadingBtn]="oidcLoading()" variant="outline" size="md" type="button"
-                  class="w-full" [disabled]="loading()" (click)="loginWithOidc()">
-            @if (oidcLoading()) { <hlm-spinner /> }
-            <klar-icon name="shield" [size]="14" />
+          <klar-button tone="outline" size="md" class="w-full" icon="shield"
+                       [disabled]="loading()" [loading]="oidcLoading()" (click)="loginWithOidc()">
             Mit {{ oidc.providerName() }} anmelden
-          </button>
+          </klar-button>
         }
       </form>
       }
