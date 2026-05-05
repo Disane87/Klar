@@ -48,10 +48,10 @@ export class HouseholdsRepository {
 
   findMembershipsByHousehold(
     householdId: string,
-  ): Promise<(HouseholdMembership & { user: { id: string; displayName: string; email: string } })[]> {
+  ): Promise<(HouseholdMembership & { user: { id: string; displayName: string; email: string; avatarUrl: string | null } })[]> {
     return this.prisma.householdMembership.findMany({
       where: { householdId },
-      include: { user: { select: { id: true, displayName: true, email: true } } },
+      include: { user: { select: { id: true, displayName: true, email: true, avatarUrl: true } } },
       orderBy: { joinedAt: 'asc' },
     });
   }

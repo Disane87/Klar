@@ -43,7 +43,8 @@
     <!-- ── MITGLIEDER ────────────────────────────────────── -->
     <klar-list-group [label]="'Mitglieder · ' + store.members().length">
       @for (member of store.members(); track member.userId) {
-        <klar-list-item icon="user"
+        <klar-list-item [avatarUrl]="member.avatarUrl ?? undefined"
+                        [icon]="member.avatarUrl ? undefined : 'user'"
                         [label]="member.displayName"
                         [sublabel]="member.email"
                         [badge]="member.role"

@@ -25,6 +25,7 @@ export interface HouseholdMemberDetail {
   email: string;
   role: HouseholdRole;
   joinedAt: Date;
+  avatarUrl?: string | null;
 }
 
 @Injectable()
@@ -74,6 +75,7 @@ export class HouseholdsService {
       email: m.user.email,
       role: m.role,
       joinedAt: m.joinedAt,
+      avatarUrl: m.user.avatarUrl ?? null,
     }));
   }
 

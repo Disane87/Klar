@@ -95,7 +95,11 @@
               [class.bg-(--surface-2)]="memberFilter() !== opt.userId"
               [class.text-(--text-2)]="memberFilter() !== opt.userId"
               (click)="memberFilter.set(memberFilter() === opt.userId ? null : opt.userId)">
-              {{ opt.displayName.charAt(0).toUpperCase() }}
+              @if (opt.avatarUrl) {
+                <img [src]="opt.avatarUrl" class="size-full object-cover rounded-full" alt="" />
+              } @else {
+                {{ opt.displayName.charAt(0).toUpperCase() }}
+              }
             </button>
             <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
                  [ngClass]="getHoverCardClasses()">

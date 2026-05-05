@@ -28,12 +28,16 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
     }
 
     <ng-template #row>
-      <!-- Leading: status dot or icon -->
+      <!-- Leading: status dot, avatar, or icon -->
       @if (dotColor()) {
         <div class="size-2 rounded-full shrink-0"
              [ngClass]="dotColor() === 'income'
                ? 'bg-(--color-income) shadow-[0_0_4px_var(--color-income)]'
                : 'bg-(--text-muted)'"></div>
+      } @else if (avatarUrl()) {
+        <img [src]="avatarUrl()!" alt=""
+             class="size-7 rounded-full object-cover shrink-0
+                    border border-[color-mix(in_oklab,var(--color-accent)_25%,transparent)]" />
       } @else if (icon()) {
         <klar-icon [name]="icon()!" [size]="16"
                    class="shrink-0"
@@ -88,10 +92,11 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
   `,
 })
 export class KlarListItemComponent {
-  label    = input.required<string>();
-  sublabel = input<string>();
-  icon     = input<string>();
-  dotColor = input<'income' | 'muted'>();
+  label     = input.required<string>();
+  sublabel  = input<string>();
+  icon      = input<string>();
+  avatarUrl = input<string | null>();
+  dotColor  = input<'income' | 'muted'>();
   value      = input<string>();
   valueClass = input<string>();
   badge    = input<string>();

@@ -44,7 +44,7 @@ export class FixkostenPageComponent {
 
   readonly memberOptions = computed(() => {
     const ms = this.members();
-    return ms.map(m => ({ userId: m.userId, displayName: m.displayName }));
+    return ms.map(m => ({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl ?? null }));
   });
 
   getHoverCardClasses(): string {

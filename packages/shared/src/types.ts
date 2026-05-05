@@ -81,6 +81,7 @@ export type HouseholdMember = {
   email: string;
   role: HouseholdRole;
   joinedAt: string;
+  avatarUrl?: string | null;
 };
 
 export type InviteCode = {
