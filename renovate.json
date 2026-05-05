@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 5am on Monday"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "labels": ["dependencies"],
+  "commitMessagePrefix": "chore(deps):",
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "description": "Patch updates: auto-merge after CI",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "labels": ["dependencies", "patch"]
+    },
+    {
+      "description": "Minor updates: group + auto-merge after CI",
+      "matchUpdateTypes": ["minor"],
+      "groupName": "minor dependency updates",
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "labels": ["dependencies", "minor"]
+    },
+    {
+      "description": "Major updates: manual review required",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"],
+      "reviewers": ["Disane87"]
+    },
+    {
+      "description": "Spartan UI / Zard UI: never auto-update (pinned Beta)",
+      "matchPackageNames": ["@spartan-ng/**", "@ng-spartan/**"],
+      "enabled": false
+    },
+    {
+      "description": "GitHub Actions: group all, manual review",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": false,
+      "labels": ["dependencies", "github-actions"]
+    },
+    {
+      "description": "Prisma: group schema + client together",
+      "matchPackageNames": ["prisma", "@prisma/client"],
+      "groupName": "Prisma",
+      "automerge": true,
+      "matchUpdateTypes": ["patch", "minor"]
+    }
+  ],
+  "pnpm": {
+    "fileMatch": ["(^|/)pnpm-lock\\.yaml$"]
+  },
+  "ignorePaths": ["**/node_modules/**", "**/dist/**"]
+}
