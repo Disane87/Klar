@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Disane87/Klar/compare/v1.0.0...v1.1.0) (2026-05-05)
+
+
+### Features
+
+* **ui+invites:** KlarAvatar-Komponente + email-aware Invite-Flow ([0185c8b](https://github.com/Disane87/Klar/commit/0185c8b4bae4cacacaf14a02ee4e366b8792992c))
+
 # 1.0.0 (2026-05-05)
 
 
