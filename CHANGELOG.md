@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/Disane87/Klar/compare/v1.4.1...v1.4.2) (2026-05-05)
+
+
+### Bug Fixes
+
+* improve error handling for 401 responses in refresh interceptor ([eb88e05](https://github.com/Disane87/Klar/commit/eb88e05a5f4615ad8314f303bef6f51bc0908f43))
+
 ## [1.4.1](https://github.com/Disane87/Klar/compare/v1.4.0...v1.4.1) (2026-05-05)
 
 
