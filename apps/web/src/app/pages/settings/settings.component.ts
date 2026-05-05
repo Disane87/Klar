@@ -9,6 +9,7 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
 import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
+import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import {
@@ -45,6 +46,7 @@ import { DataImportComponent } from './data-import.component';
     DataImportComponent,
     HlmToggleGroupDirective,
     HlmToggleGroupItemDirective,
+    KlarIconComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',

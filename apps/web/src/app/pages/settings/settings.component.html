@@ -78,12 +78,13 @@
     <!-- ── DARSTELLUNG ────────────────────────────────────── -->
     <klar-list-group label="Darstellung">
       <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
+        <klar-icon name="sun" [size]="16" class="shrink-0 text-(--text-muted)" />
         <span class="flex-1 min-w-0 text-[13px] font-medium">Farbschema</span>
         <div hlmToggleGroup type="single"
              [value]="themeService.theme()"
              (valueChange)="setTheme($event)">
           @for (opt of themeOptions; track opt.value) {
-            <button type="button" hlmToggleGroupItem [value]="opt.value">{{ opt.label }}</button>
+            <button type="button" hlmToggleGroupItem [value]="opt.value" class="min-h-8 px-2.5">{{ opt.label }}</button>
           }
         </div>
       </div>
