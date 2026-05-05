@@ -438,6 +438,100 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
   );
 ```
 
+### Spartan UI — Control-System
+
+Alle UI-Controls basieren auf Spartan UI (`spartan.ng`). Spartan-Direktiven sind Attribut-Direktiven die natives HTML mit Design-System-Klassen anreichern — **keine eigenen Elemente**.
+
+#### Vorhandene Controls (`apps/web/src/app/shared/ui/hlm/`)
+
+| Direktive / Komponente | Selector | Verwendung |
+|---|---|---|
+| `HlmInputDirective` | `input[hlmInput]`, `textarea[hlmInput]` | Textfelder |
+| `HlmSelectNativeDirective` | `select[hlmSelect]` | Dropdowns (nativ + `scheme-dark`) |
+| `HlmButtonDirective` | `[hlmBtn]` | Buttons (variant: default/outline/ghost/destructive/subtle) |
+| `HlmLabelDirective` | `label[hlmLabel]` | Labels (uppercase, muted) |
+| `HlmCheckboxComponent` | `<hlm-checkbox>` | Checkboxen |
+| `HlmBadgeDirective` | `[hlmBadge]` | Status-Badges |
+| `HlmSpinnerComponent` | `<hlm-spinner>` | Lade-Indikator |
+| `HlmErrorDirective` | `[hlmError]` | Fehler-Meldungen unter Feldern |
+
+#### Nutzungs-Pattern
+
+```html
+<!-- Input -->
+<input hlmInput type="text" class="w-full" [(ngModel)]="value" />
+
+<!-- Select — scheme-dark immer setzen (nativer Dropdown kennt sonst kein Dark Mode) -->
+<select hlmSelect class="w-full scheme-dark" [(ngModel)]="selected">
+  <option value="">— wählen —</option>
+  @for (item of items(); track item.id) {
+    <option [value]="item.id">{{ item.name }}</option>
+  }
+</select>
+
+<!-- Button mit Varianten -->
+<button hlmBtn variant="default">Speichern</button>
+<button hlmBtn variant="ghost">Abbruch</button>
+<button hlmBtn variant="destructive">Löschen</button>
+
+<!-- Label -->
+<label hlmLabel for="field-id">Feldbezeichnung</label>
+```
+
+#### Neues Control hinzufügen
+
+Wenn Spartan kein passendes Control hat: erst `spartan.ng` prüfen, dann selbst nach demselben Muster kapseln:
+
+```ts
+// apps/web/src/app/shared/ui/hlm/hlm-textarea.directive.ts
+@Directive({
+  selector: 'textarea[hlmTextarea]',
+  standalone: true,
+  host: { '[class]': '_cls()' },
+})
+export class HlmTextareaDirective {
+  userClass = input('', { alias: 'class' });
+  _cls = computed(() => hlm(
+    'flex w-full rounded border border-input bg-background px-3 py-2',
+    'text-[1rem] placeholder:text-muted-foreground',
+    'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+    'disabled:cursor-not-allowed disabled:opacity-50',
+    this.userClass()
+  ));
+}
+```
+
+#### Wiederholte Control-Gruppen → `app-*`-Komponente
+
+Wenn dasselbe Control-Muster (Label + Input + Error) mehrfach vorkommt → in eine `app-form-field`-Komponente o.ä. kapseln:
+
+```ts
+// apps/web/src/app/shared/ui/form-field/form-field.component.ts
+@Component({
+  selector: 'app-form-field',
+  standalone: true,
+  imports: [HlmLabelDirective, HlmErrorDirective],
+  template: `
+    <div class="flex flex-col gap-1">
+      @if (label()) {
+        <label hlmLabel [for]="fieldId()">{{ label() }}</label>
+      }
+      <ng-content />
+      @if (error()) {
+        <span hlmError>{{ error() }}</span>
+      }
+    </div>
+  `,
+})
+export class FormFieldComponent {
+  label  = input<string>();
+  error  = input<string>();
+  fieldId = input<string>();
+}
+```
+
+---
+
 ### Design-System-Regeln (Frontend)
 
 **Zahlen:** IMMER `font-family: var(--font-mono)` + `font-variant-numeric: tabular-nums`
