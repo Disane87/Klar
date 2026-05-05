@@ -1,6 +1,6 @@
 <!-- Loading skeleton -->
 @if (store.loading()) {
-<div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+<div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-16">
   <!-- Summary skeleton -->
   <div class="grid grid-cols-3 gap-3 mb-4">
     <klar-skeleton height="76px" />
@@ -44,7 +44,7 @@
 @else {
 
 <!-- Scrollable area -->
-<div class="flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+<div class="flex-1 overflow-y-auto pb-16">
 
   <!-- Summary section (padded) -->
   <div class="p-5 pt-3">

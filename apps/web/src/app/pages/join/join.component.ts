@@ -16,7 +16,7 @@ export const PENDING_INVITE_KEY = 'pendingInviteToken';
   standalone: true,
   imports: [RouterLink, KlarWordmarkComponent, HlmButtonDirective, HlmSpinnerComponent, KlarIconComponent],
   template: `
-    <div class="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 py-12">
+    <div class="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 py-12 pt-[calc(3rem+var(--safe-top))]">
       <div class="w-full max-w-sm flex flex-col items-center gap-8">
         <klar-wordmark />
 
