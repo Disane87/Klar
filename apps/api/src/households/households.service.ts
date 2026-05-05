@@ -214,6 +214,7 @@ export class HouseholdsService {
       householdName,
       inviteUrl,
       link.expiresAt ?? undefined,
+      ctx.householdId,
     );
 
     await this.inviteLinkRepo.updateEmail(link.id, email.toLowerCase());

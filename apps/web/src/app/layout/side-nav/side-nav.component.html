@@ -17,7 +17,7 @@
 
   <div class="mt-auto">
     <div class="px-5 pt-6 pb-2 text-[10px] uppercase tracking-[0.15em] text-(--text-muted) font-medium">System</div>
-    @for (item of sysItems; track item.id) {
+    @for (item of sysItems(); track item.id) {
       <a [routerLink]="item.route" routerLinkActive="active" class="nav-item flex items-center gap-3 py-2.5 px-5 mx-2 mb-1 text-[13px] font-medium text-(--text-2) no-underline border-l-[3px] border-transparent rounded transition-colors duration-150 hover:bg-(--surface-2) hover:text-(--text) [&.active]:text-(--text) [&.active]:bg-(--surface-2) [&.active]:border-l-accent">
         <klar-icon [name]="item.icon" [size]="16" />
         <span>{{ item.label }}</span>

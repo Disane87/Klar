@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarLogoMarkComponent } from '../../shared/brand/klar-logo-mark.component';
+import { AuthStore } from '../../core/auth/auth.store';
 
 interface NavItem {
   id: string;
@@ -24,6 +25,8 @@ const SYS_ITEMS: NavItem[] = [
   { id: 'health',   label: 'System',        icon: 'pulse',    route: '/app/health' },
 ];
 
+const ADMIN_ITEM: NavItem = { id: 'admin', label: 'Admin', icon: 'shield', route: '/app/admin' };
+
 @Component({
   selector: 'klar-side-nav',
   standalone: true,
@@ -33,6 +36,9 @@ const SYS_ITEMS: NavItem[] = [
   styleUrl: './side-nav.component.css',
 })
 export class SideNavComponent {
+  private auth = inject(AuthStore);
   protected mainItems = MAIN_ITEMS;
-  protected sysItems  = SYS_ITEMS;
+  protected sysItems = computed<NavItem[]>(() =>
+    this.auth.user()?.appRole === 'ADMIN' ? [...SYS_ITEMS, ADMIN_ITEM] : SYS_ITEMS,
+  );
 }

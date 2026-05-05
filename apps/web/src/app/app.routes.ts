@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { adminGuard } from './core/auth/admin.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { householdGuard } from './core/household/household.guard';
 
@@ -118,6 +119,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/health/health.component').then(
             m => m.HealthPageComponent,
+          ),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./pages/admin/admin.component').then(
+            m => m.AdminPageComponent,
           ),
       },
     ],

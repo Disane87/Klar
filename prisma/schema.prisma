@@ -441,6 +441,32 @@ model AuditLog {
 }
 
 // ─────────────────────────────────────────────
+// EMAIL LOG (Versandhistorie aller Mails — Admin-only)
+// ─────────────────────────────────────────────
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id          String      @id @default(cuid())
+  to          String
+  subject     String
+  template    String      // z.B. "email-verification", "invite", "custom"
+  status      EmailStatus
+  error       String?     // SMTP-Fehlertext bei FAILED
+  userId      String?     // optional: Empfänger-User (falls bekannt)
+  householdId String?     // optional: Kontext-Haushalt
+  sentAt      DateTime    @default(now())
+
+  @@index([sentAt])
+  @@index([status])
+  @@index([householdId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
 // MAIL TEMPLATES (pro Haushalt)
 // ─────────────────────────────────────────────
 
