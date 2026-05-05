@@ -138,9 +138,12 @@
                       (itemClick)="openExport()" />
       <klar-list-item icon="upload"
                       label="Importieren"
-                      sublabel="Klar-Export-Datei (.json) importieren"
+                      [sublabel]="importing() ? 'Datei wird analysiert …' : 'Klar-Export-Datei (.json) importieren'"
                       [navigable]="true"
                       (itemClick)="openImport()" />
+      <input #importInput type="file" accept=".json,application/json"
+             aria-label="Import-Datei wählen" title="Import-Datei wählen"
+             class="sr-only" (change)="onImportFileSelected($event)" />
     </klar-list-group>
 
     <!-- ── APP-INFOS ──────────────────────────────────────── -->

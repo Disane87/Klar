@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild, type ElementRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -25,7 +25,8 @@ import { ChangePasswordDialogComponent } from './change-password-dialog.componen
 import { DeleteAccountDialogComponent } from './delete-account-dialog.component';
 import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
 import { DataExportComponent } from './data-export.component';
-import { DataImportComponent } from './data-import.component';
+import { ImportMappingDialogComponent } from './import-mapping-dialog.component';
+import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/data-transfer.service';
 
 @Component({
   selector: 'app-settings',
@@ -55,6 +56,10 @@ export class SettingsPageComponent {
   private authService = inject(AuthService);
   private dialog = inject(KlarDialogService);
   private toast = inject(KlarToastService);
+  private dtService = inject(DataTransferService);
+
+  readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
+  readonly importing = signal(false);
 
   readonly editingProfile = signal(false);
   readonly editDisplayName = signal('');
@@ -165,7 +170,54 @@ export class SettingsPageComponent {
   }
 
   openImport(): void {
-    this.dialog.open({ title: 'Daten importieren', component: DataImportComponent, width: 'sm' });
+    if (this.importing()) return;
+    this.importInput()?.nativeElement.click();
+  }
+
+  async onImportFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.json')) {
+      this.toast.error('Nur .json Dateien werden akzeptiert');
+      input.value = '';
+      return;
+    }
+
+    this.importing.set(true);
+    try {
+      const text = await file.text();
+      const householdId = this.hhStore.activeId()!;
+      const result = await this.dtService.analyze(householdId, text);
+
+      const hasUnresolved =
+        result.categoryMappings.some(m => m.resolvedId === null) ||
+        result.projectMappings.some(m => m.resolvedId === null);
+
+      if (hasUnresolved) {
+        this.dialog.open({
+          title: 'Import bestätigen',
+          component: ImportMappingDialogComponent,
+          inputs: { analyzeResult: result, fileContent: text },
+          width: 'md',
+        });
+      } else {
+        const body: ConfirmBody = { fileContent: text, categoryMappings: [], projectMappings: [] };
+        const importResult = await this.dtService.confirm(householdId, body);
+        const total = importResult.imported.transactions + importResult.imported.recurringTransactions;
+        const skipped = importResult.skipped > 0 ? ` (${importResult.skipped} übersprungen)` : '';
+        this.toast.success(`${total} Einträge importiert${skipped}`);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.toLowerCase().includes('schema')) {
+        this.toast.error('Ungültige Export-Datei');
+      }
+      // other HTTP errors handled by ErrorInterceptor
+    } finally {
+      this.importing.set(false);
+      input.value = '';
+    }
   }
 
   formatDate(isoString?: string): string {
