@@ -86,10 +86,17 @@ export class AuthService {
   }
 
   uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
-    const formData = new FormData();
-    formData.append('avatar', file);
-    return this.http.post<{ avatarUrl: string }>('/api/v1/users/me/avatar', formData, {
-      withCredentials: true,
+    return new Observable(observer => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        this.http.post<{ avatarUrl: string }>('/api/v1/users/me/avatar',
+          { data: dataUrl, mimetype: file.type },
+          { withCredentials: true },
+        ).subscribe(observer);
+      };
+      reader.onerror = () => observer.error(reader.error);
+      reader.readAsDataURL(file);
     });
   }
 

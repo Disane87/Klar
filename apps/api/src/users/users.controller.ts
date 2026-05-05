@@ -9,12 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Req,
   BadRequestException,
-  PayloadTooLargeException,
 } from '@nestjs/common';
-import '@fastify/multipart';
-import type { FastifyRequest } from 'fastify';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -22,6 +18,7 @@ import type { JwtPayload } from '../common/types/jwt-payload.type';
 
 interface UpdateProfileBody { displayName?: string; email?: string }
 interface ChangePasswordBody { currentPassword: string; newPassword: string }
+interface UploadAvatarBody { data: string; mimetype: string }
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -93,21 +90,13 @@ export class UsersController {
   @Post('me/avatar')
   async uploadAvatar(
     @CurrentUser() payload: JwtPayload,
-    @Req() req: FastifyRequest,
+    @Body() body: UploadAvatarBody,
   ): Promise<{ avatarUrl: string }> {
-    let data: Awaited<ReturnType<typeof req.file>>;
-    try {
-      data = await req.file();
-    } catch (e: unknown) {
-      const err = e as { code?: string; statusCode?: number };
-      if (err?.code === 'FST_FILES_LIMIT' || err?.statusCode === 413) {
-        throw new PayloadTooLargeException('Datei zu groß (max. 5 MB)');
-      }
-      throw e;
-    }
-    if (!data) throw new BadRequestException('Kein Bild übermittelt');
-    const buffer = await data.toBuffer();
-    return this.usersService.uploadAvatar(payload.sub, buffer, data.mimetype);
+    if (!body?.data) throw new BadRequestException('Kein Bild übermittelt');
+    const base64 = body.data.includes(',') ? body.data.split(',')[1] : body.data;
+    const buffer = Buffer.from(base64, 'base64');
+    if (buffer.length > 5 * 1024 * 1024) throw new BadRequestException('Datei zu groß (max. 5 MB)');
+    return this.usersService.uploadAvatar(payload.sub, buffer, body.mimetype);
   }
 
   @Delete('me/avatar')
