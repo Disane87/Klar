@@ -58,6 +58,19 @@
         <div class="text-[var(--label-2)] text-[var(--text-2)] mb-6">Klar · Dein privates Haushaltsbuch</div>
       }
 
+      @if (fromInvite() && !totpRequired()) {
+        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--label-2)] text-[var(--text-2)]">
+          <div class="flex items-start gap-2">
+            <klar-icon name="info" [size]="14" class="shrink-0 mt-0.5 text-[var(--color-accent)]" />
+            <span>
+              Für diese E-Mail existiert bereits ein Account. Melde dich an, um dem Haushalt beizutreten.
+              Falls du das Passwort vergessen hast, nutze bitte
+              <a routerLink="/forgot-password" class="text-[var(--color-accent)] hover:underline">Passwort zurücksetzen</a>.
+            </span>
+          </div>
+        </div>
+      }
+
       @if (serverError()) {
         <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
           <klar-icon name="alert-triangle" [size]="14" class="shrink-0" />

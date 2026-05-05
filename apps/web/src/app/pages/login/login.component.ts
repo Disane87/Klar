@@ -48,6 +48,8 @@ export class LoginComponent implements OnInit {
   readonly totpLoading = signal(false);
   readonly totpError = signal<string | null>(null);
 
+  readonly fromInvite = signal(false);
+
   readonly emailError = computed(() => {
     const v = this.email();
     if (!v) return 'Pflichtfeld';
@@ -70,6 +72,8 @@ export class LoginComponent implements OnInit {
 
     const emailParam = this.route.snapshot.queryParamMap.get('email');
     if (emailParam) this.email.set(emailParam);
+
+    this.fromInvite.set(!!sessionStorage.getItem('pendingInviteToken'));
 
     await this.oidc.loadConfig();
   }
