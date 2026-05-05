@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/Disane87/Klar/compare/v1.6.0...v1.7.0) (2026-05-05)
+
+
+### Features
+
+* **projects:** add project create dialog and frontend service ([72c469c](https://github.com/Disane87/Klar/commit/72c469ce046718c2c767d84d67a6d3568c8be254))
+
 # [1.6.0](https://github.com/Disane87/Klar/compare/v1.5.0...v1.6.0) (2026-05-05)
 
 
