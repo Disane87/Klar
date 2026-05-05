@@ -22,6 +22,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ChangePasswordDialogComponent } from './change-password-dialog.component';
 import { DeleteAccountDialogComponent } from './delete-account-dialog.component';
 import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
+import { DataExportComponent } from './data-export.component';
+import { DataImportComponent } from './data-import.component';
 
 @Component({
   selector: 'app-settings',
@@ -37,6 +39,8 @@ import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,
+    DataExportComponent,
+    DataImportComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
