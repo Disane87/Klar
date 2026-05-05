@@ -6,6 +6,7 @@ interface CreateEmailVerificationData {
   userId: string;
   token: string;
   expiresAt: Date;
+  inviteToken?: string;
 }
 
 @Injectable()
@@ -18,6 +19,13 @@ export class EmailVerificationRepository {
 
   findByToken(token: string): Promise<EmailVerification | null> {
     return this.prisma.emailVerification.findUnique({ where: { token } });
+  }
+
+  findLatestByUserId(userId: string): Promise<EmailVerification | null> {
+    return this.prisma.emailVerification.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async deleteByUserId(userId: string): Promise<void> {

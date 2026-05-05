@@ -83,11 +83,12 @@ memberships         HouseholdMembership[]
 // Ephemeral: E-Mail-Verifikations-Token (TTL: 24h)
 // Cleanup-Job löscht abgelaufene Einträge.
 model EmailVerification {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique  // kryptografisch zufällig, 32 Bytes hex
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  token       String   @unique  // kryptografisch zufällig, 32 Bytes hex
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  inviteToken String?  // optional InvitationLink token to consume after email verification
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

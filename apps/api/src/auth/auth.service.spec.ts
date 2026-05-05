@@ -46,6 +46,7 @@ const makeVerification = (overrides: Partial<EmailVerification> = {}): EmailVeri
   token: 'token-abc',
   expiresAt: new Date(Date.now() + 86400000),
   createdAt: new Date(),
+  inviteToken: null,
   ...overrides,
 });
 
@@ -88,6 +89,8 @@ function buildService(): {
 
   const householdsService = {
     createDefault: vi.fn().mockResolvedValue({ id: 'household-1', name: 'Mein Haushalt' }),
+    getInviteInfo: vi.fn(),
+    joinByToken: vi.fn().mockResolvedValue({}),
   } as unknown as HouseholdsService;
 
   const mailService = {
@@ -117,6 +120,7 @@ function buildService(): {
   const emailVerificationRepo = {
     create: vi.fn().mockResolvedValue(undefined),
     findByToken: vi.fn(),
+    findLatestByUserId: vi.fn().mockResolvedValue(null),
     deleteByUserId: vi.fn().mockResolvedValue(undefined),
     deleteByToken: vi.fn().mockResolvedValue(undefined),
     deleteExpired: vi.fn().mockResolvedValue(undefined),
@@ -254,6 +258,68 @@ describe('AuthService', () => {
       );
       expect(result.message).toContain('Registrierung erfolgreich');
     });
+
+    it('skips default household and stores invite token when invite is valid', async () => {
+      const { service, usersService, householdsService, emailVerificationRepo } = buildService();
+      vi.mocked(usersService.existsByEmail).mockResolvedValue(false);
+      vi.mocked(usersService.countAll).mockResolvedValue(1);
+      vi.mocked(usersService.create).mockResolvedValue(makeUser());
+      vi.mocked(householdsService.getInviteInfo).mockResolvedValue({
+        householdName: 'Inviter Haushalt',
+        expiresAt: null,
+      });
+
+      await service.register(
+        { email: 'guest@example.com', displayName: 'Guest', password: 'pw12345!', inviteToken: 'inv-tok' },
+        fakeReq,
+      );
+
+      expect(householdsService.createDefault).not.toHaveBeenCalled();
+      expect(emailVerificationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteToken: 'inv-tok' }),
+      );
+    });
+
+    it('falls back to default household when invite is bound to a different email', async () => {
+      const { service, usersService, householdsService, emailVerificationRepo } = buildService();
+      vi.mocked(usersService.existsByEmail).mockResolvedValue(false);
+      vi.mocked(usersService.countAll).mockResolvedValue(1);
+      vi.mocked(usersService.create).mockResolvedValue(makeUser());
+      vi.mocked(householdsService.getInviteInfo).mockResolvedValue({
+        householdName: 'Inviter Haushalt',
+        expiresAt: null,
+        email: 'someone-else@example.com',
+        userExists: false,
+      });
+
+      await service.register(
+        { email: 'guest@example.com', displayName: 'Guest', password: 'pw12345!', inviteToken: 'inv-tok' },
+        fakeReq,
+      );
+
+      expect(householdsService.createDefault).toHaveBeenCalledWith('user-1');
+      expect(emailVerificationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteToken: undefined }),
+      );
+    });
+
+    it('falls back to default household when invite is invalid/expired', async () => {
+      const { service, usersService, householdsService, emailVerificationRepo } = buildService();
+      vi.mocked(usersService.existsByEmail).mockResolvedValue(false);
+      vi.mocked(usersService.countAll).mockResolvedValue(1);
+      vi.mocked(usersService.create).mockResolvedValue(makeUser());
+      vi.mocked(householdsService.getInviteInfo).mockRejectedValue(new Error('expired'));
+
+      await service.register(
+        { email: 'guest@example.com', displayName: 'Guest', password: 'pw12345!', inviteToken: 'bad-tok' },
+        fakeReq,
+      );
+
+      expect(householdsService.createDefault).toHaveBeenCalledWith('user-1');
+      expect(emailVerificationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteToken: undefined }),
+      );
+    });
   });
 
   describe('login', () => {
@@ -375,6 +441,28 @@ describe('AuthService', () => {
 
       expect(usersService.setEmailVerified).toHaveBeenCalledWith('user-1');
       expect(emailVerificationRepo.deleteByToken).toHaveBeenCalledWith('token-abc');
+    });
+
+    it('consumes invite token and joins inviter household', async () => {
+      const { service, emailVerificationRepo, householdsService } = buildService();
+      const record = makeVerification({ inviteToken: 'inv-tok' });
+      vi.mocked(emailVerificationRepo.findByToken).mockResolvedValue(record);
+
+      await service.verifyEmail('token-abc');
+
+      expect(householdsService.joinByToken).toHaveBeenCalledWith('user-1', 'inv-tok');
+      expect(householdsService.createDefault).not.toHaveBeenCalled();
+    });
+
+    it('falls back to default household when invite consumption fails after verification', async () => {
+      const { service, emailVerificationRepo, householdsService } = buildService();
+      const record = makeVerification({ inviteToken: 'inv-tok' });
+      vi.mocked(emailVerificationRepo.findByToken).mockResolvedValue(record);
+      vi.mocked(householdsService.joinByToken).mockRejectedValueOnce(new Error('used'));
+
+      await service.verifyEmail('token-abc');
+
+      expect(householdsService.createDefault).toHaveBeenCalledWith('user-1');
     });
   });
 

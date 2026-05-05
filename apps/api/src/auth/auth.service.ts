@@ -39,6 +39,7 @@ export interface RegisterInput {
   email: string;
   displayName: string;
   password: string;
+  inviteToken?: string;
 }
 
 export interface TokenSet {
@@ -119,6 +120,22 @@ export class AuthService {
     const count = await this.usersService.countAll();
     const appRole = count === 0 ? AppRole.ADMIN : AppRole.USER;
 
+    // If a valid invite token is provided, defer household creation: the user
+    // joins the inviter's household after verifying their email. We still create
+    // a fallback household later if the invite expires/gets used in the meantime.
+    let inviteIsValid = false;
+    if (dto.inviteToken) {
+      try {
+        const info = await this.householdsService.getInviteInfo(dto.inviteToken);
+        // If the invite was bound to a specific email, only honor it for that address.
+        if (!info.email || info.email.toLowerCase() === email) {
+          inviteIsValid = true;
+        }
+      } catch {
+        // Invalid/expired/used invite — fall through and create default household.
+      }
+    }
+
     const user = await this.usersService.create({
       email,
       displayName: dto.displayName,
@@ -126,12 +143,19 @@ export class AuthService {
       appRole,
     });
 
-    const household = await this.householdsService.createDefault(user.id);
-    await this.categoriesService.seedDefaults(household.id);
+    if (!inviteIsValid) {
+      const household = await this.householdsService.createDefault(user.id);
+      await this.categoriesService.seedDefaults(household.id);
+    }
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
-    await this.emailVerificationRepo.create({ userId: user.id, token, expiresAt });
+    await this.emailVerificationRepo.create({
+      userId: user.id,
+      token,
+      expiresAt,
+      inviteToken: inviteIsValid ? dto.inviteToken : undefined,
+    });
     this.mailService.sendVerificationEmail(email, dto.displayName, token).catch((err) => {
       this.logger.error(`Failed to send verification email to ${email}: ${String(err)}`);
     });
@@ -299,6 +323,21 @@ export class AuthService {
       action: 'user.email_verified',
       userId: record.userId,
     });
+
+    // If the user registered via an invite link, consume it now and join the
+    // inviter's household. Fall back to a default household if the invite is
+    // no longer valid (used/expired/deleted in the meantime).
+    if (record.inviteToken) {
+      try {
+        await this.householdsService.joinByToken(record.userId, record.inviteToken);
+      } catch (err) {
+        this.logger.warn(
+          `Invite consumption failed for user ${record.userId}: ${String(err)}; creating default household`,
+        );
+        const household = await this.householdsService.createDefault(record.userId);
+        await this.categoriesService.seedDefaults(household.id);
+      }
+    }
   }
 
   async resendVerification(email: string): Promise<void> {
@@ -306,10 +345,18 @@ export class AuthService {
     const user = await this.usersService.findByEmail(lower);
     if (!user || user.isDeleted || user.emailVerified) return;
 
+    // Preserve any pending inviteToken so the user still joins the inviter's
+    // household after verifying via the new mail.
+    const previous = await this.emailVerificationRepo.findLatestByUserId(user.id);
     await this.emailVerificationRepo.deleteByUserId(user.id);
     const token = generateToken();
     const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
-    await this.emailVerificationRepo.create({ userId: user.id, token, expiresAt });
+    await this.emailVerificationRepo.create({
+      userId: user.id,
+      token,
+      expiresAt,
+      inviteToken: previous?.inviteToken ?? undefined,
+    });
     this.mailService.sendVerificationEmail(lower, user.displayName, token).catch((err) => {
       this.logger.error(`Failed to send verification email to ${lower}: ${String(err)}`);
     });

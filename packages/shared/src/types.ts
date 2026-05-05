@@ -43,6 +43,7 @@ export type RegisterRequest = {
   email: string;
   displayName: string;
   password: string;
+  inviteToken?: string;
 };
 
 export type RegisterResponse = {

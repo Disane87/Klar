@@ -68,9 +68,12 @@ export class RegisterComponent implements OnInit {
       !this.confirmPasswordError(),
   );
 
+  readonly inviteToken = signal<string | null>(null);
+
   ngOnInit(): void {
     const inviteToken = this.route.snapshot.queryParamMap.get('invite');
     if (inviteToken) sessionStorage.setItem('pendingInviteToken', inviteToken);
+    this.inviteToken.set(inviteToken ?? sessionStorage.getItem('pendingInviteToken'));
 
     const emailParam = this.route.snapshot.queryParamMap.get('email');
     if (emailParam) this.email.set(emailParam);
@@ -89,6 +92,7 @@ export class RegisterComponent implements OnInit {
           email: this.email(),
           displayName: this.displayName(),
           password: this.password(),
+          inviteToken: this.inviteToken() ?? undefined,
         }),
       );
       this.success.set(true);
