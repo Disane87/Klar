@@ -10,10 +10,13 @@ import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
 import type { ApiKeyListItem } from '../../core/api-keys/api-keys.service';
+import { CategoriesStore } from '../../core/categories/categories.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { MailTemplatesComponent } from './mail-templates/mail-templates.component';
 import { InviteDialogComponent } from './invite-dialog.component';
+import { CategoryEditDialogComponent } from './category-edit-dialog.component';
 import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from '../../shared/ui/klar-list.component';
+import type { Category } from '@klar/shared';
 
 @Component({
   selector: 'app-haushalt',
@@ -36,6 +39,7 @@ import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from
 export class HaushaltPageComponent implements OnInit {
   protected store = inject(HouseholdStore);
   protected apiKeysStore = inject(ApiKeysStore);
+  protected categoriesStore = inject(CategoriesStore);
   private toast = inject(KlarToastService);
   private authStore = inject(AuthStore);
   private dialogService = inject(KlarDialogService);
@@ -105,6 +109,37 @@ export class HaushaltPageComponent implements OnInit {
       component: InviteDialogComponent,
       width: 'md',
     });
+  }
+
+  openCreateCategoryDialog(): void {
+    this.dialogService.open({
+      title: 'Kategorie anlegen',
+      component: CategoryEditDialogComponent,
+      width: 'md',
+      inputs: { category: null },
+    });
+  }
+
+  openEditCategoryDialog(category: Category): void {
+    this.dialogService.open({
+      title: `Kategorie bearbeiten`,
+      component: CategoryEditDialogComponent,
+      width: 'md',
+      inputs: { category },
+    });
+  }
+
+  protected categoryTypeLabel(type: Category['type']): string {
+    switch (type) {
+      case 'FIXED_INCOME': return 'Festes Einkommen';
+      case 'VARIABLE_INCOME': return 'Variables Einkommen';
+      case 'FIXED_EXPENSE': return 'Fixkosten';
+      case 'VARIABLE_EXPENSE': return 'Variable Ausgabe';
+      case 'SAVINGS': return 'Sparen';
+      case 'INCOME': return 'Einnahme';
+      case 'EXPENSE': return 'Ausgabe';
+      default: return type;
+    }
   }
 
   async removeMember(userId: string): Promise<void> {

@@ -77,6 +77,36 @@
     <!-- ── MAIL-VORLAGEN ─────────────────────────────────── -->
     <app-mail-templates />
 
+    <!-- ── KATEGORIEN (nur Owner) ────────────────────────── -->
+    @if (canManage()) {
+      <klar-list-group [label]="'Kategorien · ' + categoriesStore.active().length"
+                       headerActionLabel="+ Neu"
+                       (headerAction)="openCreateCategoryDialog()">
+        @if (categoriesStore.loading()) {
+          <p class="px-6 py-4 text-[13px] text-(--text-muted)">Wird geladen…</p>
+        } @else if (categoriesStore.all().length === 0) {
+          <p class="px-6 py-4 text-[13px] text-(--text-muted)">Noch keine Kategorien angelegt.</p>
+        } @else {
+          @for (cat of categoriesStore.all(); track cat.id) {
+            <button type="button"
+                    class="w-full flex items-center gap-3 px-6 py-2.5 min-h-11 text-left border-b border-(--border)/40 last:border-b-0 hover:bg-(--surface-2)/60 active:bg-(--surface-2) transition-colors"
+                    [class.opacity-50]="cat.isArchived"
+                    (click)="openEditCategoryDialog(cat)">
+              <span class="size-5 rounded-full shrink-0 border border-(--border)"
+                    [style.background]="cat.color"></span>
+              <div class="flex-1 min-w-0">
+                <p class="text-[13px] font-medium truncate">{{ cat.name }}</p>
+                <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
+                  {{ categoryTypeLabel(cat.type) }}{{ cat.isDefault ? ' · Standard' : '' }}{{ cat.isArchived ? ' · Archiviert' : '' }}
+                </p>
+              </div>
+              <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--text-muted)" />
+            </button>
+          }
+        }
+      </klar-list-group>
+    }
+
     <!-- ── API-SCHLÜSSEL ─────────────────────────────────── -->
     <klar-list-group label="API-Schlüssel"
                      headerActionLabel="+ Neu"

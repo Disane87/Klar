@@ -17,6 +17,7 @@ import { CategoryType } from '@prisma/client';
 import type { RequestContext } from '../common/types/request-context.type';
 import { ReqContext } from '../common/decorators/req-context.decorator';
 import { HouseholdMemberGuard } from '../households/guards/household-member.guard';
+import { HouseholdOwnerGuard } from '../common/guards/household-owner.guard';
 import { CategoriesService } from './categories.service';
 import type { CreateCategoryInput, UpdateCategoryInput } from './categories.service';
 
@@ -42,6 +43,7 @@ export class CategoriesController {
   }
 
   @Post()
+  @UseGuards(HouseholdOwnerGuard)
   async create(
     @ReqContext() ctx: RequestContext,
     @Body() body: CreateCategoryInput,
@@ -57,6 +59,7 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @UseGuards(HouseholdOwnerGuard)
   async update(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: string,
@@ -67,6 +70,7 @@ export class CategoriesController {
   }
 
   @Delete(':id')
+  @UseGuards(HouseholdOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @ReqContext() ctx: RequestContext,
