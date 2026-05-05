@@ -42,6 +42,11 @@ agentdb.rvf.lock
 
 # Claude local lock file only
 .claude/scheduled_tasks.lock
+
+# Build artifacts (compiled scripts)
+apps/api/scripts/*.js
+apps/api/scripts/*.js.map
+apps/api/scripts/*.d.ts
 .playwright*/
 screen-*
 
