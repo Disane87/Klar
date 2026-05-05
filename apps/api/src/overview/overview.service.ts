@@ -179,7 +179,7 @@ export class OverviewService {
     }
 
     // Sort: INCOME → FIXED_INCOME → EXPENSE, within same type by category.sortOrder
-    const typeOrder: Record<string, number> = { INCOME: 0, FIXED_INCOME: 1, EXPENSE: 2 };
+    const typeOrder: Record<string, number> = { FIXED_INCOME: 0, INCOME: 1, EXPENSE: 2 };
     const sortOrderMap = new Map(
       [...grouped.values()].map(({ category }) => [category.id, category.sortOrder]),
     );

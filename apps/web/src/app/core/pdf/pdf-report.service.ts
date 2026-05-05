@@ -115,7 +115,7 @@ export class PdfReportService {
     }
 
     // ── Grouped tables ──────────────────────────────────────────────────────────
-    const typeOrder: Record<string, number> = { INCOME: 0, FIXED_INCOME: 1, EXPENSE: 2 };
+    const typeOrder: Record<string, number> = { FIXED_INCOME: 0, INCOME: 1, EXPENSE: 2 };
     const sortedGroups = [...data.groups].sort((a, b) => {
       const ta = typeOrder[a.categoryType] ?? 9;
       const tb = typeOrder[b.categoryType] ?? 9;
