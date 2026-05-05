@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/Disane87/Klar/compare/v1.2.4...v1.3.0) (2026-05-05)
+
+
+### Bug Fixes
+
+* **api:** let static file middleware fall through to API routes ([afb4034](https://github.com/Disane87/Klar/commit/afb40343a85e9a06c55abb8338d3a1fd03490c06))
+
+
+### Features
+
+* **web:** introduce klar-button wrapper and migrate all hlmBtn usages ([750b60a](https://github.com/Disane87/Klar/commit/750b60a02c86fa5696082addf8bbdffb1921d06c))
+* **web:** scale desktop UI 125% and refine fixkosten PDF export ([78e3524](https://github.com/Disane87/Klar/commit/78e3524d9f026900eecdba5ab520a6ef83c15657))
+
 ## [1.2.4](https://github.com/Disane87/Klar/compare/v1.2.3...v1.2.4) (2026-05-05)
 
 
