@@ -32,7 +32,7 @@ export const KlarExportTransactionSchema = z.object({
   date: isoDate,
   description: z.string().nullable().optional(),
   visibility: z.enum(['SHARED', 'PRIVATE']),
-  category: z.object({ name: z.string(), type: z.enum(['EXPENSE', 'INCOME', 'FIXED_INCOME']) }),
+  category: z.object({ name: z.string(), type: z.enum(['FIXED_INCOME', 'VARIABLE_INCOME', 'FIXED_EXPENSE', 'VARIABLE_EXPENSE', 'SAVINGS', 'INCOME', 'EXPENSE']) }),
   project: z.object({ name: z.string() }).nullable().optional(),
 });
 
@@ -50,7 +50,7 @@ export const KlarExportRecurringSchema = z.object({
   note: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
-  category: z.object({ name: z.string(), type: z.enum(['EXPENSE', 'INCOME', 'FIXED_INCOME']) }),
+  category: z.object({ name: z.string(), type: z.enum(['FIXED_INCOME', 'VARIABLE_INCOME', 'FIXED_EXPENSE', 'VARIABLE_EXPENSE', 'SAVINGS', 'INCOME', 'EXPENSE']) }),
   project: z.object({ name: z.string() }).nullable().optional(),
 });
 

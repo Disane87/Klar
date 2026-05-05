@@ -111,7 +111,15 @@ export type InviteTokenInfo = {
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
-export type CategoryType = 'EXPENSE' | 'INCOME' | 'FIXED_INCOME';
+export type CategoryType =
+  | 'FIXED_INCOME'
+  | 'VARIABLE_INCOME'
+  | 'FIXED_EXPENSE'
+  | 'VARIABLE_EXPENSE'
+  | 'SAVINGS'
+  // Legacy — bleibt für Bestandsdaten erhalten, in neuen Daten nicht mehr verwenden
+  | 'INCOME'
+  | 'EXPENSE';
 
 export type Category = {
   id: string;

@@ -298,7 +298,15 @@ grouped.set(key, {
           });
         }
       }
-      const typeOrder: Record<string, number> = { FIXED_INCOME: 0, INCOME: 1, EXPENSE: 2 };
+      const typeOrder: Record<string, number> = {
+        FIXED_INCOME: 0,
+        VARIABLE_INCOME: 1,
+        INCOME: 1, // legacy alias
+        FIXED_EXPENSE: 2,
+        VARIABLE_EXPENSE: 3,
+        EXPENSE: 3, // legacy alias
+        SAVINGS: 4,
+      };
       return [...grouped.values()].sort((a, b) => {
         const ta = typeOrder[a.categoryType] ?? 9;
         const tb = typeOrder[b.categoryType] ?? 9;

@@ -31,16 +31,19 @@ const DEFAULT_CATEGORIES: Array<Omit<CreateCategoryData, 'householdId'>> = [
   // Fixed income
   { name: 'Festgehalt', type: CategoryType.FIXED_INCOME, color: '#22c55e', icon: 'briefcase', sortOrder: 0, isDefault: true },
   // Variable income
-  { name: 'Variables Einkommen', type: CategoryType.INCOME, color: '#4ade80', icon: 'trending-up', sortOrder: 1, isDefault: true },
-  // Expenses
-  { name: 'Wohnen', type: CategoryType.EXPENSE, color: '#60a5fa', icon: 'home', sortOrder: 10, isDefault: true },
-  { name: 'Lebensmittel', type: CategoryType.EXPENSE, color: '#fb923c', icon: 'shopping-cart', sortOrder: 11, isDefault: true },
-  { name: 'Mobilität', type: CategoryType.EXPENSE, color: '#a78bfa', icon: 'car', sortOrder: 12, isDefault: true },
-  { name: 'Versicherungen', type: CategoryType.EXPENSE, color: '#f472b6', icon: 'shield', sortOrder: 13, isDefault: true },
-  { name: 'Gesundheit', type: CategoryType.EXPENSE, color: '#34d399', icon: 'heart', sortOrder: 14, isDefault: true },
-  { name: 'Freizeit', type: CategoryType.EXPENSE, color: '#fbbf24', icon: 'star', sortOrder: 15, isDefault: true },
-  { name: 'Kleidung', type: CategoryType.EXPENSE, color: '#f87171', icon: 'tag', sortOrder: 16, isDefault: true },
-  { name: 'Sonstiges', type: CategoryType.EXPENSE, color: '#94a3b8', icon: 'more-horizontal', sortOrder: 99, isDefault: true },
+  { name: 'Variables Einkommen', type: CategoryType.VARIABLE_INCOME, color: '#4ade80', icon: 'trending-up', sortOrder: 1, isDefault: true },
+  // Fixed expenses (Miete, Versicherung, Abos)
+  { name: 'Wohnen', type: CategoryType.FIXED_EXPENSE, color: '#60a5fa', icon: 'home', sortOrder: 10, isDefault: true },
+  { name: 'Versicherungen', type: CategoryType.FIXED_EXPENSE, color: '#f472b6', icon: 'shield', sortOrder: 11, isDefault: true },
+  // Variable expenses (alltägliche Ausgaben)
+  { name: 'Lebensmittel', type: CategoryType.VARIABLE_EXPENSE, color: '#fb923c', icon: 'shopping-cart', sortOrder: 20, isDefault: true },
+  { name: 'Mobilität', type: CategoryType.VARIABLE_EXPENSE, color: '#a78bfa', icon: 'car', sortOrder: 21, isDefault: true },
+  { name: 'Gesundheit', type: CategoryType.VARIABLE_EXPENSE, color: '#34d399', icon: 'heart', sortOrder: 22, isDefault: true },
+  { name: 'Freizeit', type: CategoryType.VARIABLE_EXPENSE, color: '#fbbf24', icon: 'star', sortOrder: 23, isDefault: true },
+  { name: 'Kleidung', type: CategoryType.VARIABLE_EXPENSE, color: '#f87171', icon: 'tag', sortOrder: 24, isDefault: true },
+  { name: 'Sonstiges', type: CategoryType.VARIABLE_EXPENSE, color: '#94a3b8', icon: 'more-horizontal', sortOrder: 99, isDefault: true },
+  // Savings / Vermögensaufbau (kein klassischer Expense)
+  { name: 'Sparen', type: CategoryType.SAVINGS, color: '#0ea5e9', icon: 'piggy-bank', sortOrder: 30, isDefault: true },
 ];
 
 @Injectable()

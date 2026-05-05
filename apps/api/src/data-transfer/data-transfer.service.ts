@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { KlarExportFileSchema } from '@klar/shared';
-import type { KlarExportFile } from '@klar/shared';
+import type { KlarExportFile, CategoryType as SharedCategoryType } from '@klar/shared';
 import type { RequestContext } from '../common/types/request-context.type';
 import { DataTransferRepository } from './data-transfer.repository';
 import type { ExportOpts } from './data-transfer.repository';
@@ -82,7 +82,7 @@ export class DataTransferService {
         date: tx.date.toISOString().slice(0, 10),
         description: tx.description ?? null,
         visibility: tx.visibility as 'SHARED' | 'PRIVATE',
-        category: { name: tx.category.name, type: tx.category.type as 'EXPENSE' | 'INCOME' | 'FIXED_INCOME' },
+        category: { name: tx.category.name, type: tx.category.type as SharedCategoryType },
         project: tx.project ? { name: tx.project.name } : null,
       })),
       recurringTransactions: recurringTransactions.map(rt => ({

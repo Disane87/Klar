@@ -27,9 +27,17 @@ enum HouseholdRole {
 }
 
 enum CategoryType {
-  EXPENSE
+  // Income types
+  FIXED_INCOME      // regelmäßiges Gehalt, fester Betrag
+  VARIABLE_INCOME   // Zinsen, Boni, Nebeneinkünfte (heute "INCOME")
+  // Expense types
+  FIXED_EXPENSE     // Miete, Versicherung, Abo (heute pauschal "EXPENSE")
+  VARIABLE_EXPENSE  // Lebensmittel, Tanken, Restaurant
+  // Savings / wealth building (kein "echter" Ausgabeposten)
+  SAVINGS
+  // Legacy types — bleiben erhalten für Bestandsdaten
   INCOME
-  FIXED_INCOME
+  EXPENSE
 }
 
 enum RecurringFrequency {

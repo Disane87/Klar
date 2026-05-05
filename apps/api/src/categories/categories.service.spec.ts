@@ -142,12 +142,12 @@ describe('CategoriesService', () => {
   });
 
   describe('seedDefaults', () => {
-    it('calls createMany with 10 default categories for the household', async () => {
+    it('calls createMany with 11 default categories for the household', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.createMany).mockResolvedValue({ count: 0 });
       await service.seedDefaults('hh1');
       const call = vi.mocked(repo.createMany).mock.calls[0][0];
-      expect(call).toHaveLength(10);
+      expect(call).toHaveLength(11);
       expect(call.every((c: { householdId: string }) => c.householdId === 'hh1')).toBe(true);
     });
 
