@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Disane87/Klar/compare/v1.2.0...v1.2.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* **release:** hardcode lowercase ghcr owner in publishCmd ([a8a0f30](https://github.com/Disane87/Klar/commit/a8a0f3001c4d466a118fe30f128342ff39814154))
+
 # [1.2.0](https://github.com/Disane87/Klar/compare/v1.1.0...v1.2.0) (2026-05-05)
 
 
