@@ -43,6 +43,7 @@ describe('HouseholdStore', () => {
       listInvites:      vi.fn().mockResolvedValue([makeInvite()]),
       createInvite:     vi.fn().mockResolvedValue(makeInvite('inv-new')),
       deleteInvite:     vi.fn().mockResolvedValue(undefined),
+      sendInviteEmail:  vi.fn().mockResolvedValue(undefined),
       joinByCode:       vi.fn().mockResolvedValue({ householdId: 'hh-2' }),
     };
 
@@ -172,6 +173,17 @@ describe('HouseholdStore', () => {
       await store.loadInvites();
       await store.deleteInvite('inv-1');
       expect(store.invites()).toHaveLength(0);
+    });
+  });
+
+  describe('sendInviteEmail()', () => {
+    it('patches the matching invite with the lowercased email', async () => {
+      await TestBed.runInInjectionContext(() => store.init());
+      await store.loadInvites();
+      await store.sendInviteEmail('inv-1', 'Alice@Example.COM');
+      expect(svc.sendInviteEmail).toHaveBeenCalledWith('hh-1', 'inv-1', 'Alice@Example.COM');
+      const updated = store.invites().find(i => i.id === 'inv-1');
+      expect(updated?.email).toBe('alice@example.com');
     });
   });
 

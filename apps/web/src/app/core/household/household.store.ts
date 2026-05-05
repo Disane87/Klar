@@ -92,6 +92,10 @@ export class HouseholdStore {
     const id = this._activeId();
     if (!id) return;
     await this.householdService.sendInviteEmail(id, inviteId, email);
+    const lower = email.toLowerCase();
+    this._invites.update(list =>
+      list.map(i => (i.id === inviteId ? { ...i, email: lower } : i)),
+    );
   }
 
   async joinByToken(token: string): Promise<void> {

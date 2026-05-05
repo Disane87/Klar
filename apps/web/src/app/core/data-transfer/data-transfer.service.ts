@@ -1,6 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { CategoriesStore } from '../categories/categories.store';
+import { TransactionsStore } from '../transactions/transactions.store';
+import { OverviewStore } from '../overview/overview.store';
+import { ProjekteStore } from '../overview/projekte.store';
 
 export interface CategoryMappingItem {
   source: { name: string; type: string };
@@ -40,6 +44,10 @@ export interface ExportParams {
 @Injectable({ providedIn: 'root' })
 export class DataTransferService {
   private http = inject(HttpClient);
+  private categoriesStore = inject(CategoriesStore);
+  private transactionsStore = inject(TransactionsStore);
+  private overviewStore = inject(OverviewStore);
+  private projekteStore = inject(ProjekteStore);
 
   private base(householdId: string): string {
     return `/api/v1/households/${householdId}`;
@@ -79,12 +87,17 @@ export class DataTransferService {
     );
   }
 
-  confirm(householdId: string, body: ConfirmBody): Promise<ImportResult> {
-    return firstValueFrom(
+  async confirm(householdId: string, body: ConfirmBody): Promise<ImportResult> {
+    const result = await firstValueFrom(
       this.http.post<ImportResult>(
         `${this.base(householdId)}/import/confirm`,
         body,
       ),
     );
+    this.categoriesStore.reload();
+    this.projekteStore.reload();
+    this.transactionsStore.reload();
+    this.overviewStore.reload();
+    return result;
   }
 }

@@ -9,6 +9,7 @@ import { CategoriesStore } from '../../core/categories/categories.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { TransactionsService } from '../../core/transactions/transactions.service';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
+import { OverviewStore } from '../../core/overview/overview.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import type { Transaction } from '../../core/transactions/transactions.store';
 
@@ -26,6 +27,7 @@ export class TransactionDialogComponent {
   private household = inject(HouseholdStore);
   private service   = inject(TransactionsService);
   private store     = inject(TransactionsStore);
+  private overview  = inject(OverviewStore);
   private toast     = inject(KlarToastService);
   protected cats    = inject(CategoriesStore);
 
@@ -91,6 +93,7 @@ export class TransactionDialogComponent {
         this.toast.success('Buchung angelegt');
       }
       this.store.reload();
+      this.overview.reload();
       this.dialog.close();
     } catch {
       this.err.set('Speichern fehlgeschlagen. Bitte erneut versuchen.');
@@ -107,6 +110,7 @@ export class TransactionDialogComponent {
     try {
       await this.service.delete(hid, t.id);
       this.store.reload();
+      this.overview.reload();
       this.dialog.close();
       this.toast.success('Buchung gelöscht');
     } catch {

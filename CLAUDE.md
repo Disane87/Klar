@@ -1213,6 +1213,7 @@ export const createTransaction = (
 - ❌ UI-Strukturen duplizieren wenn ≥ 2 Verwendungen — in `klar-*`-Komponente kapseln und beim Code-Durchlauf aktiv nach Generalisierungspotenzialen suchen
 - ❌ `Zone.js`-Patterns (`NgZone.run()`, `ChangeDetectorRef.markForCheck()`)
 - ❌ Reactive Forms (`FormGroup`, `FormBuilder`) — Signal Forms verwenden
+- ❌ **Mutations ohne reaktive State-Updates** — nach JEDER erfolgreichen API-Mutation (POST/PATCH/DELETE) muss der entsprechende Store seinen Signal-State sofort aktualisieren: entweder lokal patchen (`_signal.update(...)`) oder `reload()`/`loadX()` aufrufen. Niemals darauf vertrauen dass der nächste Page-Load oder F5 den State korrigiert. Gilt für alle Listen, Counts, Detail-Ansichten und abgeleitete Computed-Signals — Owner-/Member-Listen, Einladungen, Buchungen, Recurring, Categories, Mail-Templates, API-Keys, Sessions, OIDC-Identities, Profile usw. Bei optimistischen Updates: revertiere bei Fehler via `reload()`
 - ❌ Hardcoded Color-Hex in Komponenten — Tailwind-Klassen oder CSS-Variablen
 - ❌ Zahlen ohne `font-mono` und `tabular-nums` rendern
 - ❌ `font-size < 16px` auf Form-Elementen — iOS Safari zoomt rein
