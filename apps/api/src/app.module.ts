@@ -78,6 +78,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
       ? [ServeStaticModule.forRoot({
           rootPath: join(process.cwd(), 'web'),
           exclude: ['/api/*path', '/health'],
+          serveStaticOptions: { fallthrough: true },
         })]
       : []),
   ],
