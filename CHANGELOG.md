@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Disane87/Klar/compare/v1.3.0...v1.4.0) (2026-05-05)
+
+
+### Features
+
+* **web:** add bulk select & delete on fixkosten ([b2e2537](https://github.com/Disane87/Klar/commit/b2e25378fb6f4c1239269faff419880a1d768b16))
+
 # [1.3.0](https://github.com/Disane87/Klar/compare/v1.2.4...v1.3.0) (2026-05-05)
 
 
