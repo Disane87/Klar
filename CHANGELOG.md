@@ -1,3 +1,18 @@
+# [1.6.0](https://github.com/Disane87/Klar/compare/v1.5.0...v1.6.0) (2026-05-05)
+
+
+### Bug Fixes
+
+* **auth:** consume invite token after email verification ([ff91bc3](https://github.com/Disane87/Klar/commit/ff91bc3d5704d796024ea422f73e2de83dd24d72))
+* **overview:** sort FIXED_INCOME before INCOME in fixed costs ([55bbb87](https://github.com/Disane87/Klar/commit/55bbb87dbaa43797abe4258dd24628e0a510d0e6))
+
+
+### Features
+
+* **admin:** add admin area with email log and owner/admin guards ([d24c42c](https://github.com/Disane87/Klar/commit/d24c42c672e4eee841dbab42528b556d29f4d64c))
+* **categories:** expand CategoryType taxonomy with fixed/variable/savings split ([28da62a](https://github.com/Disane87/Klar/commit/28da62ab0a6f2cc765656812777bb30d1dad5f13))
+* **categories:** owner-only category management in Haushalt page ([6ca3699](https://github.com/Disane87/Klar/commit/6ca369923434d8305e6fbe4ee733f603310cc65f))
+
 # [1.5.0](https://github.com/Disane87/Klar/compare/v1.4.2...v1.5.0) (2026-05-05)
 
 
