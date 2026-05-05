@@ -152,6 +152,14 @@ export class SettingsPageComponent {
     this.dialog.open({ title: '2FA einrichten', component: TotpSetupDialogComponent, width: 'sm' });
   }
 
+  openExport(): void {
+    this.dialog.open({ title: 'Daten exportieren', component: DataExportComponent, width: 'sm' });
+  }
+
+  openImport(): void {
+    this.dialog.open({ title: 'Daten importieren', component: DataImportComponent, width: 'sm' });
+  }
+
   formatDate(isoString?: string): string {
     if (!isoString) return '—';
     return new Date(isoString).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });

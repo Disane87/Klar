@@ -74,5 +74,6 @@ export class DataImportComponent {
     const total = importResult.imported.transactions + importResult.imported.recurringTransactions;
     const skipped = importResult.skipped > 0 ? ` (${importResult.skipped} übersprungen)` : '';
     this.toast.success(`${total} Einträge importiert${skipped}`);
+    this.dialog.close();
   }
 }

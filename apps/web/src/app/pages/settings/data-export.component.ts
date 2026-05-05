@@ -5,6 +5,7 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { HouseholdStore } from '../../core/household/household.store';
 import { DataTransferService } from '../../core/data-transfer/data-transfer.service';
@@ -26,6 +27,7 @@ export class DataExportComponent {
   private dtService = inject(DataTransferService);
   private hhStore = inject(HouseholdStore);
   private toast = inject(KlarToastService);
+  readonly dialog = inject(KlarDialogService);
 
   readonly includeTransactions = signal(true);
   readonly includeRecurring = signal(true);
@@ -50,6 +52,7 @@ export class DataExportComponent {
         endDate: this.endDate() || undefined,
       });
       this.toast.success('Export gestartet');
+      this.dialog.close();
     } catch {
       // ErrorInterceptor handles the HTTP error toast
     } finally {
