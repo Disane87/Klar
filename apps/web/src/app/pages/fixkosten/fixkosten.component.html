@@ -109,6 +109,15 @@
           </div>
           }
         </div>
+        @if (!planspielActive()) {
+        <button type="button"
+          class="flex items-center gap-1.5 text-[11px] transition-colors"
+          [ngClass]="selectionMode() ? 'text-(--color-accent)' : 'text-(--text-muted) hover:text-(--text)'"
+          (click)="toggleSelectionMode()">
+          <klar-icon [name]="selectionMode() ? 'x' : 'check-square'" [size]="12" />
+          {{ selectionMode() ? 'Abbruch' : 'Auswählen' }}
+        </button>
+        }
         <button class="flex items-center gap-1.5 text-[11px] text-(--text-muted) hover:text-(--text) transition-colors"
           (click)="exportPdf()">
           <klar-icon name="download" [size]="12" />
@@ -192,8 +201,25 @@
         [collapsible]="true"
         [collapsed]="isCollapsed(group.categoryId)"
         (headerAction)="toggleGroup(group.categoryId)">
+        @if (selectionMode() && !planspielActive()) {
+          <div class="flex items-center px-6 py-2 border-b border-(--border)/40 bg-(--surface-2)/30"
+               (click)="$event.stopPropagation(); toggleGroupSelection(group)">
+            <hlm-checkbox
+              [checked]="groupSelectionState(group) === 'all'"
+              [indeterminate]="groupSelectionState(group) === 'partial'"
+              class="cursor-pointer" />
+            <span class="ml-3 text-[11px] text-(--text-muted) select-none cursor-pointer">
+              Gruppe auswählen ({{ group.items.length }})
+            </span>
+          </div>
+        }
         @for (item of group.items; track item.id) {
           <klar-list-row [navigable]="true" (rowClick)="openEdit(item)">
+            @if (selectionMode() && !planspielActive()) {
+              <hlm-checkbox
+                [checked]="isSelected(item.id)"
+                class="shrink-0 pointer-events-none" />
+            }
             <app-brand-icon [name]="item.name" [size]="22" [color]="item.color" [icon]="item.icon" class="shrink-0" />
             @if (item.dayOfMonth) {
               <div class="w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-(--border)">
@@ -240,6 +266,20 @@
     <span class="text-[10px] text-(--text-muted)">Individuell</span>
   </div>
 </div>
+}
+
+@if (selectionMode() && selectedCount() > 0) {
+  <klar-fab [label]="selectedCount() + ' ausgewählt'">
+    <button type="button" hlmBtn variant="ghost" size="sm" (click)="exitSelection()">
+      Abbrechen
+    </button>
+    <button type="button" hlmBtn variant="destructive" size="sm"
+            [disabled]="bulkDeleting()"
+            (click)="bulkDelete()">
+      <klar-icon name="trash-2" [size]="14" />
+      Löschen
+    </button>
+  </klar-fab>
 }
 
 }
