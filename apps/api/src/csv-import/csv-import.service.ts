@@ -31,6 +31,14 @@ export interface AnalyzeRow {
   externalRef: string | null;
   status: RowStatus;
   matchedRecurringId?: string;
+  matchedRecurring?: {
+    id: string;
+    name: string;
+    amountCents: number;
+    dayOfMonth: number | null;
+    frequency: string;
+    note: string | null;
+  };
   suggestedCategoryId?: string;
   suggestedCategoryConfidence: 'EXACT' | 'LEARNED' | 'NONE';
   suggestedRecurring?: {
@@ -113,6 +121,7 @@ export class CsvImportService {
       isActive: r.isActive,
       dayOfMonth: r.dayOfMonth,
     }));
+    const recurringsRawById = new Map(recurringsRaw.map(r => [r.id, r]));
     const fixed = new FixedCostMatcher(recurringsForMatch);
 
     const suggester = new RecurringSuggester(
@@ -142,9 +151,20 @@ export class CsvImportService {
       }
       const match = fixed.match(p);
       if (match) {
+        const raw = recurringsRawById.get(match.id);
         return {
           ...this.toAnalyzeRow(p, 'FIXED_COST_MATCH', baseSuggestion),
           matchedRecurringId: match.id,
+          matchedRecurring: raw
+            ? {
+                id: raw.id,
+                name: raw.name,
+                amountCents: raw.amountCents,
+                dayOfMonth: raw.dayOfMonth,
+                frequency: raw.frequency,
+                note: raw.note,
+              }
+            : undefined,
         };
       }
       const sug = suggester.suggest(p);

@@ -9,6 +9,9 @@ import { CommonModule } from '@angular/common';
 import { CsvImportService } from '../../core/csv-import/csv-import.service';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
+import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { CategoryEditDialogComponent } from '../haushalt/category-edit-dialog.component';
+import type { Category } from '@klar/shared';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { CsvUploadStepComponent } from './components/csv-upload-step.component';
 import { CsvPreviewTableComponent } from './components/csv-preview-table.component';
@@ -63,6 +66,7 @@ export class CsvImportPageComponent {
   private readonly csv = inject(CsvImportService);
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly toast = inject(KlarToastService);
+  private readonly dialog = inject(KlarDialogService);
 
   constructor() {
     inject(PageHeaderService).set({
@@ -115,23 +119,24 @@ export class CsvImportPageComponent {
     }
   }
 
-  async onAddCategory(payload: { rowIndex: number; name: string }): Promise<void> {
-    try {
-      const created = await this.categoriesStore.create({
-        name: payload.name,
-        type: 'VARIABLE_EXPENSE',
-        color: '#94a3b8',
-      });
-      const next = new Map(this.selections());
-      const sel = next.get(payload.rowIndex);
-      if (sel) {
-        next.set(payload.rowIndex, { ...sel, categoryId: created.id });
-        this.selections.set(next);
-      }
-      this.toast.success(`Kategorie "${created.name}" angelegt`);
-    } catch (err) {
-      this.toast.error((err as Error).message ?? 'Kategorie konnte nicht angelegt werden');
-    }
+  onAddCategory(payload: { rowIndex: number; name: string }): void {
+    this.dialog.open({
+      title: 'Kategorie anlegen',
+      component: CategoryEditDialogComponent,
+      width: 'md',
+      inputs: {
+        category: null,
+        prefillName: payload.name,
+        onCreated: (created: Category) => {
+          const next = new Map(this.selections());
+          const sel = next.get(payload.rowIndex);
+          if (sel) {
+            next.set(payload.rowIndex, { ...sel, categoryId: created.id });
+            this.selections.set(next);
+          }
+        },
+      },
+    });
   }
 
   reset(): void {

@@ -134,6 +134,8 @@ const PRESET_COLORS = [
 })
 export class CategoryEditDialogComponent implements OnInit {
   category = input<Category | null>(null);
+  prefillName = input<string | null>(null);
+  onCreated = input<((cat: Category) => void) | null>(null);
 
   private store = inject(CategoriesStore);
   private toast = inject(KlarToastService);
@@ -158,7 +160,10 @@ export class CategoryEditDialogComponent implements OnInit {
       this.type.set(c.type);
       this.color.set(c.color);
       this.icon.set(c.icon ?? '');
+      return;
     }
+    const pre = this.prefillName();
+    if (pre) this.name.set(pre);
   }
 
   protected typeLabel(t: CategoryType): string {
@@ -179,13 +184,14 @@ export class CategoryEditDialogComponent implements OnInit {
         });
         this.toast.success('Kategorie aktualisiert');
       } else {
-        await this.store.create({
+        const created = await this.store.create({
           name,
           type: this.type(),
           color: this.color(),
           icon: this.icon().trim() || null,
         });
         this.toast.success('Kategorie angelegt');
+        this.onCreated()?.(created);
       }
       this.dialogRef.close();
     } catch (err: unknown) {

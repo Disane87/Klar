@@ -10,6 +10,14 @@ export interface AnalyzeRow {
   externalRef: string | null;
   status: RowStatus;
   matchedRecurringId?: string;
+  matchedRecurring?: {
+    id: string;
+    name: string;
+    amountCents: number;
+    dayOfMonth: number | null;
+    frequency: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'WEEKLY' | 'CUSTOM';
+    note: string | null;
+  };
   suggestedCategoryId?: string;
   suggestedCategoryConfidence: Confidence;
   suggestedRecurring?: {
