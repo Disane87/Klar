@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/Disane87/Klar/compare/v1.8.0...v1.8.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **vscode:** update TypeScript formatter and add npm exclusion ([868777c](https://github.com/Disane87/Klar/commit/868777c6ede446b8818255547df5c05aad167adf))
+
 # [1.8.0](https://github.com/Disane87/Klar/compare/v1.7.0...v1.8.0) (2026-05-05)
 
 
