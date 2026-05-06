@@ -91,3 +91,50 @@ describe('GET /.well-known/oauth-protected-resource', () => {
     expect(body['scopes_supported']).toEqual([...OAUTH_SCOPES]);
   });
 });
+
+describe('POST /oauth2/register', () => {
+  it('registers a public client and returns RFC 7591 metadata', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/oauth2/register',
+      payload: {
+        client_name: 'mcp-cli-test',
+        redirect_uris: ['http://localhost:33418/cb'],
+      },
+    });
+
+    expect(res.statusCode).toBe(201);
+    const body = JSON.parse(res.body) as Record<string, unknown>;
+    expect(body['client_id']).toMatch(/^klar_mcp_[0-9a-f]{24}$/);
+    expect(body['client_secret']).toBeUndefined();
+    expect(body['registration_access_token']).toMatch(/^klar_rat_/);
+    expect(body['client_secret_expires_at']).toBe(0);
+    expect(body['token_endpoint_auth_method']).toBe('none');
+  });
+
+  it('rejects http on non-loopback host', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/oauth2/register',
+      payload: {
+        client_name: 'evil',
+        redirect_uris: ['http://example.com/cb'],
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    const body = JSON.parse(res.body) as Record<string, unknown>;
+    expect(body['error']).toBe('invalid_redirect_uri');
+  });
+
+  it('rejects empty client_name', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/oauth2/register',
+      payload: {
+        client_name: '',
+        redirect_uris: ['https://app.test/cb'],
+      },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+});

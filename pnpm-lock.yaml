@@ -141,6 +141,9 @@ importers:
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.0
