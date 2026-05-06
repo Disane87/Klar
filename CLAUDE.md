@@ -92,6 +92,7 @@ memory_store(key="pattern-[beschreibung]", value="[konkreter Ansatz]", namespace
 - **Direkt auf `main`** committen — kein Feature-Branch-Overhead als Solo-Entwickler
 - **Commit-Zeitpunkt:** nach jedem abgeschlossenen Modul mit grünen Tests — nie mitten in halbfertigem Feature
 - **Commit-Größe:** ein Modul = ein Commit; niemals WIP-Commits
+- **Commits sammeln vor Push:** bei größeren Implementierungen (> 1 Datei / mehrere Module) Commits lokal sammeln und erst pushen wenn das Feature Ende-zu-Ende funktioniert. Niemals Zwischenstände pushen die feature-incomplete oder broken sind — sonst entstehen kaputte Versionen in der Prod-Integrationsumgebung. Push erst nach explizitem Marco-OK oder wenn das gesamte Feature grün ist
 - **Commit-Sprache:** IMMER Englisch — Subject + Body in Englisch, auch wenn Konversation auf Deutsch läuft
 - **Kein Co-Author:** niemals `Co-Authored-By: Claude` o.ä. an Commits anhängen
 - Feature-Branches nur für größere Experimente die eventuell weggeworfen werden
@@ -1226,6 +1227,8 @@ export const createTransaction = (
 - ❌ Linter-Fehler ignorieren — `pnpm lint` muss vor jedem Commit grün sein
 - ❌ `as any` / `as unknown` als dauerhafter Workaround — nur wenn Prisma-Client noch nicht regeneriert wurde; sobald Schema aktualisiert ist, sofort entfernen
 - ❌ Prisma-Schema und Migrationen auseinanderlaufen lassen — nach jeder Migration: Schema anpassen + `prisma:generate` ausführen, sonst kein Commit
+- ❌ Lange Listen ohne Virtual-/Infinite-Scroll rendern — bei potenziell > 50 Items IMMER Virtual-Scrolling (Angular CDK `cdk-virtual-scroll-viewport` oder bestehende `klar-list`-Variante mit Pagination/Lazy). Komplette Listen mit hunderten DOM-Knoten zerstören Performance auf Mobile. Standard für CSV-Import, Buchungen, Transactions, Audit-Log etc.
+- ❌ Neue Seiten ohne Header-Zeile bauen — JEDE Seite (Pages unter `/app/*`) bekommt oben einen Page-Header (Titel + ggf. Action-Buttons) wie alle bestehenden Seiten. Pattern: `PageHeaderService.set({ title, actions })` oder `<klar-page-header>`-Komponente, falls vorhanden. Nie nur ein nacktes `<h1>` mitten im Content
 
 ---
 

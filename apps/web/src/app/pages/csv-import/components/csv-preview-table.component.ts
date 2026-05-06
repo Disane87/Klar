@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CsvPreviewRowComponent } from './csv-preview-row.component';
 import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
 import type {
@@ -24,7 +25,7 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
 @Component({
   selector: 'app-csv-preview-table',
   standalone: true,
-  imports: [CommonModule, CsvPreviewRowComponent, HlmButtonDirective],
+  imports: [CommonModule, ScrollingModule, CsvPreviewRowComponent, HlmButtonDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-3">
@@ -32,7 +33,7 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
         @for (chip of chips(); track chip.key) {
           <button
             type="button"
-            class="rounded-full border px-3 py-1.5 text-xs whitespace-nowrap min-h-[44px] transition-colors"
+            class="rounded-full border px-3 py-1.5 text-xs whitespace-nowrap min-h-11 transition-colors"
             [class.border-primary]="filter() === chip.key"
             [class.text-primary]="filter() === chip.key"
             [class.border-border]="filter() !== chip.key"
@@ -43,16 +44,20 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
         }
       </div>
 
-      <div class="flex flex-col gap-1 rounded-lg border border-border bg-card divide-y divide-border">
-        @for (row of filteredRows(); track row.rowIndex) {
-          <app-csv-preview-row
-            [row]="row"
-            [selection]="getSelection(row.rowIndex)"
-            [categories]="categories()"
-            (selectionChange)="onSelectionChange($event)"
-          />
-        }
-      </div>
+      <cdk-virtual-scroll-viewport
+        [itemSize]="rowHeightPx"
+        class="rounded-lg border border-border bg-card h-[calc(100dvh-22rem)] min-h-96"
+      >
+        <app-csv-preview-row
+          *cdkVirtualFor="let row of filteredRows(); trackBy: trackByRowIndex"
+          [row]="row"
+          [selection]="getSelection(row.rowIndex)"
+          [categories]="categories()"
+          [style.height.px]="rowHeightPx"
+          class="block border-b border-border last:border-b-0"
+          (selectionChange)="onSelectionChange($event)"
+        />
+      </cdk-virtual-scroll-viewport>
 
       <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between sticky bottom-0 bg-background py-3 border-t border-border">
         <span class="text-sm text-muted-foreground">
@@ -84,6 +89,9 @@ export class CsvPreviewTableComponent {
   readonly submit = output<void>();
 
   readonly filter = signal<FilterKey>('all');
+
+  readonly rowHeightPx = 88;
+  readonly trackByRowIndex = (_: number, row: { rowIndex: number }): number => row.rowIndex;
 
   readonly chips = computed(() => {
     const s = this.analyzeResult().summary;

@@ -26,7 +26,7 @@ interface CategoryOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="flex flex-col gap-2 border-l-2 py-2.5 px-4 md:flex-row md:items-center md:gap-4"
+      class="flex h-full items-center gap-3 border-l-2 py-2 px-4 overflow-hidden"
       [class.border-success]="row().status === 'NEW'"
       [class.border-warning]="row().status === 'RECURRING_SUGGESTION'"
       [class.border-muted]="row().status === 'DUPLICATE' || row().status === 'FIXED_COST_MATCH'"

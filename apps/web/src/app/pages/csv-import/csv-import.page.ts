@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { CsvImportService } from '../../core/csv-import/csv-import.service';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { CsvUploadStepComponent } from './components/csv-upload-step.component';
 import { CsvPreviewTableComponent } from './components/csv-preview-table.component';
 import { CsvImportSummaryComponent } from './components/csv-import-summary.component';
@@ -31,9 +32,7 @@ type Step = 'upload' | 'preview' | 'done';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="min-h-[100dvh] flex flex-col gap-4 p-4 md:p-6 max-w-5xl mx-auto">
-      <h1 class="text-xl font-semibold">CSV-Import</h1>
-
+    <main class="min-h-dvh flex flex-col gap-4 p-4 md:p-6 max-w-5xl mx-auto">
       @switch (step()) {
         @case ('upload') {
           <app-csv-upload-step (fileSelected)="onFileSelected($event)" />
@@ -63,6 +62,13 @@ export class CsvImportPageComponent {
   private readonly csv = inject(CsvImportService);
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly toast = inject(KlarToastService);
+
+  constructor() {
+    inject(PageHeaderService).set({
+      title: 'CSV-Import',
+      subtitle: 'SPARKASSE CAMT V2',
+    });
+  }
 
   readonly step = signal<Step>('upload');
   readonly fileBase64 = signal<string | null>(null);
