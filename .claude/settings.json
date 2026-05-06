@@ -46,7 +46,9 @@
       "Bash(docker exec *)",
       "Bash(pnpm --filter @klar/shared test)",
       "Bash(pnpm --filter api exec vitest run src/csv-import/detection)",
-      "Bash(pnpm prisma *)"
+      "Bash(pnpm prisma *)",
+      "Bash(pnpm --filter @klar/web exec vitest run src/app/pages/fixkosten/fixkosten.component.spec.ts)",
+      "Bash(pnpm --filter @klar/web lint)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",

@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HlmBadgeDirective } from '../../../shared/ui/hlm/hlm-badge.directive';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
-import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
 import { KlarAvatarComponent } from '../../../shared/ui/klar-avatar.component';
 import { KlarFilterBarComponent } from '../../../shared/ui/klar-filter-bar.component';
 import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-header.component';
@@ -16,7 +15,6 @@ import { AdminApiService, type AdminHousehold } from '../admin.service';
     FormsModule,
     HlmBadgeDirective,
     HlmInputDirective,
-    HlmLabelDirective,
     KlarAvatarComponent,
     KlarFilterBarComponent,
     KlarSectionHeaderComponent,

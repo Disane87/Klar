@@ -5,7 +5,6 @@ import { KlarFilterBarComponent } from '../../../shared/ui/klar-filter-bar.compo
 import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-header.component';
 import { KlarVirtualListComponent } from '../../../shared/ui/klar-virtual-list.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
-import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
 import { AdminApiService, type AuditFilter, type AuditLogEntry } from '../admin.service';
 import { usePaginatedList } from './use-paginated-list';
 
@@ -15,7 +14,6 @@ import { usePaginatedList } from './use-paginated-list';
   imports: [
     FormsModule,
     HlmInputDirective,
-    HlmLabelDirective,
     KlarAvatarComponent,
     KlarFilterBarComponent,
     KlarSectionHeaderComponent,

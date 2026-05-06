@@ -2,7 +2,6 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HlmBadgeDirective } from '../../../shared/ui/hlm/hlm-badge.directive';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
-import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarFilterBarComponent } from '../../../shared/ui/klar-filter-bar.component';
 import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-header.component';
@@ -17,7 +16,6 @@ import { usePaginatedList } from './use-paginated-list';
     FormsModule,
     HlmBadgeDirective,
     HlmInputDirective,
-    HlmLabelDirective,
     HlmSelectNativeDirective,
     KlarFilterBarComponent,
     KlarSectionHeaderComponent,
