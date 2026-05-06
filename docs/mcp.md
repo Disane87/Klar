@@ -66,7 +66,7 @@ In der Settings-Konfiguration den MCP-Server hinzufügen:
 ```json
 {
   "klar": {
-    "url": "https://klar.disane.dev/mcp",
+    "url": "https://your-klar-instance.com/mcp",
     "transport": "http"
   }
 }
@@ -79,7 +79,7 @@ User kann den Zugriff jederzeit unter **Einstellungen → Verbundene Apps** wide
 ## Manueller Smoke-Test (curl)
 
 ```bash
-APP_URL=https://klar.disane.dev
+APP_URL=https://your-klar-instance.com
 
 # 1. Discovery
 curl -s "$APP_URL/.well-known/oauth-authorization-server" | jq
@@ -127,7 +127,7 @@ curl -s -X POST "$APP_URL/mcp" \
 Env-Variablen (siehe `apps/api/.env.example`):
 
 ```
-APP_BASE_URL=https://klar.disane.dev
+APP_BASE_URL=https://your-klar-instance.com
 JWT_MCP_PRIVATE_KEY_PATH=/secrets/mcp.private.pem
 JWT_MCP_PUBLIC_KEY_PATH=/secrets/mcp.public.pem
 JWT_MCP_AUDIENCE=klar-mcp

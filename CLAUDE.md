@@ -57,6 +57,14 @@ Nach jedem Task: `memory_store(key="klar-[phase]-[modul]", namespace="klar-app")
 
 ---
 
+## Docs / Public-Facing Inhalte
+
+- **Sprache:** README.md, docs/**, CHANGELOG, PR-Beschreibungen, Code-Kommentare in `apps/` & `packages/` IMMER auf **Englisch** — auch wenn die Konversation deutsch läuft. Konversation deutsch → Output englisch.
+- **Sensible Daten = Platzhalter:** Konkrete Hostnames, Subdomains, Server-Adressen, Stack-IDs, Tokens, Secrets, Pfade aus Marcos privater Infra **niemals** in eingecheckte Dateien. Immer Platzhalter: `your-klar-instance.com`, `<your-host>`, `<stack-id>`, `your-secret-here`. Echte Werte gehören in `.env` (gitignored), persönliche Memory oder externe Secrets.
+- Vor jedem Commit auf neue Doku/Beispiele prüfen: keine internen Referenzen leaken.
+
+---
+
 ## Stack
 
 | Schicht | Tech |
@@ -200,6 +208,7 @@ Red → Green → Refactor pro Feature. Reihenfolge: Service-Unit (mock Repo) �
 3. Frontend: jeder sichtbare Button/Link tut etwas, kommuniziert mit API, zeigt Ergebnis oder Toast
 4. Happy Path manuell durchgeklickt
 5. `pnpm test`, `pnpm lint`, `pnpm build` grün
+6. **Neue/erweiterte User-facing Features sofort in `README.md` dokumentiert** — Features-Tabelle ergänzen + Detail-Abschnitt unter "Features im Detail" (Zweck, Datenmodell-Highlights, UX-Flow, Privacy/Security-Aspekte). Kein Feature ohne README-Update mergen.
 
 **Sofort blocken:** `TODO`/`FIXME`/`// stub`/`// placeholder` im Commit · `as any` auf Prisma · Click-Handler die nichts tun · Migration ohne Schema-Model.
 
@@ -258,7 +267,9 @@ Jede Phase: committed + lauffähig + Tests grün + Coverage erfüllt.
 
 ## Prod als Integrations-Umgebung
 
-`klar.disane.dev` (Portainer Stack 162) ist primäre Integrationsumgebung. Nach main-Merge Stack manuell neu deployen. Keine Zwischenstände pushen die feature-incomplete sind.
+Marcos private Prod-Instanz (interne Subdomain, Portainer Stack — Details in Memory) ist primäre Integrationsumgebung. Nach main-Merge Stack manuell neu deployen. Keine Zwischenstände pushen die feature-incomplete sind.
+
+> Konkrete Hostnames, Stack-IDs, interne Subdomains, Server-Adressen, Tokens etc. **niemals** in eingecheckte Dateien (README, docs/, CLAUDE.md, Code, Beispiele). Immer Platzhalter wie `your-klar-instance.com`, `<your-host>`, `<stack-id>` verwenden. Echte Werte gehören in lokale `.env`, persönliche Memory oder externe Secrets — nicht ins Repo.
 
 ---
 

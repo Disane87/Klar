@@ -26,7 +26,7 @@ Klar fungiert als **Authorization Server** und **Resource Server** in einem. Str
 |---|---|
 | Token-Format | JWT RS256, eigenes Key-Pair (`jwt.mcp.privateKeyPath`, `jwt.mcp.publicKeyPath`) — **getrennt** vom Klar-Session-JWT |
 | `aud` Claim | `klar-mcp` (Bearer Guard verifiziert hart) |
-| `iss` Claim | `${APP_BASE_URL}` (z. B. `https://klar.disane.dev`) |
+| `iss` Claim | `${APP_BASE_URL}` (z. B. `https://your-klar-instance.com`) |
 | Access-Token TTL | 1h |
 | Refresh-Token | Rotating, 30d, in DB als SHA-256 Hash gespeichert |
 | Auth Code TTL | 60s, single-use (consumed-Lock) |
@@ -266,17 +266,17 @@ User-Model bekommt Back-Refs (`oauthGrants`, `oauthConsents`, `oauthAuthCodes`).
 
 ```json
 {
-  "issuer": "https://klar.disane.dev",
-  "authorization_endpoint": "https://klar.disane.dev/oauth2/authorize",
-  "token_endpoint": "https://klar.disane.dev/oauth2/token",
-  "registration_endpoint": "https://klar.disane.dev/oauth2/register",
-  "revocation_endpoint": "https://klar.disane.dev/oauth2/revoke",
+  "issuer": "https://your-klar-instance.com",
+  "authorization_endpoint": "https://your-klar-instance.com/oauth2/authorize",
+  "token_endpoint": "https://your-klar-instance.com/oauth2/token",
+  "registration_endpoint": "https://your-klar-instance.com/oauth2/register",
+  "revocation_endpoint": "https://your-klar-instance.com/oauth2/revoke",
   "scopes_supported": ["klar:transactions:read", "klar:transactions:write", ...],
   "response_types_supported": ["code"],
   "grant_types_supported": ["authorization_code", "refresh_token"],
   "token_endpoint_auth_methods_supported": ["none", "client_secret_post"],
   "code_challenge_methods_supported": ["S256"],
-  "service_documentation": "https://klar.disane.dev/docs/mcp"
+  "service_documentation": "https://your-klar-instance.com/docs/mcp"
 }
 ```
 
@@ -284,11 +284,11 @@ User-Model bekommt Back-Refs (`oauthGrants`, `oauthConsents`, `oauthAuthCodes`).
 
 ```json
 {
-  "resource": "https://klar.disane.dev/mcp",
-  "authorization_servers": ["https://klar.disane.dev"],
+  "resource": "https://your-klar-instance.com/mcp",
+  "authorization_servers": ["https://your-klar-instance.com"],
   "scopes_supported": [...],
   "bearer_methods_supported": ["header"],
-  "resource_documentation": "https://klar.disane.dev/docs/mcp"
+  "resource_documentation": "https://your-klar-instance.com/docs/mcp"
 }
 ```
 
@@ -328,7 +328,7 @@ Response 201:
   "client_id_issued_at": 1714989600,
   "client_secret_expires_at": 0,
   "registration_access_token": "klar_rat_<48 random hex>",
-  "registration_client_uri": "https://klar.disane.dev/oauth2/register/<client_id>",
+  "registration_client_uri": "https://your-klar-instance.com/oauth2/register/<client_id>",
   ...echo der akzeptierten Felder
 }
 ```
@@ -729,7 +729,7 @@ Schritte im Test:
 ## 9. Env-Vars (neu)
 
 ```
-APP_BASE_URL=https://klar.disane.dev
+APP_BASE_URL=https://your-klar-instance.com
 JWT_MCP_PRIVATE_KEY_PATH=/secrets/mcp.private.pem
 JWT_MCP_PUBLIC_KEY_PATH=/secrets/mcp.public.pem
 JWT_MCP_AUDIENCE=klar-mcp
@@ -748,10 +748,10 @@ In `apps/api/src/config/configuration.ts` als typed config + zod-Validierung bei
 
 ```bash
 # 1. Discovery
-curl -s https://klar.disane.dev/.well-known/oauth-authorization-server | jq
+curl -s https://your-klar-instance.com/.well-known/oauth-authorization-server | jq
 
 # 2. Register
-CLIENT=$(curl -s -X POST https://klar.disane.dev/oauth2/register \
+CLIENT=$(curl -s -X POST https://your-klar-instance.com/oauth2/register \
   -H 'content-type: application/json' \
   -d '{"client_name":"my-cli","redirect_uris":["http://localhost:33418/cb"]}')
 CID=$(echo $CLIENT | jq -r .client_id)
@@ -761,14 +761,14 @@ VERIFIER=$(openssl rand -base64 64 | tr -d '/+\n=' | cut -c1-64)
 CHALLENGE=$(echo -n $VERIFIER | openssl dgst -binary -sha256 | base64 | tr -d '/+=' | tr '/' '_' | tr '+' '-')
 
 # 4. Authorize (Browser-Flow)
-open "https://klar.disane.dev/oauth2/authorize?response_type=code&client_id=$CID&redirect_uri=http://localhost:33418/cb&scope=klar:transactions:read&state=xyz&code_challenge=$CHALLENGE&code_challenge_method=S256"
+open "https://your-klar-instance.com/oauth2/authorize?response_type=code&client_id=$CID&redirect_uri=http://localhost:33418/cb&scope=klar:transactions:read&state=xyz&code_challenge=$CHALLENGE&code_challenge_method=S256"
 
 # 5. Token (nach Capture des Codes)
-curl -s -X POST https://klar.disane.dev/oauth2/token \
+curl -s -X POST https://your-klar-instance.com/oauth2/token \
   -d "grant_type=authorization_code&code=$CODE&redirect_uri=http://localhost:33418/cb&client_id=$CID&code_verifier=$VERIFIER" | jq
 
 # 6. MCP-Call
-curl -s -X POST https://klar.disane.dev/mcp \
+curl -s -X POST https://your-klar-instance.com/mcp \
   -H "Authorization: Bearer $ACCESS" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
@@ -793,7 +793,7 @@ Nach jedem Block: `memory_store(key="klar-mcp-block-A-done", namespace="klar-app
 - [ ] Coverage Backend ≥ 80% Lines, Frontend ≥ 70% Lines
 - [ ] Playwright Smoke für Consent-Page + Connected-Apps grün
 - [ ] mcp-inspector kann gegen lokal connecten und alle Tools nutzen
-- [ ] Claude Desktop kann gegen `klar.disane.dev` connecten und `list_transactions` aufrufen
+- [ ] Claude Desktop kann gegen `your-klar-instance.com` connecten und `list_transactions` aufrufen
 - [ ] `docs/mcp.md` vollständig, von frischem Setup verifiziert
 - [ ] Stack 162 redeployed, Smoke-Test grün
 - [ ] Memory aktualisiert (`klar-mcp-implemented`)
