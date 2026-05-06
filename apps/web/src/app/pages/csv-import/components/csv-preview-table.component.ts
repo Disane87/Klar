@@ -106,6 +106,7 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
               [style.height.px]="rowHeightPx"
               class="block w-full"
               (selectionChange)="onSelectionChange($event)"
+              (addCategory)="addCategory.emit($event)"
             />
           }
         </ng-container>
@@ -138,6 +139,7 @@ export class CsvPreviewTableComponent {
   readonly submitting = input<boolean>(false);
 
   readonly selectionsChange = output<Map<number, ConfirmRowSelection>>();
+  readonly addCategory = output<{ rowIndex: number; name: string }>();
   readonly submit = output<void>();
 
   readonly filter = signal<FilterKey>('all');

@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { HlmCheckboxComponent } from '../../../shared/ui/hlm/hlm-checkbox.component';
-import { HlmSelectNativeDirective } from '../../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarComboboxComponent } from '../../../shared/ui/klar-combobox.component';
 import { KlarListItemComponent } from '../../../shared/ui/klar-list-item.component';
 import type { AnalyzeRow, ConfirmRowSelection } from '../../../core/csv-import/csv-import.types';
 
@@ -16,9 +15,8 @@ interface CategoryOption {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     HlmCheckboxComponent,
-    HlmSelectNativeDirective,
+    KlarComboboxComponent,
     KlarListItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,19 +40,20 @@ interface CategoryOption {
       />
 
       @if (showCategory()) {
-        <select
-          klarTrailing
-          hlmSelect
-          class="scheme-dark text-sm w-44 shrink-0"
-          [ngModel]="selection().categoryId ?? ''"
-          (ngModelChange)="onCategoryChange($event)"
-          (click)="$event.stopPropagation()"
-        >
-          <option value="">— Kategorie —</option>
-          @for (cat of categories(); track cat.id) {
-            <option [value]="cat.id">{{ cat.name }}</option>
-          }
-        </select>
+        <div klarTrailing class="w-44 shrink-0" (click)="$event.stopPropagation()">
+          <klar-combobox
+            [items]="categories()"
+            [value]="selection().categoryId ?? null"
+            [idOf]="catId"
+            [displayWith]="catName"
+            placeholder="— Kategorie —"
+            searchPlaceholder="Kategorie suchen…"
+            [addLabel]="addCategoryLabel"
+            ariaLabel="Kategorie wählen"
+            (valueChange)="onCategoryChange($event)"
+            (addNew)="onAddCategory($event)"
+          />
+        </div>
       }
 
       @if (row().status === 'RECURRING_SUGGESTION' && !selection().skip) {
@@ -78,6 +77,11 @@ export class CsvPreviewRowComponent {
   readonly selection = input.required<ConfirmRowSelection>();
   readonly categories = input.required<CategoryOption[]>();
   readonly selectionChange = output<ConfirmRowSelection>();
+  readonly addCategory = output<{ rowIndex: number; name: string }>();
+
+  readonly catId = (c: CategoryOption) => c.id;
+  readonly catName = (c: CategoryOption) => c.name;
+  readonly addCategoryLabel = (q: string) => `"${q}" als neue Kategorie anlegen`;
 
   readonly sublabel = computed(() => {
     const r = this.row();
@@ -136,11 +140,15 @@ export class CsvPreviewRowComponent {
     this.selectionChange.emit({ ...this.selection(), skip: !include });
   }
 
-  onCategoryChange(categoryId: string): void {
+  onCategoryChange(categoryId: string | null): void {
     this.selectionChange.emit({
       ...this.selection(),
-      categoryId: categoryId || undefined,
+      categoryId: categoryId ?? undefined,
     });
+  }
+
+  onAddCategory(name: string): void {
+    this.addCategory.emit({ rowIndex: this.row().rowIndex, name });
   }
 
   onRecurringToggle(v: boolean): void {

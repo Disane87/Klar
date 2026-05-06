@@ -45,6 +45,7 @@ type Step = 'upload' | 'preview' | 'done';
               [categories]="categoryOptions()"
               [submitting]="submitting()"
               (selectionsChange)="selections.set($event)"
+              (addCategory)="onAddCategory($event)"
               (submit)="onSubmit()"
             />
           }
@@ -111,6 +112,25 @@ export class CsvImportPageComponent {
       this.toast.error((err as Error).message ?? 'Import fehlgeschlagen');
     } finally {
       this.submitting.set(false);
+    }
+  }
+
+  async onAddCategory(payload: { rowIndex: number; name: string }): Promise<void> {
+    try {
+      const created = await this.categoriesStore.create({
+        name: payload.name,
+        type: 'VARIABLE_EXPENSE',
+        color: '#94a3b8',
+      });
+      const next = new Map(this.selections());
+      const sel = next.get(payload.rowIndex);
+      if (sel) {
+        next.set(payload.rowIndex, { ...sel, categoryId: created.id });
+        this.selections.set(next);
+      }
+      this.toast.success(`Kategorie "${created.name}" angelegt`);
+    } catch (err) {
+      this.toast.error((err as Error).message ?? 'Kategorie konnte nicht angelegt werden');
     }
   }
 

@@ -271,9 +271,15 @@ importers:
       '@spartan-ng/brain':
         specifier: 0.0.1-alpha.683
         version: 0.0.1-alpha.683(b967e566a9acb8c4672da5c6369f4a6c)
+      '@spartan-ng/ui-command-brain':
+        specifier: 0.0.1-alpha.374
+        version: 0.0.1-alpha.374(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@ngneat/overview@5.1.1(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@ngneat/until-destroy@10.0.0(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@ngxpert/cmdk@1.0.0(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2))
       '@spartan-ng/ui-dialog-brain':
         specifier: 0.0.1-alpha.374
         version: 0.0.1-alpha.374(@angular/cdk@21.2.9(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@spartan-ng/ui-core@0.0.1-alpha.374(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(clsx@2.1.1)(rxjs@7.8.2)(tailwind-merge@3.5.0)(tailwindcss-animate@1.0.7(tailwindcss@4.2.4))(tailwindcss@4.2.4))(rxjs@7.8.2)
+      '@spartan-ng/ui-popover-brain':
+        specifier: 0.0.1-alpha.374
+        version: 0.0.1-alpha.374(5ef23ef6ab8a50d285413ec8cf2cfea0)
       '@spartan-ng/ui-select-brain':
         specifier: 0.0.1-alpha.374
         version: 0.0.1-alpha.374(0948f6672dcbfaa5d6f358ea32dbda50)
@@ -1875,6 +1881,23 @@ packages:
       '@nestjs/core': ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
       reflect-metadata: ^0.1.13 || ^0.2.0
 
+  '@ngneat/overview@5.1.1':
+    resolution: {integrity: sha512-Dz7yylhS08Mo+A8SXo7KyJBJMxD18Oq/G5v/ndvd5C8Gi3uOrAiXUjxvqRCPMxrg03FlkvEsD5/4TvMKtrUfAQ==}
+    peerDependencies:
+      '@angular/core': '>=16'
+
+  '@ngneat/until-destroy@10.0.0':
+    resolution: {integrity: sha512-xXFAabQ4YVJ82LYxdgUlaKZyR3dSbxqG3woSyaclzxfCgWMEDweCcM/GGYbNiHJa0WwklI98RXHvca+UyCxpeg==}
+    peerDependencies:
+      '@angular/core': '>=13'
+      rxjs: ^6.4.0 || ^7.0.0
+
+  '@ngxpert/cmdk@1.0.0':
+    resolution: {integrity: sha512-PmZEKINJxWbGEE4GJ+iyB881z2YWETL1s8l2snqnmmVKCzTZjQruCY0JA8rLIAmLz6m9jlXUVj3Ox05i216tCQ==}
+    peerDependencies:
+      '@angular/common': '>=16.0.0'
+      '@angular/core': '>16.0.0'
+
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
@@ -2577,6 +2600,15 @@ packages:
       luxon:
         optional: true
 
+  '@spartan-ng/ui-command-brain@0.0.1-alpha.374':
+    resolution: {integrity: sha512-BhO3TpOcGoZMDVJnBWJy5+5n50u5OSNFbN1x2ft9T8l63kTK/uU5EO5mupstkCAQAD1z7N91uGbN5Od2g6HIgg==}
+    peerDependencies:
+      '@angular/common': '>=18.0.0'
+      '@angular/core': '>=18.0.0'
+      '@ngneat/overview': ^5.1.1
+      '@ngneat/until-destroy': ^10.0.0
+      '@ngxpert/cmdk': ^1.0.0
+
   '@spartan-ng/ui-core@0.0.1-alpha.374':
     resolution: {integrity: sha512-wCz74mMbt4Yoh41SxbqE8JFOIB5eWiZ5IktfCMGx6HtCCQyzrogkT/XLDiO/Dz0jObzPXRU4klLj0PXR5FIl4Q==}
     peerDependencies:
@@ -2613,6 +2645,13 @@ packages:
       '@angular/common': '>=18.0.0'
       '@angular/core': '>=18.0.0'
       '@angular/forms': '>=18.0.0'
+
+  '@spartan-ng/ui-popover-brain@0.0.1-alpha.374':
+    resolution: {integrity: sha512-JtKCGGiSdrHvM/YK8RF3Ojg8ZbUKkpOYqEptkEkC20eOfcnOhe3ROsHj5pBng3z34ovDVSuA114Q7OmOjlZEtQ==}
+    peerDependencies:
+      '@angular/core': '>=18.0.0'
+      '@spartan-ng/ui-core': 0.0.1-alpha.374
+      '@spartan-ng/ui-dialog-brain': 0.0.1-alpha.374
 
   '@spartan-ng/ui-select-brain@0.0.1-alpha.374':
     resolution: {integrity: sha512-A3cUyShJXOFW3Qs7VleNMKKzLNpPBgb/lEHAnRcfcj+mBXgnBYuIZ+J+ESCNUA5oWhJ1QQVbvlPcpzgCI8C9tA==}
@@ -7868,6 +7907,29 @@ snapshots:
       '@nestjs/core': 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
 
+  '@ngneat/overview@5.1.1(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))':
+    dependencies:
+      '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
+      tslib: 2.8.1
+
+  '@ngneat/until-destroy@10.0.0(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)':
+    dependencies:
+      '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
+      rxjs: 7.8.2
+      tslib: 2.8.1
+
+  '@ngxpert/cmdk@1.0.0(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2)':
+    dependencies:
+      '@angular/cdk': 21.2.9(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/common': 21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
+      '@ngneat/overview': 5.1.1(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))
+      '@ngneat/until-destroy': 10.0.0(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - '@angular/platform-browser'
+      - rxjs
+
   '@noble/hashes@1.8.0': {}
 
   '@noble/hashes@2.2.0': {}
@@ -8494,6 +8556,15 @@ snapshots:
       tailwindcss: 4.2.4
       tslib: 2.8.1
 
+  '@spartan-ng/ui-command-brain@0.0.1-alpha.374(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@ngneat/overview@5.1.1(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@ngneat/until-destroy@10.0.0(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@ngxpert/cmdk@1.0.0(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2))':
+    dependencies:
+      '@angular/common': 21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
+      '@ngneat/overview': 5.1.1(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))
+      '@ngneat/until-destroy': 10.0.0(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@ngxpert/cmdk': 1.0.0(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2)
+      tslib: 2.8.1
+
   '@spartan-ng/ui-core@0.0.1-alpha.374(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(clsx@2.1.1)(rxjs@7.8.2)(tailwind-merge@3.5.0)(tailwindcss-animate@1.0.7(tailwindcss@4.2.4))(tailwindcss@4.2.4)':
     dependencies:
       '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
@@ -8529,6 +8600,13 @@ snapshots:
       '@angular/common': 21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
       '@angular/forms': 21.2.11(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2)
+      tslib: 2.8.1
+
+  '@spartan-ng/ui-popover-brain@0.0.1-alpha.374(5ef23ef6ab8a50d285413ec8cf2cfea0)':
+    dependencies:
+      '@angular/core': 21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)
+      '@spartan-ng/ui-core': 0.0.1-alpha.374(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(clsx@2.1.1)(rxjs@7.8.2)(tailwind-merge@3.5.0)(tailwindcss-animate@1.0.7(tailwindcss@4.2.4))(tailwindcss@4.2.4)
+      '@spartan-ng/ui-dialog-brain': 0.0.1-alpha.374(@angular/cdk@21.2.9(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@angular/platform-browser@21.2.11(@angular/animations@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(@angular/common@21.2.11(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(@spartan-ng/ui-core@0.0.1-alpha.374(@angular/core@21.2.11(@angular/compiler@21.2.11)(rxjs@7.8.2))(clsx@2.1.1)(rxjs@7.8.2)(tailwind-merge@3.5.0)(tailwindcss-animate@1.0.7(tailwindcss@4.2.4))(tailwindcss@4.2.4))(rxjs@7.8.2)
       tslib: 2.8.1
 
   '@spartan-ng/ui-select-brain@0.0.1-alpha.374(0948f6672dcbfaa5d6f358ea32dbda50)':
