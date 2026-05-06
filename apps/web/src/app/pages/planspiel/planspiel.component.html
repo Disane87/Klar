@@ -189,8 +189,10 @@
           hlmSelect
           [ngModel]="form().frequency"
           (ngModelChange)="updateForm({ frequency: $event })">
+          <option value="WEEKLY">Wöchentlich</option>
           <option value="MONTHLY">Monatlich</option>
           <option value="QUARTERLY">Quartalsweise</option>
+          <option value="HALF_YEARLY">Halbjährlich</option>
           <option value="YEARLY">Jährlich</option>
         </select>
       </div>

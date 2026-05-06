@@ -75,8 +75,10 @@ export class PlanspielPageComponent {
   // ── Frequency label helper ─────────────────────────────────────────────────
   frequencyLabel(freq: RecurringFrequency): string {
     switch (freq) {
+      case 'WEEKLY':      return 'Wöchentlich';
       case 'MONTHLY':     return 'Monatlich';
       case 'QUARTERLY':   return 'Quartalsweise';
+      case 'HALF_YEARLY': return 'Halbjährlich';
       case 'YEARLY':      return 'Jährlich';
       case 'CUSTOM_DAYS': return 'Individuell';
     }

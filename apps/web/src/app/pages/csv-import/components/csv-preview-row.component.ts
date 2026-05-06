@@ -16,6 +16,7 @@ const FREQ_LABEL: Record<string, string> = {
   WEEKLY: 'wöchentlich',
   MONTHLY: 'monatlich',
   QUARTERLY: 'quartalsweise',
+  HALF_YEARLY: 'halbjährlich',
   YEARLY: 'jährlich',
   CUSTOM: 'individuell',
 };

@@ -15,13 +15,13 @@ export interface AnalyzeRow {
     name: string;
     amountCents: number;
     dayOfMonth: number | null;
-    frequency: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'WEEKLY' | 'CUSTOM';
+    frequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY' | 'CUSTOM';
     note: string | null;
   };
   suggestedCategoryId?: string;
   suggestedCategoryConfidence: Confidence;
   suggestedRecurring?: {
-    estimatedFrequency: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+    estimatedFrequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
     pastOccurrences: number;
   };
 }
