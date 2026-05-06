@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { CommonModule } from '@angular/common';
 import { BrnHoverCardImports } from '@spartan-ng/brain/hover-card';
 import { HlmCheckboxComponent } from '../../../shared/ui/hlm/hlm-checkbox.component';
+import { KlarAvatarComponent } from '../../../shared/ui/klar-avatar.component';
 import { KlarComboboxComponent } from '../../../shared/ui/klar-combobox.component';
 import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
-import { KlarListItemComponent } from '../../../shared/ui/klar-list-item.component';
 import type { AnalyzeRow, ConfirmRowSelection } from '../../../core/csv-import/csv-import.types';
 
 interface CategoryOption {
@@ -27,76 +27,58 @@ const FREQ_LABEL: Record<string, string> = {
     CommonModule,
     BrnHoverCardImports,
     HlmCheckboxComponent,
+    KlarAvatarComponent,
     KlarComboboxComponent,
     KlarIconComponent,
-    KlarListItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block w-full border-b border-(--border)/40 last:border-b-0' },
   template: `
-    <klar-list-item
-      [label]="row().counterparty ?? '—'"
-      [sublabel]="sublabel()"
-      [avatarSeed]="row().counterparty ?? '—'"
-      [badge]="statusLabel()"
-      [badgeClass]="badgeClass()"
-      [value]="formatAmount(row().amountCents)"
-      [valueClass]="amountClass()"
-      [disabled]="selection().skip"
-      [hoverCard]="false"
+    <div
+      class="grid items-center gap-3 px-4 h-14 transition-colors hover:bg-(--surface-2)/40"
+      [class.opacity-50]="selection().skip"
+      style="grid-template-columns: 28px 32px minmax(0, 1fr) 92px 96px 176px 32px;"
     >
+      <!-- Checkbox -->
       <hlm-checkbox
-        klarLeading
         class="shrink-0"
         [checked]="!selection().skip"
         [disabled]="row().status === 'DUPLICATE'"
         (checkedChange)="onIncludeChange($event)"
       />
 
-      @if (row().status === 'FIXED_COST_MATCH' && row().matchedRecurring) {
-        <brn-hover-card klarTrailing class="inline-flex shrink-0">
-          <button
-            type="button"
-            brnHoverCardTrigger
-            class="inline-flex items-center justify-center size-6 rounded-full text-primary hover:bg-primary/10 transition-colors"
-            aria-label="Details zur Fixkost"
-            (click)="$event.stopPropagation()"
-          >
-            <klar-icon name="alert" [size]="14" />
-          </button>
-          <ng-template brnHoverCardContent>
-            <div class="rounded-md border border-(--border) bg-(--surface) p-3 shadow-[0_8px_30px_rgba(0,0,0,0.35)] min-w-64 max-w-80">
-              <div class="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Erkannte Fixkost</div>
-              <div class="text-sm font-medium truncate">{{ row().matchedRecurring!.name }}</div>
-              <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <span class="text-muted-foreground">Betrag</span>
-                <span class="font-mono tabular-nums text-right">{{ formatAmount(row().matchedRecurring!.amountCents) }}</span>
-                <span class="text-muted-foreground">Frequenz</span>
-                <span class="text-right">{{ freqLabel(row().matchedRecurring!.frequency) }}</span>
-                @if (row().matchedRecurring!.dayOfMonth !== null) {
-                  <span class="text-muted-foreground">Buchungstag</span>
-                  <span class="font-mono tabular-nums text-right">{{ row().matchedRecurring!.dayOfMonth }}.</span>
-                }
-                @if (row().matchedRecurring!.note) {
-                  <span class="text-muted-foreground col-span-2 mt-1">Notiz</span>
-                  <span class="col-span-2 text-[11px] text-(--text-2)">{{ row().matchedRecurring!.note }}</span>
-                }
-              </div>
-              @if (selection().skip) {
-                <div class="mt-3 pt-2 border-t border-(--border) text-[11px] text-muted-foreground">
-                  Wird übersprungen — über die Checkbox kannst du den Match überschreiben und die Buchung trotzdem importieren.
-                </div>
-              } @else {
-                <div class="mt-3 pt-2 border-t border-(--border) text-[11px] text-warning">
-                  Override aktiv — wird trotz Match als reguläre Buchung importiert.
-                </div>
-              }
-            </div>
-          </ng-template>
-        </brn-hover-card>
-      }
+      <!-- Avatar -->
+      <klar-avatar
+        [seed]="row().counterparty ?? '—'"
+        [size]="28"
+        [hoverCard]="false"
+      />
 
-      @if (showCategory()) {
-        <div klarTrailing class="w-44 shrink-0" (click)="$event.stopPropagation()">
+      <!-- Label + sublabel -->
+      <div class="min-w-0">
+        <p class="text-[13px] font-medium truncate">{{ row().counterparty ?? '—' }}</p>
+        <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">{{ sublabel() }}</p>
+      </div>
+
+      <!-- Badge -->
+      <span
+        class="justify-self-start text-[10px] font-medium px-1.5 py-0.5 rounded-xs whitespace-nowrap"
+        [ngClass]="badgeClass()"
+      >
+        {{ statusLabel() }}
+      </span>
+
+      <!-- Amount (right-aligned mono) -->
+      <span
+        class="justify-self-end font-mono tabular-nums text-[13px]"
+        [ngClass]="amountClass()"
+      >
+        {{ formatAmount(row().amountCents) }}
+      </span>
+
+      <!-- Category combobox or recurring toggle -->
+      <div class="min-w-0" (click)="$event.stopPropagation()">
+        @if (showCategory()) {
           <klar-combobox
             [items]="categories()"
             [value]="selection().categoryId ?? null"
@@ -109,23 +91,62 @@ const FREQ_LABEL: Record<string, string> = {
             (valueChange)="onCategoryChange($event)"
             (addNew)="onAddCategory($event)"
           />
-        </div>
-      }
+        }
+      </div>
 
-      @if (row().status === 'RECURRING_SUGGESTION' && !selection().skip) {
-        <label
-          klarTrailing
-          class="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0"
-          (click)="$event.stopPropagation()"
-        >
-          <hlm-checkbox
-            [checked]="selection().createNewRecurring ?? false"
-            (checkedChange)="onRecurringToggle($event)"
-          />
-          <span>Fixkost</span>
-        </label>
-      }
-    </klar-list-item>
+      <!-- Extras: hovercard for fixed-cost match OR recurring suggestion toggle -->
+      <div class="justify-self-end flex items-center" (click)="$event.stopPropagation()">
+        @if (row().status === 'FIXED_COST_MATCH' && row().matchedRecurring) {
+          <brn-hover-card class="inline-flex">
+            <button
+              type="button"
+              brnHoverCardTrigger
+              class="inline-flex items-center justify-center size-7 rounded-full text-primary hover:bg-primary/10 transition-colors"
+              aria-label="Details zur Fixkost"
+            >
+              <klar-icon name="alert" [size]="14" />
+            </button>
+            <ng-template brnHoverCardContent>
+              <div class="rounded-md border border-(--border) bg-(--surface) p-3 shadow-[0_8px_30px_rgba(0,0,0,0.35)] min-w-64 max-w-80">
+                <div class="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Erkannte Fixkost</div>
+                <div class="text-sm font-medium truncate">{{ row().matchedRecurring!.name }}</div>
+                <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <span class="text-muted-foreground">Betrag</span>
+                  <span class="font-mono tabular-nums text-right">{{ formatAmount(row().matchedRecurring!.amountCents) }}</span>
+                  <span class="text-muted-foreground">Frequenz</span>
+                  <span class="text-right">{{ freqLabel(row().matchedRecurring!.frequency) }}</span>
+                  @if (row().matchedRecurring!.dayOfMonth !== null) {
+                    <span class="text-muted-foreground">Buchungstag</span>
+                    <span class="font-mono tabular-nums text-right">{{ row().matchedRecurring!.dayOfMonth }}.</span>
+                  }
+                  @if (row().matchedRecurring!.note) {
+                    <span class="text-muted-foreground col-span-2 mt-1">Notiz</span>
+                    <span class="col-span-2 text-[11px] text-(--text-2)">{{ row().matchedRecurring!.note }}</span>
+                  }
+                </div>
+                @if (selection().skip) {
+                  <div class="mt-3 pt-2 border-t border-(--border) text-[11px] text-muted-foreground">
+                    Wird übersprungen — Checkbox abhaken um den Match zu überschreiben.
+                  </div>
+                } @else {
+                  <div class="mt-3 pt-2 border-t border-(--border) text-[11px] text-warning">
+                    Override aktiv — wird trotz Match importiert.
+                  </div>
+                }
+              </div>
+            </ng-template>
+          </brn-hover-card>
+        } @else if (row().status === 'RECURRING_SUGGESTION' && !selection().skip) {
+          <label class="flex items-center gap-1 text-[10px] text-(--text-muted) cursor-pointer">
+            <hlm-checkbox
+              [checked]="selection().createNewRecurring ?? false"
+              (checkedChange)="onRecurringToggle($event)"
+            />
+            <span>Fix</span>
+          </label>
+        }
+      </div>
+    </div>
   `,
 })
 export class CsvPreviewRowComponent {
@@ -168,7 +189,7 @@ export class CsvPreviewRowComponent {
       case 'DUPLICATE':
         return 'Duplikat';
       case 'FIXED_COST_MATCH':
-        return this.selection().skip ? 'Fixkosten' : 'Fixkosten · Override';
+        return this.selection().skip ? 'Fixkost' : 'Override';
       case 'RECURRING_SUGGESTION':
         return 'Vorschlag';
     }
