@@ -36,19 +36,28 @@
   <!-- Empty -->
   @else if (store.isEmpty()) {
     <div class="stat-strip">
-      <div class="stat">
-        <span class="stat-label">EINNAHMEN</span>
-        <span class="stat-value font-mono tabular-nums text-success">{{ 0 | klarMoney }}</span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:wallet" width="24" height="24" class="text-(--color-income) shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">EINNAHMEN</span>
+          <span class="stat-value font-mono tabular-nums text-(--color-income)">{{ 0 | klarMoney }}</span>
+        </div>
       </div>
       <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">AUSGABEN</span>
-        <span class="stat-value font-mono tabular-nums text-danger">{{ 0 | klarMoney }}</span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:credit-card" width="24" height="24" class="text-(--color-expense) shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">AUSGABEN</span>
+          <span class="stat-value font-mono tabular-nums text-(--color-expense)">{{ 0 | klarMoney }}</span>
+        </div>
       </div>
       <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">NETTO</span>
-        <span class="stat-value font-mono tabular-nums">{{ 0 | klarMoney }}</span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:scale" width="24" height="24" class="text-(--text-muted) shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">BILANZ</span>
+          <span class="stat-value font-mono tabular-nums">{{ 0 | klarMoney }}</span>
+        </div>
       </div>
     </div>
 
@@ -59,21 +68,30 @@
   @else {
     <!-- Stats strip -->
     <div class="stat-strip">
-      <div class="stat">
-        <span class="stat-label">EINNAHMEN</span>
-        <span class="stat-value font-mono tabular-nums text-success">{{ store.totalIncomeCents() | klarMoney }}</span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:wallet" width="24" height="24" class="text-(--color-income) shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">EINNAHMEN</span>
+          <span class="stat-value font-mono tabular-nums text-(--color-income)">{{ store.totalIncomeCents() | klarMoney }}</span>
+        </div>
       </div>
       <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">AUSGABEN</span>
-        <span class="stat-value font-mono tabular-nums text-danger">{{ store.totalExpenseCents() | klarMoney }}</span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:credit-card" width="24" height="24" class="text-(--color-expense) shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">AUSGABEN</span>
+          <span class="stat-value font-mono tabular-nums text-(--color-expense)">{{ store.totalExpenseCents() | klarMoney }}</span>
+        </div>
       </div>
       <div class="stat-rule"></div>
-      <div class="stat">
-        <span class="stat-label">NETTO</span>
-        <span class="stat-value font-mono tabular-nums" [ngClass]="store.nettoCents() | klarMoneyClass">
-          {{ store.nettoCents() | klarMoney }}
-        </span>
+      <div class="stat flex-row items-center gap-3">
+        <iconify-icon icon="lucide:scale" width="24" height="24" [ngClass]="store.nettoCents() | klarMoneyClass" class="shrink-0"></iconify-icon>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="stat-label">BILANZ</span>
+          <span class="stat-value font-mono tabular-nums" [ngClass]="store.nettoCents() | klarMoneyClass">
+            {{ store.nettoCents() | klarMoney }}
+          </span>
+        </div>
       </div>
     </div>
 
