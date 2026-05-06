@@ -12,28 +12,43 @@ export interface RecurringForMatch {
   dayOfMonth: number | null;
 }
 
-const DATE_WINDOW_DAYS = 5;
+const DATE_WINDOW_DAYS = 10;
+const MIN_TOKEN_LENGTH = 4;
+
+interface IndexedRecurring extends RecurringForMatch {
+  tokens: string[];
+}
 
 export class FixedCostMatcher {
-  constructor(private readonly recurrings: RecurringForMatch[]) {}
+  private readonly indexed: IndexedRecurring[];
 
-  match(row: ParsedRow): RecurringForMatch | null {
-    for (const rec of this.recurrings) {
-      if (!rec.isActive) continue;
-      if (!this.nameMatches(row, rec)) continue;
-      if (!rec.isVariable && !this.amountMatches(row.amountCents, rec.amountCents)) continue;
-      if (!this.dateMatches(row.date, rec.dayOfMonth)) continue;
-      return rec;
-    }
-    return null;
+  constructor(recurrings: RecurringForMatch[]) {
+    this.indexed = recurrings
+      .filter(r => r.isActive)
+      .map(r => ({ ...r, tokens: tokenize(`${r.nameNorm} ${r.noteNorm}`) }));
   }
 
-  private nameMatches(row: ParsedRow, rec: RecurringForMatch): boolean {
-    const cp = row.counterpartyNorm;
-    if (!cp) return false;
-    if (rec.nameNorm && (cp.includes(rec.nameNorm) || rec.nameNorm.includes(cp))) return true;
-    if (rec.noteNorm && rec.noteNorm.includes(cp)) return true;
-    return false;
+  match(row: ParsedRow): RecurringForMatch | null {
+    const rowTokens = tokenize(`${row.counterpartyNorm} ${row.purposeNorm}`);
+    if (rowTokens.length === 0) return null;
+
+    const scored: Array<{ rec: IndexedRecurring; amountDiff: number; dateDiff: number }> = [];
+
+    for (const rec of this.indexed) {
+      if (!hasTokenOverlap(rec.tokens, rowTokens)) continue;
+      if (!rec.isVariable && !this.amountMatches(row.amountCents, rec.amountCents)) continue;
+      const dateDiff = this.dateDiff(row.date, rec.dayOfMonth);
+      if (dateDiff > DATE_WINDOW_DAYS) continue;
+      scored.push({
+        rec,
+        amountDiff: Math.abs(row.amountCents - rec.amountCents),
+        dateDiff,
+      });
+    }
+
+    if (scored.length === 0) return null;
+    scored.sort((a, b) => a.amountDiff - b.amountDiff || a.dateDiff - b.dateDiff);
+    return scored[0].rec;
   }
 
   private amountMatches(rowAmount: number, recAmount: number): boolean {
@@ -42,13 +57,27 @@ export class FixedCostMatcher {
     return diff <= tolerance;
   }
 
-  private dateMatches(rowDate: string, dayOfMonth: number | null): boolean {
-    if (dayOfMonth === null) return true;
+  private dateDiff(rowDate: string, dayOfMonth: number | null): number {
+    if (dayOfMonth === null) return 0;
     const [y, m] = rowDate.split('-').map(Number);
     const expectedDay = safeDayOfMonth(y, m, dayOfMonth);
     const expected = new Date(Date.UTC(y, m - 1, expectedDay));
     const actual = new Date(`${rowDate}T00:00:00Z`);
-    const diffDays = Math.abs((actual.getTime() - expected.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays <= DATE_WINDOW_DAYS;
+    return Math.abs((actual.getTime() - expected.getTime()) / (1000 * 60 * 60 * 24));
   }
+}
+
+function tokenize(s: string): string[] {
+  return s
+    .split(/\s+/)
+    .filter(t => t.length >= MIN_TOKEN_LENGTH);
+}
+
+function hasTokenOverlap(recTokens: string[], rowTokens: string[]): boolean {
+  for (const r of recTokens) {
+    for (const c of rowTokens) {
+      if (r === c || r.includes(c) || c.includes(r)) return true;
+    }
+  }
+  return false;
 }
