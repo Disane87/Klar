@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/Disane87/Klar/compare/v1.9.0...v1.10.0) (2026-05-06)
+
+
+### Features
+
+* **avatar:** implement avatar upload and cropping functionality ([f4040ac](https://github.com/Disane87/Klar/commit/f4040acede7756289604f47c0fc6544b7636c653))
+
 # [1.9.0](https://github.com/Disane87/Klar/compare/v1.8.1...v1.9.0) (2026-05-06)
 
 
