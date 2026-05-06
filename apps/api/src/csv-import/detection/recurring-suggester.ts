@@ -55,9 +55,9 @@ export class RecurringSuggester {
   }
 
   private classifyFrequency(avgDays: number): EstimatedFrequency | null {
-    if (avgDays >= 28 && avgDays <= 32) return 'MONTHLY';
-    if (avgDays >= 85 && avgDays <= 95) return 'QUARTERLY';
-    if (avgDays >= 360 && avgDays <= 370) return 'YEARLY';
+    if (avgDays >= 25 && avgDays <= 35) return 'MONTHLY';
+    if (avgDays >= 80 && avgDays <= 100) return 'QUARTERLY';
+    if (avgDays >= 350 && avgDays <= 380) return 'YEARLY';
     return null;
   }
 }

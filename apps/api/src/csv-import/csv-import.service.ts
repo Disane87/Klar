@@ -124,13 +124,18 @@ export class CsvImportService {
     const recurringsRawById = new Map(recurringsRaw.map(r => [r.id, r]));
     const fixed = new FixedCostMatcher(recurringsForMatch);
 
-    const suggester = new RecurringSuggester(
-      recentTx.map(t => ({
+    const suggester = new RecurringSuggester([
+      ...recentTx.map(t => ({
         counterpartyNorm: counterpartyKey(t.counterparty),
         date: t.date.toISOString().slice(0, 10),
         amountCents: t.amountCents,
       })),
-    );
+      ...parsed.map(p => ({
+        counterpartyNorm: p.counterpartyNorm,
+        date: p.date,
+        amountCents: p.amountCents,
+      })),
+    ]);
 
     const learnings = new Map(learningsRaw.map(l => [l.counterpartyKey, l.categoryId]));
     const recurringCategoryMap = new Map(recurringsRaw.map(r => [r.id, r.categoryId]));
