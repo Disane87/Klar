@@ -11,6 +11,8 @@ import { BudgetsService } from '../budgets/budgets.service';
 import { OverviewService } from '../overview/overview.service';
 import { HouseholdsService } from '../households/households.service';
 import { MCP_TOOLS, type McpToolDeps } from './tools/tool-registry';
+// Side-effect import: registriert alle Tools im Registry.
+import './tools';
 
 const SERVER_INFO = {
   name: 'klar',
