@@ -9,30 +9,31 @@
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="red-monthly">Betrag / Monat (€)</label>
-    <input id="red-monthly" hlmInput class="font-mono tabular-nums" type="text"
+    <label hlmLabel for="red-amount">{{ amountLabel() }}</label>
+    <input id="red-amount" hlmInput class="font-mono tabular-nums" type="text"
            inputmode="decimal" placeholder="0,00"
-           [value]="monthly()"
-           (input)="monthly.set($any($event.target).value)" />
-    @if (freqHint()) {
-      <span class="text-[11px] text-(--text-muted)">{{ freqHint() }}</span>
-    }
+           [value]="amount()"
+           (input)="amount.set($any($event.target).value)" />
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="red-category">Kategorie</label>
-    <select id="red-category" hlmSelect
-            (change)="categoryId.set($any($event.target).value)">
-      <option value="" disabled [selected]="!categoryId()">Kategorie wählen…</option>
-      @for (cat of cats.active(); track cat.id) {
-        <option [value]="cat.id" [selected]="cat.id === categoryId()">{{ cat.name }}</option>
-      }
-    </select>
+    <label hlmLabel>Kategorie</label>
+    <klar-combobox
+      [items]="cats.active()"
+      [value]="categoryId()"
+      (valueChange)="categoryId.set($event)"
+      [idOf]="catId"
+      [displayWith]="catName"
+      placeholder="Kategorie wählen…"
+      searchPlaceholder="Kategorie suchen…"
+      [addLabel]="addCategoryLabel"
+      ariaLabel="Kategorie wählen"
+      (addNew)="onAddCategory($event)" />
   </div>
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-freq">Frequenz</label>
-    <select id="red-freq" hlmSelect
+    <select id="red-freq" hlmSelect class="scheme-dark"
             (change)="frequency.set($any($event.target).value)">
       @for (opt of freqOptions; track opt.value) {
         <option [value]="opt.value" [selected]="opt.value === frequency()">{{ opt.label }}</option>
@@ -40,13 +41,25 @@
     </select>
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="red-day">Buchungstag (1–31)</label>
-    <input id="red-day" hlmInput class="font-mono tabular-nums" type="number"
-           min="1" max="31" placeholder="–"
-           [value]="dayOfMonth()"
-           (input)="dayOfMonth.set($any($event.target).value)" />
-  </div>
+  @if (isWeekly()) {
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="red-weekday">Buchungstag</label>
+      <select id="red-weekday" hlmSelect class="scheme-dark"
+              (change)="dayOfWeek.set($any($event.target).value)">
+        @for (opt of weekdayOptions; track opt.value) {
+          <option [value]="opt.value" [selected]="opt.value === dayOfWeek()">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="red-day">Buchungstag (1–31)</label>
+      <input id="red-day" hlmInput class="font-mono tabular-nums" type="number"
+             min="1" max="31" placeholder="–"
+             [value]="dayOfMonth()"
+             (input)="dayOfMonth.set($any($event.target).value)" />
+    </div>
+  }
 
   <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
     <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>

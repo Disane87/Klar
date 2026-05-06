@@ -6,12 +6,15 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
+import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
+import { CategoryEditDialogComponent } from '../haushalt/category-edit-dialog.component';
+import type { Category } from '@klar/shared';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 import { safeDayOfMonth } from '@klar/shared';
@@ -19,7 +22,10 @@ import { safeDayOfMonth } from '@klar/shared';
 @Component({
   selector: 'app-recurring-edit-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarColorPickerComponent, KlarIconPickerComponent],
+  imports: [
+    KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective,
+    KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
+  ],
   templateUrl: './recurring-edit-dialog.component.html',
   styleUrl: './recurring-edit-dialog.component.css',
 })
@@ -36,10 +42,11 @@ export class RecurringEditDialogComponent {
   protected cats     = inject(CategoriesStore);
 
   readonly name       = signal('');
-  readonly monthly    = signal('');
-  readonly categoryId = signal('');
+  readonly amount     = signal('');
+  readonly categoryId = signal<string | null>(null);
   readonly frequency  = signal<RecurringFrequency>('MONTHLY');
   readonly dayOfMonth = signal<string>('');
+  readonly dayOfWeek  = signal<string>('1');
   readonly color      = signal<string | null>(null);
   readonly icon       = signal<string | null>(null);
   readonly saving     = signal(false);
@@ -49,10 +56,15 @@ export class RecurringEditDialogComponent {
     effect(() => {
       const i = this.item();
       this.name.set(i.name);
-      this.monthly.set(this.centsToDisplay(i.monthlyEquivalentCents));
+      this.amount.set(this.centsToDisplay(i.amountCents));
       this.categoryId.set(i.categoryId);
       this.frequency.set(i.frequency);
-      this.dayOfMonth.set(i.dayOfMonth != null ? String(i.dayOfMonth) : '');
+      if (i.frequency === 'WEEKLY') {
+        this.dayOfWeek.set(i.dayOfMonth != null ? String(i.dayOfMonth) : '1');
+        this.dayOfMonth.set('');
+      } else {
+        this.dayOfMonth.set(i.dayOfMonth != null ? String(i.dayOfMonth) : '');
+      }
       this.color.set(i.color ?? null);
       this.icon.set(i.icon ?? null);
     });
@@ -60,33 +72,65 @@ export class RecurringEditDialogComponent {
 
   readonly isValid = computed(() => {
     const n = this.name().trim();
-    const m = this.parseMonthly(this.monthly());
+    const a = this.parseAmount(this.amount());
     const c = this.categoryId();
-    return n.length > 0 && !isNaN(m) && c.length > 0;
+    return n.length > 0 && !isNaN(a) && !!c;
   });
 
   readonly freqOptions: { value: RecurringFrequency; label: string }[] = [
-    { value: 'MONTHLY',   label: 'Monatlich' },
-    { value: 'QUARTERLY', label: 'Quartalsweise' },
-    { value: 'YEARLY',    label: 'Jährlich' },
+    { value: 'WEEKLY',      label: 'Wöchentlich' },
+    { value: 'MONTHLY',     label: 'Monatlich' },
+    { value: 'QUARTERLY',   label: 'Quartalsweise' },
+    { value: 'HALF_YEARLY', label: 'Halbjährlich' },
+    { value: 'YEARLY',      label: 'Jährlich' },
   ];
 
-  readonly freqHint = computed(() => {
-    const f = this.frequency();
-    if (f === 'QUARTERLY') return '× 3 = Quartalsbetrag';
-    if (f === 'YEARLY')    return '× 12 = Jahresbetrag';
-    return '';
+  readonly weekdayOptions = [
+    { value: '1', label: 'Montag' },
+    { value: '2', label: 'Dienstag' },
+    { value: '3', label: 'Mittwoch' },
+    { value: '4', label: 'Donnerstag' },
+    { value: '5', label: 'Freitag' },
+    { value: '6', label: 'Samstag' },
+    { value: '7', label: 'Sonntag' },
+  ];
+
+  readonly amountLabel = computed(() => {
+    switch (this.frequency()) {
+      case 'WEEKLY':      return 'Betrag / Woche (€)';
+      case 'MONTHLY':     return 'Betrag / Monat (€)';
+      case 'QUARTERLY':   return 'Betrag / Quartal (€)';
+      case 'HALF_YEARLY': return 'Betrag / Halbjahr (€)';
+      case 'YEARLY':      return 'Betrag / Jahr (€)';
+      default:            return 'Betrag (€)';
+    }
   });
+
+  readonly isWeekly = computed(() => this.frequency() === 'WEEKLY');
+
+  readonly addCategoryLabel = (q: string) => `"${q}" als neue Kategorie anlegen`;
+  readonly catId = (c: Category) => c.id;
+  readonly catName = (c: Category) => c.name;
+
+  onAddCategory(name: string): void {
+    this.dialog.open({
+      title: 'Kategorie anlegen',
+      component: CategoryEditDialogComponent,
+      width: 'md',
+      inputs: {
+        category: null,
+        prefillName: name,
+        onCreated: (created: Category) => this.categoryId.set(created.id),
+      },
+    });
+  }
 
   async save(): Promise<void> {
     if (!this.isValid() || this.saving()) return;
 
-    const monthlyCents = this.parseMonthly(this.monthly());
-    const freq         = this.frequency();
-    const actualCents  = this.toActualCents(monthlyCents, freq);
-    const dom          = parseInt(this.dayOfMonth(), 10);
-    const clampedDay   = isNaN(dom) ? null
-      : safeDayOfMonth(new Date().getFullYear(), new Date().getMonth() + 1, dom);
+    const actualCents = this.parseAmount(this.amount());
+    const freq        = this.frequency();
+    const dom         = this.computeDay(freq);
 
     this.saving.set(true);
     this.err.set('');
@@ -95,7 +139,7 @@ export class RecurringEditDialogComponent {
       this.planspielStore.updateEntry(this.item().id, {
         label:        this.name().trim(),
         amountCents: actualCents,
-        categoryId:  this.categoryId(),
+        categoryId:  this.categoryId()!,
         frequency:   freq,
       });
       this.dialog.close();
@@ -108,9 +152,9 @@ export class RecurringEditDialogComponent {
         await this.recurring.patch(hid, this.item().id, {
           name:        this.name().trim(),
           amountCents: actualCents,
-          categoryId:  this.categoryId(),
+          categoryId:  this.categoryId()!,
           frequency:   freq,
-          dayOfMonth:  clampedDay,
+          dayOfMonth:  dom,
           color:       this.color(),
           icon:        this.icon(),
         });
@@ -158,14 +202,18 @@ export class RecurringEditDialogComponent {
     return (cents / 100).toFixed(2).replace('.', ',');
   }
 
-  private parseMonthly(value: string): number {
+  private parseAmount(value: string): number {
     const n = parseFloat(value.replace(',', '.').replace(/[^0-9.\-]/g, ''));
     return Math.round(n * 100);
   }
 
-  private toActualCents(monthlyCents: number, freq: RecurringFrequency): number {
-    if (freq === 'QUARTERLY') return Math.round(monthlyCents * 3);
-    if (freq === 'YEARLY')    return Math.round(monthlyCents * 12);
-    return monthlyCents;
+  private computeDay(freq: RecurringFrequency): number | null {
+    if (freq === 'WEEKLY') {
+      const w = parseInt(this.dayOfWeek(), 10);
+      return isNaN(w) ? null : w;
+    }
+    const dom = parseInt(this.dayOfMonth(), 10);
+    if (isNaN(dom)) return null;
+    return safeDayOfMonth(new Date().getFullYear(), new Date().getMonth() + 1, dom);
   }
 }
