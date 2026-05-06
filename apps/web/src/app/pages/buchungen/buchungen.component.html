@@ -35,6 +35,7 @@
 
   <!-- Empty -->
   @else if (store.isEmpty()) {
+    <klar-toolbar label="Übersicht" />
     <klar-summary-strip [incomeCents]="0" [expenseCents]="0" [balanceCents]="0" />
 
     <klar-empty-state message="Noch keine Buchungen für diesen Monat" ctaLabel="Buchung anlegen" (ctaClick)="openCreate()" />
@@ -42,6 +43,8 @@
 
   <!-- Data -->
   @else {
+    <klar-toolbar label="Übersicht" />
+
     <klar-summary-strip
       [incomeCents]="store.totalIncomeCents()"
       [expenseCents]="store.totalExpenseCents()"

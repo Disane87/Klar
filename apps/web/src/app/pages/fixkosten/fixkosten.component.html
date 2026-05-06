@@ -46,11 +46,8 @@
 <!-- Scrollable area -->
 <div class="flex-1 overflow-y-auto pb-16">
 
-  <!-- Summary section (padded) -->
-  <div class="p-5 pt-3">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-[11px] uppercase tracking-wider font-semibold text-(--text-muted)">Übersicht</span>
-      <div class="flex items-center gap-2">
+  <!-- Toolbar -->
+  <klar-toolbar label="Übersicht">
         <label class="flex items-center gap-1.5 cursor-pointer select-none">
           <span class="text-[10px] text-(--text-muted)">Planspiel</span>
           <button role="switch"
@@ -123,10 +120,7 @@
           <klar-icon name="download" [size]="12" />
           PDF
         </button>
-      </div>
-    </div>
-
-  </div>
+  </klar-toolbar>
 
   <klar-summary-strip
     [incomeCents]="incomeTotalCents()"
