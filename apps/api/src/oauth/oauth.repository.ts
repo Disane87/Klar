@@ -113,6 +113,14 @@ export class OAuthRepository {
     return this.prisma.oAuthGrant.findUnique({ where: { refreshTokenHash } });
   }
 
+  /** Wird vom Bearer-Guard aufgerufen — minimaler Select für Performance. */
+  findGrantStatusById(grantId: string): Promise<{ revokedAt: Date | null } | null> {
+    return this.prisma.oAuthGrant.findUnique({
+      where: { id: grantId },
+      select: { revokedAt: true },
+    });
+  }
+
   findActiveGrant(userId: string, clientId: string): Promise<OAuthGrant | null> {
     return this.prisma.oAuthGrant.findFirst({
       where: { userId, clientId, revokedAt: null, refreshExpiresAt: { gt: new Date() } },
