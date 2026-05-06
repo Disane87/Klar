@@ -32,12 +32,12 @@ const FREQ_LABEL: Record<string, string> = {
     KlarIconComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block w-full border-b border-(--border)/40 last:border-b-0' },
+  host: { class: 'block w-full border-b border-(--border)/40' },
   template: `
     <div
-      class="grid items-center gap-3 px-4 h-14 transition-colors hover:bg-(--surface-2)/40"
+      class="grid items-center gap-3 px-6 h-14 transition-colors hover:bg-(--surface-2)/40"
       [class.opacity-50]="selection().skip"
-      style="grid-template-columns: 28px 32px minmax(0, 1fr) 92px 96px 176px 32px;"
+      style="grid-template-columns: 24px 28px minmax(0, 1fr) 88px 92px 168px 32px;"
     >
       <!-- Checkbox -->
       <hlm-checkbox

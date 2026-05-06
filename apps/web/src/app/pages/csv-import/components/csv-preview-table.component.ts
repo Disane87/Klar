@@ -81,9 +81,9 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
         <ng-container *cdkVirtualFor="let item of items(); trackBy: trackByItem">
           @if (item.kind === 'header') {
             <div
-              class="grid w-full items-center gap-3 px-4 bg-(--surface-2)/40 border-b border-(--border)/40"
+              class="grid w-full items-center gap-3 px-6 bg-(--surface-2)/40 border-b border-(--border)/50"
               [style.height.px]="rowHeightPx"
-              style="grid-template-columns: 28px 1fr auto;"
+              style="grid-template-columns: 28px 1fr auto auto;"
             >
               <hlm-checkbox
                 [checked]="isGroupAllSelected(item)"
@@ -91,11 +91,18 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
                 [disabled]="item.selectableRowIndices.length === 0"
                 (checkedChange)="onGroupToggle(item, $event)"
               />
-              <span class="text-sm font-semibold uppercase tracking-wide text-foreground truncate">
-                {{ item.label }}
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full shrink-0 bg-accent"></span>
+                <span class="text-[10px] uppercase tracking-[0.12em] font-medium text-(--text-muted) truncate">
+                  {{ item.label }}
+                </span>
+              </div>
+              <span class="text-[11px] text-(--text-muted) whitespace-nowrap">
+                {{ countSelectedInGroup(item) }} / {{ item.rowIndices.length }}
               </span>
-              <span class="text-xs text-muted-foreground whitespace-nowrap">
-                {{ item.rowIndices.length }} Buchungen · {{ countSelectedInGroup(item) }} ausgewählt
+              <span class="font-mono tabular-nums text-[13px] whitespace-nowrap"
+                    [ngClass]="groupTotalCents(item) >= 0 ? 'text-success' : 'text-danger'">
+                {{ formatCents(groupTotalCents(item)) }}
               </span>
             </div>
           } @else {
@@ -198,6 +205,27 @@ export class CsvPreviewTableComponent {
 
   countSelectedInGroup(item: HeaderItem): number {
     return item.rowIndices.filter(i => !this.selections().get(i)?.skip).length;
+  }
+
+  groupTotalCents(item: HeaderItem): number {
+    const rows = this.analyzeResult().rows;
+    const byIndex = new Map(rows.map(r => [r.rowIndex, r]));
+    let sum = 0;
+    for (const idx of item.rowIndices) {
+      if (this.selections().get(idx)?.skip) continue;
+      const r = byIndex.get(idx);
+      if (r) sum += r.amountCents;
+    }
+    return sum;
+  }
+
+  formatCents(cents: number): string {
+    return (
+      (cents / 100).toLocaleString('de-DE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + ' €'
+    );
   }
 
   onGroupToggle(item: HeaderItem, include: boolean): void {
