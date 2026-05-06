@@ -82,8 +82,22 @@ export class OAuthBearerGuard implements CanActivate {
       mcpClientId: claims.azp,
       scopes,
       grantId,
+      ip: this.extractIp(req),
+      userAgent: this.extractUserAgent(req),
     };
     return true;
+  }
+
+  private extractIp(req: FastifyRequest): string | undefined {
+    const fwd = req.headers['x-forwarded-for'];
+    if (typeof fwd === 'string' && fwd.length > 0) return fwd.split(',')[0]?.trim();
+    if (Array.isArray(fwd) && fwd.length > 0) return fwd[0];
+    return req.ip ?? undefined;
+  }
+
+  private extractUserAgent(req: FastifyRequest): string | undefined {
+    const ua = req.headers['user-agent'];
+    return typeof ua === 'string' ? ua : undefined;
   }
 
   private publicKey(): Buffer {

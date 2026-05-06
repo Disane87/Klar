@@ -9,4 +9,8 @@ export type RequestContext = {
   scopes?: string[];
   /** Bei `source: 'mcp'`: jti des Access-Tokens (= Grant-ID, für Revocation-Check). */
   grantId?: string;
+  /** Client-IP (X-Forwarded-For oder socket); optional, primär für Audit. */
+  ip?: string;
+  /** User-Agent-Header; optional, primär für Audit. */
+  userAgent?: string;
 };

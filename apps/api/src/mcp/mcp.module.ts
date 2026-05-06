@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
 import { OAuthModule } from '../oauth/oauth.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { RecurringTransactionsModule } from '../recurring-transactions/recurring-transactions.module';
@@ -17,6 +18,7 @@ import { OAuthBearerGuard } from './guards/oauth-bearer.guard';
  */
 @Module({
   imports: [
+    AuditModule,
     OAuthModule,
     TransactionsModule,
     RecurringTransactionsModule,
