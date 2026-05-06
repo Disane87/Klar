@@ -1,35 +1,54 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-export interface PaginatedResponse<T> {
+export interface CursorPage<T> {
   data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+  nextCursor: string | null;
+  total: number | null;
+}
+
+export interface ResolvedUser {
+  id: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+}
+export interface ResolvedHousehold {
+  id: string;
+  name: string;
 }
 
 export interface AuditLogEntry {
   id: string;
-  userId: string | null;
-  householdId: string | null;
+  createdAt: string;
   action: string;
-  metadata: unknown;
   ip: string | null;
   userAgent: string | null;
-  createdAt: string;
+  metadata: Record<string, unknown> | null;
+  user: ResolvedUser | null;
+  household: ResolvedHousehold | null;
+}
+
+export interface McpAuditEntry extends AuditLogEntry {
+  toolName: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  durationMs: number | null;
+  ok: boolean | null;
+  errorCode: string | null;
 }
 
 export interface EmailLogEntry {
   id: string;
+  sentAt: string;
   to: string;
   subject: string;
   template: string;
   status: 'SENT' | 'FAILED';
   error: string | null;
-  userId: string | null;
-  householdId: string | null;
-  sentAt: string;
+  user: ResolvedUser | null;
+  household: ResolvedHousehold | null;
 }
 
 export interface AdminHouseholdMember {
@@ -48,12 +67,43 @@ export interface AdminHousehold {
   members: AdminHouseholdMember[];
 }
 
-function toParams(obj: Record<string, unknown>): HttpParams {
-  let params = new HttpParams();
+export interface AuditFilter {
+  q?: string;
+  actionPrefix?: string;
+  userId?: string;
+  householdId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface McpFilter {
+  q?: string;
+  userId?: string;
+  householdId?: string;
+  toolName?: string;
+  clientId?: string;
+  ok?: boolean | null;
+  from?: string;
+  to?: string;
+}
+
+export interface EmailFilter {
+  q?: string;
+  status?: 'SENT' | 'FAILED' | null;
+  template?: string;
+  householdId?: string;
+  from?: string;
+  to?: string;
+}
+
+function toParams(obj: Record<string, unknown>, cursor: string | null, pageSize: number): HttpParams {
+  let params = new HttpParams().set('pageSize', String(pageSize));
+  if (cursor) params = params.set('cursor', cursor);
   for (const [key, value] of Object.entries(obj)) {
-    if (value !== null && value !== undefined && value !== '') {
-      params = params.set(key, String(value));
-    }
+    if (value === null || value === undefined) continue;
+    const str = String(value);
+    if (str.length === 0) continue;
+    params = params.set(key, str);
   }
   return params;
 }
@@ -62,18 +112,26 @@ function toParams(obj: Record<string, unknown>): HttpParams {
 export class AdminApiService {
   private http = inject(HttpClient);
 
-  listAuditLogs(params: { page?: number; pageSize?: number; action?: string; householdId?: string } = {}) {
+  listAuditLogs(filter: AuditFilter, cursor: string | null, pageSize = 50) {
     return firstValueFrom(
-      this.http.get<PaginatedResponse<AuditLogEntry>>('/api/v1/admin/audit-logs', {
-        params: toParams(params),
+      this.http.get<CursorPage<AuditLogEntry>>('/api/v1/admin/audit-logs', {
+        params: toParams({ ...filter }, cursor, pageSize),
       }),
     );
   }
 
-  listEmails(params: { page?: number; pageSize?: number; status?: 'SENT' | 'FAILED'; householdId?: string } = {}) {
+  listMcpAuditLogs(filter: McpFilter, cursor: string | null, pageSize = 50) {
     return firstValueFrom(
-      this.http.get<PaginatedResponse<EmailLogEntry>>('/api/v1/admin/emails', {
-        params: toParams(params),
+      this.http.get<CursorPage<McpAuditEntry>>('/api/v1/admin/mcp', {
+        params: toParams({ ...filter }, cursor, pageSize),
+      }),
+    );
+  }
+
+  listEmails(filter: EmailFilter, cursor: string | null, pageSize = 50) {
+    return firstValueFrom(
+      this.http.get<CursorPage<EmailLogEntry>>('/api/v1/admin/emails', {
+        params: toParams({ ...filter }, cursor, pageSize),
       }),
     );
   }
