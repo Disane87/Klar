@@ -10,10 +10,27 @@ import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CsvPreviewRowComponent } from './csv-preview-row.component';
 import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
+import { HlmCheckboxComponent } from '../../../shared/ui/hlm/hlm-checkbox.component';
 import type {
   AnalyzeResponse,
+  AnalyzeRow,
   ConfirmRowSelection,
 } from '../../../core/csv-import/csv-import.types';
+
+interface HeaderItem {
+  kind: 'header';
+  monthKey: string;
+  label: string;
+  rowIndices: number[];
+  selectableRowIndices: number[];
+}
+
+interface RowItem {
+  kind: 'row';
+  row: AnalyzeRow;
+}
+
+type ListItem = HeaderItem | RowItem;
 
 interface CategoryOption {
   id: string;
@@ -25,8 +42,21 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
 @Component({
   selector: 'app-csv-preview-table',
   standalone: true,
-  imports: [CommonModule, ScrollingModule, CsvPreviewRowComponent, HlmButtonDirective],
+  imports: [
+    CommonModule,
+    ScrollingModule,
+    CsvPreviewRowComponent,
+    HlmButtonDirective,
+    HlmCheckboxComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      :host ::ng-deep .cdk-virtual-scroll-content-wrapper {
+        width: 100%;
+      }
+    `,
+  ],
   template: `
     <div class="flex flex-col gap-3">
       <div class="flex gap-2 overflow-x-auto pb-1 sticky top-0 bg-background z-10">
@@ -46,17 +76,39 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
 
       <cdk-virtual-scroll-viewport
         [itemSize]="rowHeightPx"
-        class="rounded-lg border border-border bg-card h-[calc(100dvh-22rem)] min-h-96"
+        class="rounded-lg border border-border bg-card h-[calc(100dvh-22rem)] min-h-96 overflow-x-hidden"
       >
-        <app-csv-preview-row
-          *cdkVirtualFor="let row of filteredRows(); trackBy: trackByRowIndex"
-          [row]="row"
-          [selection]="getSelection(row.rowIndex)"
-          [categories]="categories()"
-          [style.height.px]="rowHeightPx"
-          class="block"
-          (selectionChange)="onSelectionChange($event)"
-        />
+        <ng-container *cdkVirtualFor="let item of items(); trackBy: trackByItem">
+          @if (item.kind === 'header') {
+            <div
+              class="flex w-full items-center gap-3 px-6 bg-(--surface-2)/40 border-b border-(--border)/40"
+              [style.height.px]="rowHeightPx"
+            >
+              <hlm-checkbox
+                [checked]="isGroupAllSelected(item)"
+                [indeterminate]="isGroupIndeterminate(item)"
+                [disabled]="item.selectableRowIndices.length === 0"
+                (checkedChange)="onGroupToggle(item, $event)"
+              />
+              <span class="text-sm font-semibold uppercase tracking-wide text-foreground">
+                {{ item.label }}
+              </span>
+              <span class="text-xs text-muted-foreground">
+                {{ item.rowIndices.length }} Buchungen ·
+                {{ countSelectedInGroup(item) }} ausgewählt
+              </span>
+            </div>
+          } @else {
+            <app-csv-preview-row
+              [row]="item.row"
+              [selection]="getSelection(item.row.rowIndex)"
+              [categories]="categories()"
+              [style.height.px]="rowHeightPx"
+              class="block w-full"
+              (selectionChange)="onSelectionChange($event)"
+            />
+          }
+        </ng-container>
       </cdk-virtual-scroll-viewport>
 
       <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between sticky bottom-0 bg-background py-3 border-t border-border">
@@ -91,7 +143,77 @@ export class CsvPreviewTableComponent {
   readonly filter = signal<FilterKey>('all');
 
   readonly rowHeightPx = 56;
-  readonly trackByRowIndex = (_: number, row: { rowIndex: number }): number => row.rowIndex;
+
+  readonly items = computed<ListItem[]>(() => {
+    const rows = this.filteredRows();
+    if (rows.length === 0) return [];
+
+    const groups = new Map<string, AnalyzeRow[]>();
+    for (const row of rows) {
+      const monthKey = row.date.slice(0, 7);
+      if (!groups.has(monthKey)) groups.set(monthKey, []);
+      groups.get(monthKey)!.push(row);
+    }
+
+    const sortedKeys = [...groups.keys()].sort((a, b) => b.localeCompare(a));
+    const result: ListItem[] = [];
+    for (const key of sortedKeys) {
+      const groupRows = groups.get(key)!;
+      const indices = groupRows.map(r => r.rowIndex);
+      const selectable = groupRows
+        .filter(r => r.status === 'NEW' || r.status === 'RECURRING_SUGGESTION')
+        .map(r => r.rowIndex);
+      result.push({
+        kind: 'header',
+        monthKey: key,
+        label: this.formatMonthLabel(key),
+        rowIndices: indices,
+        selectableRowIndices: selectable,
+      });
+      for (const r of groupRows) {
+        result.push({ kind: 'row', row: r });
+      }
+    }
+    return result;
+  });
+
+  readonly trackByItem = (_: number, item: ListItem): string =>
+    item.kind === 'header' ? `h:${item.monthKey}` : `r:${item.row.rowIndex}`;
+
+  isGroupAllSelected(item: HeaderItem): boolean {
+    if (item.selectableRowIndices.length === 0) return false;
+    return item.selectableRowIndices.every(i => !this.selections().get(i)?.skip);
+  }
+
+  isGroupIndeterminate(item: HeaderItem): boolean {
+    if (item.selectableRowIndices.length === 0) return false;
+    const selectedCount = item.selectableRowIndices.filter(i => !this.selections().get(i)?.skip).length;
+    return selectedCount > 0 && selectedCount < item.selectableRowIndices.length;
+  }
+
+  countSelectedInGroup(item: HeaderItem): number {
+    return item.rowIndices.filter(i => !this.selections().get(i)?.skip).length;
+  }
+
+  onGroupToggle(item: HeaderItem, include: boolean): void {
+    const next = new Map(this.selections());
+    for (const idx of item.selectableRowIndices) {
+      const current = next.get(idx);
+      if (!current) continue;
+      next.set(idx, {
+        ...current,
+        skip: !include,
+        skipReason: include ? undefined : 'user',
+      });
+    }
+    this.selectionsChange.emit(next);
+  }
+
+  private formatMonthLabel(monthKey: string): string {
+    const [year, month] = monthKey.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, 1));
+    return d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  }
 
   readonly chips = computed(() => {
     const s = this.analyzeResult().summary;
