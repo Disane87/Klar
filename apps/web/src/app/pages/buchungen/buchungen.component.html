@@ -85,7 +85,10 @@
             [label]="group.categoryName"
             [headerDotColor]="group.categoryColor"
             [headerValue]="group.totalCents | klarMoney"
-            [headerValueClass]="group.totalCents | klarMoneyClass">
+            [headerValueClass]="group.totalCents | klarMoneyClass"
+            [collapsible]="true"
+            [collapsed]="isCollapsed(groupKey(group))"
+            (headerAction)="toggleGroup(groupKey(group))">
             @for (tx of group.items; track tx.id) {
               <klar-list-row [navigable]="true" (rowClick)="openEdit(tx)">
                 <app-brand-icon [name]="primaryLabel(tx)" [size]="22" class="shrink-0" />

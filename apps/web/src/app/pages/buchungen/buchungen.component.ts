@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
@@ -132,6 +132,24 @@ export class BuchungenPageComponent {
     const parts = dateStr.split('-');
     if (parts.length < 3) return dateStr;
     return `${parts[2]}.${parts[1]}.`;
+  }
+
+  readonly collapsedGroups = signal(new Set<string>());
+
+  toggleGroup(key: string): void {
+    this.collapsedGroups.update(set => {
+      const next = new Set(set);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
+  isCollapsed(key: string): boolean {
+    return this.collapsedGroups().has(key);
+  }
+
+  groupKey(g: TxGroup): string {
+    return g.categoryId ?? '__none__';
   }
 
   primaryLabel(tx: Transaction): string {
