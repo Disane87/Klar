@@ -45,6 +45,25 @@ describe('RecurringSuggester', () => {
     expect(s.suggest(row())?.estimatedFrequency).toBe('QUARTERLY');
   });
 
+  it('suggests WEEKLY for 7-day spacing', () => {
+    const s = new RecurringSuggester([
+      hist('2026-03-01'),
+      hist('2026-03-08'),
+      hist('2026-03-15'),
+      hist('2026-03-22'),
+    ]);
+    expect(s.suggest(row())?.estimatedFrequency).toBe('WEEKLY');
+  });
+
+  it('suggests HALF_YEARLY for 6-month spacing', () => {
+    const s = new RecurringSuggester([
+      hist('2024-10-15'),
+      hist('2025-04-15'),
+      hist('2025-10-15'),
+    ]);
+    expect(s.suggest(row())?.estimatedFrequency).toBe('HALF_YEARLY');
+  });
+
   it('suggests YEARLY for 12-month spacing', () => {
     const s = new RecurringSuggester([
       hist('2023-04-15'),

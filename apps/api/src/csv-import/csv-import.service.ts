@@ -42,7 +42,7 @@ export interface AnalyzeRow {
   suggestedCategoryId?: string;
   suggestedCategoryConfidence: 'EXACT' | 'LEARNED' | 'NONE';
   suggestedRecurring?: {
-    estimatedFrequency: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+    estimatedFrequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
     pastOccurrences: number;
   };
 }

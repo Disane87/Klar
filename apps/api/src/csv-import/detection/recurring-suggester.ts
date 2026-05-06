@@ -6,7 +6,7 @@ export interface HistoryEntry {
   amountCents: number;
 }
 
-export type EstimatedFrequency = 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type EstimatedFrequency = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 
 export interface SuggestionResult {
   estimatedFrequency: EstimatedFrequency;
@@ -55,8 +55,10 @@ export class RecurringSuggester {
   }
 
   private classifyFrequency(avgDays: number): EstimatedFrequency | null {
-    if (avgDays >= 25 && avgDays <= 35) return 'MONTHLY';
-    if (avgDays >= 80 && avgDays <= 100) return 'QUARTERLY';
+    if (avgDays >= 6   && avgDays <= 8)   return 'WEEKLY';
+    if (avgDays >= 25  && avgDays <= 35)  return 'MONTHLY';
+    if (avgDays >= 80  && avgDays <= 100) return 'QUARTERLY';
+    if (avgDays >= 170 && avgDays <= 195) return 'HALF_YEARLY';
     if (avgDays >= 350 && avgDays <= 380) return 'YEARLY';
     return null;
   }
