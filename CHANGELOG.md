@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/Disane87/Klar/compare/v1.13.0...v1.14.0) (2026-05-06)
+
+
+### Features
+
+* **web:** add Help & Community section with GitHub links to user menu ([41e9f64](https://github.com/Disane87/Klar/commit/41e9f64f6cb9cbc3b687c714a357330106a69f4b))
+
 # [1.13.0](https://github.com/Disane87/Klar/compare/v1.12.0...v1.13.0) (2026-05-06)
 
 
