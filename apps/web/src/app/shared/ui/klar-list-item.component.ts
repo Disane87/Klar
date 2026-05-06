@@ -43,7 +43,8 @@ import { KlarAvatarComponent } from './klar-avatar.component';
                      [seed]="avatarSeed() ?? ''"
                      [size]="28"
                      [tooltip]="label()"
-                     [tooltipSub]="sublabel()" />
+                     [tooltipSub]="sublabel()"
+                     [hoverCard]="hoverCard()" />
       } @else if (icon()) {
         <klar-icon [name]="icon()!" [size]="16"
                    class="shrink-0"
@@ -114,6 +115,7 @@ export class KlarListItemComponent {
   danger   = input(false);
   disabled = input(false);
   navigable = input(false);
+  hoverCard = input(true);
 
   trailingActionLabel    = input<string>();
   trailingActionIcon     = input<string>();

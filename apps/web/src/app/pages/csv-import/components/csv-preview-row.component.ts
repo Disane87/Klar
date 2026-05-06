@@ -42,6 +42,7 @@ const FREQ_LABEL: Record<string, string> = {
       [value]="formatAmount(row().amountCents)"
       [valueClass]="amountClass()"
       [disabled]="selection().skip"
+      [hoverCard]="false"
     >
       <hlm-checkbox
         klarLeading

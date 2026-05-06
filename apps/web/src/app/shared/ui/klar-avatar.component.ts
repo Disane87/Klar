@@ -28,7 +28,7 @@ function seedToHue(seed: string): number {
       </div>
     }
 
-    @if (tooltip()) {
+    @if (tooltip() && hoverCard()) {
       <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
                   min-w-max px-2.5 py-1.5 rounded-md
                   bg-(--surface) border border-(--border)
@@ -53,6 +53,7 @@ export class KlarAvatarComponent {
   noBorder   = input<boolean>(false);
   tooltip    = input<string>();
   tooltipSub = input<string>();
+  hoverCard  = input<boolean>(true);
 
   _initials = computed(() => {
     if (this.initials()) return this.initials()!;
