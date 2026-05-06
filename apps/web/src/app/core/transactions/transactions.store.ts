@@ -13,6 +13,7 @@ export interface Transaction {
   plannedAmountCents: number | null;
   isPlanned: boolean;
   description: string;
+  counterparty: string | null;
   date: string; // YYYY-MM-DD
   visibility: 'SHARED' | 'PRIVATE';
   createdAt: string;

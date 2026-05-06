@@ -130,6 +130,7 @@ export class TransactionsService {
       projectId: tx.projectId,
       date: tx.date.toISOString().slice(0, 10),
       description: tx.description,
+      counterparty: tx.counterparty,
       visibility: tx.visibility,
       recurringTransactionId: tx.recurringTransactionId,
       createdAt: tx.createdAt.toISOString(),

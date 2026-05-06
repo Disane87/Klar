@@ -88,10 +88,10 @@
             [headerValueClass]="group.totalCents | klarMoneyClass">
             @for (tx of group.items; track tx.id) {
               <klar-list-row [navigable]="true" (rowClick)="openEdit(tx)">
-                <app-brand-icon [name]="tx.description" [size]="22" class="shrink-0" />
+                <app-brand-icon [name]="primaryLabel(tx)" [size]="22" class="shrink-0" />
                 <div class="flex-1 min-w-0">
                   <p class="text-[13px] font-medium truncate" [class.opacity-60]="tx.isPlanned">
-                    {{ tx.description }}
+                    {{ primaryLabel(tx) }}
                   </p>
                   <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
                     {{ formatSublabel(tx) }}

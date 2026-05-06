@@ -134,8 +134,15 @@ export class BuchungenPageComponent {
     return `${parts[2]}.${parts[1]}.`;
   }
 
+  primaryLabel(tx: Transaction): string {
+    return tx.counterparty?.trim() || tx.description?.trim() || '—';
+  }
+
   formatSublabel(tx: Transaction): string {
     const parts: string[] = [this.formatDate(tx.date)];
+    if (tx.counterparty?.trim() && tx.description?.trim() && tx.description !== tx.counterparty) {
+      parts.push(tx.description);
+    }
     if (tx.isPlanned) parts.push('geplant');
     if (tx.visibility === 'PRIVATE') parts.push('privat');
     return parts.join(' · ');
