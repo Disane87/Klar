@@ -1,0 +1,74 @@
+<section class="space-y-3">
+  <div>
+    <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+      Verbundene Apps
+    </p>
+    <p class="text-xs text-muted-foreground">
+      Externe Anwendungen mit OAuth-Zugriff auf dein Klar-Konto. Widerrufe Zugriff jederzeit hier.
+    </p>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center py-6 text-muted-foreground">
+      <klar-icon name="refresh" [size]="18" />
+    </div>
+  } @else if (empty()) {
+    <div class="rounded border border-dashed border-border p-6 text-center">
+      <p class="text-sm text-muted-foreground">Keine verbundenen Apps.</p>
+    </div>
+  } @else {
+    <ul class="space-y-2" role="list">
+      @for (grant of grants(); track grant.id) {
+        <li class="rounded border border-border bg-(--surface-1) p-3">
+          <div class="flex items-start gap-3">
+            <div
+              class="size-9 shrink-0 rounded border border-border bg-(--surface-2) flex items-center justify-center text-muted-foreground"
+            >
+              @if (grant.clientLogoUri) {
+                <img
+                  [src]="grant.clientLogoUri"
+                  [alt]="grant.clientName + ' Logo'"
+                  class="size-full object-contain rounded"
+                  loading="lazy"
+                />
+              } @else {
+                <klar-icon name="key" [size]="16" />
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline justify-between gap-2">
+                <p class="text-sm font-semibold text-foreground truncate">
+                  {{ grant.clientName }}
+                </p>
+                <klar-button
+                  tone="danger"
+                  size="sm"
+                  [loading]="revoking() === grant.id"
+                  [disabled]="!!revoking()"
+                  (click)="revoke(grant)"
+                >
+                  Widerrufen
+                </klar-button>
+              </div>
+              <p class="text-[11px] text-muted-foreground mt-0.5">
+                Verbunden seit {{ grant.createdAt | date: 'mediumDate' }}
+                @if (grant.lastUsedAt) {
+                  <span> · zuletzt verwendet {{ grant.lastUsedAt | date: 'short' }}</span>
+                }
+              </p>
+              <div class="mt-2 flex flex-wrap gap-1">
+                @for (s of grant.scopes; track s) {
+                  <span
+                    class="rounded border border-border bg-(--surface-2) px-1.5 py-0.5 text-[10px] text-foreground"
+                  >
+                    {{ scopeLabel(s) }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

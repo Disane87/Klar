@@ -111,6 +111,18 @@ export class OAuthController {
    * sonst Plain-400.
    */
   /**
+   * RFC 7009 — Token Revocation. Antwort immer 200, auch wenn der Token
+   * unbekannt ist (Information-Leak-Schutz).
+   */
+  @Public()
+  @Post('oauth2/revoke')
+  @HttpCode(HttpStatus.OK)
+  async revoke(@Body() body: unknown): Promise<{ revoked: true }> {
+    await this.service.revokeToken(body);
+    return { revoked: true };
+  }
+
+  /**
    * RFC 6749 §3.2 Token Endpoint.
    * Akzeptiert `application/x-www-form-urlencoded` (Standard) und `application/json`.
    * Cache-Header per RFC verpflichtend.

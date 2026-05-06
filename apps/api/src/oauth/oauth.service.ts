@@ -220,6 +220,65 @@ export class OAuthService {
     }
   }
 
+  // ── Phase 11: User-facing Grant management ──────────────────────────
+
+  /** Liste aller aktiven Grants des Users — fürs Settings-UI. */
+  async listUserGrants(userId: string): Promise<Array<{
+    id: string;
+    clientId: string;
+    clientName: string;
+    clientLogoUri: string | null;
+    scopes: string[];
+    createdAt: Date;
+    lastUsedAt: Date | null;
+    refreshExpiresAt: Date;
+  }>> {
+    const grants = await this.repo.listUserGrants(userId);
+    return grants.map((g) => ({
+      id: g.id,
+      clientId: g.clientId,
+      clientName: g.client.clientName,
+      clientLogoUri: g.client.logoUri,
+      scopes: g.scopes,
+      createdAt: g.createdAt,
+      lastUsedAt: g.lastUsedAt,
+      refreshExpiresAt: g.refreshExpiresAt,
+    }));
+  }
+
+  /** User widerruft einen Grant aus dem Settings-UI. Idempotent. */
+  async revokeUserGrant(userId: string, grantId: string): Promise<void> {
+    const grant = await this.repo.findGrantStatusById(grantId);
+    if (!grant) {
+      throw new OAuthError('invalid_request', 'unknown grant', 404);
+    }
+    // Doppel-Revoke ist OK — nur bei null setzen.
+    if (grant.revokedAt) return;
+    // Sicherstellen dass es dem User gehört.
+    const grants = await this.repo.listUserGrants(userId);
+    if (!grants.some((g) => g.id === grantId)) {
+      throw new OAuthError('invalid_request', 'unknown grant', 404);
+    }
+    await this.repo.revokeGrant(grantId);
+  }
+
+  // ── Phase 12: Token Revocation (RFC 7009) ───────────────────────────
+
+  /**
+   * RFC 7009 — der Spec verlangt 200 unabhängig vom Erfolg, um keine
+   * Information-Leak über die Existenz von Tokens zu geben.
+   */
+  async revokeToken(rawBody: unknown): Promise<void> {
+    const body = (rawBody ?? {}) as { token?: unknown; client_id?: unknown };
+    const token = typeof body.token === 'string' ? body.token : null;
+    if (!token) return;
+    // Wir akzeptieren ausschließlich Refresh-Tokens — Access-Token-Revoke ist
+    // No-Op (kurzlebig, nicht in DB). Spec erlaubt beide Fälle.
+    const grant = await this.repo.findGrantByRefreshHash(sha256Hex(token));
+    if (!grant || grant.revokedAt) return;
+    await this.repo.revokeGrant(grant.id);
+  }
+
   // ── Phase 6: Token Endpoint ─────────────────────────────────────────
 
   /**

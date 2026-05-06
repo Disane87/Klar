@@ -29,6 +29,7 @@ import { DeleteAccountDialogComponent } from './delete-account-dialog.component'
 import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
 import { DataExportComponent } from './data-export.component';
 import { ImportMappingDialogComponent } from './import-mapping-dialog.component';
+import { ConnectedAppsComponent } from './connected-apps/connected-apps.component';
 import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/data-transfer.service';
 
 @Component({
@@ -48,6 +49,7 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
     HlmToggleGroupDirective,
     HlmToggleGroupItemDirective,
     KlarIconComponent,
+    ConnectedAppsComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
