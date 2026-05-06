@@ -7,7 +7,7 @@ import { KlarAvatarComponent } from './klar-avatar.component';
   selector: 'klar-list-item',
   standalone: true,
   imports: [NgClass, NgTemplateOutlet, KlarIconComponent, KlarAvatarComponent],
-  host: { class: 'block border-b border-(--border)/40 last:border-b-0' },
+  host: { class: 'block w-full border-b border-(--border)/40 last:border-b-0' },
   template: `
     @if (navigable()) {
       <button type="button"
@@ -22,7 +22,7 @@ import { KlarAvatarComponent } from './klar-avatar.component';
         <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--text-muted)" />
       </button>
     } @else {
-      <div class="flex items-center gap-3 px-6 py-2.5 min-h-11"
+      <div class="flex w-full items-center gap-3 px-6 py-2.5 min-h-11 overflow-hidden"
            [class.opacity-40]="disabled()">
         <ng-container *ngTemplateOutlet="row" />
       </div>
