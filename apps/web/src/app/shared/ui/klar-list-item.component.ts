@@ -29,6 +29,9 @@ import { KlarAvatarComponent } from './klar-avatar.component';
     }
 
     <ng-template #row>
+      <!-- Slot: arbitrary leading content (e.g. checkbox), rendered before auto-leading -->
+      <ng-content select="[klarLeading]" />
+
       <!-- Leading: status dot, avatar (url or seed), or icon -->
       @if (dotColor()) {
         <div class="size-2 rounded-full shrink-0"
@@ -73,6 +76,9 @@ import { KlarAvatarComponent } from './klar-avatar.component';
           {{ value() }}
         </span>
       }
+
+      <!-- Slot: arbitrary trailing content (e.g. select, toggle) before action button -->
+      <ng-content select="[klarTrailing]" />
 
       <!-- Trailing: action button (label or icon) -->
       @if (_hasTrailing()) {

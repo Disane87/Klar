@@ -54,7 +54,7 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
           [selection]="getSelection(row.rowIndex)"
           [categories]="categories()"
           [style.height.px]="rowHeightPx"
-          class="block border-b border-border last:border-b-0"
+          class="block"
           (selectionChange)="onSelectionChange($event)"
         />
       </cdk-virtual-scroll-viewport>
@@ -90,7 +90,7 @@ export class CsvPreviewTableComponent {
 
   readonly filter = signal<FilterKey>('all');
 
-  readonly rowHeightPx = 88;
+  readonly rowHeightPx = 56;
   readonly trackByRowIndex = (_: number, row: { rowIndex: number }): number => row.rowIndex;
 
   readonly chips = computed(() => {
