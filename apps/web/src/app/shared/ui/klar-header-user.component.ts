@@ -10,6 +10,14 @@ import { AuthStore } from '../../core/auth/auth.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { HouseholdStore } from '../../core/household/household.store';
 
+interface HelpLink {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+const REPO_URL = 'https://github.com/Disane87/Klar';
+
 @Component({
   selector: 'klar-header-user',
   standalone: true,
@@ -115,7 +123,30 @@ import { HouseholdStore } from '../../core/household/household.store';
               <klar-icon name="settings" [size]="12" />
               Einstellungen
             </a>
-            <div class="h-px bg-(--border) mx-2 my-1"></div>
+          </div>
+
+          <!-- Help & Community (external links) -->
+          <div class="px-3 py-2.5 border-t border-(--border)">
+            <div class="text-[9px] uppercase tracking-[0.12em] text-(--text-muted) font-medium mb-2">
+              Hilfe & Community
+            </div>
+            <div class="flex flex-col gap-0.5">
+              @for (link of helpLinks; track link.href) {
+                <a [href]="link.href"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="flex items-center gap-2 -mx-1 px-1 py-1 rounded text-[12px]
+                          text-(--text-2) no-underline transition-colors
+                          hover:bg-(--surface-2) hover:text-(--text)">
+                  <klar-icon [name]="link.icon" [size]="12" />
+                  <span class="flex-1">{{ link.label }}</span>
+                  <klar-icon name="arrow-up-right" [size]="10" />
+                </a>
+              }
+            </div>
+          </div>
+
+          <div class="py-1 border-t border-(--border)">
             <button type="button" (click)="authStore.logout()"
                     class="flex w-full items-center gap-2 px-3 py-2 text-[11px] uppercase
                            tracking-[0.08em] font-medium text-(--color-expense)
@@ -138,6 +169,13 @@ export class KlarHeaderUserComponent {
 
   protected uploading = signal(false);
   private fileInputRef = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+  protected readonly helpLinks: HelpLink[] = [
+    { label: 'Dokumentation',  href: `${REPO_URL}#readme`,            icon: 'info' },
+    { label: 'GitHub-Repo',    href: REPO_URL,                        icon: 'folder' },
+    { label: 'Issues',         href: `${REPO_URL}/issues`,            icon: 'alert' },
+    { label: 'Diskussionen',   href: `${REPO_URL}/discussions`,       icon: 'mail' },
+  ];
 
   protected initials = computed(() => {
     const name = this.authStore.user()?.displayName ?? '';
