@@ -1,3 +1,26 @@
+# [1.11.0](https://github.com/Disane87/Klar/compare/v1.10.0...v1.11.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* **settings:** update additionalDirectories path to Klar workspace ([82129d5](https://github.com/Disane87/Klar/commit/82129d5b58e99930c726c27b2a0ffc2376ddd9a9))
+
+
+### Features
+
+* **mcp:** add OAuth bearer guard for resource server ([b225787](https://github.com/Disane87/Klar/commit/b2257877c17767e3872dac6c8dc3d9b6bf54d4a7))
+* **mcp:** add read and write tools (transactions, recurring, categories, projects, budgets, overview) ([27aa802](https://github.com/Disane87/Klar/commit/27aa80269a2d5baa3408f3f70add98d1c088813e))
+* **mcp:** add Streamable HTTP server skeleton with tool registry ([2e44dd8](https://github.com/Disane87/Klar/commit/2e44dd853f9673fa76548f32401bc230965343c9))
+* **oauth:** add authorize endpoint with consent flow ([02f02e5](https://github.com/Disane87/Klar/commit/02f02e59cd8f027ddfcc06266ec2b971511bc929))
+* **oauth:** add connected apps UI, revocation endpoint, cleanup cron ([d25dddf](https://github.com/Disane87/Klar/commit/d25dddf76007ddc9ebf49fe9d1a0b71ada86d396))
+* **oauth:** add consent UI page with login return-url support ([0201879](https://github.com/Disane87/Klar/commit/02018794bae18828def13f4ba05a8bbf5ba7c8dc))
+* **oauth:** add discovery endpoints (RFC 8414, RFC 9728) ([32029b1](https://github.com/Disane87/Klar/commit/32029b14db58b576f4bba248d6cd2c105cd24ce9))
+* **oauth:** add dynamic client registration (RFC 7591) ([a5fc53b](https://github.com/Disane87/Klar/commit/a5fc53bbcc8c7f833c377a9f0a76c11098b8889f))
+* **oauth:** add OAuth 2.1 schema and shared scopes for MCP ([50e676e](https://github.com/Disane87/Klar/commit/50e676e839ea13058ffcd40fa44a89d1b951f4d7))
+* **oauth:** add token endpoint with PKCE and rotating refresh tokens ([b02a31e](https://github.com/Disane87/Klar/commit/b02a31e70d46fdcc521edcd94f312f0e372e1349))
+* **oauth:** full OAuth+MCP flow e2e test, audit logging, hardening, docs ([693b260](https://github.com/Disane87/Klar/commit/693b2605fb52ef889fd6191e822d8aa2ff257fb3))
+* **tests:** add new test commands for web and shared packages ([4fda403](https://github.com/Disane87/Klar/commit/4fda40369742da3f250e7e636ae03ad5820c71a6))
+
 # [1.10.0](https://github.com/Disane87/Klar/compare/v1.9.0...v1.10.0) (2026-05-06)
 
 
