@@ -19,8 +19,22 @@ export const mailConfig = registerAs('mail', () => ({
 }));
 
 export const appConfig = registerAs('app', () => ({
+  baseUrl: process.env['APP_BASE_URL'] ?? 'http://localhost:3000',
   frontendUrl: process.env['FRONTEND_URL'] ?? 'http://localhost:4200',
   registrationEnabled: process.env['REGISTRATION_ENABLED'] !== 'false',
+}));
+
+export const oauthConfig = registerAs('oauth', () => ({
+  // Pfade zum eigenen MCP-JWT-Key-Pair (getrennt vom Klar-Session-JWT).
+  // Wird von scripts/generate-mcp-keys.ts angelegt falls fehlend.
+  mcpPrivateKeyPath: process.env['JWT_MCP_PRIVATE_KEY_PATH'] ?? '',
+  mcpPublicKeyPath: process.env['JWT_MCP_PUBLIC_KEY_PATH'] ?? '',
+  mcpAudience: process.env['JWT_MCP_AUDIENCE'] ?? 'klar-mcp',
+  authCodeTtlSeconds: Number(process.env['OAUTH_AUTH_CODE_TTL_SECONDS'] ?? 60),
+  accessTokenTtlSeconds: Number(process.env['OAUTH_ACCESS_TOKEN_TTL_SECONDS'] ?? 3600),
+  refreshTokenTtlSeconds: Number(process.env['OAUTH_REFRESH_TOKEN_TTL_SECONDS'] ?? 2_592_000),
+  registrationOpen: process.env['OAUTH_REGISTRATION_OPEN'] !== 'false',
+  registrationRateLimitPerHour: Number(process.env['OAUTH_REGISTRATION_RATE_LIMIT_PER_HOUR'] ?? 5),
 }));
 
 export const oidcConfig = registerAs('oidc', () => ({

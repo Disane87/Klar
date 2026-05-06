@@ -24,6 +24,7 @@ import { MailTemplatesModule } from './mail-templates/mail-templates.module';
 import { DataTransferModule } from './data-transfer/data-transfer.module';
 import { CsvImportModule } from './csv-import/csv-import.module';
 import { AdminModule } from './admin/admin.module';
+import { OAuthModule } from './oauth/oauth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -77,6 +78,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     DataTransferModule,
     CsvImportModule,
     AdminModule,
+    OAuthModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({

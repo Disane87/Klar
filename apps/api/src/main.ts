@@ -4,11 +4,11 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { RequestMethod } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const fastifyCookie = require('@fastify/cookie') as Parameters<NestFastifyApplication['register']>[0];
 import { AppModule } from './app.module';
+import { applyGlobalPrefix } from './common/global-prefix';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -18,9 +18,7 @@ async function bootstrap(): Promise<void> {
 
   await app.register(fastifyCookie);
   app.useLogger(app.get(Logger));
-  app.setGlobalPrefix('api/v1', {
-    exclude: [{ path: 'health', method: RequestMethod.GET }],
-  });
+  applyGlobalPrefix(app);
   app.enableCors({
     origin: process.env['FRONTEND_URL'] ?? 'http://localhost:4200',
     credentials: true,
