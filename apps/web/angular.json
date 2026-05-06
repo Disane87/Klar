@@ -27,28 +27,34 @@
               { "glob": "**/*", "input": "src/assets" },
               "src/favicon.ico",
               "src/manifest.webmanifest",
-              { "glob": "**/*", "input": "src/icons", "output": "icons" },
-              {
-                "glob": "ngsw-worker.js",
-                "input": "node_modules/@angular/service-worker",
-                "output": "."
-              },
-              {
-                "glob": "safety-worker.js",
-                "input": "node_modules/@angular/service-worker",
-                "output": "."
-              }
+              { "glob": "**/*", "input": "src/icons", "output": "icons" }
             ],
             "styles": ["src/styles.css"],
-            "scripts": [],
-            "serviceWorker": "ngsw-config.json"
+            "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
                 { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json",
+              "assets": [
+                { "glob": "**/*", "input": "src/assets" },
+                "src/favicon.ico",
+                "src/manifest.webmanifest",
+                { "glob": "**/*", "input": "src/icons", "output": "icons" },
+                {
+                  "glob": "ngsw-worker.js",
+                  "input": "node_modules/@angular/service-worker",
+                  "output": "."
+                },
+                {
+                  "glob": "safety-worker.js",
+                  "input": "node_modules/@angular/service-worker",
+                  "output": "."
+                }
+              ]
             },
             "development": {
               "optimization": false,

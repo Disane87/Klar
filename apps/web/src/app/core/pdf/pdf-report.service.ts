@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { FixedCostGroup } from '../overview/overview.service';
 
 export interface FixkostenPdfData {
@@ -21,7 +19,11 @@ export interface FixkostenPdfData {
 @Injectable({ providedIn: 'root' })
 export class PdfReportService {
 
-  exportFixkosten(data: FixkostenPdfData): void {
+  async exportFixkosten(data: FixkostenPdfData): Promise<void> {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     const marginL = 14;

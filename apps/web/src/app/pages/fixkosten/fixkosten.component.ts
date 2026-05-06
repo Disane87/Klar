@@ -508,7 +508,7 @@ grouped.set(key, {
 
   // ── PDF Export ────────────────────────────────────────────────────────────────
 
-  exportPdf(): void {
+  async exportPdf(): Promise<void> {
     const data = this.store.fixedCosts();
     if (!data) return;
 
@@ -527,7 +527,7 @@ grouped.set(key, {
           .filter(g => g.items.length > 0)
       : data.groups;
 
-    this.pdfReport.exportFixkosten({
+    await this.pdfReport.exportFixkosten({
       groups,
       incomeTotalCents:   this.incomeTotalCents(),
       expenseTotalCents:  this.expenseTotalCents(),
