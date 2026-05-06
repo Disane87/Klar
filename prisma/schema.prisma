@@ -28,11 +28,11 @@ enum HouseholdRole {
 
 enum CategoryType {
   // Income types
-  FIXED_INCOME      // regelmäßiges Gehalt, fester Betrag
-  VARIABLE_INCOME   // Zinsen, Boni, Nebeneinkünfte (heute "INCOME")
+  FIXED_INCOME // regelmäßiges Gehalt, fester Betrag
+  VARIABLE_INCOME // Zinsen, Boni, Nebeneinkünfte (heute "INCOME")
   // Expense types
-  FIXED_EXPENSE     // Miete, Versicherung, Abo (heute pauschal "EXPENSE")
-  VARIABLE_EXPENSE  // Lebensmittel, Tanken, Restaurant
+  FIXED_EXPENSE // Miete, Versicherung, Abo (heute pauschal "EXPENSE")
+  VARIABLE_EXPENSE // Lebensmittel, Tanken, Restaurant
   // Savings / wealth building (kein "echter" Ausgabeposten)
   SAVINGS
   // Legacy types — bleiben erhalten für Bestandsdaten
@@ -67,24 +67,27 @@ enum ProjectStatus {
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique  // IMMER lowercase gespeichert
+  email         String    @unique // IMMER lowercase gespeichert
   emailVerified Boolean   @default(false)
   displayName   String
-  passwordHash  String?             // null bei reinen OIDC-Usern
+  passwordHash  String? // null bei reinen OIDC-Usern
   appRole       AppRole   @default(USER)
-  isDeleted     Boolean   @default(false)  // soft-delete bei Account-Löschung
+  isDeleted     Boolean   @default(false) // soft-delete bei Account-Löschung
   createdAt     DateTime  @default(now())
   lastLoginAt   DateTime?
-  totpSecret    String?             // Base32 encoded TOTP secret
+  totpSecret    String? // Base32 encoded TOTP secret
   totpEnabled   Boolean   @default(false)
-  avatarUrl     String?             // base64 JPEG data URL (~15KB), stored directly in DB
+  avatarUrl     String? // base64 JPEG data URL (~15KB), stored directly in DB
 
-memberships         HouseholdMembership[]
-   oidcIdentities      OidcIdentity[]
-   refreshTokens       RefreshToken[]
-   emailVerifications  EmailVerification[]
-   recurringTransactions RecurringTransaction[]
-   tempTokens          TempToken[]
+  memberships           HouseholdMembership[]
+  oidcIdentities        OidcIdentity[]
+  refreshTokens         RefreshToken[]
+  emailVerifications    EmailVerification[]
+  recurringTransactions RecurringTransaction[]
+  tempTokens            TempToken[]
+  oauthAuthCodes        OAuthAuthCode[]
+  oauthGrants           OAuthGrant[]
+  oauthConsents         OAuthConsent[]
 
   @@index([email])
   @@index([isDeleted])
@@ -95,10 +98,10 @@ memberships         HouseholdMembership[]
 model EmailVerification {
   id          String   @id @default(cuid())
   userId      String
-  token       String   @unique  // kryptografisch zufällig, 32 Bytes hex
+  token       String   @unique // kryptografisch zufällig, 32 Bytes hex
   expiresAt   DateTime
   createdAt   DateTime @default(now())
-  inviteToken String?  // optional InvitationLink token to consume after email verification
+  inviteToken String? // optional InvitationLink token to consume after email verification
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -109,9 +112,9 @@ model EmailVerification {
 model OidcIdentity {
   id           String    @id @default(cuid())
   userId       String
-  providerName String    // z.B. "pocketid", "github"
-  oidcSub      String    // Subject-Claim vom IdP
-  email        String    // snapshot der E-Mail vom IdP zum Zeitpunkt des Logins
+  providerName String // z.B. "pocketid", "github"
+  oidcSub      String // Subject-Claim vom IdP
+  email        String // snapshot der E-Mail vom IdP zum Zeitpunkt des Logins
   createdAt    DateTime  @default(now())
   lastLoginAt  DateTime?
 
@@ -124,13 +127,13 @@ model OidcIdentity {
 // Kurzlebig: State + PKCE für OIDC Authorization Code Flow
 // TTL: 10 Minuten. Cleanup-Job löscht abgelaufene Einträge.
 model OidcLoginState {
-  id                 String    @id @default(cuid())
+  id                 String   @id @default(cuid())
   providerName       String
-  state              String    @unique
-  codeVerifier       String    // PKCE Code-Verifier
-  redirectAfterLogin String?   // optionaler Redirect nach erfolgreichem Login
+  state              String   @unique
+  codeVerifier       String // PKCE Code-Verifier
+  redirectAfterLogin String? // optionaler Redirect nach erfolgreichem Login
   expiresAt          DateTime
-  createdAt          DateTime  @default(now())
+  createdAt          DateTime @default(now())
 }
 
 // Kurzlebig: One-Time-Code für Token-Übergabe an SPA nach OIDC-Callback
@@ -147,9 +150,9 @@ model OneTimeHandoverCode {
 model RefreshToken {
   id        String    @id @default(cuid())
   userId    String
-  tokenHash String    @unique  // Argon2id-Hash des tatsächlichen Tokens
+  tokenHash String    @unique // Argon2id-Hash des tatsächlichen Tokens
   expiresAt DateTime
-  revokedAt DateTime?          // null = noch gültig
+  revokedAt DateTime? // null = noch gültig
   userAgent String?
   ip        String?
   createdAt DateTime  @default(now())
@@ -157,14 +160,14 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([expiresAt])  // für Cleanup
+  @@index([expiresAt]) // für Cleanup
 }
 
 model TempToken {
   id        String    @id @default(cuid())
   userId    String
-  token     String    @unique  // Plain text (short-lived, 5 min)
-  purpose   String    // z.B. "totp_login"
+  token     String    @unique // Plain text (short-lived, 5 min)
+  purpose   String // z.B. "totp_login"
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
@@ -184,17 +187,17 @@ model Household {
   name      String
   createdAt DateTime @default(now())
 
-  memberships            HouseholdMembership[]
-  invitationLinks        InvitationLink[]
-  categories             Category[]
-  projects               Project[]
+  memberships           HouseholdMembership[]
+  invitationLinks       InvitationLink[]
+  categories            Category[]
+  projects              Project[]
   recurringTransactions RecurringTransaction[]
-  transactions           Transaction[]
-  budgets                Budget[]
-  apiKeys                ApiKey[]
-  mailTemplates           HouseholdMailTemplate[]
-  csvImports             CsvImport[]
-  importLearnings        ImportLearning[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  apiKeys               ApiKey[]
+  mailTemplates         HouseholdMailTemplate[]
+  csvImports            CsvImport[]
+  importLearnings       ImportLearning[]
 }
 
 model HouseholdMembership {
@@ -238,11 +241,11 @@ model Category {
   householdId String
   name        String
   type        CategoryType
-  color       String       // hex, z.B. "#22c55e"
-  icon        String?      // Icon-Name aus Zard UI / lucide
+  color       String // hex, z.B. "#22c55e"
+  icon        String? // Icon-Name aus Zard UI / lucide
   isArchived  Boolean      @default(false)
-  sortOrder   Int          @default(0)  // für manuelle Sortierung in der Übersicht
-  isDefault   Boolean      @default(false)  // vom System angelegt beim Haushalt-Setup
+  sortOrder   Int          @default(0) // für manuelle Sortierung in der Übersicht
+  isDefault   Boolean      @default(false) // vom System angelegt beim Haushalt-Setup
   createdAt   DateTime     @default(now())
 
   household             Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -263,14 +266,14 @@ model Category {
 model Project {
   id               String        @id @default(cuid())
   householdId      String
-  createdByUserId  String?       // nullable (Account-Delete)
+  createdByUserId  String? // nullable (Account-Delete)
   name             String
   description      String?
   status           ProjectStatus @default(ACTIVE)
-  totalBudgetCents Int?          // null = kein Gesamtbudget definiert
+  totalBudgetCents Int? // null = kein Gesamtbudget definiert
   startDate        DateTime?     @db.Date
   endDate          DateTime?     @db.Date
-  color            String        // hex
+  color            String // hex
   visibility       Visibility    @default(SHARED)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -295,7 +298,7 @@ model Project {
 model RecurringTransaction {
   id              String             @id @default(cuid())
   householdId     String
-  createdByUserId String?            // nullable (Account-Delete)
+  createdByUserId String? // nullable (Account-Delete)
   name            String
   // amountCents: Schätzwert wenn isVariable=true (in Übersicht mit "~" markiert)
   // Vorzeichen: positiv=Einnahme (INCOME/FIXED_INCOME), negativ=Ausgabe (EXPENSE)
@@ -303,25 +306,25 @@ model RecurringTransaction {
   categoryId      String
   projectId       String?
   frequency       RecurringFrequency
-  customDays      Int?               // nur bei frequency=CUSTOM_DAYS
+  customDays      Int? // nur bei frequency=CUSTOM_DAYS
   // dayOfMonth: 1–31, wird zur Laufzeit via safeDayOfMonth() geclampt
   // z.B. dayOfMonth=31 im Februar → 28/29
   dayOfMonth      Int?
   startDate       DateTime           @db.Date
-  endDate         DateTime?          @db.Date   // null = läuft unbegrenzt
+  endDate         DateTime?          @db.Date // null = läuft unbegrenzt
   visibility      Visibility         @default(SHARED)
   isVariable      Boolean            @default(false)
   note            String?
-  color           String?            // custom hex color, z.B. "#22c55e"
-  icon            String?            // iconify key, z.B. "simple-icons:spotify" oder "lucide:home"
+  color           String? // custom hex color, z.B. "#22c55e"
+  icon            String? // iconify key, z.B. "simple-icons:spotify" oder "lucide:home"
   isActive        Boolean            @default(true)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-household    Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
-   category     Category     @relation(fields: [categoryId], references: [id])
-   project      Project?     @relation(fields: [projectId], references: [id])
-   createdBy    User?        @relation(fields: [createdByUserId], references: [id])
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category     Category      @relation(fields: [categoryId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id])
+  createdBy    User?         @relation(fields: [createdByUserId], references: [id])
   // Referenz auf ggf. daraus erstellte manuelle Transaktionen (z.B. wenn User Ist-Wert nachträgt)
   transactions Transaction[]
 
@@ -342,7 +345,7 @@ household    Household    @relation(fields: [householdId], references: [id], onD
 model Transaction {
   id                     String     @id @default(cuid())
   householdId            String
-  createdByUserId        String?    // nullable (Account-Delete)
+  createdByUserId        String? // nullable (Account-Delete)
   // positiv = Einnahme (INCOME), negativ = Ausgabe (EXPENSE)
   amountCents            Int
   // Wenn die Buchung geplant war und realisiert wurde, hält dieses Feld den
@@ -358,10 +361,10 @@ model Transaction {
   // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
   // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
   recurringTransactionId String?
-  externalRef            String?    // Sparkasse Endto-End-Ref / Mandatsref / Kundenreferenz
-  externalHash           String?    // SHA-256 über (date|amountCents|counterpartyNorm|purposeNorm)
-  counterparty           String?    // Empfänger/Absender aus CSV
-  sourceImportId         String?    // FK auf CsvImport, Audit-Trail
+  externalRef            String? // Sparkasse Endto-End-Ref / Mandatsref / Kundenreferenz
+  externalHash           String? // SHA-256 über (date|amountCents|counterpartyNorm|purposeNorm)
+  counterparty           String? // Empfänger/Absender aus CSV
+  sourceImportId         String? // FK auf CsvImport, Audit-Trail
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
 
@@ -408,7 +411,7 @@ model CsvImport {
 model ImportLearning {
   id              String   @id @default(cuid())
   householdId     String
-  counterpartyKey String   // normalisiert: lowercase, ohne Sonderzeichen, max 64 chars
+  counterpartyKey String // normalisiert: lowercase, ohne Sonderzeichen, max 64 chars
   categoryId      String
   hitCount        Int      @default(1)
   lastUsedAt      DateTime @default(now())
@@ -430,7 +433,7 @@ model Budget {
   categoryId  String
   // IMMER als YYYY-MM-01 gespeichert (Monatserster)
   month       DateTime @db.Date
-  amountCents Int      // Soll-Betrag für den Monat (positiv)
+  amountCents Int // Soll-Betrag für den Monat (positiv)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -448,14 +451,14 @@ model Budget {
 model ApiKey {
   id              String    @id @default(cuid())
   householdId     String
-  createdByUserId String?   // nullable (Account-Delete)
-  name            String    // z.B. "n8n Automation" oder "Home Assistant"
+  createdByUserId String? // nullable (Account-Delete)
+  name            String // z.B. "n8n Automation" oder "Home Assistant"
   // Prefix: erste 8 Zeichen nach "bgb_live_", für Anzeige + DB-Lookup
   // Beispiel: vollständiger Key = bgb_live_aBcDeFgH[weitere 24 chars]
   //           prefix = "aBcDeFgH" (für Lookup), hashedSecret = Argon2(rest)
   prefix          String
-  hashedSecret    String    // Argon2id-Hash des Rest-Tokens
-  scopes          String[]  // z.B. ["transactions:read", "overview:read"]
+  hashedSecret    String // Argon2id-Hash des Rest-Tokens
+  scopes          String[] // z.B. ["transactions:read", "overview:read"]
   expiresAt       DateTime?
   lastUsedAt      DateTime?
   lastUsedIp      String?
@@ -465,7 +468,7 @@ model ApiKey {
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
-  @@index([prefix])         // für schnellen Lookup bei jedem API-Request
+  @@index([prefix]) // für schnellen Lookup bei jedem API-Request
   @@index([householdId])
   @@index([isRevoked])
 }
@@ -476,7 +479,7 @@ model ApiKey {
 
 model AuditLog {
   id          String   @id @default(cuid())
-  userId      String?  // null bei System-Events
+  userId      String? // null bei System-Events
   householdId String?
   // Aktions-Format: "resource.action", z.B.:
   // user.login, user.login.failed, user.register, user.delete
@@ -485,7 +488,7 @@ model AuditLog {
   // household.created, member.invited, member.joined, member.removed
   // admin.role_changed
   action      String
-  metadata    Json?    // zusätzliche Kontext-Daten (keine Passwörter!)
+  metadata    Json? // zusätzliche Kontext-Daten (keine Passwörter!)
   ip          String?
   userAgent   String?
   createdAt   DateTime @default(now())
@@ -509,11 +512,11 @@ model EmailLog {
   id          String      @id @default(cuid())
   to          String
   subject     String
-  template    String      // z.B. "email-verification", "invite", "custom"
+  template    String // z.B. "email-verification", "invite", "custom"
   status      EmailStatus
-  error       String?     // SMTP-Fehlertext bei FAILED
-  userId      String?     // optional: Empfänger-User (falls bekannt)
-  householdId String?     // optional: Kontext-Haushalt
+  error       String? // SMTP-Fehlertext bei FAILED
+  userId      String? // optional: Empfänger-User (falls bekannt)
+  householdId String? // optional: Kontext-Haushalt
   sentAt      DateTime    @default(now())
 
   @@index([sentAt])
@@ -537,16 +540,119 @@ enum MailTemplateType {
   API_KEY_CREATED
 }
 
+// ─────────────────────────────────────────────
+// OAUTH 2.1 (für MCP-Endpoint)
+// ─────────────────────────────────────────────
+// Ausschließlich für den MCP-Endpoint genutzt — JWT-Audience "klar-mcp".
+// Die bestehende Klar-Web-Auth (RefreshToken, OidcIdentity) bleibt unberührt.
+// API-Keys (ApiKey) bleiben für M2M / Public API.
+
+model OAuthClient {
+  id                          String    @id @default(cuid())
+  // Public Identifier, im JWT als azp; Pattern "klar_mcp_<24 hex>"
+  clientId                    String    @unique
+  // Argon2id; null bei public clients (PKCE-only, Standard für MCP-Desktop)
+  clientSecretHash            String?
+  clientName                  String // Anzeige im Consent-Screen
+  redirectUris                String[] // Whitelist für Authorize/Token
+  logoUri                     String?
+  clientUri                   String?
+  tosUri                      String?
+  policyUri                   String?
+  // "none" (PKCE-only) | "client_secret_post"
+  tokenEndpointAuthMethod     String    @default("none")
+  // SHA-256 Hex; ermöglicht spätere RFC 7592 Client-Updates (nicht im MVP)
+  registrationAccessTokenHash String?
+  // Sicherheits-Bremse: ab > 100 fehlgeschlagene Token-Requests in 24h auto-disable
+  failedTokenRequests24h      Int       @default(0)
+  failedTokenWindowStart      DateTime?
+  disabled                    Boolean   @default(false)
+  createdAt                   DateTime  @default(now())
+
+  authCodes OAuthAuthCode[]
+  grants    OAuthGrant[]
+  consents  OAuthConsent[]
+
+  @@index([clientId])
+}
+
+// Kurzlebig: Authorization Code (TTL 60s, single-use).
+// Speichert SHA-256 vom ausgegebenen Code als Primärschlüssel.
+model OAuthAuthCode {
+  // SHA-256 hex(plain code) — nie Plain speichern
+  code                String    @id
+  clientId            String
+  userId              String
+  householdId         String
+  scopes              String[]
+  redirectUri         String
+  // PKCE: Base64URL-encoded SHA-256 vom code_verifier
+  codeChallenge       String
+  // Pflicht "S256" (verifyAuthorize lehnt "plain" ab)
+  codeChallengeMethod String
+  expiresAt           DateTime
+  // Single-use Lock — gesetzt beim ersten Token-Exchange.
+  // Replay → Cascade-Revoke aller Grants des Clients (Phase 6).
+  consumedAt          DateTime?
+  createdAt           DateTime  @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([expiresAt])
+}
+
+// Persistente Grant-Verbindung User ↔ Client.
+// Refresh-Token rotating: jede Refresh-Anfrage erzeugt neuen Grant, alter wird revoked.
+model OAuthGrant {
+  id               String    @id @default(cuid())
+  clientId         String
+  userId           String
+  householdId      String
+  scopes           String[]
+  // SHA-256 hex vom Refresh-Token-Plaintext "klar_rt_<...>"
+  refreshTokenHash String    @unique
+  refreshExpiresAt DateTime
+  lastUsedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, clientId])
+  @@index([refreshExpiresAt])
+}
+
+// User-Consent pro Client. Subset-Match → Auto-Approve im Authorize-Flow.
+// Bei zusätzlich angeforderten Scopes wird der Consent-Screen erneut gezeigt.
+model OAuthConsent {
+  id        String   @id @default(cuid())
+  userId    String
+  clientId  String
+  scopes    String[]
+  grantedAt DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+  @@index([userId])
+  @@index([clientId])
+}
+
 model HouseholdMailTemplate {
-  id          String         @id @default(cuid())
-  householdId String
+  id           String           @id @default(cuid())
+  householdId  String
   templateType MailTemplateType
-  name        String         // Anzeigename, z.B. "Einladung an Nachbar"
-  subject     String         // E-Mail-Betreff mit Handlebars-Platzhaltern
-  body        String         // HTML-Body mit Handlebars-Platzhaltern
-  isActive    Boolean       @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  name         String // Anzeigename, z.B. "Einladung an Nachbar"
+  subject      String // E-Mail-Betreff mit Handlebars-Platzhaltern
+  body         String // HTML-Body mit Handlebars-Platzhaltern
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
