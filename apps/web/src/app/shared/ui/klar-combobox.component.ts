@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BrnPopoverImports, BrnPopoverComponent } from '@spartan-ng/brain/popover';
+import { BrnPopoverImports, BrnPopover } from '@spartan-ng/brain/popover';
 import { KlarIconComponent } from '../icons/klar-icon.component';
 
 @Component({
@@ -117,7 +117,7 @@ export class KlarComboboxComponent<T> {
 
   readonly addNew = output<string>();
 
-  protected readonly popover = viewChild<BrnPopoverComponent>('popover');
+  protected readonly popover = viewChild<BrnPopover>('popover');
   protected readonly trigger = viewChild<ElementRef<HTMLElement>>('trigger');
 
   protected readonly query = signal('');
