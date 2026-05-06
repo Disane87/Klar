@@ -260,8 +260,23 @@ export class FixkostenPageComponent {
 
   formatItemSublabel(item: FixedCostItem): string {
     const parts: string[] = [this.freqLabel(item.frequency)];
-    if (item.dayOfMonth) parts.push('Tag ' + item.dayOfMonth);
+    if (item.dayOfMonth) {
+      if (item.frequency === 'WEEKLY') parts.push(this.weekdayName(item.dayOfMonth));
+      else                             parts.push('Tag ' + item.dayOfMonth);
+    }
     return parts.join(' · ');
+  }
+
+  weekdayName(d: number): string {
+    return ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'][d - 1] ?? '';
+  }
+
+  weekdayAbbr(d: number): string {
+    return ['Mo','Di','Mi','Do','Fr','Sa','So'][d - 1] ?? '';
+  }
+
+  isWeeklyFreq(item: FixedCostItem): boolean {
+    return item.frequency === 'WEEKLY';
   }
 
   // ── Enriched groups (filtered by member, planspiel-aware) ─────────────────────
@@ -446,7 +461,9 @@ grouped.set(key, {
 
   shortFreq(freq: RecurringFrequency): string {
     switch (freq) {
+      case 'WEEKLY':      return '/ Woche';
       case 'QUARTERLY':   return '/ Quartal';
+      case 'HALF_YEARLY': return '/ Halbjahr';
       case 'YEARLY':      return '/ Jahr';
       case 'CUSTOM_DAYS': return '/ individuell';
       default:            return '';
@@ -455,8 +472,10 @@ grouped.set(key, {
 
   freqLabel(freq: RecurringFrequency): string {
     switch (freq) {
+      case 'WEEKLY':      return 'Wöchentlich';
       case 'MONTHLY':     return 'Monatlich';
       case 'QUARTERLY':   return 'Quartalsweise';
+      case 'HALF_YEARLY': return 'Halbjährlich';
       case 'YEARLY':      return 'Jährlich';
       case 'CUSTOM_DAYS': return 'Individuell';
       default:            return freq;
@@ -465,18 +484,22 @@ grouped.set(key, {
 
   freqIcon(freq: RecurringFrequency): string {
     switch (freq) {
+      case 'WEEKLY':      return 'lucide:calendar';
       case 'MONTHLY':     return 'lucide:calendar-days';
       case 'QUARTERLY':   return 'lucide:calendar-range';
+      case 'HALF_YEARLY': return 'lucide:calendar-clock';
       case 'YEARLY':      return 'lucide:calendar-check';
-      case 'CUSTOM_DAYS': return 'lucide:calendar-clock';
+      case 'CUSTOM_DAYS': return 'lucide:calendar-cog';
       default:            return 'lucide:calendar';
     }
   }
 
   freqColor(freq: RecurringFrequency): string {
     switch (freq) {
+      case 'WEEKLY':      return '#06b6d4'; // cyan
       case 'MONTHLY':     return '#22c55e'; // green
       case 'QUARTERLY':   return '#3b82f6'; // blue
+      case 'HALF_YEARLY': return '#ec4899'; // pink
       case 'YEARLY':      return '#a855f7'; // purple
       case 'CUSTOM_DAYS': return '#f59e0b'; // amber
       default:            return '#6b7280'; // gray

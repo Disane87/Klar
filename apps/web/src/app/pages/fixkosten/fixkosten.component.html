@@ -161,10 +161,12 @@
             @if (item.dayOfMonth) {
               <div class="w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-(--border)">
                 <div class="bg-accent h-2.5 flex items-center justify-center">
-                  <span class="text-[6px] font-bold text-white leading-none uppercase">TAG</span>
+                  <span class="text-[6px] font-bold text-white leading-none uppercase">{{ isWeeklyFreq(item) ? 'TAG' : 'TAG' }}</span>
                 </div>
                 <div class="flex items-center justify-center h-[calc(100%-10px)]">
-                  <span class="font-mono text-[12px] tabular-nums text-(--text) leading-none">{{ item.dayOfMonth }}</span>
+                  <span class="font-mono text-[12px] tabular-nums text-(--text) leading-none">
+                    {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : item.dayOfMonth }}
+                  </span>
                 </div>
               </div>
             }
@@ -172,10 +174,17 @@
               <p class="text-[13px] font-medium truncate">{{ item.name }}</p>
               <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">{{ formatItemSublabel(item) }}</p>
             </div>
-            <span class="font-mono tabular-nums text-[13px] shrink-0"
-                  [ngClass]="item.monthlyEquivalentCents | klarMoneyClass">
-              {{ item.monthlyEquivalentCents | klarMoney }}
-            </span>
+            <div class="shrink-0 flex flex-col items-end leading-tight">
+              <span class="font-mono tabular-nums text-[13px]"
+                    [ngClass]="item.amountCents | klarMoneyClass">
+                {{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}
+              </span>
+              @if (item.frequency !== 'MONTHLY' && item.frequency !== 'CUSTOM_DAYS') {
+                <span class="font-mono tabular-nums text-[10px] text-(--text-muted) mt-0.5">
+                  ≈ {{ item.monthlyEquivalentCents | klarMoney }} / Monat
+                </span>
+              }
+            </div>
           </klar-list-row>
         }
       </klar-list-group>
