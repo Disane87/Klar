@@ -146,3 +146,164 @@ registerMcpTool({
     return { id: b.id };
   },
 });
+
+// ── Updates ───────────────────────────────────────────────────────────
+
+registerMcpTool({
+  name: 'update_transaction',
+  scope: 'klar:transactions:write',
+  description:
+    'Aktualisiert eine bestehende Transaktion. Nur die übergebenen Felder werden geändert. Beträge in Cents (signed).',
+  inputShape: {
+    id: z.string().min(1),
+    amountCents: z.number().int().refine((v) => v !== 0, 'amountCents must not be 0').optional(),
+    categoryId: z.string().optional(),
+    date: z.string().regex(dateRegex).optional(),
+    description: z.string().max(500).nullable().optional(),
+    projectId: z.string().nullable().optional(),
+    visibility: z.enum(['PRIVATE', 'SHARED']).optional(),
+  },
+  handler: async (args, ctx, deps) => {
+    const { id, ...patch } = args;
+    const tx = await deps.transactionsService.update(ctx, id, patch);
+    return { id: tx.id, amountCents: tx.amountCents, date: tx.date };
+  },
+});
+
+registerMcpTool({
+  name: 'delete_transaction',
+  scope: 'klar:transactions:write',
+  description: 'Löscht eine Transaktion endgültig. Nicht reversibel — vorher beim User bestätigen lassen.',
+  inputShape: {
+    id: z.string().min(1),
+  },
+  handler: async (args, ctx, deps) => {
+    await deps.transactionsService.remove(ctx, args.id);
+    return { id: args.id, deleted: true };
+  },
+});
+
+registerMcpTool({
+  name: 'update_recurring',
+  scope: 'klar:recurring:write',
+  description: 'Aktualisiert eine wiederkehrende Buchung (Fixkosten/Fix-Einnahme).',
+  inputShape: {
+    id: z.string().min(1),
+    name: z.string().min(1).max(100).optional(),
+    amountCents: z.number().int().refine((v) => v !== 0, 'amountCents must not be 0').optional(),
+    categoryId: z.string().optional(),
+    frequency: z
+      .enum(['MONTHLY', 'QUARTERLY', 'YEARLY', 'WEEKLY', 'HALF_YEARLY', 'CUSTOM_DAYS'])
+      .optional(),
+    customDays: z.number().int().min(1).nullable().optional(),
+    dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+    startDate: z.string().regex(dateRegex).optional(),
+    endDate: z.string().regex(dateRegex).nullable().optional(),
+    visibility: z.enum(['PRIVATE', 'SHARED']).optional(),
+    isVariable: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+    note: z.string().max(500).nullable().optional(),
+    color: z.string().regex(hexColor).nullable().optional(),
+    icon: z.string().max(64).nullable().optional(),
+    projectId: z.string().nullable().optional(),
+  },
+  handler: async (args, ctx, deps) => {
+    const { id, ...patch } = args;
+    const r = await deps.recurringService.update(ctx, id, patch);
+    return { id: r.id };
+  },
+});
+
+registerMcpTool({
+  name: 'delete_recurring',
+  scope: 'klar:recurring:write',
+  description: 'Löscht eine wiederkehrende Buchung endgültig (z.B. nach Vertragskündigung). Nicht reversibel.',
+  inputShape: {
+    id: z.string().min(1),
+  },
+  handler: async (args, ctx, deps) => {
+    await deps.recurringService.remove(ctx, args.id);
+    return { id: args.id, deleted: true };
+  },
+});
+
+registerMcpTool({
+  name: 'update_category',
+  scope: 'klar:categories:write',
+  description: 'Aktualisiert eine Kategorie. Optional `isArchived: true` zum Ausblenden ohne Löschen.',
+  inputShape: {
+    id: z.string().min(1),
+    name: z.string().min(1).max(50).optional(),
+    color: z.string().regex(hexColor).optional(),
+    icon: z.string().max(64).nullable().optional(),
+    sortOrder: z.number().int().min(0).optional(),
+    isArchived: z.boolean().optional(),
+  },
+  handler: async (args, ctx, deps) => {
+    const { id, ...patch } = args;
+    const c = await deps.categoriesService.update(ctx, id, patch);
+    return { id: c.id };
+  },
+});
+
+registerMcpTool({
+  name: 'delete_category',
+  scope: 'klar:categories:write',
+  description:
+    'Löscht eine Kategorie. Schlägt fehl wenn noch Transaktionen/Recurrings/Budgets daran hängen — dann besser archivieren via update_category.',
+  inputShape: {
+    id: z.string().min(1),
+  },
+  handler: async (args, ctx, deps) => {
+    await deps.categoriesService.remove(ctx, args.id);
+    return { id: args.id, deleted: true };
+  },
+});
+
+registerMcpTool({
+  name: 'update_project',
+  scope: 'klar:projects:write',
+  description: 'Aktualisiert ein Projekt — z.B. Status auf COMPLETED oder Budget anpassen.',
+  inputShape: {
+    id: z.string().min(1),
+    name: z.string().min(1).max(100).optional(),
+    color: z.string().regex(hexColor).optional(),
+    description: z.string().max(500).nullable().optional(),
+    status: z.enum(['PLANNING', 'ACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
+    totalBudgetCents: z.number().int().positive().nullable().optional(),
+    startDate: z.string().regex(dateRegex).nullable().optional(),
+    endDate: z.string().regex(dateRegex).nullable().optional(),
+    visibility: z.enum(['PRIVATE', 'SHARED']).optional(),
+  },
+  handler: async (args, ctx, deps) => {
+    const { id, ...patch } = args;
+    const p = await deps.projectsService.update(ctx, id, patch);
+    return { id: p.id };
+  },
+});
+
+registerMcpTool({
+  name: 'delete_project',
+  scope: 'klar:projects:write',
+  description: 'Löscht ein Projekt endgültig. Zugeordnete Buchungen verlieren die Project-Referenz.',
+  inputShape: {
+    id: z.string().min(1),
+  },
+  handler: async (args, ctx, deps) => {
+    await deps.projectsService.remove(ctx, args.id);
+    return { id: args.id, deleted: true };
+  },
+});
+
+registerMcpTool({
+  name: 'delete_budget',
+  scope: 'klar:budgets:write',
+  description: 'Entfernt das Budget für eine Kategorie/Monat. Idempotent.',
+  inputShape: {
+    id: z.string().min(1),
+  },
+  handler: async (args, ctx, deps) => {
+    await deps.budgetsService.remove(ctx, args.id);
+    return { id: args.id, deleted: true };
+  },
+});

@@ -96,7 +96,13 @@
     </klar-list-group>
 
     <!-- ── VERBUNDENE APPS ──────────────────────────────────── -->
-    <app-connected-apps />
+    <klar-list-group label="Verbundene Apps">
+      <klar-list-item icon="key"
+                      label="Verbundene Apps"
+                      [sublabel]="connectedAppsLabel()"
+                      [navigable]="true"
+                      (itemClick)="openConnectedApps()" />
+    </klar-list-group>
 
     <!-- ── HAUSHALT ────────────────────────────────────────── -->
     <klar-list-group label="Haushalt">

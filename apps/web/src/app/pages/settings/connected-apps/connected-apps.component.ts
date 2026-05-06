@@ -4,12 +4,17 @@ import { firstValueFrom } from 'rxjs';
 import { SCOPE_DISPLAY, type OAuthScope } from '@klar/shared';
 import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
+import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
+import { KlarToastService } from '../../../shared/ui/klar-toast.service';
 import {
   OAuthGrantsService,
   type OAuthGrantSummary,
 } from '../../../core/oauth/oauth-grants.service';
-import { KlarToastService } from '../../../shared/ui/klar-toast.service';
 
+/**
+ * Dialog-Inhalt: Liste verbundener Apps mit Revoke-Button.
+ * Wird via `KlarDialogService` aus der Settings-Page geöffnet.
+ */
 @Component({
   selector: 'app-connected-apps',
   standalone: true,
@@ -19,6 +24,7 @@ import { KlarToastService } from '../../../shared/ui/klar-toast.service';
 export class ConnectedAppsComponent {
   private readonly api = inject(OAuthGrantsService);
   private readonly toast = inject(KlarToastService);
+  readonly dialog = inject(KlarDialogService);
 
   readonly grants = signal<OAuthGrantSummary[]>([]);
   readonly loading = signal(true);
@@ -32,6 +38,10 @@ export class ConnectedAppsComponent {
   scopeLabel(scope: string): string {
     const display = SCOPE_DISPLAY[scope as OAuthScope];
     return display ? display.title : scope;
+  }
+
+  scopeIsWrite(scope: string): boolean {
+    return SCOPE_DISPLAY[scope as OAuthScope]?.write === true;
   }
 
   async reload(): Promise<void> {

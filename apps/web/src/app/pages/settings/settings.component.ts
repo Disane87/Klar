@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, viewChild, type ElementRef } from '@angular/core';
+import { Component, computed, effect, inject, signal, viewChild, type ElementRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,6 +30,7 @@ import { TotpSetupDialogComponent } from './totp-setup-dialog.component';
 import { DataExportComponent } from './data-export.component';
 import { ImportMappingDialogComponent } from './import-mapping-dialog.component';
 import { ConnectedAppsComponent } from './connected-apps/connected-apps.component';
+import { OAuthGrantsService } from '../../core/oauth/oauth-grants.service';
 import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/data-transfer.service';
 
 @Component({
@@ -49,7 +50,6 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
     HlmToggleGroupDirective,
     HlmToggleGroupItemDirective,
     KlarIconComponent,
-    ConnectedAppsComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -64,6 +64,7 @@ export class SettingsPageComponent {
   private dialog = inject(KlarDialogService);
   private toast = inject(KlarToastService);
   private dtService = inject(DataTransferService);
+  private oauthGrantsService = inject(OAuthGrantsService);
 
   readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
   readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
@@ -73,6 +74,48 @@ export class SettingsPageComponent {
   readonly editingProfile = signal(false);
   readonly editDisplayName = signal('');
   readonly savingProfile = signal(false);
+
+  readonly connectedAppsCount = signal<number | null>(null);
+  readonly connectedAppsLabel = computed(() => {
+    const n = this.connectedAppsCount();
+    if (n === null) return 'OAuth-Zugriff verwalten (z.B. Claude Desktop)';
+    if (n === 0) return 'Keine Apps verbunden';
+    return n === 1 ? '1 App verbunden' : `${n} Apps verbunden`;
+  });
+
+  constructor() {
+    inject(PageHeaderService).set({ title: 'Einstellungen', subtitle: 'PROFIL & APP' });
+    void this.refreshConnectedAppsCount();
+    // Beim Schließen des Connected-Apps-Dialogs Counter neu laden, damit
+    // ein Revoke aus dem Dialog sofort in der Settings-Liste reflektiert wird.
+    effect(() => {
+      const open = this.dialog.active();
+      if (!open && this.connectedAppsDialogOpen) {
+        this.connectedAppsDialogOpen = false;
+        void this.refreshConnectedAppsCount();
+      }
+    });
+  }
+
+  private async refreshConnectedAppsCount(): Promise<void> {
+    try {
+      const list = await firstValueFrom(this.oauthGrantsService.list());
+      this.connectedAppsCount.set(list.length);
+    } catch {
+      this.connectedAppsCount.set(null);
+    }
+  }
+
+  openConnectedApps(): void {
+    this.connectedAppsDialogOpen = true;
+    this.dialog.open({
+      title: 'Verbundene Apps',
+      component: ConnectedAppsComponent,
+      width: 'md',
+    });
+  }
+
+  private connectedAppsDialogOpen = false;
 
   readonly avatarInitials = computed(() => {
     const name = this.authStore.user()?.displayName ?? '';
@@ -87,10 +130,6 @@ export class SettingsPageComponent {
     { value: 'dark',   label: 'Dunkel' },
     { value: 'system', label: 'System' },
   ];
-
-  constructor() {
-    inject(PageHeaderService).set({ title: 'Einstellungen', subtitle: 'PROFIL & APP' });
-  }
 
   async ngOnInit(): Promise<void> {
     await Promise.all([
