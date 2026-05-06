@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import { randomUUID } from 'crypto';
+import * as fs from 'fs';
 import { ZodError } from 'zod';
 import { OAuthRepository } from './oauth.repository';
 import { isScopeSubset, type OAuthScope, SCOPE_DISPLAY } from './oauth-scopes';
@@ -8,13 +10,17 @@ import {
   generateAuthorizationCode,
   generateClientId,
   generateClientSecret,
+  generateRefreshToken,
   generateRegistrationAccessToken,
   sha256Hex,
 } from './random.util';
 import { registerClientSchema, type RegisterClientInput } from './dto/register-client.dto';
 import { authorizeQuerySchema, type AuthorizeQuery } from './dto/authorize-query.dto';
 import { consentDecisionSchema } from './dto/consent-decision.dto';
+import { tokenRequestSchema, type TokenRequest } from './dto/token-request.dto';
 import { OAuthError } from './oauth-error';
+import { signMcpAccessToken } from './token.util';
+import { verifyS256 } from './pkce.util';
 
 const ARGON2_OPTIONS = {
   type: argon2.argon2id,
@@ -60,6 +66,14 @@ export interface ConsentInfo {
 
 export interface IssuedAuthCode {
   redirectUrl: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: 'Bearer';
+  expires_in: number;
+  refresh_token: string;
+  scope: string;
 }
 
 @Injectable()
@@ -204,6 +218,197 @@ export class OAuthService {
       }
       throw err;
     }
+  }
+
+  // ── Phase 6: Token Endpoint ─────────────────────────────────────────
+
+  /**
+   * RFC 6749 §3.2 Token Endpoint. Discriminated Union via `grant_type`.
+   *
+   * Sicherheits-Highlights:
+   * - Single-use Code: `consumeAuthCode` ist atomar; Replay → Cascade-Revoke.
+   * - PKCE-S256 mandatory. `plain` ist auf Schema-Ebene schon ausgeschlossen.
+   * - Refresh-Token rotating: alter Grant wird revoked, neuer ausgegeben.
+   */
+  async issueToken(rawBody: unknown): Promise<TokenResponse> {
+    let parsed: TokenRequest;
+    try {
+      parsed = tokenRequestSchema.parse(rawBody);
+    } catch (err) {
+      throw this.zodToOAuthError(err);
+    }
+
+    if (parsed.grant_type === 'authorization_code') {
+      return this.exchangeAuthorizationCode(parsed);
+    }
+    return this.exchangeRefreshToken(parsed);
+  }
+
+  private async exchangeAuthorizationCode(
+    parsed: Extract<TokenRequest, { grant_type: 'authorization_code' }>,
+  ): Promise<TokenResponse> {
+    const client = await this.assertClient(parsed.client_id, parsed.client_secret);
+
+    const codeHash = sha256Hex(parsed.code);
+    const record = await this.repo.findAuthCodeByHash(codeHash);
+    if (!record) {
+      throw new OAuthError('invalid_grant', 'unknown authorization code');
+    }
+    if (record.clientId !== parsed.client_id) {
+      throw new OAuthError('invalid_grant', 'code was issued to a different client');
+    }
+    if (record.redirectUri !== parsed.redirect_uri) {
+      throw new OAuthError('invalid_grant', 'redirect_uri does not match');
+    }
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new OAuthError('invalid_grant', 'authorization code expired');
+    }
+    // Replay-Versuch: Code wurde schon verbraucht.
+    if (record.consumedAt) {
+      // RFC 6819 §5.2.1.1 — bei Code-Replay alle bestehenden Grants des Clients revoken.
+      await this.repo.revokeAllGrantsForClient(record.clientId);
+      throw new OAuthError('invalid_grant', 'authorization code already used');
+    }
+
+    if (record.codeChallengeMethod !== 'S256' || !verifyS256(parsed.code_verifier, record.codeChallenge)) {
+      throw new OAuthError('invalid_grant', 'pkce verification failed');
+    }
+
+    // Atomic mark-as-consumed. Wenn 0 Zeilen betroffen → Race-Replay.
+    const consumed = await this.repo.consumeAuthCode(codeHash);
+    if (!consumed) {
+      await this.repo.revokeAllGrantsForClient(record.clientId);
+      throw new OAuthError('invalid_grant', 'authorization code already used');
+    }
+
+    const refreshToken = generateRefreshToken();
+    const refreshHash = sha256Hex(refreshToken);
+    const refreshTtl = this.config.get<number>('oauth.refreshTokenTtlSeconds', 30 * 24 * 3600);
+    const grant = await this.repo.createGrant({
+      clientId: record.clientId,
+      userId: record.userId,
+      householdId: record.householdId,
+      scopes: record.scopes,
+      refreshTokenHash: refreshHash,
+      refreshExpiresAt: new Date(Date.now() + refreshTtl * 1000),
+    });
+
+    return this.buildTokenResponse(grant.id, {
+      userId: record.userId,
+      householdId: record.householdId,
+      clientId: record.clientId,
+      scopes: record.scopes as OAuthScope[],
+    }, refreshToken);
+  }
+
+  private async exchangeRefreshToken(
+    parsed: Extract<TokenRequest, { grant_type: 'refresh_token' }>,
+  ): Promise<TokenResponse> {
+    await this.assertClient(parsed.client_id, parsed.client_secret);
+
+    const grant = await this.repo.findGrantByRefreshHash(sha256Hex(parsed.refresh_token));
+    if (!grant) {
+      throw new OAuthError('invalid_grant', 'unknown refresh_token');
+    }
+    if (grant.clientId !== parsed.client_id) {
+      throw new OAuthError('invalid_grant', 'refresh_token was issued to a different client');
+    }
+    if (grant.revokedAt || grant.refreshExpiresAt.getTime() < Date.now()) {
+      throw new OAuthError('invalid_grant', 'refresh_token revoked or expired');
+    }
+
+    const grantedScopes = grant.scopes as OAuthScope[];
+    let issueScopes: OAuthScope[] = grantedScopes;
+    if (parsed.scope) {
+      const requested = parsed.scope.split(/\s+/).filter(Boolean) as OAuthScope[];
+      if (!isScopeSubset(requested, grantedScopes)) {
+        throw new OAuthError('invalid_scope', 'scope is not a subset of granted scopes');
+      }
+      issueScopes = requested;
+    }
+
+    // Rotate: alten Grant revoken, neuen anlegen.
+    await this.repo.revokeGrant(grant.id);
+    const newRefreshToken = generateRefreshToken();
+    const refreshTtl = this.config.get<number>('oauth.refreshTokenTtlSeconds', 30 * 24 * 3600);
+    const newGrant = await this.repo.createGrant({
+      clientId: grant.clientId,
+      userId: grant.userId,
+      householdId: grant.householdId,
+      scopes: issueScopes,
+      refreshTokenHash: sha256Hex(newRefreshToken),
+      refreshExpiresAt: new Date(Date.now() + refreshTtl * 1000),
+    });
+
+    return this.buildTokenResponse(newGrant.id, {
+      userId: grant.userId,
+      householdId: grant.householdId,
+      clientId: grant.clientId,
+      scopes: issueScopes,
+    }, newRefreshToken);
+  }
+
+  private buildTokenResponse(
+    jti: string,
+    ctx: { userId: string; householdId: string; clientId: string; scopes: OAuthScope[] },
+    refreshToken: string,
+  ): TokenResponse {
+    const issuer = this.config.get<string>('app.baseUrl', 'http://localhost:3000');
+    const audience = this.config.get<string>('oauth.mcpAudience', 'klar-mcp');
+    const ttl = this.config.get<number>('oauth.accessTokenTtlSeconds', 3600);
+    const privateKeyPath = this.config.get<string>('oauth.mcpPrivateKeyPath');
+    if (!privateKeyPath) {
+      throw new OAuthError('server_error', 'MCP signing key not configured');
+    }
+    const privateKey = fs.readFileSync(privateKeyPath);
+
+    const { token, expiresIn } = signMcpAccessToken({
+      userId: ctx.userId,
+      householdId: ctx.householdId,
+      clientId: ctx.clientId,
+      scopes: ctx.scopes,
+      ttlSeconds: ttl,
+      issuer,
+      audience,
+      privateKey,
+      jti,
+    });
+
+    return {
+      access_token: token,
+      token_type: 'Bearer',
+      expires_in: expiresIn,
+      refresh_token: refreshToken,
+      scope: ctx.scopes.join(' '),
+    };
+  }
+
+  private async assertClient(
+    clientId: string,
+    clientSecret: string | undefined,
+  ): Promise<{ tokenEndpointAuthMethod: string }> {
+    const client = await this.repo.findClientByClientId(clientId);
+    if (!client || client.disabled) {
+      throw new OAuthError('invalid_client', 'unknown or disabled client');
+    }
+
+    if (client.tokenEndpointAuthMethod === 'client_secret_post') {
+      if (!clientSecret) {
+        throw new OAuthError('invalid_client', 'client_secret required');
+      }
+      if (!client.clientSecretHash) {
+        throw new OAuthError('invalid_client', 'client misconfigured');
+      }
+      const ok = await argon2.verify(client.clientSecretHash, clientSecret);
+      if (!ok) throw new OAuthError('invalid_client', 'bad client_secret');
+    }
+
+    return { tokenEndpointAuthMethod: client.tokenEndpointAuthMethod };
+  }
+
+  // generateRandomJti ist für Tests/Mocks gut sichtbar zu haben
+  protected newJti(): string {
+    return randomUUID();
   }
 
   private parseAuthorize(rawQuery: unknown): AuthorizeQuery {

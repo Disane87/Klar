@@ -28,6 +28,12 @@ if (process.env['JWT_PRIVATE_KEY_PATH'] && !path.isAbsolute(process.env['JWT_PRI
 if (process.env['JWT_PUBLIC_KEY_PATH'] && !path.isAbsolute(process.env['JWT_PUBLIC_KEY_PATH'])) {
   process.env['JWT_PUBLIC_KEY_PATH'] = path.resolve(apiRoot, process.env['JWT_PUBLIC_KEY_PATH']);
 }
+if (process.env['JWT_MCP_PRIVATE_KEY_PATH'] && !path.isAbsolute(process.env['JWT_MCP_PRIVATE_KEY_PATH'])) {
+  process.env['JWT_MCP_PRIVATE_KEY_PATH'] = path.resolve(apiRoot, process.env['JWT_MCP_PRIVATE_KEY_PATH']);
+}
+if (process.env['JWT_MCP_PUBLIC_KEY_PATH'] && !path.isAbsolute(process.env['JWT_MCP_PUBLIC_KEY_PATH'])) {
+  process.env['JWT_MCP_PUBLIC_KEY_PATH'] = path.resolve(apiRoot, process.env['JWT_MCP_PUBLIC_KEY_PATH']);
+}
 
 // Always use the test database for E2E tests
 if (process.env['DATABASE_TEST_URL']) {

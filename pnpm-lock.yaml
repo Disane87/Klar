@@ -48,6 +48,9 @@ importers:
       '@fastify/cookie':
         specifier: ^11.0.0
         version: 11.0.2
+      '@fastify/formbody':
+        specifier: ^8.0.2
+        version: 8.0.2
       '@fastify/multipart':
         specifier: ^10.0.0
         version: 10.0.0
@@ -105,6 +108,9 @@ importers:
       iconv-lite:
         specifier: ^0.7.2
         version: 0.7.2
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       nestjs-pino:
         specifier: ^4.0.0
         version: 4.6.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@10.3.1)(rxjs@7.8.2)
@@ -157,6 +163,9 @@ importers:
       '@swc/core':
         specifier: ^1.15.33
         version: 1.15.33
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.17

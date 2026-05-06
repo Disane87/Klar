@@ -110,6 +110,28 @@ export class OAuthController {
    * `?error=...&state=...` (RFC 6749 §4.1.2.1), wenn die URI ableitbar ist;
    * sonst Plain-400.
    */
+  /**
+   * RFC 6749 §3.2 Token Endpoint.
+   * Akzeptiert `application/x-www-form-urlencoded` (Standard) und `application/json`.
+   * Cache-Header per RFC verpflichtend.
+   */
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Post('oauth2/token')
+  @HttpCode(HttpStatus.OK)
+  async token(
+    @Body() body: unknown,
+    @Res() reply: FastifyReply,
+  ): Promise<void> {
+    const result = await this.service.issueToken(body);
+    void reply
+      .code(HttpStatus.OK)
+      .header('Cache-Control', 'no-store')
+      .header('Pragma', 'no-cache')
+      .send(result);
+  }
+
   @Public()
   @Get('oauth2/authorize')
   authorize(
