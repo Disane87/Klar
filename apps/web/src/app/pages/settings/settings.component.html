@@ -20,6 +20,39 @@
           </div>
         </div>
       } @else {
+        <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
+          <klar-avatar [avatarUrl]="authStore.user()?.avatarUrl"
+                       [seed]="authStore.user()?.displayName ?? ''"
+                       [initials]="avatarInitials()"
+                       [size]="40" />
+          <div class="flex-1 min-w-0">
+            <p class="text-[13px] font-medium truncate">Profilfoto</p>
+            <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
+              @if (authStore.user()?.avatarUrl) { Eigenes Foto } @else { Initialen-Avatar }
+            </p>
+          </div>
+          @if (authStore.user()?.avatarUrl) {
+            <button type="button"
+                    [disabled]="avatarBusy()"
+                    class="shrink-0 min-h-11 px-2.5 text-[12px] font-medium rounded-xs transition-colors
+                           text-(--color-expense) hover:bg-(--color-expense)/10
+                           disabled:opacity-40 disabled:pointer-events-none"
+                    (click)="removeAvatar()">
+              Entfernen
+            </button>
+          }
+          <button type="button"
+                  [disabled]="avatarBusy()"
+                  class="shrink-0 min-h-11 px-2.5 text-[12px] font-medium rounded-xs transition-colors
+                         text-(--text-muted) hover:text-(--text) hover:bg-(--surface-2)
+                         disabled:opacity-40 disabled:pointer-events-none"
+                  (click)="triggerAvatarFile()">
+            Ändern
+          </button>
+        </div>
+        <input #avatarInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+               aria-label="Profilfoto wählen" title="Profilfoto wählen"
+               class="sr-only" (change)="onAvatarFileSelected($event)" />
         <klar-list-item icon="user"
                         label="Anzeigename"
                         [value]="store.profile()?.displayName" />

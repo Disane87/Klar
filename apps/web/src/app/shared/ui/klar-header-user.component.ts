@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { BrnPopoverImports } from '@spartan-ng/brain/popover';
 import { KlarIconComponent } from '../icons/klar-icon.component';
 import { KlarAvatarComponent } from './klar-avatar.component';
+import { KlarDialogService } from './klar-dialog.service';
+import { KlarImageCropDialogComponent } from './klar-image-crop-dialog.component';
 import { AuthStore } from '../../core/auth/auth.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -132,6 +134,7 @@ export class KlarHeaderUserComponent {
   protected householdStore = inject(HouseholdStore);
   protected authStore      = inject(AuthStore);
   private   authService    = inject(AuthService);
+  private   dialog         = inject(KlarDialogService);
 
   protected uploading = signal(false);
   private fileInputRef = viewChild<ElementRef<HTMLInputElement>>('fileInput');
@@ -145,19 +148,32 @@ export class KlarHeaderUserComponent {
     this.fileInputRef()?.nativeElement.click();
   }
 
-  protected async onFileSelected(event: Event): Promise<void> {
+  protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
-    this.uploading.set(true);
-    try {
-      const { avatarUrl } = await firstValueFrom(this.authService.uploadAvatar(file));
-      this.authStore.updateAvatar(avatarUrl);
-    } catch {
-      // Toast handled by ErrorInterceptor
-    } finally {
-      this.uploading.set(false);
-      input.value = '';
-    }
+
+    this.dialog.open({
+      title: 'Profilfoto zuschneiden',
+      component: KlarImageCropDialogComponent,
+      width: 'sm',
+      inputs: {
+        file,
+        outputSize: 256,
+        shape: 'circle',
+        onConfirm: async (dataUrl: string) => {
+          this.uploading.set(true);
+          try {
+            const { avatarUrl } = await firstValueFrom(
+              this.authService.uploadAvatarDataUrl(dataUrl),
+            );
+            this.authStore.updateAvatar(avatarUrl);
+          } finally {
+            this.uploading.set(false);
+          }
+        },
+      },
+    });
   }
 }

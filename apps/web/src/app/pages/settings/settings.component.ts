@@ -9,7 +9,9 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
 import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarImageCropDialogComponent } from '../../shared/ui/klar-image-crop-dialog.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import {
   KlarListComponent,
@@ -18,6 +20,7 @@ import {
 } from '../../shared/ui/klar-list.component';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
 import { HouseholdStore } from '../../core/household/household.store';
+import { AuthStore } from '../../core/auth/auth.store';
 import { ThemeService, type Theme } from '../../core/theme/theme.service';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -41,6 +44,7 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
     KlarListComponent,
     KlarListGroupComponent,
     KlarListItemComponent,
+    KlarAvatarComponent,
     HlmToggleGroupDirective,
     HlmToggleGroupItemDirective,
     KlarIconComponent,
@@ -51,6 +55,7 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
 export class SettingsPageComponent {
   protected store = inject(UserSettingsStore);
   protected hhStore = inject(HouseholdStore);
+  protected authStore = inject(AuthStore);
   protected themeService = inject(ThemeService);
   protected router = inject(Router);
   private authService = inject(AuthService);
@@ -59,11 +64,18 @@ export class SettingsPageComponent {
   private dtService = inject(DataTransferService);
 
   readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
+  readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
   readonly importing = signal(false);
+  readonly avatarBusy = signal(false);
 
   readonly editingProfile = signal(false);
   readonly editDisplayName = signal('');
   readonly savingProfile = signal(false);
+
+  readonly avatarInitials = computed(() => {
+    const name = this.authStore.user()?.displayName ?? '';
+    return name.split(' ').map(p => p[0] ?? '').join('').slice(0, 2).toUpperCase() || '?';
+  });
 
   readonly currentSessions = computed(() => this.store.sessions().filter(s => s.isCurrent));
   readonly otherSessions   = computed(() => this.store.sessions().filter(s => !s.isCurrent));
@@ -172,6 +184,55 @@ export class SettingsPageComponent {
   openImport(): void {
     if (this.importing()) return;
     this.importInput()?.nativeElement.click();
+  }
+
+  triggerAvatarFile(): void {
+    if (this.avatarBusy()) return;
+    this.avatarInput()?.nativeElement.click();
+  }
+
+  onAvatarFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.dialog.open({
+      title: 'Profilfoto zuschneiden',
+      component: KlarImageCropDialogComponent,
+      width: 'sm',
+      inputs: {
+        file,
+        outputSize: 256,
+        shape: 'circle',
+        onConfirm: async (dataUrl: string) => {
+          this.avatarBusy.set(true);
+          try {
+            const { avatarUrl } = await firstValueFrom(
+              this.authService.uploadAvatarDataUrl(dataUrl),
+            );
+            this.authStore.updateAvatar(avatarUrl);
+            this.toast.success('Profilfoto aktualisiert');
+          } finally {
+            this.avatarBusy.set(false);
+          }
+        },
+      },
+    });
+  }
+
+  async removeAvatar(): Promise<void> {
+    if (this.avatarBusy()) return;
+    this.avatarBusy.set(true);
+    try {
+      await firstValueFrom(this.authService.deleteAvatar());
+      this.authStore.updateAvatar(null);
+      this.toast.success('Profilfoto entfernt');
+    } catch {
+      this.toast.error('Profilfoto konnte nicht entfernt werden');
+    } finally {
+      this.avatarBusy.set(false);
+    }
   }
 
   async onImportFileSelected(event: Event): Promise<void> {
