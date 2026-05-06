@@ -37,50 +37,53 @@ const REPO_URL = 'https://github.com/Disane87/Klar';
       </button>
 
       <ng-template brnPopoverContent>
-        <div class="min-w-56 rounded-lg border border-(--border) bg-(--surface) py-1
-                    shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+        <div class="w-72 rounded-xl border border-(--border) bg-(--surface) p-1.5
+                    shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
 
           <!-- User section -->
           @if (authStore.user(); as user) {
-            <div class="px-3 py-3 border-b border-(--border)">
-              <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 px-2.5 py-3">
 
-                <!-- 40px avatar with upload overlay -->
-                <button type="button"
-                        class="relative rounded-full shrink-0 overflow-hidden group cursor-pointer"
-                        (click)="triggerFileInput()"
-                        [disabled]="uploading()"
-                        title="Foto ändern">
-                  <klar-avatar [avatarUrl]="user.avatarUrl"
-                               [seed]="user.displayName"
-                               [initials]="initials()"
-                               [size]="40" />
-                  <!-- Hover overlay -->
-                  <div class="absolute inset-0 bg-black/50 flex items-center justify-center
-                               opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                    @if (uploading()) {
-                      <div class="size-3 border border-white/50 border-t-white rounded-full animate-spin"></div>
-                    } @else {
-                      <!-- Camera icon (inline SVG — no camera icon in klar-icon system) -->
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white"
-                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    }
+              <!-- 44px avatar with upload overlay -->
+              <button type="button"
+                      class="relative size-11 shrink-0 rounded-full overflow-hidden block p-0
+                             group cursor-pointer transition bg-(--surface-2)"
+                      (click)="triggerFileInput()"
+                      [disabled]="uploading()"
+                      title="Foto ändern">
+                @if (user.avatarUrl) {
+                  <img [src]="user.avatarUrl" alt=""
+                       class="absolute inset-0 size-full object-cover" />
+                } @else {
+                  <div class="absolute inset-0 flex items-center justify-center
+                              text-white text-[15px] font-semibold"
+                       [style.background-color]="avatarBg()">
+                    {{ initials() }}
                   </div>
-                </button>
-
-                <div class="min-w-0 flex-1">
-                  <div class="text-[13px] font-medium text-(--text) truncate">{{ user.displayName }}</div>
-                  <div class="mt-0.5 text-[11px] text-(--text-muted) truncate">{{ user.email }}</div>
-                  <button type="button" (click)="triggerFileInput()"
-                          [disabled]="uploading()"
-                          class="mt-1 text-[10px] uppercase tracking-[0.08em] font-medium
-                                 text-(--color-accent) cursor-pointer hover:underline">
-                    Foto ändern
-                  </button>
+                }
+                <div class="absolute inset-0 bg-black/55 flex items-center justify-center
+                             opacity-0 group-hover:opacity-100 transition-opacity">
+                  @if (uploading()) {
+                    <div class="size-3.5 border border-white/40 border-t-white rounded-full animate-spin"></div>
+                  } @else {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  }
                 </div>
+              </button>
+
+              <div class="min-w-0 flex-1">
+                <div class="text-[14px] font-semibold text-(--text) truncate leading-tight">{{ user.displayName }}</div>
+                <div class="mt-0.5 text-[12px] text-(--text-muted) truncate leading-tight">{{ user.email }}</div>
+                <button type="button" (click)="triggerFileInput()"
+                        [disabled]="uploading()"
+                        class="mt-1.5 text-[11px] font-medium text-(--text-muted)
+                               cursor-pointer hover:text-accent transition-colors">
+                  Foto ändern
+                </button>
               </div>
             </div>
           }
@@ -91,70 +94,65 @@ const REPO_URL = 'https://github.com/Disane87/Klar';
 
           <!-- Household section -->
           @if (householdStore.activeHousehold(); as hh) {
-            <div class="px-3 py-2.5 border-b border-(--border)">
-              <div class="text-[9px] uppercase tracking-[0.12em] text-(--text-muted) font-medium mb-2">
-                Haushalt
+            <div class="my-1 h-px bg-(--border)"></div>
+            <a routerLink="/app/haushalt"
+               class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg no-underline
+                      text-(--text-2) transition-colors hover:bg-(--surface-2) hover:text-(--text) group">
+              <div class="flex size-7 items-center justify-center rounded-md shrink-0
+                          font-mono text-[10px] font-semibold text-(--text-2)
+                          bg-(--surface-2) border border-(--border)">
+                {{ hh.household.name.slice(0, 2).toUpperCase() }}
               </div>
-              <div class="flex items-center gap-2">
-                <div class="flex size-5 items-center justify-center rounded shrink-0
-                            font-mono text-[8px] font-bold text-(--color-expense)
-                            bg-[color-mix(in_oklab,var(--color-expense)_12%,var(--surface-2))]
-                            border border-[color-mix(in_oklab,var(--color-expense)_30%,transparent)]">
-                  {{ hh.household.name.slice(0, 2).toUpperCase() }}
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-medium truncate leading-tight">{{ hh.household.name }}</div>
+                <div class="mt-0.5 text-[10px] uppercase tracking-widest text-(--text-muted) leading-tight">
+                  {{ hh.role }}
                 </div>
-                <span class="text-[12px] text-(--text-2) truncate flex-1">{{ hh.household.name }}</span>
-                <span class="text-[9px] uppercase tracking-[0.08em] text-(--text-muted)">{{ hh.role }}</span>
               </div>
-              <a routerLink="/app/haushalt"
-                 class="mt-1.5 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.08em]
-                        font-medium text-(--text-muted) no-underline hover:text-(--text) transition-colors">
-                <klar-icon name="haushalt" [size]="10" />
-                Haushalt verwalten
-              </a>
-            </div>
+              <klar-icon name="arrow-up-right" [size]="12"
+                         class="text-(--text-muted) opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
           }
 
-          <!-- Actions -->
-          <div class="py-1">
-            <a routerLink="/app/settings"
-               class="flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-[0.08em]
-                      font-medium text-(--text-2) no-underline transition-colors
-                      hover:bg-(--surface-2) hover:text-(--text)">
-              <klar-icon name="settings" [size]="12" />
-              Einstellungen
-            </a>
-          </div>
+          <!-- Settings -->
+          <div class="my-1 h-px bg-(--border)"></div>
+          <a routerLink="/app/settings"
+             class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium
+                    text-(--text-2) no-underline transition-colors
+                    hover:bg-(--surface-2) hover:text-(--text)">
+            <klar-icon name="settings" [size]="16" class="text-(--text-muted)" />
+            Einstellungen
+          </a>
 
           <!-- Help & Community (external links) -->
-          <div class="px-3 py-2.5 border-t border-(--border)">
-            <div class="text-[9px] uppercase tracking-[0.12em] text-(--text-muted) font-medium mb-2">
-              Hilfe & Community
-            </div>
-            <div class="flex flex-col gap-0.5">
-              @for (link of helpLinks; track link.href) {
-                <a [href]="link.href"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="flex items-center gap-2 -mx-1 px-1 py-1 rounded text-[12px]
-                          text-(--text-2) no-underline transition-colors
-                          hover:bg-(--surface-2) hover:text-(--text)">
-                  <klar-icon [name]="link.icon" [size]="12" />
-                  <span class="flex-1">{{ link.label }}</span>
-                  <klar-icon name="arrow-up-right" [size]="10" />
-                </a>
-              }
-            </div>
+          <div class="my-1 h-px bg-(--border)"></div>
+          <div class="px-2.5 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.12em]
+                      text-(--text-muted) font-semibold">
+            Hilfe & Community
           </div>
+          @for (link of helpLinks; track link.href) {
+            <a [href]="link.href"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium
+                      text-(--text-2) no-underline transition-colors
+                      hover:bg-(--surface-2) hover:text-(--text) group">
+              <klar-icon [name]="link.icon" [size]="16" class="text-(--text-muted)" />
+              <span class="flex-1">{{ link.label }}</span>
+              <klar-icon name="arrow-up-right" [size]="12"
+                         class="text-(--text-muted) opacity-60 group-hover:opacity-100 transition-opacity" />
+            </a>
+          }
 
-          <div class="py-1 border-t border-(--border)">
-            <button type="button" (click)="authStore.logout()"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-[11px] uppercase
-                           tracking-[0.08em] font-medium text-(--color-expense)
-                           transition-colors hover:bg-(--surface-2) cursor-pointer">
-              <klar-icon name="logout" [size]="12" />
-              Abmelden
-            </button>
-          </div>
+          <!-- Logout -->
+          <div class="my-1 h-px bg-(--border)"></div>
+          <button type="button" (click)="authStore.logout()"
+                  class="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px]
+                         font-medium text-(--color-expense) cursor-pointer transition-colors
+                         hover:bg-[color-mix(in_oklab,var(--color-expense)_10%,var(--surface-2))]">
+            <klar-icon name="logout" [size]="16" />
+            Abmelden
+          </button>
 
         </div>
       </ng-template>
@@ -180,6 +178,13 @@ export class KlarHeaderUserComponent {
   protected initials = computed(() => {
     const name = this.authStore.user()?.displayName ?? '';
     return name.split(' ').map(p => p[0] ?? '').join('').slice(0, 2).toUpperCase() || '?';
+  });
+
+  protected avatarBg = computed(() => {
+    const seed = this.authStore.user()?.displayName ?? '';
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) & 0xffff;
+    return `hsl(${hash % 360} 42% 38%)`;
   });
 
   protected triggerFileInput(): void {
