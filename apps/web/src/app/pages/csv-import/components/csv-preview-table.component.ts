@@ -11,6 +11,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CsvPreviewRowComponent } from './csv-preview-row.component';
 import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
 import { HlmCheckboxComponent } from '../../../shared/ui/hlm/hlm-checkbox.component';
+import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
 import type {
   AnalyzeResponse,
   AnalyzeRow,
@@ -48,6 +49,7 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
     CsvPreviewRowComponent,
     HlmButtonDirective,
     HlmCheckboxComponent,
+    KlarIconComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [
@@ -74,18 +76,32 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
         }
       </div>
 
+      <div class="flex items-center gap-3 px-6 py-2 bg-(--surface-2)/30 border border-border rounded-t-lg -mb-px">
+        <hlm-checkbox
+          [checked]="isAllSelected()"
+          [indeterminate]="isAllIndeterminate()"
+          [disabled]="totalSelectableCount() === 0"
+          (checkedChange)="onSelectAll($event)"
+        />
+        <span class="text-[10px] uppercase tracking-[0.12em] font-medium text-(--text-muted)">
+          Alle auswählen ({{ totalSelectedCount() }} / {{ totalSelectableCount() }})
+        </span>
+      </div>
+
       <cdk-virtual-scroll-viewport
         [itemSize]="rowHeightPx"
-        class="rounded-lg border border-border bg-card h-[calc(100dvh-22rem)] min-h-96 overflow-x-hidden"
+        class="rounded-b-lg border border-border bg-card h-[calc(100dvh-22rem)] min-h-96 overflow-x-hidden"
       >
         <ng-container *cdkVirtualFor="let item of items(); trackBy: trackByItem">
           @if (item.kind === 'header') {
             <div
-              class="grid w-full items-center gap-3 px-6 bg-(--surface-2)/40 border-b border-(--border)/50"
+              class="grid w-full items-center gap-3 px-6 bg-(--surface-2)/40 border-b border-(--border)/50 cursor-pointer hover:bg-(--surface-2)/60 transition-colors"
               [style.height.px]="rowHeightPx"
-              style="grid-template-columns: 28px 1fr auto auto;"
+              style="grid-template-columns: 28px 1fr auto auto 16px;"
+              (click)="toggleCollapse(item.monthKey)"
             >
               <hlm-checkbox
+                (click)="$event.stopPropagation()"
                 [checked]="isGroupAllSelected(item)"
                 [indeterminate]="isGroupIndeterminate(item)"
                 [disabled]="item.selectableRowIndices.length === 0"
@@ -104,6 +120,9 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
                     [ngClass]="groupTotalCents(item) >= 0 ? 'text-success' : 'text-danger'">
                 {{ formatCents(groupTotalCents(item)) }}
               </span>
+              <klar-icon name="chevron-down" [size]="12"
+                         class="text-(--text-muted) transition-transform shrink-0"
+                         [class.-rotate-90]="isCollapsed(item.monthKey)" />
             </div>
           } @else {
             <app-csv-preview-row
@@ -153,8 +172,21 @@ export class CsvPreviewTableComponent {
   readonly submit = output<void>();
 
   readonly filter = signal<FilterKey>('all');
+  readonly collapsedMonths = signal<Set<string>>(new Set());
 
   readonly rowHeightPx = 56;
+
+  isCollapsed(monthKey: string): boolean {
+    return this.collapsedMonths().has(monthKey);
+  }
+
+  toggleCollapse(monthKey: string): void {
+    this.collapsedMonths.update(set => {
+      const next = new Set(set);
+      next.has(monthKey) ? next.delete(monthKey) : next.add(monthKey);
+      return next;
+    });
+  }
 
   readonly items = computed<ListItem[]>(() => {
     const rows = this.filteredRows();
@@ -182,6 +214,7 @@ export class CsvPreviewTableComponent {
         rowIndices: indices,
         selectableRowIndices: selectable,
       });
+      if (this.collapsedMonths().has(key)) continue;
       for (const r of groupRows) {
         result.push({ kind: 'row', row: r });
       }
@@ -191,6 +224,49 @@ export class CsvPreviewTableComponent {
 
   readonly trackByItem = (_: number, item: ListItem): string =>
     item.kind === 'header' ? `h:${item.monthKey}` : `r:${item.row.rowIndex}`;
+
+  readonly allSelectableIndices = computed<number[]>(() => {
+    const indices: number[] = [];
+    for (const item of this.items()) {
+      if (item.kind === 'header') indices.push(...item.selectableRowIndices);
+    }
+    return indices;
+  });
+
+  totalSelectableCount(): number {
+    return this.allSelectableIndices().length;
+  }
+
+  totalSelectedCount(): number {
+    return this.allSelectableIndices().filter(i => !this.selections().get(i)?.skip).length;
+  }
+
+  isAllSelected(): boolean {
+    const total = this.allSelectableIndices();
+    if (total.length === 0) return false;
+    return total.every(i => !this.selections().get(i)?.skip);
+  }
+
+  isAllIndeterminate(): boolean {
+    const total = this.allSelectableIndices();
+    if (total.length === 0) return false;
+    const sel = total.filter(i => !this.selections().get(i)?.skip).length;
+    return sel > 0 && sel < total.length;
+  }
+
+  onSelectAll(include: boolean): void {
+    const next = new Map(this.selections());
+    for (const idx of this.allSelectableIndices()) {
+      const current = next.get(idx);
+      if (!current) continue;
+      next.set(idx, {
+        ...current,
+        skip: !include,
+        skipReason: include ? undefined : 'user',
+      });
+    }
+    this.selectionsChange.emit(next);
+  }
 
   isGroupAllSelected(item: HeaderItem): boolean {
     if (item.selectableRowIndices.length === 0) return false;
