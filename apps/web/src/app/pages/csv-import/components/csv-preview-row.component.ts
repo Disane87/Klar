@@ -52,12 +52,11 @@ const FREQ_LABEL: Record<string, string> = {
       />
 
       @if (row().status === 'FIXED_COST_MATCH' && row().matchedRecurring) {
-        <brn-hover-card>
+        <brn-hover-card klarTrailing class="inline-flex shrink-0">
           <button
-            klarTrailing
             type="button"
             brnHoverCardTrigger
-            class="shrink-0 inline-flex items-center justify-center size-6 rounded-full text-primary hover:bg-primary/10 transition-colors"
+            class="inline-flex items-center justify-center size-6 rounded-full text-primary hover:bg-primary/10 transition-colors"
             aria-label="Details zur Fixkost"
             (click)="$event.stopPropagation()"
           >
