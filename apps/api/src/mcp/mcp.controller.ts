@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { AuditService } from '../audit/audit.service';
 import { Public } from '../common/decorators/public.decorator';
 import type { RequestContext } from '../common/types/request-context.type';
 import { OAuthService } from '../oauth/oauth.service';
@@ -32,6 +33,7 @@ export class McpController {
   constructor(
     private readonly factory: McpServerFactory,
     private readonly oauthService: OAuthService,
+    private readonly audit: AuditService,
   ) {}
 
   @Public()
@@ -46,6 +48,7 @@ export class McpController {
     // "claude-ai (via mcp-remote 0.1.37)") — viel besser als der generische
     // "MCP CLI Proxy", den mcp-remote bei der OAuth-Registration verwendet.
     this.maybeCaptureClientName(req.reqContext.mcpClientId, req.body);
+    this.maybeAuditSessionStart(req.reqContext, req.body);
 
     const { transport, server } = await this.factory.createServer(req.reqContext);
     try {
@@ -54,6 +57,36 @@ export class McpController {
     } finally {
       await server.close();
     }
+  }
+
+  private maybeAuditSessionStart(ctx: RequestContext, body: unknown): void {
+    if (typeof body !== 'object' || body === null) return;
+    const msg = body as { method?: unknown; params?: unknown };
+    if (msg.method !== 'initialize') return;
+    const params = msg.params as
+      | {
+          clientInfo?: { name?: unknown; version?: unknown };
+          protocolVersion?: unknown;
+        }
+      | undefined;
+    const clientName = typeof params?.clientInfo?.name === 'string' ? params.clientInfo.name : undefined;
+    const clientVersion =
+      typeof params?.clientInfo?.version === 'string' ? params.clientInfo.version : undefined;
+    const protocolVersion =
+      typeof params?.protocolVersion === 'string' ? params.protocolVersion : undefined;
+    this.audit.log({
+      userId: ctx.userId,
+      householdId: ctx.householdId,
+      action: 'mcp.session.start',
+      ip: ctx.ip,
+      userAgent: ctx.userAgent,
+      metadata: {
+        clientId: ctx.mcpClientId,
+        ...(clientName !== undefined ? { clientName } : {}),
+        ...(clientVersion !== undefined ? { clientVersion } : {}),
+        ...(protocolVersion !== undefined ? { protocolVersion } : {}),
+      },
+    });
   }
 
   private maybeCaptureClientName(clientId: string | undefined, body: unknown): void {
