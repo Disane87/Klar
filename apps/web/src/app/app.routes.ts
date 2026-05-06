@@ -108,6 +108,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'import',
+        loadComponent: () =>
+          import('./pages/csv-import/csv-import.page').then(
+            m => m.CsvImportPageComponent,
+          ),
+      },
+      {
         path: 'haushalt',
         loadComponent: () =>
           import('./pages/haushalt/haushalt.component').then(

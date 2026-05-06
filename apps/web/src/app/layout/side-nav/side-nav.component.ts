@@ -16,6 +16,7 @@ const MAIN_ITEMS: NavItem[] = [
   { id: 'monat',     label: 'Monat',         icon: 'trending',      route: '/app/monat' },
   { id: 'projekte',  label: 'Projekte',      icon: 'folder',        route: '/app/projekte' },
   { id: 'buchungen', label: 'Buchungen',     icon: 'receipt',       route: '/app/buchungen' },
+  { id: 'import',    label: 'CSV-Import',    icon: 'arrow-up',      route: '/app/import' },
 ];
 
 const SYS_ITEMS: NavItem[] = [
