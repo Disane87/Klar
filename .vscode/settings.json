@@ -27,8 +27,9 @@
     "**/.turbo": true
   },
   "prisma.prismaFmtPath": "node_modules/.bin/prisma-fmt",
+  "npm.exclude": ["**/apps/*", "**/packages/*"],
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[html]": {
     "editor.defaultFormatter": "vscode.html-language-features"
