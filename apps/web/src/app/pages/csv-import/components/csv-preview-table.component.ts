@@ -115,6 +115,9 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
       <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between sticky bottom-0 bg-background py-3 border-t border-border">
         <span class="text-sm text-muted-foreground">
           {{ importableCount() }} importieren · {{ skippedCount() }} übersprungen
+          @if (missingCategoryCount() > 0) {
+            <span class="ml-1 text-warning">· {{ missingCategoryCount() }} ohne Kategorie (werden übersprungen)</span>
+          }
         </span>
         <button
           hlmBtn
@@ -242,10 +245,11 @@ export class CsvPreviewTableComponent {
     () => Array.from(this.selections().values()).filter(s => s.skip).length,
   );
 
-  readonly canSubmit = computed(() => {
-    if (this.importableCount() === 0) return false;
-    return Array.from(this.selections().values()).every(s => s.skip || !!s.categoryId);
-  });
+  readonly missingCategoryCount = computed(
+    () => Array.from(this.selections().values()).filter(s => !s.skip && !s.categoryId).length,
+  );
+
+  readonly canSubmit = computed(() => this.importableCount() > 0);
 
   getSelection(rowIndex: number): ConfirmRowSelection {
     return this.selections().get(rowIndex) ?? { rowIndex, skip: true };

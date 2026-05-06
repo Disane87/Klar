@@ -171,6 +171,7 @@ export class CategoryEditDialogComponent implements OnInit {
   }
 
   async onSave(): Promise<void> {
+    if (this.saving() || this.deleting()) return;
     const name = this.name().trim();
     if (!name || !this.color()) return;
     this.saving.set(true);

@@ -107,7 +107,11 @@ export class CsvImportPageComponent {
     if (!b64 || !fn) return;
     this.submitting.set(true);
     try {
-      const rows = Array.from(this.selections().values());
+      const rows = Array.from(this.selections().values()).map(s =>
+        !s.skip && !s.categoryId
+          ? { ...s, skip: true, skipReason: 'user' as const }
+          : s,
+      );
       const result = await this.csv.confirm(b64, fn, rows);
       this.confirmResult.set(result);
       this.step.set('done');
