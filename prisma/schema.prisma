@@ -191,6 +191,8 @@ model Household {
   budgets                Budget[]
   apiKeys                ApiKey[]
   mailTemplates           HouseholdMailTemplate[]
+  csvImports             CsvImport[]
+  importLearnings        ImportLearning[]
 }
 
 model HouseholdMembership {
@@ -245,6 +247,7 @@ model Category {
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
   budgets               Budget[]
+  importLearnings       ImportLearning[]
 
   @@index([householdId])
   @@index([householdId, type])
@@ -353,6 +356,10 @@ model Transaction {
   // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
   // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
   recurringTransactionId String?
+  externalRef            String?    // Sparkasse Endto-End-Ref / Mandatsref / Kundenreferenz
+  externalHash           String?    // SHA-256 über (date|amountCents|counterpartyNorm|purposeNorm)
+  counterparty           String?    // Empfänger/Absender aus CSV
+  sourceImportId         String?    // FK auf CsvImport, Audit-Trail
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
 
@@ -360,14 +367,55 @@ model Transaction {
   category             Category              @relation(fields: [categoryId], references: [id])
   project              Project?              @relation(fields: [projectId], references: [id])
   recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  csvImport            CsvImport?            @relation(fields: [sourceImportId], references: [id])
 
+  @@unique([householdId, externalRef])
   @@index([householdId, date])
   @@index([householdId, categoryId])
   @@index([householdId, projectId])
   @@index([householdId, visibility])
   @@index([householdId, isPlanned])
+  @@index([householdId, externalHash])
+  @@index([sourceImportId])
   @@index([createdByUserId])
   @@index([recurringTransactionId])
+}
+
+// ─────────────────────────────────────────────
+// CSV IMPORT
+// ─────────────────────────────────────────────
+
+model CsvImport {
+  id                String   @id @default(cuid())
+  householdId       String
+  createdByUserId   String
+  filename          String
+  rowCount          Int
+  importedCount     Int      @default(0)
+  skippedDuplicates Int      @default(0)
+  skippedFixed      Int      @default(0)
+  createdRecurrings Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([householdId, createdAt])
+}
+
+model ImportLearning {
+  id              String   @id @default(cuid())
+  householdId     String
+  counterpartyKey String   // normalisiert: lowercase, ohne Sonderzeichen, max 64 chars
+  categoryId      String
+  hitCount        Int      @default(1)
+  lastUsedAt      DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id])
+
+  @@unique([householdId, counterpartyKey])
+  @@index([householdId, lastUsedAt])
 }
 
 // ─────────────────────────────────────────────
