@@ -1,31 +1,122 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AdminService } from './admin.service';
-import type { AdminRepository } from './admin.repository';
+import type { AdminRepository, AuditLogWithRefs, EmailLogWithRefs } from './admin.repository';
 
-describe('AdminService', () => {
-  it('listAuditLogs delegates to repo', async () => {
+const NOW = new Date('2026-01-15T10:00:00Z');
+
+function buildAuditRow(overrides: Partial<AuditLogWithRefs> = {}): AuditLogWithRefs {
+  return {
+    id: 'a1',
+    createdAt: NOW,
+    userId: 'u1',
+    householdId: 'h1',
+    action: 'mcp.tool.transactions.list',
+    metadata: {
+      toolName: 'transactions.list',
+      clientId: 'klar_mcp_x',
+      durationMs: 12,
+      ok: true,
+      argsHash: 'a'.repeat(64),
+    },
+    ip: '127.0.0.1',
+    userAgent: 'ua',
+    user: { id: 'u1', displayName: 'Alice', email: 'a@b', avatarUrl: null },
+    household: { id: 'h1', name: 'Home' },
+    ...overrides,
+  };
+}
+
+describe('AdminService.listAuditLogs', () => {
+  it('delegates to repo and maps DTOs', async () => {
     const repo = {
-      findAuditLogs: vi.fn().mockResolvedValue({ data: [], total: 0, page: 1, pageSize: 50 }),
+      findAuditLogs: vi.fn().mockResolvedValue({
+        data: [buildAuditRow()],
+        nextCursor: null,
+        total: 1,
+      }),
     } as unknown as AdminRepository;
     const svc = new AdminService(repo);
 
-    const result = await svc.listAuditLogs({ page: 1, pageSize: 50 });
-    expect(result.total).toBe(0);
-    expect(repo.findAuditLogs).toHaveBeenCalledWith({ page: 1, pageSize: 50 });
+    const result = await svc.listAuditLogs({ pageSize: 50 });
+    expect(result.total).toBe(1);
+    expect(result.data[0]!.user).toEqual({
+      id: 'u1',
+      displayName: 'Alice',
+      email: 'a@b',
+      avatarUrl: null,
+    });
+    expect(result.data[0]!.household).toEqual({ id: 'h1', name: 'Home' });
+  });
+});
+
+describe('AdminService.listMcpAuditLogs', () => {
+  it('forces actionPrefix mcp. and resolves client names', async () => {
+    const findAuditLogs = vi.fn().mockResolvedValue({
+      data: [buildAuditRow()],
+      nextCursor: null,
+      total: 1,
+    });
+    const resolveOAuthClientNames = vi
+      .fn()
+      .mockResolvedValue(new Map([['klar_mcp_x', 'Claude Desktop']]));
+    const repo = { findAuditLogs, resolveOAuthClientNames } as unknown as AdminRepository;
+    const svc = new AdminService(repo);
+
+    const result = await svc.listMcpAuditLogs({ pageSize: 50 });
+    expect(findAuditLogs).toHaveBeenCalledWith(
+      expect.objectContaining({ actionPrefix: 'mcp.' }),
+    );
+    expect(resolveOAuthClientNames).toHaveBeenCalledWith(['klar_mcp_x']);
+    expect(result.data[0]).toMatchObject({
+      toolName: 'transactions.list',
+      clientId: 'klar_mcp_x',
+      clientName: 'Claude Desktop',
+      durationMs: 12,
+      ok: true,
+      errorCode: null,
+    });
   });
 
-  it('listHouseholds maps members to summary', async () => {
-    const now = new Date('2026-01-15T10:00:00Z');
+  it('lifts errorCode when present and ok=false', async () => {
+    const repo = {
+      findAuditLogs: vi.fn().mockResolvedValue({
+        data: [
+          buildAuditRow({
+            metadata: {
+              toolName: 'transactions.create',
+              clientId: 'klar_mcp_x',
+              durationMs: 5,
+              ok: false,
+              errorCode: 'TypeError',
+            },
+          }),
+        ],
+        nextCursor: null,
+        total: 1,
+      }),
+      resolveOAuthClientNames: vi.fn().mockResolvedValue(new Map()),
+    } as unknown as AdminRepository;
+    const svc = new AdminService(repo);
+
+    const result = await svc.listMcpAuditLogs({ pageSize: 50 });
+    expect(result.data[0]!.ok).toBe(false);
+    expect(result.data[0]!.errorCode).toBe('TypeError');
+    expect(result.data[0]!.clientName).toBeNull();
+  });
+});
+
+describe('AdminService.listHouseholds', () => {
+  it('maps members to summary', async () => {
     const repo = {
       listHouseholdsWithMembers: vi.fn().mockResolvedValue([
         {
           id: 'h1',
           name: 'Test',
-          createdAt: now,
+          createdAt: NOW,
           memberships: [
             {
               role: 'OWNER',
-              joinedAt: now,
+              joinedAt: NOW,
               user: { id: 'u1', displayName: 'Alice', email: 'a@b', avatarUrl: null },
             },
           ],
@@ -42,10 +133,12 @@ describe('AdminService', () => {
       role: 'OWNER',
     });
   });
+});
 
-  it('toEmailResponse hides nothing relevant and stringifies sentAt', () => {
+describe('AdminService.toEmailDto', () => {
+  it('stringifies sentAt and exposes resolved refs', () => {
     const svc = new AdminService({} as AdminRepository);
-    const out = svc.toEmailResponse({
+    const row: EmailLogWithRefs = {
       id: 'e1',
       to: 'a@b',
       subject: 'sub',
@@ -54,9 +147,12 @@ describe('AdminService', () => {
       error: null,
       userId: null,
       householdId: 'h1',
-      sentAt: new Date('2026-01-15T10:00:00Z'),
-    });
-    expect(out.sentAt).toBe('2026-01-15T10:00:00.000Z');
-    expect(out.status).toBe('SENT');
+      sentAt: NOW,
+      user: null,
+      household: { id: 'h1', name: 'Home' },
+    };
+    const out = svc.toEmailDto(row);
+    expect(out.sentAt).toBe(NOW.toISOString());
+    expect(out.household?.name).toBe('Home');
   });
 });

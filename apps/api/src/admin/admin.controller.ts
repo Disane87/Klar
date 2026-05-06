@@ -6,13 +6,6 @@ import { AdminService } from './admin.service';
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 
-function parsePage(value: string | undefined): number {
-  if (!value) return 1;
-  const n = Number.parseInt(value, 10);
-  if (!Number.isFinite(n) || n < 1) throw new BadRequestException('Ungültiger page-Parameter');
-  return n;
-}
-
 function parsePageSize(value: string | undefined): number {
   if (!value) return DEFAULT_PAGE_SIZE;
   const n = Number.parseInt(value, 10);
@@ -22,38 +15,95 @@ function parsePageSize(value: string | undefined): number {
   return n;
 }
 
+function parseCursor(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}
+
+function parseDate(value: string | undefined, field: string): Date | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    throw new BadRequestException(`${field} ist kein gültiges Datum`);
+  }
+  return d;
+}
+
+function parseBool(value: string | undefined, field: string): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  throw new BadRequestException(`${field} muss true oder false sein`);
+}
+
 @Controller('admin')
 @UseGuards(AppAdminGuard)
 export class AdminController {
   constructor(private readonly service: AdminService) {}
 
   @Get('audit-logs')
-  async listAuditLogs(
-    @Query('page') page?: string,
+  listAuditLogs(
+    @Query('cursor') cursor?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('q') q?: string,
+    @Query('actionPrefix') actionPrefix?: string,
     @Query('action') action?: string,
-    @Query('householdId') householdId?: string,
     @Query('userId') userId?: string,
+    @Query('householdId') householdId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    const result = await this.service.listAuditLogs({
-      page: parsePage(page),
+    return this.service.listAuditLogs({
       pageSize: parsePageSize(pageSize),
-      action: action?.trim() || undefined,
-      householdId: householdId?.trim() || undefined,
-      userId: userId?.trim() || undefined,
+      cursor: parseCursor(cursor),
+      q: trim(q),
+      actionPrefix: trim(actionPrefix),
+      action: trim(action),
+      userId: trim(userId),
+      householdId: trim(householdId),
+      from: parseDate(from, 'from'),
+      to: parseDate(to, 'to'),
     });
-    return {
-      ...result,
-      data: result.data.map((l) => this.service.toAuditResponse(l)),
-    };
+  }
+
+  @Get('mcp')
+  listMcpAuditLogs(
+    @Query('cursor') cursor?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('q') q?: string,
+    @Query('userId') userId?: string,
+    @Query('householdId') householdId?: string,
+    @Query('toolName') toolName?: string,
+    @Query('clientId') clientId?: string,
+    @Query('ok') ok?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.service.listMcpAuditLogs({
+      pageSize: parsePageSize(pageSize),
+      cursor: parseCursor(cursor),
+      q: trim(q),
+      userId: trim(userId),
+      householdId: trim(householdId),
+      toolName: trim(toolName),
+      clientId: trim(clientId),
+      ok: parseBool(ok, 'ok'),
+      from: parseDate(from, 'from'),
+      to: parseDate(to, 'to'),
+    });
   }
 
   @Get('emails')
-  async listEmails(
-    @Query('page') page?: string,
+  listEmails(
+    @Query('cursor') cursor?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('q') q?: string,
     @Query('status') status?: string,
+    @Query('template') template?: string,
     @Query('householdId') householdId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
     let parsedStatus: EmailStatus | undefined;
     if (status) {
@@ -63,20 +113,26 @@ export class AdminController {
       parsedStatus = status;
     }
 
-    const result = await this.service.listEmailLogs({
-      page: parsePage(page),
+    return this.service.listEmailLogs({
       pageSize: parsePageSize(pageSize),
+      cursor: parseCursor(cursor),
+      q: trim(q),
       status: parsedStatus,
-      householdId: householdId?.trim() || undefined,
+      template: trim(template),
+      householdId: trim(householdId),
+      from: parseDate(from, 'from'),
+      to: parseDate(to, 'to'),
     });
-    return {
-      ...result,
-      data: result.data.map((l) => this.service.toEmailResponse(l)),
-    };
   }
 
   @Get('households')
   listHouseholds() {
     return this.service.listHouseholds();
   }
+}
+
+function trim(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim();
+  return t.length === 0 ? undefined : t;
 }
