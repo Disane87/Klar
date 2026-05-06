@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/Disane87/Klar/compare/v1.11.0...v1.12.0) (2026-05-06)
+
+
+### Features
+
+* **mcp:** add update/delete tools and move connected-apps into a dialog ([822b85e](https://github.com/Disane87/Klar/commit/822b85ed27a9330eb952779b62a8615343b26715))
+
 # [1.11.0](https://github.com/Disane87/Klar/compare/v1.10.0...v1.11.0) (2026-05-06)
 
 
