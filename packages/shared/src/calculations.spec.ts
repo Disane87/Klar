@@ -53,6 +53,20 @@ describe('toMonthlyEquivalent', () => {
     expect(toMonthlyEquivalent(10000, 'YEARLY')).toBe(833);
   });
 
+  it('WEEKLY: multiplies by 52/12 and rounds', () => {
+    // 1000 cents/week × 52 / 12 = 4333.33… → 4333
+    expect(toMonthlyEquivalent(1000, 'WEEKLY')).toBe(4333);
+  });
+
+  it('HALF_YEARLY: divides by 6 and rounds', () => {
+    expect(toMonthlyEquivalent(60000, 'HALF_YEARLY')).toBe(10000);
+  });
+
+  it('HALF_YEARLY: rounds to nearest cent', () => {
+    // 10000 / 6 = 1666.66… → 1667
+    expect(toMonthlyEquivalent(10000, 'HALF_YEARLY')).toBe(1667);
+  });
+
   it('CUSTOM_DAYS: returns amount unchanged (used as-is)', () => {
     expect(toMonthlyEquivalent(5000, 'CUSTOM_DAYS')).toBe(5000);
   });

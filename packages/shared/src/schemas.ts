@@ -39,7 +39,7 @@ export const KlarExportTransactionSchema = z.object({
 export const KlarExportRecurringSchema = z.object({
   name: z.string(),
   amountCents: z.number().int(),
-  frequency: z.enum(['MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM_DAYS']),
+  frequency: z.enum(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY', 'CUSTOM_DAYS']),
   customDays: z.number().int().nullable().optional(),
   dayOfMonth: z.number().int().nullable().optional(),
   startDate: isoDate,

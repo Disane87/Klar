@@ -1,4 +1,10 @@
-export type RecurringFrequency = 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM_DAYS';
+export type RecurringFrequency =
+  | 'WEEKLY'
+  | 'MONTHLY'
+  | 'QUARTERLY'
+  | 'HALF_YEARLY'
+  | 'YEARLY'
+  | 'CUSTOM_DAYS';
 
 export function safeDayOfMonth(year: number, month: number, day: number): number {
   // month is 1-based (1=January, 12=December).
@@ -13,8 +19,10 @@ export function toMonthlyEquivalent(
   freq: RecurringFrequency,
 ): number {
   switch (freq) {
+    case 'WEEKLY':      return Math.round(amountCents * 52 / 12);
     case 'MONTHLY':     return amountCents;
     case 'QUARTERLY':   return Math.round(amountCents / 3);
+    case 'HALF_YEARLY': return Math.round(amountCents / 6);
     case 'YEARLY':      return Math.round(amountCents / 12);
     case 'CUSTOM_DAYS': return amountCents;
   }

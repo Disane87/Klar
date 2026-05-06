@@ -44,6 +44,8 @@ enum RecurringFrequency {
   MONTHLY
   QUARTERLY
   YEARLY
+  WEEKLY
+  HALF_YEARLY
   CUSTOM_DAYS
 }
 
