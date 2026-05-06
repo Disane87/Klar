@@ -167,14 +167,13 @@ describe('Invite code flow', () => {
       payload: {},
     });
     expect(inviteRes.statusCode).toBe(201);
-    const invite = JSON.parse(inviteRes.body) as { code: string };
+    const invite = JSON.parse(inviteRes.body) as { token: string };
 
-    // Bob joins via invite
+    // Bob joins via invite token (POST /join/:token)
     const joinRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/households/join',
+      url: `/api/v1/join/${invite.token}`,
       headers: { authorization: `Bearer ${bob.accessToken}` },
-      payload: { code: invite.code },
     });
     expect(joinRes.statusCode).toBe(200);
 

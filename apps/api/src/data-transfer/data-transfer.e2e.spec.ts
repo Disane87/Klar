@@ -116,9 +116,13 @@ async function createSession(email: string, password = 'TestPass123!'): Promise<
   });
 
   const categories = JSON.parse(categoriesRes.body) as CategoryResponse[];
-  const expenseCategory = categories.find(c => c.type === 'EXPENSE');
+  // Seed liefert nur FIXED_EXPENSE / VARIABLE_EXPENSE (Legacy "EXPENSE" wurde
+  // 2026-05-05 migriert). Wir nehmen die erste verfügbare Expense-Kategorie.
+  const expenseCategory = categories.find(c =>
+    c.type === 'FIXED_EXPENSE' || c.type === 'VARIABLE_EXPENSE' || c.type === 'EXPENSE',
+  );
   if (!expenseCategory) {
-    throw new Error('No seeded EXPENSE category found — check seedDefaults');
+    throw new Error('No seeded expense category found — check seedDefaults');
   }
 
   return {
@@ -294,10 +298,13 @@ describe('GET /api/v1/households/:hid/export', () => {
 
 describe('POST /api/v1/households/:hid/import/analyze', () => {
   it('returns 201 with summary and categoryMappings for a valid exported file', async () => {
-    const { accessToken, householdId, expenseCategoryName } =
+    const { accessToken, householdId, expenseCategoryName, expenseCategoryType } =
       await createSession('alice-analyze@test.com');
 
-    const fileContent = buildExportFileContent({ categoryName: expenseCategoryName });
+    const fileContent = buildExportFileContent({
+      categoryName: expenseCategoryName,
+      categoryType: expenseCategoryType,
+    });
 
     const res = await app.inject({
       method: 'POST',

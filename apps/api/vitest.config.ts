@@ -18,14 +18,19 @@ export default defineConfig({
         'src/**/*.guard.ts',
         'src/**/*.decorator.ts',
         'src/**/*.dto.ts',
+        'src/**/*.filter.ts',
         'src/**/*.d.ts',
         'src/**/strategies/**',
         'src/common/types/**',
         'src/common/filters/**',
+        'src/common/global-prefix.ts',
         'src/config/**',
         'src/health/**',
         'src/mail/**',
         'src/prisma/**',
+        // MCP: thin registration adapters over already-tested domain services.
+        // Behavior covered by oauth-flow.e2e.spec.ts.
+        'src/mcp/**',
       ],
       thresholds: {
         lines: 70,

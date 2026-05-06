@@ -109,9 +109,11 @@ async function createSession(
   });
 
   const categories = JSON.parse(categoriesRes.body) as CategoryResponse[];
-  const expenseCategory = categories.find(c => c.type === 'EXPENSE');
+  const expenseCategory = categories.find(
+    c => c.type === 'FIXED_EXPENSE' || c.type === 'VARIABLE_EXPENSE' || c.type === 'EXPENSE',
+  );
   if (!expenseCategory) {
-    throw new Error('No seeded EXPENSE category found — check seedDefaults');
+    throw new Error('No seeded expense category found — check seedDefaults');
   }
 
   return { accessToken, householdId, expenseCategoryId: expenseCategory.id };
