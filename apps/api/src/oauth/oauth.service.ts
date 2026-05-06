@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import { ZodError } from 'zod';
 import { OAuthRepository } from './oauth.repository';
+import { AuditService } from '../audit/audit.service';
 import { isScopeSubset, type OAuthScope, SCOPE_DISPLAY } from './oauth-scopes';
 import {
   generateAuthorizationCode,
@@ -81,6 +82,7 @@ export class OAuthService {
   constructor(
     private readonly repo: OAuthRepository,
     private readonly config: ConfigService,
+    private readonly audit: AuditService,
   ) {}
 
   // ── Phase 4: Authorize-Validation ────────────────────────────────────
@@ -256,10 +258,16 @@ export class OAuthService {
     if (grant.revokedAt) return;
     // Sicherstellen dass es dem User gehört.
     const grants = await this.repo.listUserGrants(userId);
-    if (!grants.some((g) => g.id === grantId)) {
+    const owned = grants.find((g) => g.id === grantId);
+    if (!owned) {
       throw new OAuthError('invalid_request', 'unknown grant', 404);
     }
     await this.repo.revokeGrant(grantId);
+    this.audit.log({
+      action: 'oauth.grant.revoked',
+      userId,
+      metadata: { grantId, clientId: owned.clientId },
+    });
   }
 
   // ── Phase 12: Token Revocation (RFC 7009) ───────────────────────────
@@ -350,6 +358,12 @@ export class OAuthService {
       scopes: record.scopes,
       refreshTokenHash: refreshHash,
       refreshExpiresAt: new Date(Date.now() + refreshTtl * 1000),
+    });
+    this.audit.log({
+      action: 'oauth.grant.created',
+      userId: record.userId,
+      householdId: record.householdId,
+      metadata: { grantId: grant.id, clientId: record.clientId, scopes: record.scopes },
     });
 
     return this.buildTokenResponse(grant.id, {
@@ -546,6 +560,10 @@ export class OAuthService {
       policyUri: parsed.policy_uri ?? null,
       tokenEndpointAuthMethod: parsed.token_endpoint_auth_method,
       registrationAccessTokenHash: sha256Hex(registrationAccessToken),
+    });
+    this.audit.log({
+      action: 'oauth.client.registered',
+      metadata: { clientId, clientName: parsed.client_name },
     });
 
     const issuedAt = Math.floor(Date.now() / 1000);

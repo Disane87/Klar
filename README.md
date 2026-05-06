@@ -323,6 +323,14 @@ Want to help make Klar better? Awesome! 🎉
 
 ---
 
+## 🤖 MCP / KI-Integration
+
+Klar exponiert ihre Daten via [Model Context Protocol](https://modelcontextprotocol.io) mit OAuth 2.1 — LLM-Clients (Claude Desktop, Cursor, Continue) können nach User-Consent direkt Buchungen, Kategorien, Projekte etc. lesen und schreiben. Per-Scope Berechtigungen, jederzeit widerrufbar unter Einstellungen → Verbundene Apps.
+
+Details und Setup: [docs/mcp.md](docs/mcp.md).
+
+---
+
 ## 📄 License
 
 MIT — see [LICENSE](https://github.com/Disane87/klar/blob/main/LICENSE) for details.

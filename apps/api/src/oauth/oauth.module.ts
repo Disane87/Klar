@@ -13,6 +13,6 @@ import { OAuthCleanupService } from './oauth-cleanup.service';
   imports: [PrismaModule, AuditModule, HouseholdsModule],
   controllers: [OAuthController, OAuthConsentController, OAuthGrantsController],
   providers: [OAuthService, OAuthRepository, OAuthCleanupService],
-  exports: [OAuthService, OAuthRepository],
+  exports: [OAuthService, OAuthRepository, OAuthCleanupService],
 })
 export class OAuthModule {}

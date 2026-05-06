@@ -24,9 +24,11 @@ function makeService(): {
   const config = {
     get: vi.fn((key: string, def: unknown) => def),
   };
+  const audit = { log: vi.fn() };
   const service = new OAuthService(
     repo as unknown as OAuthRepository,
     config as unknown as import('@nestjs/config').ConfigService,
+    audit as unknown as import('../audit/audit.service').AuditService,
   );
   return { service, repo };
 }
