@@ -225,8 +225,8 @@ export class CsvPreviewTableComponent {
     return [
       { key: 'all' as FilterKey, label: 'Alle', count: s.total },
       { key: 'NEW' as FilterKey, label: 'Neu', count: s.new },
-      { key: 'RECURRING_SUGGESTION' as FilterKey, label: 'Vorschläge', count: s.recurringSuggestions },
       { key: 'FIXED_COST_MATCH' as FilterKey, label: 'Fixkosten', count: s.fixedCostMatches },
+      { key: 'RECURRING_SUGGESTION' as FilterKey, label: 'Fixkosten-Vorschläge', count: s.recurringSuggestions },
       { key: 'DUPLICATE' as FilterKey, label: 'Duplikate', count: s.duplicates },
     ];
   });
