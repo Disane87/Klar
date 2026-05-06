@@ -1,3 +1,20 @@
+# [1.16.0](https://github.com/Disane87/Klar/compare/v1.15.0...v1.16.0) (2026-05-06)
+
+
+### Features
+
+* **api:** add filter indexes on audit_log ([820e4d0](https://github.com/Disane87/Klar/commit/820e4d0d5dfa940de5656a1bf72e13df61ffdc19))
+* **api:** add MCP audit helpers (action prefix, args hash) ([feb348e](https://github.com/Disane87/Klar/commit/feb348e10e9959088056e0cf2294cd2d62637d64))
+* **api:** audit every MCP tool call with duration, ok/fail, args hash ([5104b5d](https://github.com/Disane87/Klar/commit/5104b5de3eb29d02ab9fc5e097896a1226394625))
+* **api:** audit MCP session start ([28382f4](https://github.com/Disane87/Klar/commit/28382f4eaf40d14137e266f3322ad44e0aa7868c))
+* **api:** cursor pagination, /admin/mcp endpoint, resolved user/household DTOs ([73149cd](https://github.com/Disane87/Klar/commit/73149cd33c9f08d2c02be73d605b8c1816e155f8))
+* **web:** admin refactor — virtual lists, search/filter per tab, MCP tab ([7c02d72](https://github.com/Disane87/Klar/commit/7c02d72271e56faae4569e0f8b18a75c1eac7942))
+
+
+### Performance Improvements
+
+* **web:** faster dev cold start ([6e3eb9d](https://github.com/Disane87/Klar/commit/6e3eb9d8ce41749af32e2bcd8a71a11d1df0b58a))
+
 # [1.15.0](https://github.com/Disane87/Klar/compare/v1.14.0...v1.15.0) (2026-05-06)
 
 
