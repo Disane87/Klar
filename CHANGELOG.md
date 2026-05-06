@@ -1,3 +1,47 @@
+# [1.9.0](https://github.com/Disane87/Klar/compare/v1.8.1...v1.9.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* **buchungen:** align row amount with group total via collapsible headers ([458e149](https://github.com/Disane87/Klar/commit/458e149e02d610439d46a79146f9142f6a493d02))
+* **csv-import:** hovercard now projects into klar-list-item trailing slot ([60c556f](https://github.com/Disane87/Klar/commit/60c556fcd0ec71859f7ad294bbc51b8f20611831))
+* **csv-import:** match fixed costs by token overlap, score by best amount/date diff ([960e557](https://github.com/Disane87/Klar/commit/960e557c77deb7e639d77127f25b8d4d5c2799e0))
+* **csv-import:** rebuild preview row as CSS grid with fixed column tracks ([c2c98a7](https://github.com/Disane87/Klar/commit/c2c98a75636bee35fe5d8017893fd1aeaac7e0d5))
+* **csv-import:** rename 'Vorschläge' chip to 'Fixkosten-Vorschläge', move next to Fixkosten ([c3d27a1](https://github.com/Disane87/Klar/commit/c3d27a1f23b17be907dfd24aa15e3d8f8c6c6fbc))
+* **csv-import:** unblock submit when some rows lack category, prevent dup category create ([f5e88c0](https://github.com/Disane87/Klar/commit/f5e88c0a7d32d02b9613979daffdfd2ebab90462))
+* **csv-import:** use namespace imports for iconv-lite and papaparse ([0c476ad](https://github.com/Disane87/Klar/commit/0c476ada7aec6d96a5501952fbd1525c03c43549))
+* **klar-list-item:** add w-full and overflow-hidden so sublabel truncates ([62fb4fc](https://github.com/Disane87/Klar/commit/62fb4fce7d449c21112066fbf00c9187f7d52829))
+* **ui:** use BrnPopover (umbrella export) instead of BrnPopoverComponent ([44a0489](https://github.com/Disane87/Klar/commit/44a0489c5566095f546ccae1093a5415499e1989))
+
+
+### Features
+
+* **buchungen:** add icons + colors to stat strip, rename Netto -> Bilanz ([858998f](https://github.com/Disane87/Klar/commit/858998f2e9eb96194c702ea56be1b44ee2351b3b))
+* **buchungen:** group transactions by category like fixkosten ledger ([2a34e32](https://github.com/Disane87/Klar/commit/2a34e32c3751c6048804ac44423a701f6e6b3abb))
+* **buchungen:** show counterparty as title, description as sublabel ([29fae5d](https://github.com/Disane87/Klar/commit/29fae5db6eedf7414ac7148d70eba99a007a9942))
+* **buchungen:** use klar-combobox for category in transaction dialog ([7219f6f](https://github.com/Disane87/Klar/commit/7219f6f4d2a9208a4fd7a07fdbe73db3e040275c))
+* **csv-import:** add counterpartyKey and rowHash utils ([08ef5d7](https://github.com/Disane87/Klar/commit/08ef5d7d5bb39a01fe51b06281e503018c9e5f48))
+* **csv-import:** add detection modules (duplicate, fixed-cost, recurring, category) ([f97f543](https://github.com/Disane87/Klar/commit/f97f5430c6e6c3f0eb04e1f606f36eb7299a51e5))
+* **csv-import:** add page header and virtual scroll for large CSV previews ([1799584](https://github.com/Disane87/Klar/commit/17995844257406922ae1c8973c9abed2a717d389))
+* **csv-import:** add service, controller, repository and module wiring ([157b9b9](https://github.com/Disane87/Klar/commit/157b9b975a40266aa65bfa98ba1e79457e724bfa))
+* **csv-import:** add Sparkasse CAMT v2 parser with Win-1252 decoding ([2bb7d0f](https://github.com/Disane87/Klar/commit/2bb7d0f170cfd6f1b80e8d83446d407fe1a8154b))
+* **csv-import:** detect recurring patterns inside the current CSV, not just history ([8c9d62c](https://github.com/Disane87/Klar/commit/8c9d62cb3b5cc771ec5ee58e841909fa0441045a))
+* **csv-import:** detect WEEKLY and HALF_YEARLY recurring patterns ([cda2c04](https://github.com/Disane87/Klar/commit/cda2c0441dee23a53589fa63167839681c8eeb71))
+* **csv-import:** fixed-cost override, hovercard with match details, dialog-based category create ([470c459](https://github.com/Disane87/Klar/commit/470c459c9bfa4b6756ed10d041c151471fb30466))
+* **csv-import:** global select-all + collapsible month groups ([fcde800](https://github.com/Disane87/Klar/commit/fcde800078b6cdbc3b4dec5fe125a9e026d5115a))
+* **csv-import:** group preview rows by month with select-all per group; fix CDK width ([24f5fe3](https://github.com/Disane87/Klar/commit/24f5fe3cde9addfec30ef46228cd9a19f5ec7848))
+* **db:** add CsvImport, ImportLearning tables and Transaction external fields ([d4343c5](https://github.com/Disane87/Klar/commit/d4343c52a0d6444a1bac2951728c9a8557c3f54e))
+* **fixkosten:** rework recurring dialogs for new frequencies and category combobox ([e3c7efa](https://github.com/Disane87/Klar/commit/e3c7efa282d91f17f0bff2a38f064860b2c7ec3e))
+* **fixkosten:** show period amount with monthly equivalent as secondary ([e88e6f7](https://github.com/Disane87/Klar/commit/e88e6f785cb856f8438d7297a705f0405cf16047))
+* **klar-list-item:** add klarLeading/klarTrailing slots; reuse for CSV preview ([5ea89fd](https://github.com/Disane87/Klar/commit/5ea89fd0e8d6d87c08af15701730f2a896e3a69e))
+* **shared:** add WEEKLY and HALF_YEARLY recurring frequencies ([0a7e50d](https://github.com/Disane87/Klar/commit/0a7e50d00621548bfbaa23111e4e2d82292b124f))
+* **ui:** extract klar-summary-strip, share between fixkosten and buchungen ([27942e1](https://github.com/Disane87/Klar/commit/27942e113c6b9a214052cb3d67000b2f12b77f4a))
+* **ui:** generic klar-combobox with inline create, wired into CSV import ([fc7feeb](https://github.com/Disane87/Klar/commit/fc7feeb40100b9434ac95c7b51af3f36b5517001))
+* **ui:** generic klar-toolbar shared by fixkosten and buchungen ([fca6db9](https://github.com/Disane87/Klar/commit/fca6db9ea47c2d722d551047e65894ab3ffef1f3))
+* **ui:** hoverCard input on klar-avatar (passthrough via klar-list-item) ([5bdd93b](https://github.com/Disane87/Klar/commit/5bdd93ba2552361c26004f911972ae2d04711953))
+* **web:** add CSV import wizard page with upload, preview and summary ([8f4ed7e](https://github.com/Disane87/Klar/commit/8f4ed7eff4cd683b7f94de838fed24ad98b503f3))
+* **web:** surface WEEKLY and HALF_YEARLY in csv-import and planspiel ([b23d2bc](https://github.com/Disane87/Klar/commit/b23d2bcc2e78c4fb703edfdf9db7a542cd6f3b4a))
+
 ## [1.8.1](https://github.com/Disane87/Klar/compare/v1.8.0...v1.8.1) (2026-05-06)
 
 
