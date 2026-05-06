@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/Disane87/Klar/compare/v1.12.0...v1.13.0) (2026-05-06)
+
+
+### Features
+
+* **oauth:** auto-detect MCP client name from initialize, allow user rename ([89a635e](https://github.com/Disane87/Klar/commit/89a635e380224c1f6935d19ce6d26746024b6e6d))
+
 # [1.12.0](https://github.com/Disane87/Klar/compare/v1.11.0...v1.12.0) (2026-05-06)
 
 
