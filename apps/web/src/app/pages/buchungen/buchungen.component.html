@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <klar-skeleton-rows [count]="6" class="tx-list" />
+    <klar-skeleton-rows [count]="6" class="px-5 pt-3" />
   }
 
   <!-- Error -->
@@ -35,7 +35,6 @@
 
   <!-- Empty -->
   @else if (store.isEmpty()) {
-    <!-- Stats strip even when empty -->
     <div class="stat-strip">
       <div class="stat">
         <span class="stat-label">EINNAHMEN</span>
@@ -78,32 +77,35 @@
       </div>
     </div>
 
-    <!-- Transaction list -->
-    <div class="tx-list">
-      @for (tx of store.sortedItems(); track tx.id) {
-        <div class="tx-row" (click)="openEdit(tx, $event)">
-          <div class="tx-date-brand">
-            <app-brand-icon [name]="tx.description ?? ''" [size]="12" />
-            <span class="tx-date">{{ formatDate(tx.date) }}</span>
-          </div>
-
-          <span class="tx-info">
-            <span class="tx-desc" [class.tx-desc-planned]="tx.isPlanned">{{ tx.description }}</span>
-            <span class="tx-badges">
-              @if (tx.isPlanned) {
-                <span class="tx-badge tx-badge-planned">GEPLANT</span>
-              }
-              @if (tx.visibility === 'PRIVATE') {
-                <span class="tx-badge tx-badge-private">PRIVAT</span>
-              }
-            </span>
-          </span>
-
-          <span class="tx-amount font-mono tabular-nums" [ngClass]="tx.amountCents | klarMoneyClass">
-            {{ tx.amountCents | klarMoney }}
-          </span>
-        </div>
-      }
+    <!-- Grouped transaction list -->
+    <div class="flex-1 overflow-y-auto pb-16">
+      <klar-list>
+        @for (group of groups(); track group.categoryId ?? 'none') {
+          <klar-list-group
+            [label]="group.categoryName"
+            [headerDotColor]="group.categoryColor"
+            [headerValue]="group.totalCents | klarMoney"
+            [headerValueClass]="group.totalCents | klarMoneyClass">
+            @for (tx of group.items; track tx.id) {
+              <klar-list-row [navigable]="true" (rowClick)="openEdit(tx)">
+                <app-brand-icon [name]="tx.description" [size]="22" class="shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-medium truncate" [class.opacity-60]="tx.isPlanned">
+                    {{ tx.description }}
+                  </p>
+                  <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
+                    {{ formatSublabel(tx) }}
+                  </p>
+                </div>
+                <span class="font-mono tabular-nums text-[13px] shrink-0"
+                      [ngClass]="tx.amountCents | klarMoneyClass">
+                  {{ tx.amountCents | klarMoney }}
+                </span>
+              </klar-list-row>
+            }
+          </klar-list-group>
+        }
+      </klar-list>
     </div>
   }
 
