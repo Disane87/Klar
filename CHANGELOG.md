@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/Disane87/Klar/compare/v1.14.0...v1.15.0) (2026-05-06)
+
+
+### Features
+
+* **ui:** enhance user avatar section and improve layout for Help & Community links ([bb5e2a8](https://github.com/Disane87/Klar/commit/bb5e2a84c910add9f2f8c6281539daf15f208923))
+
 # [1.14.0](https://github.com/Disane87/Klar/compare/v1.13.0...v1.14.0) (2026-05-06)
 
 
