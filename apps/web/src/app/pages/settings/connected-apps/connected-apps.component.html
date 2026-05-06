@@ -31,27 +31,91 @@
               }
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-foreground truncate">
-                {{ grant.clientName }}
-              </p>
-              <p class="text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                Verbunden {{ grant.createdAt | date: 'd. MMM yyyy' }}
-                @if (grant.lastUsedAt) {
-                  <span class="block">
-                    Zuletzt genutzt {{ grant.lastUsedAt | date: 'd. MMM, HH:mm' }}
-                  </span>
+              @if (editingId() === grant.id) {
+                <div class="flex items-center gap-2">
+                  <input
+                    hlmInput
+                    type="text"
+                    [ngModel]="draftName()"
+                    (ngModelChange)="draftName.set($event)"
+                    (keydown.enter)="saveRename(grant)"
+                    (keydown.escape)="cancelRename()"
+                    maxlength="100"
+                    class="h-8 text-sm flex-1"
+                    placeholder="Anzeigename"
+                    [title]="'Anzeigename für ' + grant.originalClientName"
+                    [attr.aria-label]="'Anzeigename für ' + grant.originalClientName"
+                  />
+                  <klar-button
+                    tone="primary"
+                    size="sm"
+                    [loading]="renaming() === grant.id"
+                    [disabled]="!!renaming()"
+                    (click)="saveRename(grant)"
+                  >
+                    Speichern
+                  </klar-button>
+                  <klar-button
+                    tone="ghost"
+                    size="sm"
+                    [disabled]="!!renaming()"
+                    (click)="cancelRename()"
+                  >
+                    Abbrechen
+                  </klar-button>
+                </div>
+                @if (grant.displayName) {
+                  <button
+                    type="button"
+                    class="text-[11px] text-muted-foreground hover:text-foreground underline mt-1"
+                    [disabled]="!!renaming()"
+                    [title]="'Auf Original ' + grant.originalClientName + ' zurücksetzen'"
+                    (click)="resetName(grant)"
+                  >
+                    Auf Original „{{ grant.originalClientName }}" zurücksetzen
+                  </button>
                 }
-              </p>
+              } @else {
+                <div class="flex items-center gap-1.5">
+                  <p class="text-sm font-semibold text-foreground truncate">
+                    {{ grant.clientName }}
+                  </p>
+                  <button
+                    type="button"
+                    class="size-6 inline-flex items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    [title]="'Umbenennen: ' + grant.clientName"
+                    [attr.aria-label]="'Umbenennen: ' + grant.clientName"
+                    (click)="startRename(grant)"
+                  >
+                    <klar-icon name="pencil" [size]="12" />
+                  </button>
+                </div>
+                @if (grant.displayName && grant.displayName !== grant.originalClientName) {
+                  <p class="text-[10px] text-muted-foreground italic mt-0.5">
+                    OAuth-Name: {{ grant.originalClientName }}
+                  </p>
+                }
+                <p class="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                  Verbunden {{ grant.createdAt | date: 'd. MMM yyyy' }}
+                  @if (grant.lastUsedAt) {
+                    <span class="block">
+                      Zuletzt genutzt {{ grant.lastUsedAt | date: 'd. MMM, HH:mm' }}
+                    </span>
+                  }
+                </p>
+              }
             </div>
-            <klar-button
-              tone="danger"
-              size="sm"
-              [loading]="revoking() === grant.id"
-              [disabled]="!!revoking()"
-              (click)="revoke(grant)"
-            >
-              Widerrufen
-            </klar-button>
+            @if (editingId() !== grant.id) {
+              <klar-button
+                tone="danger"
+                size="sm"
+                [loading]="revoking() === grant.id"
+                [disabled]="!!revoking() || !!renaming()"
+                (click)="revoke(grant)"
+              >
+                Widerrufen
+              </klar-button>
+            }
           </div>
 
           <div>

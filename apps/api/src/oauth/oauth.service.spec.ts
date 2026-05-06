@@ -25,6 +25,7 @@ function makeService(repoOverrides: Partial<RepoMock> = {}, configMap: Record<st
     revokeGrant: vi.fn().mockResolvedValue(undefined),
     listUserGrants: vi.fn().mockResolvedValue([]),
     findGrantStatusById: vi.fn().mockResolvedValue(null),
+    updateClientDisplayName: vi.fn().mockResolvedValue(undefined),
     ...repoOverrides,
   };
   const config = {

@@ -113,6 +113,17 @@ export class OAuthRepository {
     return this.prisma.oAuthGrant.findUnique({ where: { refreshTokenHash } });
   }
 
+  /**
+   * Setzt den User-overridable Display-Namen eines Clients. `null` setzt
+   * zurück auf den ursprünglichen `clientName` aus der Registration.
+   */
+  updateClientDisplayName(clientId: string, displayName: string | null): Promise<unknown> {
+    return this.prisma.oAuthClient.update({
+      where: { clientId },
+      data: { displayName },
+    });
+  }
+
   /** Wird vom Bearer-Guard aufgerufen — minimaler Select für Performance. */
   findGrantStatusById(grantId: string): Promise<{ revokedAt: Date | null } | null> {
     return this.prisma.oAuthGrant.findUnique({

@@ -228,7 +228,16 @@ export class OAuthService {
   async listUserGrants(userId: string): Promise<Array<{
     id: string;
     clientId: string;
+    /**
+     * Effektiver Anzeigename: User-Override oder vom Client gesetzter
+     * `clientName`. Auto-detect via MCP-`clientInfo` setzt `displayName`
+     * automatisch beim ersten `initialize`-Call (siehe McpController).
+     */
     clientName: string;
+    /** Roher `clientName` aus der Registration — sichtbar im Rename-Dialog. */
+    originalClientName: string;
+    /** User-/Auto-Override; null wenn keiner gesetzt. */
+    displayName: string | null;
     clientLogoUri: string | null;
     scopes: string[];
     createdAt: Date;
@@ -236,16 +245,58 @@ export class OAuthService {
     refreshExpiresAt: Date;
   }>> {
     const grants = await this.repo.listUserGrants(userId);
-    return grants.map((g) => ({
-      id: g.id,
-      clientId: g.clientId,
-      clientName: g.client.clientName,
-      clientLogoUri: g.client.logoUri,
-      scopes: g.scopes,
-      createdAt: g.createdAt,
-      lastUsedAt: g.lastUsedAt,
-      refreshExpiresAt: g.refreshExpiresAt,
-    }));
+    return grants.map((g) => {
+      const c = g.client as typeof g.client & { displayName?: string | null };
+      return {
+        id: g.id,
+        clientId: g.clientId,
+        clientName: c.displayName ?? c.clientName,
+        originalClientName: c.clientName,
+        displayName: c.displayName ?? null,
+        clientLogoUri: c.logoUri,
+        scopes: g.scopes,
+        createdAt: g.createdAt,
+        lastUsedAt: g.lastUsedAt,
+        refreshExpiresAt: g.refreshExpiresAt,
+      };
+    });
+  }
+
+  /**
+   * User benennt einen verbundenen Client um. Authorisierung über Grant-
+   * Ownership. `null` resettet auf den Original-Namen aus der Registration.
+   */
+  async renameClient(
+    userId: string,
+    grantId: string,
+    displayName: string | null,
+  ): Promise<void> {
+    const grants = await this.repo.listUserGrants(userId);
+    const owned = grants.find((g) => g.id === grantId);
+    if (!owned) {
+      throw new OAuthError('invalid_request', 'unknown grant', 404);
+    }
+    const trimmed = displayName?.trim();
+    if (trimmed !== undefined && trimmed !== '' && (trimmed.length < 1 || trimmed.length > 100)) {
+      throw new OAuthError('invalid_request', 'displayName must be 1..100 characters');
+    }
+    await this.repo.updateClientDisplayName(owned.clientId, trimmed && trimmed.length > 0 ? trimmed : null);
+  }
+
+  /**
+   * Setzt den Anzeigenamen automatisch aus dem MCP `clientInfo.name`, das
+   * `mcp-remote` mit dem echten LLM-Client-Namen befüllt
+   * (z.B. "claude-ai (via mcp-remote 0.1.37)"). Wir überschreiben NICHT,
+   * wenn schon ein Name (User-Override) gesetzt ist.
+   */
+  async autoSetClientDisplayNameIfMissing(clientId: string, detectedName: string): Promise<void> {
+    const client = await this.repo.findClientByClientId(clientId);
+    if (!client || client.disabled) return;
+    const existing = (client as typeof client & { displayName?: string | null }).displayName;
+    if (existing && existing.trim().length > 0) return;
+    const cleaned = detectedName.trim().slice(0, 100);
+    if (!cleaned) return;
+    await this.repo.updateClientDisplayName(clientId, cleaned);
   }
 
   /** User widerruft einen Grant aus dem Settings-UI. Idempotent. */

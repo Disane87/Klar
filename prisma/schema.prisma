@@ -553,7 +553,11 @@ model OAuthClient {
   clientId                    String    @unique
   // Argon2id; null bei public clients (PKCE-only, Standard für MCP-Desktop)
   clientSecretHash            String?
-  clientName                  String // Anzeige im Consent-Screen
+  clientName                  String // Anzeige im Consent-Screen (vom Client bei Registration gesetzt)
+  // User-overridable Anzeigename für Connected-Apps-UI. Hilfreich weil
+  // generische Proxies (mcp-remote) sich überall als "MCP CLI Proxy" registrieren —
+  // User kann das auf "Claude Desktop", "Codex" usw. umbenennen.
+  displayName                 String?
   redirectUris                String[] // Whitelist für Authorize/Token
   logoUri                     String?
   clientUri                   String?

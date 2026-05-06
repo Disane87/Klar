@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Req,
 } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
@@ -33,5 +35,20 @@ export class OAuthGrantsController {
     @Param('id') id: string,
   ): Promise<void> {
     await this.service.revokeUserGrant(req.user.sub, id);
+  }
+
+  /**
+   * Setzt den User-Display-Namen für den Client, dem dieser Grant gehört.
+   * `displayName: null` (oder leerer String) resettet auf den Original-Namen
+   * aus der OAuth-Registration / das via clientInfo auto-detected ist.
+   */
+  @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async rename(
+    @Req() req: FastifyRequest & { user: JwtPayload },
+    @Param('id') id: string,
+    @Body() body: { displayName?: string | null },
+  ): Promise<void> {
+    await this.service.renameClient(req.user.sub, id, body.displayName ?? null);
   }
 }

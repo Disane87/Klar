@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Logger,
   Post,
   Req,
   Res,
@@ -10,6 +11,7 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Public } from '../common/decorators/public.decorator';
 import type { RequestContext } from '../common/types/request-context.type';
+import { OAuthService } from '../oauth/oauth.service';
 import { OAuthBearerGuard } from './guards/oauth-bearer.guard';
 import { McpServerFactory } from './mcp-server.factory';
 
@@ -25,7 +27,12 @@ import { McpServerFactory } from './mcp-server.factory';
  */
 @Controller('mcp')
 export class McpController {
-  constructor(private readonly factory: McpServerFactory) {}
+  private readonly logger = new Logger(McpController.name);
+
+  constructor(
+    private readonly factory: McpServerFactory,
+    private readonly oauthService: OAuthService,
+  ) {}
 
   @Public()
   @UseGuards(OAuthBearerGuard)
@@ -34,6 +41,12 @@ export class McpController {
     @Req() req: FastifyRequest & { reqContext: RequestContext },
     @Res() reply: FastifyReply,
   ): Promise<void> {
+    // Auto-Detect Client-Name aus dem MCP `initialize`-Request.
+    // mcp-remote füllt clientInfo.name mit dem echten LLM-Client (z.B.
+    // "claude-ai (via mcp-remote 0.1.37)") — viel besser als der generische
+    // "MCP CLI Proxy", den mcp-remote bei der OAuth-Registration verwendet.
+    this.maybeCaptureClientName(req.reqContext.mcpClientId, req.body);
+
     const { transport, server } = await this.factory.createServer(req.reqContext);
     try {
       // Fastify liefert raw Node-Req/Res via .raw
@@ -41,6 +54,22 @@ export class McpController {
     } finally {
       await server.close();
     }
+  }
+
+  private maybeCaptureClientName(clientId: string | undefined, body: unknown): void {
+    if (!clientId) return;
+    if (typeof body !== 'object' || body === null) return;
+    const msg = body as { method?: unknown; params?: unknown };
+    if (msg.method !== 'initialize') return;
+    const params = msg.params as { clientInfo?: { name?: unknown } } | undefined;
+    const name = params?.clientInfo?.name;
+    if (typeof name !== 'string' || name.length === 0) return;
+    // Fire-and-forget — soll nie den Request-Pfad blocken oder fehlschlagen.
+    this.oauthService.autoSetClientDisplayNameIfMissing(clientId, name).catch((err) => {
+      this.logger.warn(
+        `Failed to auto-set client display name for ${clientId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
   }
 
   /**
