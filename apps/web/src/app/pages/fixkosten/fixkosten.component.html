@@ -126,69 +126,12 @@
       </div>
     </div>
 
-    <!-- Summary cards grid -->
-    <div class="grid grid-cols-4 gap-3 mb-1 max-md:grid-cols-2 max-md:gap-2">
-      <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
-        <iconify-icon icon="lucide:wallet" width="28" height="28" class="text-(--color-income) shrink-0" />
-        <div class="min-w-0">
-          <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Einnahmen</div>
-          <div class="font-mono text-base tabular-nums text-(--color-income) max-md:text-[15px]">
-            {{ incomeTotalCents() | klarMoney }}
-          </div>
-          @if (incomeBracket().label !== '–') {
-          <div class="text-[9px] font-semibold text-(--text-2)">{{ incomeBracket().label }}</div>
-          }
-        </div>
-      </div>
-      <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
-        <iconify-icon icon="lucide:credit-card" width="28" height="28" class="text-(--color-expense) shrink-0" />
-        <div class="min-w-0">
-          <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Ausgaben</div>
-          <div class="font-mono text-base tabular-nums text-(--color-expense) max-md:text-[15px]">
-            {{ expenseTotalCents() | klarMoney }}
-          </div>
-          @if (expenseRatio() !== null) {
-          <div class="flex items-center gap-1">
-            <iconify-icon
-              [icon]="expenseRatio()! <= 70 ? 'lucide:trending-down' : expenseRatio()! <= 100 ? 'lucide:minus' : 'lucide:trending-up'"
-              width="12" height="12" [class]="expenseRatingColor()"></iconify-icon>
-            <span class="font-mono text-[9px] tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRatio() }}%</span>
-            <span class="text-[9px] font-semibold" [ngClass]="expenseRatingColor()">{{ expenseRating() }}</span>
-          </div>
-          }
-        </div>
-      </div>
-      <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
-        <iconify-icon icon="lucide:piggy-bank" width="28" height="28" [ngClass]="surplusCents() | klarMoneyClass" class="shrink-0" />
-        <div class="min-w-0">
-          <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Überschuss</div>
-          <div class="font-mono text-base tabular-nums max-md:text-[15px]" [ngClass]="surplusCents() | klarMoneyClass">
-            {{ surplusCents() | klarMoney }}
-          </div>
-          @if (surplusRatio() !== null) {
-          <div class="flex items-center gap-1">
-            <iconify-icon [icon]="surplusCents() >= 0 ? 'lucide:arrow-up-right' : 'lucide:arrow-down-right'" width="12"
-              height="12" [class]="surplusRatingColor()"></iconify-icon>
-            <span class="font-mono text-[9px] tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRatio() }}%</span>
-            <span class="text-[9px] font-semibold" [ngClass]="surplusRatingColor()">{{ surplusRating() }}</span>
-          </div>
-          }
-        </div>
-      </div>
-      <div class="bg-(--surface) rounded-md p-3 border border-(--border) shadow-sm max-md:p-2.5 flex items-center gap-3">
-        <iconify-icon icon="lucide:target" width="28" height="28" [ngClass]="savingsGapCents() >= 0 ? 'text-(--color-income)' : 'text-(--color-expense)'" class="shrink-0" />
-        <div class="min-w-0">
-          <div class="text-[10px] uppercase tracking-widest text-(--text-2)">Ideale Quote</div>
-          <div class="font-mono text-base tabular-nums max-md:text-[15px]" [ngClass]="savingsGapCents() >= 0 ? 'text-(--color-income)' : 'text-(--color-expense)'">
-            {{ optimalSavingsCents() | klarMoney }}
-          </div>
-          <div class="text-[9px] text-(--text-muted)">
-            Aktuell: <span [ngClass]="savingsRatingColor()" class="font-mono">{{ surplusRatio() !== null ? surplusRatio() : 0 }}%</span> · Ziel: 20%
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
+
+  <klar-summary-strip
+    [incomeCents]="incomeTotalCents()"
+    [expenseCents]="expenseTotalCents()"
+    [balanceCents]="surplusCents()" />
 
   <!-- Groups as klar-list -->
   <klar-list>

@@ -13,6 +13,7 @@ import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component'
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { KlarMonthPickerComponent } from '../../shared/ui/klar-month-picker.component';
 import { KlarSkeletonRowsComponent } from '../../shared/ui/klar-skeleton-rows.component';
+import { KlarSummaryStripComponent } from '../../shared/ui/klar-summary-strip.component';
 import {
   KlarListComponent,
   KlarListGroupComponent,
@@ -53,6 +54,7 @@ interface TxGroup {
     KlarEmptyStateComponent,
     KlarMonthPickerComponent,
     KlarSkeletonRowsComponent,
+    KlarSummaryStripComponent,
     KlarListComponent,
     KlarListGroupComponent,
     KlarListRowComponent,

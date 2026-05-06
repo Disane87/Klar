@@ -18,6 +18,7 @@ import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component'
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarListComponent, KlarListGroupComponent, KlarListRowComponent } from '../../shared/ui/klar-list.component';
+import { KlarSummaryStripComponent } from '../../shared/ui/klar-summary-strip.component';
 import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
@@ -30,7 +31,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarSummaryStripComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
