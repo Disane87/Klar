@@ -18,7 +18,7 @@ describe('oauth-scopes', () => {
       expect(display).toBeDefined();
       expect(display.title).toMatch(/.+/);
       expect(display.desc).toMatch(/.+/);
-      expect(display.icon).toMatch(/^lucide:/);
+      expect(display.icon).toMatch(/^[a-z][a-z-]*$/);
     }
   });
 

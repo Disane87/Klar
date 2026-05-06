@@ -73,9 +73,33 @@ export class LoginComponent implements OnInit {
     const emailParam = this.route.snapshot.queryParamMap.get('email');
     if (emailParam) this.email.set(emailParam);
 
+    // returnUrl wird vom authGuard gesetzt, wenn unauth User auf eine
+    // geschützte Route trifft (z.B. /oauth/consent). Nach Login navigieren
+    // wir zurück. Wir akzeptieren NUR relative Pfade — externe URLs werden
+    // ignoriert (Open-Redirect-Schutz).
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
+      sessionStorage.setItem('postLoginReturnUrl', returnUrl);
+    }
+
     this.fromInvite.set(!!sessionStorage.getItem('pendingInviteToken'));
 
     await this.oidc.loadConfig();
+  }
+
+  private async navigateAfterLogin(): Promise<void> {
+    const returnUrl = sessionStorage.getItem('postLoginReturnUrl');
+    if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
+      sessionStorage.removeItem('postLoginReturnUrl');
+      await this.router.navigateByUrl(returnUrl);
+      return;
+    }
+    const pendingToken = sessionStorage.getItem('pendingInviteToken');
+    if (pendingToken) {
+      await this.router.navigate(['/join', pendingToken]);
+    } else {
+      await this.router.navigate(['/app']);
+    }
   }
 
   async submit(): Promise<void> {
@@ -100,12 +124,7 @@ export class LoginComponent implements OnInit {
         this.tempToken.set(res.tempToken);
       } else if (res.accessToken && res.user) {
         this.authStore.setSession(res.user as AuthUser, res.accessToken);
-        const pendingToken = sessionStorage.getItem('pendingInviteToken');
-        if (pendingToken) {
-          await this.router.navigate(['/join', pendingToken]);
-        } else {
-          await this.router.navigate(['/app']);
-        }
+        await this.navigateAfterLogin();
       }
     } catch (err: unknown) {
       this.handleLoginError(err);
@@ -125,12 +144,7 @@ export class LoginComponent implements OnInit {
         this.authService.verifyTotp(this.tempToken(), this.totpCode(), this.rememberMe()),
       );
       this.authStore.setSession(res.user, res.accessToken);
-      const pendingToken = sessionStorage.getItem('pendingInviteToken');
-      if (pendingToken) {
-        await this.router.navigate(['/join', pendingToken]);
-      } else {
-        await this.router.navigate(['/app']);
-      }
+      await this.navigateAfterLogin();
     } catch {
       this.totpError.set('Ungültiger Code. Bitte versuche es erneut.');
     } finally {

@@ -50,6 +50,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'oauth/consent',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/oauth-consent/oauth-consent.component').then(
+        m => m.OAuthConsentComponent,
+      ),
+  },
+  {
     path: 'app',
     canActivate: [authGuard, householdGuard],
     loadComponent: () =>

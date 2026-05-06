@@ -47,69 +47,76 @@ export function isScopeSubset(requested: readonly OAuthScope[], granted: readonl
 export type ScopeDisplay = {
   title: string;
   desc: string;
-  /** Iconify key (lucide). */
+  /** Klar-Icon-Name (siehe `klar-icon` Component). */
   icon: string;
+  /** true = schreibender Zugriff (UI hebt das hervor) */
+  write?: boolean;
 };
 
 export const SCOPE_DISPLAY: Record<OAuthScope, ScopeDisplay> = {
   'klar:transactions:read': {
     title: 'Buchungen lesen',
     desc: 'Alle deine Transaktionen sehen',
-    icon: 'lucide:list',
+    icon: 'receipt',
   },
   'klar:transactions:write': {
     title: 'Buchungen anlegen',
     desc: 'Neue Transaktionen für dich erstellen',
-    icon: 'lucide:plus',
+    icon: 'plus',
+    write: true,
   },
   'klar:recurring:read': {
     title: 'Fixkosten lesen',
     desc: 'Wiederkehrende Buchungen sehen',
-    icon: 'lucide:repeat',
+    icon: 'wiederkehrend',
   },
   'klar:recurring:write': {
     title: 'Fixkosten anlegen',
     desc: 'Neue wiederkehrende Buchungen erstellen',
-    icon: 'lucide:repeat-2',
+    icon: 'wiederkehrend',
+    write: true,
   },
   'klar:categories:read': {
     title: 'Kategorien lesen',
     desc: 'Alle Kategorien deines Haushalts sehen',
-    icon: 'lucide:tag',
+    icon: 'tag',
   },
   'klar:categories:write': {
     title: 'Kategorien anlegen',
     desc: 'Neue Kategorien erstellen',
-    icon: 'lucide:tags',
+    icon: 'tag',
+    write: true,
   },
   'klar:projects:read': {
     title: 'Projekte lesen',
     desc: 'Deine Projekte sehen',
-    icon: 'lucide:folder',
+    icon: 'folder',
   },
   'klar:projects:write': {
     title: 'Projekte anlegen',
     desc: 'Neue Projekte erstellen',
-    icon: 'lucide:folder-plus',
+    icon: 'folder',
+    write: true,
   },
   'klar:budgets:read': {
     title: 'Budgets lesen',
     desc: 'Deine Budgets sehen',
-    icon: 'lucide:wallet',
+    icon: 'wallet',
   },
   'klar:budgets:write': {
     title: 'Budgets setzen',
     desc: 'Budgets erstellen oder ändern',
-    icon: 'lucide:wallet-cards',
+    icon: 'wallet',
+    write: true,
   },
   'klar:overview:read': {
     title: 'Übersicht lesen',
     desc: 'Zusammenfassungen und Aggregate',
-    icon: 'lucide:bar-chart-3',
+    icon: 'trending',
   },
   'klar:household:read': {
     title: 'Haushalt lesen',
     desc: 'Basis-Infos zu deinem Haushalt',
-    icon: 'lucide:home',
+    icon: 'haushalt',
   },
 };

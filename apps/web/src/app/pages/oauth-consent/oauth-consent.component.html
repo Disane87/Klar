@@ -1,0 +1,150 @@
+<div class="min-h-[100dvh] bg-background flex flex-col">
+  <header class="border-b border-border">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <klar-wordmark [size]="28" />
+      @if (userEmail()) {
+        <span class="text-xs text-muted-foreground">{{ userEmail() }}</span>
+      }
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-start justify-center px-4 py-8">
+    <div class="w-full max-w-md">
+      @if (loading()) {
+        <div class="flex justify-center py-16">
+          <klar-icon name="refresh" [size]="20" />
+        </div>
+      } @else if (error() && !info()) {
+        <div class="rounded border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+          {{ error() }}
+          <div class="mt-3">
+            <klar-button tone="ghost" size="sm" (click)="cancel()">Zur App</klar-button>
+          </div>
+        </div>
+      } @else if (info()) {
+        <section
+          class="rounded border border-border bg-(--surface-1) overflow-hidden"
+          aria-labelledby="oauth-consent-title"
+        >
+          <div class="px-6 pt-6 pb-4 flex items-start gap-4">
+            <div
+              class="size-12 shrink-0 rounded border border-border bg-(--surface-2) flex items-center justify-center text-muted-foreground"
+            >
+              @if (info()!.client.logoUri) {
+                <img
+                  [src]="info()!.client.logoUri"
+                  [alt]="info()!.client.clientName + ' Logo'"
+                  class="size-full object-contain rounded"
+                  loading="lazy"
+                />
+              } @else {
+                <klar-icon name="key" [size]="22" />
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <h1 id="oauth-consent-title" class="text-base font-semibold text-foreground leading-tight">
+                {{ info()!.client.clientName }}
+              </h1>
+              <p class="text-sm text-muted-foreground mt-0.5">
+                möchte auf dein Klar-Konto zugreifen
+              </p>
+              @if (clientHost()) {
+                <p class="text-xs text-muted-foreground mt-1 font-[var(--font-mono)]">
+                  {{ clientHost() }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <div class="border-t border-border px-6 py-4">
+            <p class="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
+              Diese App erhält Zugriff auf
+            </p>
+            <ul class="space-y-3" role="list">
+              @for (s of info()!.scopes; track s.id) {
+                <li class="flex items-start gap-3">
+                  <div
+                    class="size-7 shrink-0 rounded flex items-center justify-center"
+                    [class.bg-success]="!s.write"
+                    [class.text-success-foreground]="!s.write"
+                    [class.bg-primary]="s.write"
+                    [class.text-primary-foreground]="s.write"
+                  >
+                    <klar-icon name="check" [size]="14" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <klar-icon [name]="s.icon" [size]="14" />
+                      <span class="text-sm font-medium text-foreground">
+                        {{ s.title }}
+                      </span>
+                      @if (s.write) {
+                        <span class="text-[10px] uppercase tracking-widest text-primary font-semibold">
+                          schreibend
+                        </span>
+                      }
+                    </div>
+                    <p class="text-xs text-muted-foreground mt-0.5">
+                      {{ s.desc }}
+                    </p>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="border-t border-border px-6 py-4 bg-(--surface-2)">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="text-xs text-muted-foreground">
+                <div>
+                  Eingeloggt als
+                  <span class="text-foreground font-medium">{{ userEmail() }}</span>
+                </div>
+                @if (redirectHost()) {
+                  <div class="font-[var(--font-mono)] mt-1">
+                    Weiterleitung: {{ redirectHost() }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (error()) {
+              <div class="rounded border border-destructive/40 bg-destructive/5 p-2.5 text-xs text-destructive mb-3">
+                {{ error() }}
+              </div>
+            }
+
+            <div class="flex items-center gap-2">
+              <klar-button
+                class="flex-1"
+                tone="ghost"
+                [disabled]="approving() || denying()"
+                [loading]="denying()"
+                (click)="deny()"
+              >
+                Ablehnen
+              </klar-button>
+              <klar-button
+                class="flex-1"
+                tone="primary"
+                [disabled]="approving() || denying()"
+                [loading]="approving()"
+                (click)="approve()"
+              >
+                Autorisieren
+              </klar-button>
+            </div>
+
+            <p class="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+              Du kannst den Zugriff jederzeit unter
+              <a routerLink="/app/settings" class="underline hover:text-foreground">
+                Einstellungen → Verbundene Apps
+              </a>
+              widerrufen.
+            </p>
+          </div>
+        </section>
+      }
+    </div>
+  </main>
+</div>
