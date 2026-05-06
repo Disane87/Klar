@@ -29,6 +29,7 @@
 | **📱 PWA — Mobile-First** | Installable on iOS/Android, dark mode, safe area support |
 | **🤖 Home Assistant / n8n** | Hook up homelab automations via API keys |
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
+| **🛠️ Admin Panel** | Audit log, MCP tool-call audit, sent emails, household overview — all virtualized + searchable + filterable |
 
 > [!NOTE]
 > 🔢 **Everything in cents.** All amounts stored as signed integers (`amountCents`). Positive = income, negative = expense. No floating point, no rounding surprises.
@@ -162,6 +163,32 @@ On first tool call: `mcp-remote` discovers the OAuth metadata, registers a clien
 - Cleanup job (every 15 min) deletes expired auth codes and grants revoked > 90 days ago
 
 Full documentation including curl smoke test and configuration: **[docs/mcp.md](docs/mcp.md)**.
+
+### 🛠️ Admin Panel
+
+Available to users with `appRole = ADMIN` (the first registered user, or anyone elevated via the role-change flow). Routed at `/app/admin`. All four tabs use a virtualized `klar-virtual-list` so they remain responsive even with millions of rows; every list is **searchable + filterable**, paginated with a stable `(createdAt DESC, id DESC)` cursor, and resolves user / household IDs to names + avatars + emails before display.
+
+| Tab | Purpose | Filters |
+|---|---|---|
+| **Audit Log** | Every system event (`user.login`, `oidc.link`, `apikey.used`, `mcp.tool.*`, `mcp.session.start`, …) | free-text on action · action prefix · user-ID · household-ID |
+| **MCP** | Per-tool-call audit for the MCP server — one row per tool invocation | free-text · tool name · client-ID · OK/Fail · user · household |
+| **E-Mails** | All sent emails (success + failed) | free-text on `to`/`subject` · status (SENT/FAILED) · template |
+| **Haushalte** | Households + members with avatars and roles | free-text on name / member email |
+
+**MCP audit details** — for every MCP tool invocation Klar records:
+
+- `action`: `mcp.tool.<toolName>` (e.g. `mcp.tool.transactions.list`)
+- `userId`, `householdId`, `ip`, `userAgent`
+- `metadata.toolName`, `metadata.clientId`, `metadata.durationMs`, `metadata.ok`
+- `metadata.errorCode` (only on failure)
+- `metadata.argsHash` — **SHA-256 hash** of the JSON-serialized args, never the raw values
+
+> [!IMPORTANT]
+> 🔒 **Args are never stored in plaintext.** Amounts, category names, search queries, and date ranges can be sensitive — only a deterministic hash is persisted so admins can correlate calls with identical inputs without exposing the inputs themselves.
+
+In addition, each MCP `initialize` request emits a single `mcp.session.start` row with `clientName`, `clientVersion`, and `protocolVersion` so admins can spot new clients connecting to the instance.
+
+The `OAuthClient.displayName` is resolved at read time, so renaming a connected app under **Settings → Connected Apps** is reflected retroactively in the MCP tab.
 
 ---
 
