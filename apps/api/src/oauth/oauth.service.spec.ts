@@ -339,8 +339,22 @@ describe('OAuthService.validateAuthorizeForRedirect', () => {
 // ── Token Endpoint (refresh + replay paths) ──────────────────────────
 
 import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
+import { generateKeyPairSync, randomBytes } from 'crypto';
 
-const MCP_PRIVATE_KEY = path.resolve(__dirname, '../../keys/mcp.private.pem');
+// Test-only RSA Key — vermeidet Abhängigkeit von checked-in keys (CI hat sie nicht).
+const tmpKeyDir = path.join(os.tmpdir(), 'klar-oauth-test-' + randomBytes(8).toString('hex'));
+fs.mkdirSync(tmpKeyDir, { recursive: true });
+const MCP_PRIVATE_KEY = path.join(tmpKeyDir, 'mcp.private.pem');
+{
+  const { privateKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  });
+  fs.writeFileSync(MCP_PRIVATE_KEY, privateKey);
+}
 
 describe('OAuthService.issueToken — refresh_token grant', () => {
   it('rotates the grant and revokes the old one', async () => {

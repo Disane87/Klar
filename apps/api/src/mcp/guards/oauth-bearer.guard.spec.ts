@@ -1,15 +1,31 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { generateKeyPairSync, randomBytes } from 'crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import { OAuthBearerGuard } from './oauth-bearer.guard';
 import type { OAuthRepository } from '../../oauth/oauth.repository';
 
-const apiRoot = path.resolve(__dirname, '../../..');
-const privateKeyPath = path.join(apiRoot, 'keys/mcp.private.pem');
-const publicKeyPath = path.join(apiRoot, 'keys/mcp.public.pem');
+// Test-only RSA key pair, generiert pro Spec-Lauf in einem temp-Dir.
+// Vermeidet Abhängigkeit von filesystem-Keys (CI hat sie nicht).
+const tmpKeyDir = path.join(os.tmpdir(), 'klar-mcp-test-' + randomBytes(8).toString('hex'));
+fs.mkdirSync(tmpKeyDir, { recursive: true });
+const privateKeyPath = path.join(tmpKeyDir, 'mcp.private.pem');
+const publicKeyPath = path.join(tmpKeyDir, 'mcp.public.pem');
+
+beforeAll(() => {
+  if (fs.existsSync(privateKeyPath)) return;
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048, // schneller als 4096, ausreichend für Tests
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  });
+  fs.writeFileSync(privateKeyPath, privateKey);
+  fs.writeFileSync(publicKeyPath, publicKey);
+});
 
 const ISSUER = 'https://klar.test';
 const AUDIENCE = 'klar-mcp';
@@ -82,11 +98,6 @@ function makeGuard(opts?: {
 }
 
 describe('OAuthBearerGuard', () => {
-  beforeEach(() => {
-    if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
-      throw new Error('MCP keys missing — run `pnpm tsx scripts/generate-mcp-keys.ts` from apps/api/');
-    }
-  });
 
   it('accepts a valid bearer token and sets reqContext', async () => {
     const guard = makeGuard();
