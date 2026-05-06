@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import iconv from 'iconv-lite';
-import Papa from 'papaparse';
+import * as iconv from 'iconv-lite';
+import * as Papa from 'papaparse';
 import { counterpartyKey } from '../utils/counterparty-key';
 
 export interface ParsedRow {
