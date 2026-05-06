@@ -41,7 +41,12 @@
       "Bash(git show *)",
       "Bash(cp prisma/schema.prisma /tmp/schema-full.prisma)",
       "Read(//tmp/**)",
-      "Bash(cp /tmp/schema-orig.prisma prisma/schema.prisma)"
+      "Bash(cp /tmp/schema-orig.prisma prisma/schema.prisma)",
+      "Bash(pnpm --filter web test -- --run klar-crop)",
+      "Bash(docker exec *)",
+      "Bash(pnpm --filter @klar/shared test)",
+      "Bash(pnpm --filter api exec vitest run src/csv-import/detection)",
+      "Bash(pnpm prisma *)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\denaro",
