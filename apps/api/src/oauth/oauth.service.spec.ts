@@ -4,11 +4,30 @@ import { OAuthService } from './oauth.service';
 import { OAuthError } from './oauth-error';
 import type { OAuthRepository } from './oauth.repository';
 
-function makeService(): { service: OAuthService; repo: { createClient: ReturnType<typeof vi.fn> } } {
+function makeService(): {
+  service: OAuthService;
+  repo: {
+    createClient: ReturnType<typeof vi.fn>;
+    findClientByClientId: ReturnType<typeof vi.fn>;
+    findConsent: ReturnType<typeof vi.fn>;
+    upsertConsent: ReturnType<typeof vi.fn>;
+    createAuthCode: ReturnType<typeof vi.fn>;
+  };
+} {
   const repo = {
     createClient: vi.fn().mockResolvedValue(undefined),
+    findClientByClientId: vi.fn().mockResolvedValue(null),
+    findConsent: vi.fn().mockResolvedValue(null),
+    upsertConsent: vi.fn().mockResolvedValue(undefined),
+    createAuthCode: vi.fn().mockResolvedValue(undefined),
   };
-  const service = new OAuthService(repo as unknown as OAuthRepository);
+  const config = {
+    get: vi.fn((key: string, def: unknown) => def),
+  };
+  const service = new OAuthService(
+    repo as unknown as OAuthRepository,
+    config as unknown as import('@nestjs/config').ConfigService,
+  );
   return { service, repo };
 }
 

@@ -5,11 +5,15 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
+  Req,
+  Res,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Public } from '../common/decorators/public.decorator';
 import { OAUTH_SCOPES } from './oauth-scopes';
 import { OAuthService } from './oauth.service';
@@ -92,5 +96,38 @@ export class OAuthController {
   async registerClient(@Body() body: unknown): Promise<Record<string, unknown>> {
     const result = await this.service.registerClient(body, this.baseUrl);
     return result as unknown as Record<string, unknown>;
+  }
+
+  /**
+   * GET /oauth2/authorize — von OAuth-Spec geforderter Browser-Endpoint.
+   *
+   * Wir validieren die Query-Parameter und leiten den User dann an die
+   * Frontend-Consent-Page weiter (`${frontendUrl}/oauth/consent?<params>`).
+   * Die eigentliche Authentifizierung + Approval läuft im SPA — das hat
+   * Zugriff auf den Klar-Access-Token im Memory.
+   *
+   * Bei ungültiger Anfrage: redirect zur registrierten redirect_uri mit
+   * `?error=...&state=...` (RFC 6749 §4.1.2.1), wenn die URI ableitbar ist;
+   * sonst Plain-400.
+   */
+  @Public()
+  @Get('oauth2/authorize')
+  authorize(
+    @Query() query: Record<string, string | undefined>,
+    @Req() _req: FastifyRequest,
+    @Res() reply: FastifyReply,
+  ): void {
+    const { redirectUrl } = this.service.validateAuthorizeForRedirect(query);
+    if (redirectUrl) {
+      void reply.code(302).header('location', redirectUrl).send('');
+      return;
+    }
+    const frontendUrl = this.config.get<string>('app.frontendUrl', 'http://localhost:4200');
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(query)) {
+      if (typeof v === 'string') params.set(k, v);
+    }
+    const target = `${frontendUrl}/oauth/consent?${params.toString()}`;
+    void reply.code(302).header('location', target).send('');
   }
 }
