@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 import * as pino from 'pino';
 import pinoPretty from 'pino-pretty';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LiveLogModule } from './admin/health/live-log.module';
 import { LiveLogBuffer } from './admin/health/live-log.buffer';
 import { HealthModule } from './health/health.module';
@@ -101,6 +102,7 @@ const REDACT_PATHS = [
       // Skip throttling in test environment so E2E tests can register/login freely
       skipIf: () => process.env['NODE_ENV'] === 'test',
     }]),
+    ScheduleModule.forRoot(),
     AppConfigModule,
     PrismaModule,
     MailModule,
