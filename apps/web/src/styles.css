@@ -1,180 +1,248 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 /* Tell Tailwind v4 where to scan for utility classes */
 @source "./app/**/*.{html,ts}";
 @source "./index.html";
 
-/* Layout constants */
-:root {
-  --header-height: 61px;
-}
-
 /* Class-based dark mode — add class="dark" or data-theme="light" to <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-    KLAR — Swiss Tech Theme (dark default)
-    ============================================================ */
+   KLAR — Editorial-Technical Theme (dark-first)
+   Source of truth: Klar Design Pearl bundle (claude.ai/design)
+   ============================================================ */
 :root {
-  /* Swiss Gray palette — warmer, lighter dark */
-  --swiss-10:  #1a1a1e;
-  --swiss-15:  #222228;
-  --swiss-20:  #2a2a30;
-  --swiss-25:  #323238;
-  --swiss-30:  #3a3a42;
-  --swiss-40:  #52525e;
-  --swiss-50:  #71717a;
-  --swiss-60:  #9898a0;
-  --swiss-70:  #b8b8c0;
-  --swiss-80:  #d8d8e0;
-  --swiss-90:  #f0f0f4;
+  /* Type system — Fraunces (display/numerals) + Inter (body) + JetBrains Mono (data) */
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-serif:   "Fraunces", "Iowan Old Style", serif;
+  --font-sans:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Semantic palette */
-  --red-accent:   #e63946;
-  --red-accent-hover: #d62839;
-  --emerald-400: #34d399;
-  --emerald-600: #059669;
-  --rose-400:    #fb7185;
-  --rose-600:    #e11d48;
-  --sky-400:     #38bdf8;
-  --sky-600:     #0284c7;
-  --amber-400:   #fbbf24;
-  --amber-600:   #d97706;
+  /* Type scale (px) */
+  --t-10: 10px; --t-11: 11px; --t-12: 12px; --t-13: 13px; --t-14: 14px;
+  --t-15: 15px; --t-16: 16px; --t-18: 18px; --t-20: 20px; --t-24: 24px;
+  --t-28: 28px; --t-32: 32px; --t-40: 40px; --t-56: 56px;
 
-  /* Theme: Swiss Dark (default) */
-  --bg:          var(--swiss-10);
-  --surface:     var(--swiss-15);
-  --surface-2:   var(--swiss-20);
-  --border:      var(--swiss-25);
-  --border-soft: var(--swiss-20);
-  --border-subtle: #3a3a42;
-  --text:        var(--swiss-90);
-  --text-2:      var(--swiss-60);
-  --text-muted:  var(--swiss-50);
+  /* Spacing — 4pt grid */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
 
-  /* Domain colors — keeping income/expense semantic */
-  --color-income:   var(--emerald-400);
-  --color-expense:  var(--rose-400);
-  --color-surplus:  var(--sky-400);
-  --color-variable: var(--amber-400);
-  --color-accent:   var(--red-accent);
+  /* Radii */
+  --r-2: 2px; --r-4: 4px; --r-6: 6px; --r-8: 8px; --r-12: 12px; --r-full: 999px;
 
-  --color-income-tint:   color-mix(in oklab, var(--emerald-400) 8%, transparent);
-  --color-expense-tint:  color-mix(in oklab, var(--rose-400)    8%, transparent);
-  --color-surplus-tint:  color-mix(in oklab, var(--sky-400)    10%, transparent);
-  --color-variable-tint: color-mix(in oklab, var(--amber-400)   8%, transparent);
-  --color-accent-tint:   color-mix(in oklab, var(--red-accent)   12%, transparent);
+  /* Motion */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms; --dur-2: 180ms; --dur-3: 280ms; --dur-4: 420ms;
 
-  /* Fonts — Space Grotesk for headings/body, JetBrains Mono for numbers */
-  --font-sans:  'Space Grotesk', 'DM Sans', system-ui, sans-serif;
-  --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
-  --font-serif: 'Fraunces', 'Iowan Old Style', serif;
+  /* Layout */
+  --sidebar-w:    200px;
+  --bottomnav-h:  60px;
+  --header-h:     56px;
+  --header-height: 61px; /* legacy alias for existing components */
 
-  /* Spacing */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --spacing-table-row: 28px;
-
-  /* Radius — slightly more modern */
-  --radius-sm: 3px;
-  --radius:    5px;
-  --radius-md: 7px;
-  --radius-lg: 10px;
-
-  /* Type ramps — improved readability */
-  --label:    12px;
-  --label-2:  13px;
-  --body-sm:  14px;
-  --body:     15px;
-  --body-lg:  17px;
-  --num-sm:   14px;
-  --num:      15px;
-  --num-md:   17px;
-  --num-lg:   21px;
-  --num-card: 24px;
-  --num-hero: 36px;
-  --num-xl: 32px;
-  --display:  48px;
-
-  /* Focus ring — red accent */
-  --ring: 0 0 0 1px var(--red-accent);
-
-  /* iOS Safe Area insets */
+  /* iOS safe-area insets */
   --safe-top:    env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left:   env(safe-area-inset-left, 0px);
   --safe-right:  env(safe-area-inset-right, 0px);
+
+  /* Legacy spacing aliases — keep in sync with --s-* */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --spacing-table-row: 28px;
+
+  /* Legacy radius aliases */
+  --radius-sm: 4px; --radius: 6px; --radius-md: 8px; --radius-lg: 12px;
+
+  /* Legacy type ramps — mapped onto new scale */
+  --label: 12px; --label-2: 13px;
+  --body-sm: 14px; --body: 15px; --body-lg: 17px;
+  --num-sm: 14px; --num: 15px; --num-md: 17px; --num-lg: 21px;
+  --num-card: 24px; --num-hero: 36px; --num-xl: 32px; --display: 48px;
 }
 
+/* ---------- DARK (primary) — warm OKLCH, hue 35 ---------- */
+:root,
+[data-theme="dark"],
+.dark {
+  --bg:         oklch(0.16 0.012 35);
+  --bg-1:       oklch(0.195 0.014 35);
+  --bg-2:       oklch(0.235 0.016 35);
+  --bg-3:       oklch(0.285 0.018 35);
+  --bg-side:    oklch(0.205 0.030 35);
+  --bg-overlay: oklch(0.13 0.012 35 / 0.78);
+
+  --fg:   oklch(0.965 0.005 80);
+  --fg-1: oklch(0.86 0.008 80);
+  --fg-2: oklch(0.66 0.010 80);
+  --fg-3: oklch(0.48 0.012 80);
+
+  --line:        oklch(0.32 0.014 35);
+  --line-strong: oklch(0.42 0.018 35);
+  --line-soft:   oklch(0.27 0.012 35);
+
+  --accent:      oklch(0.74 0.13 50);
+  --accent-soft: oklch(0.74 0.13 50 / 0.18);
+  --primary:     oklch(0.96 0.005 80);
+  --primary-fg:  oklch(0.16 0.012 35);
+
+  --success:      oklch(0.78 0.13 152);
+  --success-soft: oklch(0.78 0.13 152 / 0.14);
+  --danger:       oklch(0.72 0.16 25);
+  --danger-soft:  oklch(0.72 0.16 25 / 0.14);
+  --warn:         oklch(0.82 0.14 80);
+  --warn-soft:    oklch(0.82 0.14 80 / 0.14);
+
+  /* Category palette — muted earthy */
+  --cat-wohnen:    oklch(0.74 0.07 145);   /* sage */
+  --cat-versicher: oklch(0.72 0.08 245);   /* slate-blue */
+  --cat-abos:      oklch(0.78 0.09 65);    /* ochre */
+  --cat-mobil:     oklch(0.70 0.08 30);    /* clay */
+  --cat-essen:     oklch(0.72 0.07 95);    /* moss */
+  --cat-gesund:    oklch(0.74 0.08 200);   /* mineral */
+  --cat-freizeit:  oklch(0.72 0.09 320);   /* plum */
+  --cat-spar:      oklch(0.78 0.06 55);    /* mocha */
+
+  --shadow-1:     0 1px 0 0 oklch(0 0 0 / 0.4),  0 0 0 1px var(--line-soft);
+  --shadow-2:     0 8px 24px -4px oklch(0 0 0 / 0.5),  0 0 0 1px var(--line);
+  --shadow-modal: 0 24px 60px -12px oklch(0 0 0 / 0.7), 0 0 0 1px var(--line);
+
+  /* ---- Legacy aliases for existing components (mapped onto new tokens) ---- */
+  --surface:        var(--bg-1);
+  --surface-2:      var(--bg-2);
+  --border:         var(--line);
+  --border-soft:    var(--line-soft);
+  --border-subtle:  var(--line);
+  --text:           var(--fg);
+  --text-2:         var(--fg-2);
+  --text-muted:     var(--fg-3);
+
+  --color-income:   var(--success);
+  --color-expense:  var(--danger);
+  --color-surplus:  var(--accent);
+  --color-variable: var(--warn);
+  --color-accent:   var(--accent);
+
+  --color-income-tint:   var(--success-soft);
+  --color-expense-tint:  var(--danger-soft);
+  --color-surplus-tint:  var(--accent-soft);
+  --color-variable-tint: var(--warn-soft);
+  --color-accent-tint:   var(--accent-soft);
+
+  --ring: 0 0 0 2px var(--accent);
+}
+
+/* ---------- LIGHT ---------- */
 [data-theme="light"] {
-  --bg:          #ffffff;
-  --surface:     #f5f5f7;
-  --surface-2:   #ebebed;
-  --border:      #d4d4d6;
-  --border-soft: #e5e5e7;
-  --text:        #1a1a1e;
-  --text-2:      #52525e;
-  --text-muted:  #71717a;
+  --bg:         oklch(0.985 0.005 80);
+  --bg-1:       oklch(1 0.003 80);
+  --bg-2:       oklch(0.965 0.008 70);
+  --bg-3:       oklch(0.935 0.012 65);
+  --bg-side:    oklch(0.955 0.018 60);
+  --bg-overlay: oklch(0.985 0.005 80 / 0.85);
 
-  --color-income:   var(--emerald-600);
-  --color-expense:  var(--rose-600);
-  --color-surplus:  var(--sky-600);
-  --color-variable: var(--amber-600);
-  --color-accent:   var(--red-accent);
+  --accent:      oklch(0.55 0.16 45);
+  --accent-soft: oklch(0.55 0.16 45 / 0.12);
 
-  --color-income-tint:   color-mix(in oklab, var(--emerald-600) 6%, transparent);
-  --color-expense-tint:  color-mix(in oklab, var(--rose-600)    6%, transparent);
-  --color-surplus-tint:  color-mix(in oklab, var(--sky-600)     8%, transparent);
-  --color-variable-tint: color-mix(in oklab, var(--amber-600)   6%, transparent);
-  --color-accent-tint:   color-mix(in oklab, var(--red-accent)   8%, transparent);
+  --fg:   oklch(0.20 0.008 250);
+  --fg-1: oklch(0.32 0.008 250);
+  --fg-2: oklch(0.50 0.008 250);
+  --fg-3: oklch(0.66 0.005 250);
+
+  --line:        oklch(0.88 0.004 80);
+  --line-strong: oklch(0.78 0.005 80);
+  --line-soft:   oklch(0.93 0.003 80);
+
+  --primary:    oklch(0.20 0.008 250);
+  --primary-fg: oklch(0.985 0.002 80);
+
+  --success:      oklch(0.50 0.13 152);
+  --success-soft: oklch(0.50 0.13 152 / 0.10);
+  --danger:       oklch(0.52 0.18 25);
+  --danger-soft:  oklch(0.52 0.18 25 / 0.08);
+  --warn:         oklch(0.62 0.14 80);
+  --warn-soft:    oklch(0.62 0.14 80 / 0.10);
+
+  --cat-wohnen:    oklch(0.50 0.08 145);
+  --cat-versicher: oklch(0.48 0.10 245);
+  --cat-abos:      oklch(0.55 0.11 65);
+  --cat-mobil:     oklch(0.50 0.10 30);
+  --cat-essen:     oklch(0.50 0.08 95);
+  --cat-gesund:    oklch(0.50 0.09 200);
+  --cat-freizeit:  oklch(0.48 0.10 320);
+  --cat-spar:      oklch(0.52 0.07 55);
+
+  --shadow-1:     0 1px 0 0 oklch(0 0 0 / 0.04), 0 0 0 1px var(--line-soft);
+  --shadow-2:     0 8px 24px -4px oklch(0 0 0 / 0.10), 0 0 0 1px var(--line);
+  --shadow-modal: 0 24px 60px -12px oklch(0 0 0 / 0.18), 0 0 0 1px var(--line);
+
+  /* Legacy aliases */
+  --surface:        var(--bg-1);
+  --surface-2:      var(--bg-2);
+  --border:         var(--line);
+  --border-soft:    var(--line-soft);
+  --border-subtle:  var(--line);
+  --text:           var(--fg);
+  --text-2:         var(--fg-2);
+  --text-muted:     var(--fg-3);
+
+  --color-income:   var(--success);
+  --color-expense:  var(--danger);
+  --color-surplus:  var(--accent);
+  --color-variable: var(--warn);
+  --color-accent:   var(--accent);
+
+  --color-income-tint:   var(--success-soft);
+  --color-expense-tint:  var(--danger-soft);
+  --color-surplus-tint:  var(--accent-soft);
+  --color-variable-tint: var(--warn-soft);
+  --color-accent-tint:   var(--accent-soft);
 }
 
-/* Tailwind theme — expose semantic colors as utilities */
+/* Tailwind theme — semantic tokens consumed by spartan.ng / shadcn utilities.
+   Hex approximations of the OKLCH palette so Tailwind utilities render the
+   same warm theme. Keep in sync with the OKLCH values above. */
 @theme {
-  /* Domain colors */
-  --color-income:   #34d399;
-  --color-expense:  #fb7185;
-  --color-surplus:  #38bdf8;
-  --color-variable: #fbbf24;
-  --color-accent:   #e63946;
-  --color-bg:       #1a1a1e;
-  --color-surface:  #222228;
-  --color-border:   #2a2a30;
-
-  /* Fonts — Space Grotesk + JetBrains Mono */
-  --font-sans:  'Space Grotesk', 'DM Sans', system-ui, sans-serif;
-  --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  /* Fonts */
+  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-serif: 'Fraunces', 'Iowan Old Style', serif;
 
-  /* Semantic aliases — spartan.ng + shadcn-compatible tokens */
-  --color-background:             #1a1a1e;
-  --color-foreground:             #f0f0f4;
-  --color-card:                   #222228;
-  --color-card-foreground:        #f0f0f4;
-  --color-popover:                #222228;
-  --color-popover-foreground:     #f0f0f4;
-  --color-primary:                #e63946;
-  --color-primary-foreground:     #ffffff;
-  --color-secondary:              #2a2a30;
-  --color-secondary-foreground:   #f0f0f4;
-  --color-muted:                  #2a2a30;
-  --color-muted-foreground:       #71717a;
-  --color-accent:                 #323238;
-  --color-accent-foreground:      #f0f0f4;
-  --color-destructive:            #fb7185;
-  --color-destructive-foreground: #09090b;
-  --color-input:                  #2a2a30;
-  --color-ring:                   #e63946;
-  --color-success:                #34d399;
-  --color-danger:                 #fb7185;
-  --radius: 5px;
+  /* Domain colors */
+  --color-income:   #6fcf97;
+  --color-expense:  #e07a5f;
+  --color-surplus:  #d4a85c;
+  --color-variable: #d8b15f;
+  --color-accent:   #d4a85c;
+  --color-bg:       #1c1814;
+  --color-surface:  #221d18;
+  --color-border:   #3a342e;
+
+  /* Semantic aliases — spartan.ng + shadcn compatible */
+  --color-background:             #1c1814;
+  --color-foreground:             #f3ede4;
+  --color-card:                   #221d18;
+  --color-card-foreground:        #f3ede4;
+  --color-popover:                #2a241e;
+  --color-popover-foreground:     #f3ede4;
+  --color-primary:                #d4a85c;
+  --color-primary-foreground:     #1c1814;
+  --color-secondary:              #2a241e;
+  --color-secondary-foreground:   #f3ede4;
+  --color-muted:                  #2a241e;
+  --color-muted-foreground:       #a89c8e;
+  --color-accent:                 #322a23;
+  --color-accent-foreground:      #f3ede4;
+  --color-destructive:            #e07a5f;
+  --color-destructive-foreground: #fff;
+  --color-input:                  #2a241e;
+  --color-ring:                   #d4a85c;
+  --color-success:                #6fcf97;
+  --color-danger:                 #e07a5f;
+
+  --radius: 6px;
 }
 
 /* ============================================================
@@ -211,14 +279,30 @@ input, select, textarea {
 /* ============================================================
    Klar utility classes
    ============================================================ */
-.klar-mono {
+.klar-mono,
+.mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "zero";
+  letter-spacing: -0.01em;
 }
 
-.klar-serif {
-  font-family: var(--font-serif);
-  font-style: italic;
+.klar-serif,
+.serif {
+  font-family: var(--font-display);
+  font-feature-settings: "tnum", "ss01";
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.02em;
+}
+
+.klar-serif { font-style: italic; }
+
+.eyebrow {
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  font-weight: 500;
 }
 
 .klar-label {
@@ -238,6 +322,56 @@ input, select, textarea {
 .klar-num-neg     { color: var(--color-expense); }
 .klar-num-surplus { color: var(--color-surplus); }
 .klar-num-var     { color: var(--color-variable); }
+
+/* ============================================================
+   Planspiel — hypothetical projections
+   ============================================================ */
+.hypo {
+  font-style: italic;
+  color: var(--fg-3);
+}
+
+.hypo-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  font-size: var(--t-10);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Category accent — 2px left-border for grouped lists
+   Consumers set --cat-color via inline style or class.
+   ============================================================ */
+.cat-bar {
+  border-left: 2px solid var(--cat-color, var(--accent));
+  padding-left: var(--s-3);
+}
+
+/* Category tone helper classes — match slugs from category-tones.ts */
+.cat-wohnen    { --cat-color: var(--cat-wohnen); }
+.cat-versicher { --cat-color: var(--cat-versicher); }
+.cat-abos      { --cat-color: var(--cat-abos); }
+.cat-mobil     { --cat-color: var(--cat-mobil); }
+.cat-essen     { --cat-color: var(--cat-essen); }
+.cat-gesund    { --cat-color: var(--cat-gesund); }
+.cat-freizeit  { --cat-color: var(--cat-freizeit); }
+.cat-spar      { --cat-color: var(--cat-spar); }
+
+/* ============================================================
+   Global focus ring — uses warm amber accent
+   ============================================================ */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+  border-radius: inherit;
+}
 
 .klar-hairline { border-top: 1px solid var(--border); }
 
