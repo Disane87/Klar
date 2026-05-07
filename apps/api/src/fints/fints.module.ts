@@ -7,6 +7,7 @@ import { BankRegistryService } from './banks/bank-registry.service';
 import { BlzRefreshScheduler } from './banks/blz-refresh.scheduler';
 import { FintsConnectionRepository } from './connection/fints-connection.repository';
 import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
+import { FintsClientService } from './client/fints-client.service';
 
 /**
  * FinTS module (Phases 14a.3 + 14a.4 + 14a.7-partial).
@@ -34,7 +35,13 @@ import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
     BlzRefreshScheduler,
     FintsConnectionRepository,
     ReauthWatcherScheduler,
+    FintsClientService,
   ],
-  exports: [FintsCryptoService, BankRegistryService, FintsConnectionRepository],
+  exports: [
+    FintsCryptoService,
+    BankRegistryService,
+    FintsConnectionRepository,
+    FintsClientService,
+  ],
 })
 export class FintsModule {}
