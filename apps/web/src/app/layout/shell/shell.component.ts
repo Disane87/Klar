@@ -4,7 +4,6 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
 import { TopBarComponent } from '../top-bar/top-bar.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
-import { KlarMonthChipComponent } from '../../shared/ui/klar-month-chip.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { KlarModeToolbarComponent } from '../mode-toolbar/mode-toolbar.component';
@@ -34,7 +33,7 @@ const BOTTOM_TABS: BottomTab[] = [
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
     SideNavComponent, TopBarComponent, KlarIconComponent,
-    KlarToastContainerComponent, KlarMonthChipComponent, KlarHeaderUserComponent,
+    KlarToastContainerComponent, KlarHeaderUserComponent,
     KlarNotificationBellComponent,
     KlarModeToolbarComponent,
     UpdateBannerComponent,

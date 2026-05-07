@@ -5,7 +5,6 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -32,7 +31,7 @@ interface TopMoverRow {
   selector: 'klar-statistik-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, KlarMetricTileComponent, KlarMoneyPipe],
+  imports: [KlarMetricTileComponent, KlarMoneyPipe],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16">
       <!-- KPI strip -->

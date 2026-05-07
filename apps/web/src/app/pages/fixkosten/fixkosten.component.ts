@@ -1,5 +1,5 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { RouterLink } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -18,15 +18,9 @@ import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { RecurringEditDialogComponent } from './recurring-edit-dialog.component';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
-import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
-import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
-import { KlarListComponent, KlarListGroupComponent, KlarListRowComponent } from '../../shared/ui/klar-list.component';
-import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
-import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
-import { HlmSwitchComponent } from '../../shared/ui/hlm/hlm-switch.component';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
@@ -35,11 +29,9 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, NgTemplateOutlet, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
+  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, KlarFabComponent, HlmButtonDirective],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
-  // <iconify-icon> is a web component, not an Angular directive.
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class FixkostenPageComponent {
   protected store         = inject(OverviewStore);

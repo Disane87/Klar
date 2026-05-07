@@ -6,13 +6,12 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
 import type { Transaction } from '../../core/transactions/transactions.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 
 interface DayCell {
@@ -34,7 +33,7 @@ const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   selector: 'klar-kalender-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, KlarMoneyPipe, KlarIconComponent, KlarButtonComponent],
+  imports: [DatePipe, KlarMoneyPipe, KlarIconComponent],
   template: `
     <div class="flex flex-col gap-(--s-4) p-(--s-6) pb-16">
       <!-- Toolbar -->
