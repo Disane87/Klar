@@ -5,6 +5,8 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
+import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
+import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { TransactionsService } from '../../core/transactions/transactions.service';
@@ -18,7 +20,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 @Component({
   selector: 'app-transaction-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarComboboxComponent],
+  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent],
   templateUrl: './transaction-dialog.component.html',
   styleUrl: './transaction-dialog.component.css',
 })
@@ -38,7 +40,7 @@ export class TransactionDialogComponent {
   protected cats    = inject(CategoriesStore);
 
   readonly description = signal('');
-  readonly amount      = signal('');   // display string, e.g. "-50,00"
+  readonly amountCents = signal<number | null>(null);
   readonly date        = signal('');   // YYYY-MM-DD
   readonly categoryId  = signal('');
   readonly visibility  = signal<'SHARED' | 'PRIVATE'>('SHARED');
@@ -59,9 +61,9 @@ export class TransactionDialogComponent {
   readonly deviationCents = computed(() => {
     const t = this.tx();
     if (!t || !this.realizingNow()) return null;
-    const newAmount = this.parseCents(this.amount());
-    if (isNaN(newAmount)) return null;
-    return newAmount - t.amountCents;
+    const a = this.amountCents();
+    if (a === null) return null;
+    return a - t.amountCents;
   });
 
   constructor() {
@@ -69,7 +71,7 @@ export class TransactionDialogComponent {
       const t = this.tx();
       if (t) {
         this.description.set(t.description ?? '');
-        this.amount.set(this.centsToDisplay(t.amountCents));
+        this.amountCents.set(t.amountCents);
         this.date.set(t.date);
         this.categoryId.set(t.categoryId ?? '');
         this.visibility.set(t.visibility);
@@ -77,7 +79,7 @@ export class TransactionDialogComponent {
         this.projectId.set(t.projectId ?? null);
       } else {
         this.description.set('');
-        this.amount.set('');
+        this.amountCents.set(null);
         this.date.set(new Date().toISOString().slice(0, 10));
         this.categoryId.set('');
         this.visibility.set('SHARED');
@@ -89,10 +91,10 @@ export class TransactionDialogComponent {
 
   readonly isValid = computed(() => {
     const d = this.description().trim();
-    const a = this.parseCents(this.amount());
+    const a = this.amountCents();
     const dt = this.date();
     const c = this.categoryId();
-    return d.length > 0 && !isNaN(a) && a !== 0 && dt.length === 10 && c.length > 0;
+    return d.length > 0 && a !== null && a !== 0 && dt.length === 10 && c.length > 0;
   });
 
   async save(): Promise<void> {
@@ -102,7 +104,7 @@ export class TransactionDialogComponent {
 
     const body = {
       description: this.description().trim(),
-      amountCents: this.parseCents(this.amount()),
+      amountCents: this.amountCents() ?? 0,
       date:        this.date(),
       categoryId:  this.categoryId(),
       visibility:  this.visibility(),
@@ -170,10 +172,5 @@ export class TransactionDialogComponent {
 
   protected centsToDisplay(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',');
-  }
-
-  private parseCents(value: string): number {
-    const n = parseFloat(value.replace(',', '.').replace(/[^0-9.\-]/g, ''));
-    return Math.round(n * 100);
   }
 }

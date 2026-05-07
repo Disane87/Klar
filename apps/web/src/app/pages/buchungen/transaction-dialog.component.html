@@ -12,10 +12,11 @@
     <label hlmLabel for="td-amount">
       {{ isPlanned() ? 'Geplanter Betrag' : 'Betrag' }} (€, negativ = Ausgabe)
     </label>
-    <input id="td-amount" hlmInput class="font-mono tabular-nums" type="text"
-           inputmode="decimal" placeholder="-50,00"
-           [value]="amount()"
-           (input)="amount.set($any($event.target).value)" />
+    <klar-money-input
+      [inputId]="'td-amount'"
+      placeholder="-50,00"
+      [(amountCents)]="amountCents"
+    />
 
     @if (realizingNow() && tx() && deviationCents() !== null) {
       <span class="text-[11px] text-(--text-muted) font-mono tabular-nums">
@@ -33,9 +34,7 @@
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-date">Datum</label>
-    <input id="td-date" hlmInput type="date"
-           [value]="date()"
-           (change)="date.set($any($event.target).value)" />
+    <klar-date-input [inputId]="'td-date'" [(value)]="date" />
   </div>
 
   <div class="flex flex-col gap-1.5">

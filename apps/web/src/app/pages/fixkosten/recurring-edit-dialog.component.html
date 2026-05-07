@@ -10,10 +10,11 @@
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-amount">{{ amountLabel() }}</label>
-    <input id="red-amount" hlmInput class="font-mono tabular-nums" type="text"
-           inputmode="decimal" placeholder="0,00"
-           [value]="amount()"
-           (input)="amount.set($any($event.target).value)" />
+    <klar-money-input
+      [inputId]="'red-amount'"
+      placeholder="0,00"
+      [(amountCents)]="amountCents"
+    />
   </div>
 
   <div class="flex flex-col gap-1.5">

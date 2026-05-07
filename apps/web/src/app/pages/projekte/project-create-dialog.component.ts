@@ -5,6 +5,8 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
+import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
+import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { ProjectsService, type ProjectStatus, type ProjectResponse } from '../../core/projects/projects.service';
 import { ProjekteStore } from '../../core/overview/projekte.store';
@@ -21,6 +23,8 @@ const DEFAULT_COLOR = '#6366f1';
     HlmLabelDirective,
     HlmSelectNativeDirective,
     KlarColorPickerComponent,
+    KlarMoneyInputComponent,
+    KlarDateInputComponent,
   ],
   template: `
     <div class="flex flex-col gap-4">
@@ -43,24 +47,21 @@ const DEFAULT_COLOR = '#6366f1';
 
       <div class="flex flex-col gap-1.5">
         <label hlmLabel for="pcd-budget">Gesamtbudget (€, optional)</label>
-        <input id="pcd-budget" hlmInput class="font-mono tabular-nums" type="text"
-               inputmode="decimal" placeholder="0,00"
-               [value]="budget()"
-               (input)="budget.set($any($event.target).value)" />
+        <klar-money-input
+          [inputId]="'pcd-budget'"
+          placeholder="0,00"
+          [(amountCents)]="budgetCents"
+        />
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
           <label hlmLabel for="pcd-start">Startdatum</label>
-          <input id="pcd-start" hlmInput type="date"
-                 [value]="startDate()"
-                 (input)="startDate.set($any($event.target).value)" />
+          <klar-date-input [inputId]="'pcd-start'" [(value)]="startDate" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label hlmLabel for="pcd-end">Enddatum</label>
-          <input id="pcd-end" hlmInput type="date"
-                 [value]="endDate()"
-                 (input)="endDate.set($any($event.target).value)" />
+          <klar-date-input [inputId]="'pcd-end'" [(value)]="endDate" />
         </div>
       </div>
 
@@ -104,7 +105,7 @@ export class ProjectCreateDialogComponent {
 
   readonly name        = signal('');
   readonly description = signal('');
-  readonly budget      = signal('');
+  readonly budgetCents = signal<number | null>(null);
   readonly startDate   = signal('');
   readonly endDate     = signal('');
   readonly status      = signal<ProjectStatus>('ACTIVE');
@@ -128,7 +129,7 @@ export class ProjectCreateDialogComponent {
     if (!it) return;
     this.name.set(it.name);
     this.description.set(it.description ?? '');
-    this.budget.set(it.totalBudgetCents != null ? (it.totalBudgetCents / 100).toFixed(2).replace('.', ',') : '');
+    this.budgetCents.set(it.totalBudgetCents);
     this.startDate.set(it.startDate ?? '');
     this.endDate.set(it.endDate ?? '');
     this.status.set(it.status);
@@ -145,7 +146,7 @@ export class ProjectCreateDialogComponent {
       color:            this.color() ?? DEFAULT_COLOR,
       description:      this.description().trim() || null,
       status:           this.status(),
-      totalBudgetCents: this.parseBudget(this.budget()),
+      totalBudgetCents: this.budgetCents(),
       startDate:        this.startDate() || null,
       endDate:          this.endDate() || null,
     };
@@ -171,12 +172,4 @@ export class ProjectCreateDialogComponent {
   }
 
   cancel(): void { this.dialog.close(); }
-
-  private parseBudget(value: string): number | null {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    const n = parseFloat(trimmed.replace(',', '.').replace(/[^0-9.\-]/g, ''));
-    if (isNaN(n)) return null;
-    return Math.round(n * 100);
-  }
 }

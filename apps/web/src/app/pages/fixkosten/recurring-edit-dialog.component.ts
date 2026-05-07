@@ -4,6 +4,7 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
@@ -25,6 +26,7 @@ import { safeDayOfMonth } from '@klar/shared';
   imports: [
     KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
+    KlarMoneyInputComponent,
   ],
   templateUrl: './recurring-edit-dialog.component.html',
   styleUrl: './recurring-edit-dialog.component.css',
@@ -42,7 +44,7 @@ export class RecurringEditDialogComponent {
   protected cats     = inject(CategoriesStore);
 
   readonly name       = signal('');
-  readonly amount     = signal('');
+  readonly amountCents = signal<number | null>(null);
   readonly categoryId = signal<string | null>(null);
   readonly frequency  = signal<RecurringFrequency>('MONTHLY');
   readonly dayOfMonth = signal<string>('');
@@ -56,7 +58,7 @@ export class RecurringEditDialogComponent {
     effect(() => {
       const i = this.item();
       this.name.set(i.name);
-      this.amount.set(this.centsToDisplay(i.amountCents));
+      this.amountCents.set(i.amountCents);
       this.categoryId.set(i.categoryId);
       this.frequency.set(i.frequency);
       if (i.frequency === 'WEEKLY') {
@@ -72,9 +74,9 @@ export class RecurringEditDialogComponent {
 
   readonly isValid = computed(() => {
     const n = this.name().trim();
-    const a = this.parseAmount(this.amount());
+    const a = this.amountCents();
     const c = this.categoryId();
-    return n.length > 0 && !isNaN(a) && !!c;
+    return n.length > 0 && a !== null && !!c;
   });
 
   readonly freqOptions: { value: RecurringFrequency; label: string }[] = [
@@ -128,7 +130,7 @@ export class RecurringEditDialogComponent {
   async save(): Promise<void> {
     if (!this.isValid() || this.saving()) return;
 
-    const actualCents = this.parseAmount(this.amount());
+    const actualCents = this.amountCents() ?? 0;
     const freq        = this.frequency();
     const dom         = this.computeDay(freq);
 
@@ -197,15 +199,6 @@ export class RecurringEditDialogComponent {
   }
 
   cancel(): void { this.dialog.close(); }
-
-  private centsToDisplay(cents: number): string {
-    return (cents / 100).toFixed(2).replace('.', ',');
-  }
-
-  private parseAmount(value: string): number {
-    const n = parseFloat(value.replace(',', '.').replace(/[^0-9.\-]/g, ''));
-    return Math.round(n * 100);
-  }
 
   private computeDay(freq: RecurringFrequency): number | null {
     if (freq === 'WEEKLY') {
