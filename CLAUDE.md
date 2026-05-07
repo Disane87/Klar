@@ -145,7 +145,7 @@ Niemals nackte `<input>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials imme
 
 ## Mobile-First & PWA
 
-**Mobile-First:** Base = Mobile, Breakpoints fügen Desktop hinzu — nie umgekehrt.
+**Mobile-First:** Base = Mobile, Breakpoints fügen Desktop hinzu — nie umgekehrt. Jede neue/geänderte Komponente MUSS bei der Implementierung im Mobile-Viewport (≤ 375px) geprüft werden — kein horizontaler Overflow, kein abgeschnittener Inhalt, keine Touch-Targets < 44px. Header/Summary-Strips, Toolbars, Tabellen-Header etc. sind besonders anfällig: Icons auf Mobile ggf. ausblenden (`max-md:hidden`), Schriftgrößen reduzieren, `truncate`/`min-w-0` nicht vergessen. Desktop-only-Entwicklung ist eine Regression.
 
 **iOS/Safari Hard Rules (nicht verhandelbar):**
 - Form-Elemente min. `text-base` (16px) — sonst zoomt Safari rein
