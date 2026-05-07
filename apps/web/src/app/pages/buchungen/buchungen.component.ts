@@ -1,10 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
-import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { TransactionsStore, Transaction } from '../../core/transactions/transactions.store';
-import { CategoriesStore } from '../../core/categories/categories.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { TransactionDialogComponent } from './transaction-dialog.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
@@ -15,32 +13,8 @@ import { KlarMonthPickerComponent } from '../../shared/ui/klar-month-picker.comp
 import { KlarSkeletonRowsComponent } from '../../shared/ui/klar-skeleton-rows.component';
 import { KlarSummaryStripComponent } from '../../shared/ui/klar-summary-strip.component';
 import { KlarToolbarComponent } from '../../shared/ui/klar-toolbar.component';
-import {
-  KlarListComponent,
-  KlarListGroupComponent,
-  KlarListRowComponent,
-} from '../../shared/ui/klar-list.component';
 
-const TYPE_ORDER: Record<string, number> = {
-  FIXED_INCOME: 0,
-  VARIABLE_INCOME: 1,
-  INCOME: 1,
-  FIXED_EXPENSE: 2,
-  VARIABLE_EXPENSE: 3,
-  EXPENSE: 3,
-  SAVINGS: 4,
-};
-
-interface TxGroup {
-  categoryId: string | null;
-  categoryName: string;
-  categoryColor: string;
-  categoryIcon: string | null;
-  categoryType: string;
-  categorySortOrder: number;
-  totalCents: number;
-  items: Transaction[];
-}
+type Filter = 'alle' | 'rec' | 'manual' | 'income';
 
 @Component({
   selector: 'app-buchungen',
@@ -49,7 +23,6 @@ interface TxGroup {
   imports: [
     NgClass,
     KlarSkeletonComponent,
-    BrandIconComponent,
     KlarMoneyPipe,
     KlarMoneyClassPipe,
     KlarErrorBarComponent,
@@ -58,63 +31,60 @@ interface TxGroup {
     KlarSkeletonRowsComponent,
     KlarSummaryStripComponent,
     KlarToolbarComponent,
-    KlarListComponent,
-    KlarListGroupComponent,
-    KlarListRowComponent,
   ],
   templateUrl: './buchungen.component.html',
   styleUrl: './buchungen.component.css',
 })
 export class BuchungenPageComponent {
-  protected store         = inject(TransactionsStore);
-  private categoriesStore = inject(CategoriesStore);
-  private dialogService   = inject(KlarDialogService);
+  protected store       = inject(TransactionsStore);
+  private dialogService = inject(KlarDialogService);
 
   constructor() {
-    inject(PageHeaderService).set({
-      title:         'Buchungen',
-      subtitle:      'MONATLICHE AUSGABEN & EINNAHMEN',
-      showPlanspiel: false,
-      showAdd:       true,
-      addLabel:      'Buchung',
-      onAdd:         () => this.openCreate(),
+    const ph = inject(PageHeaderService);
+    ph.set({
+      title:    'Buchungen',
+      subtitle: 'Cashflow · Buchungen',
+      showAdd:  true,
+      showExport: true,
+      showUserSwitch: true,
+      scopeSegments: [
+        { id: 'month', label: 'Mai 2026' },
+        { id: 'avg6m', label: 'Schnitt 6 M' },
+        { id: 'year',  label: 'Jahr' },
+      ],
+      scopeValue: 'month',
+      addLabel: 'Buchung',
+      onAdd:    () => this.openCreate(),
+      onExport: () => { /* PDF export wires through TransactionsStore */ },
     });
   }
 
-  readonly groups = computed<TxGroup[]>(() => {
+  readonly filter = signal<Filter>('alle');
+
+  readonly filtered = computed(() => {
     const items = this.store.sortedItems();
-    const byCat = new Map<string, Category>();
-    for (const c of this.categoriesStore.all()) byCat.set(c.id, c);
-
-    const grouped = new Map<string, TxGroup>();
-    for (const tx of items) {
-      const key = tx.categoryId ?? '__none__';
-      let group = grouped.get(key);
-      if (!group) {
-        const cat = tx.categoryId ? byCat.get(tx.categoryId) : null;
-        group = {
-          categoryId: tx.categoryId,
-          categoryName: cat?.name ?? 'Ohne Kategorie',
-          categoryColor: cat?.color ?? '#6b7280',
-          categoryIcon: cat?.icon ?? null,
-          categoryType: cat?.type ?? (tx.amountCents >= 0 ? 'INCOME' : 'EXPENSE'),
-          categorySortOrder: cat?.sortOrder ?? 999,
-          totalCents: 0,
-          items: [],
-        };
-        grouped.set(key, group);
-      }
-      group.items.push(tx);
-      group.totalCents += tx.amountCents;
+    const f = this.filter();
+    switch (f) {
+      case 'rec':     return items.filter(t => !!t.recurringTransactionId && t.amountCents < 0);
+      case 'manual':  return items.filter(t => !t.recurringTransactionId);
+      case 'income':  return items.filter(t => t.amountCents > 0);
+      case 'alle':    return items;
     }
-
-    return [...grouped.values()].sort((a, b) => {
-      const ta = TYPE_ORDER[a.categoryType] ?? 9;
-      const tb = TYPE_ORDER[b.categoryType] ?? 9;
-      if (ta !== tb) return ta - tb;
-      return a.categorySortOrder - b.categorySortOrder;
-    });
   });
+
+  readonly filterCounts = computed(() => {
+    const items = this.store.sortedItems();
+    return {
+      alle:    items.length,
+      rec:     items.filter(t => !!t.recurringTransactionId && t.amountCents < 0).length,
+      manual:  items.filter(t => !t.recurringTransactionId).length,
+      income:  items.filter(t => t.amountCents > 0).length,
+    };
+  });
+
+  setFilter(f: Filter): void {
+    this.filter.set(f);
+  }
 
   openCreate(): void {
     this.dialogService.open({
@@ -140,44 +110,14 @@ export class BuchungenPageComponent {
     return `${parts[2]}.${parts[1]}.`;
   }
 
-  readonly collapsedGroups = signal(new Set<string>());
-
-  toggleGroup(key: string): void {
-    this.collapsedGroups.update(set => {
-      const next = new Set(set);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
-
-  isCollapsed(key: string): boolean {
-    return this.collapsedGroups().has(key);
-  }
-
-  groupKey(g: TxGroup): string {
-    return g.categoryId ?? '__none__';
+  formatDayMeta(tx: Transaction): string {
+    const dd = tx.date.split('-')[2] ?? '';
+    const mm = tx.date.split('-')[1] ?? '';
+    const cp = tx.counterparty || tx.description || '';
+    return cp ? `${dd}.${mm}. · ${cp}` : `${dd}.${mm}.`;
   }
 
   primaryLabel(tx: Transaction): string {
     return tx.counterparty?.trim() || tx.description?.trim() || '—';
   }
-
-  formatSublabel(tx: Transaction): string {
-    const parts: string[] = [this.formatDate(tx.date)];
-    if (tx.counterparty?.trim() && tx.description?.trim() && tx.description !== tx.counterparty) {
-      parts.push(tx.description);
-    }
-    if (tx.isPlanned) parts.push('geplant');
-    if (tx.visibility === 'PRIVATE') parts.push('privat');
-    return parts.join(' · ');
-  }
-}
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  icon: string | null;
-  type: string;
-  sortOrder: number;
 }

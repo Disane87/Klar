@@ -9,6 +9,7 @@ export interface Transaction {
   householdId: string;
   categoryId: string | null;
   projectId: string | null;
+  recurringTransactionId: string | null;
   amountCents: number;
   plannedAmountCents: number | null;
   isPlanned: boolean;
