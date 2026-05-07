@@ -136,6 +136,27 @@ export class HouseholdStore {
     return updated;
   }
 
+  /** Updates the household's free-text note (Fixkosten right-rail Notiz). */
+  async updateNote(note: string | null): Promise<Household> {
+    const id = this._activeId();
+    if (!id) throw new Error('Kein aktiver Haushalt');
+    const updated = await this.householdService.updateNote(id, note);
+    this._households.update(list =>
+      list.map(h =>
+        h.household.id === id ? { ...h, household: updated } : h,
+      ),
+    );
+    return updated;
+  }
+
+  /** Currently-active household entry, including its note. */
+  readonly active = computed(() =>
+    this._households().find(h => h.household.id === this._activeId()) ?? null,
+  );
+
+  /** Free-text note for the active household. */
+  readonly note = computed(() => this.active()?.household.note ?? null);
+
   async leave(): Promise<void> {
     const id = this._activeId();
     if (!id) return;

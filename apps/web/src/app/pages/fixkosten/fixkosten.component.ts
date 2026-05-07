@@ -11,6 +11,9 @@ import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { PdfReportService } from '../../core/pdf/pdf-report.service';
 import { HouseholdStore } from '../../core/household/household.store';
+import { TransactionsStore } from '../../core/transactions/transactions.store';
+import { ProjekteStore } from '../../core/overview/projekte.store';
+import { CategoriesStore } from '../../core/categories/categories.store';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { RecurringEditDialogComponent } from './recurring-edit-dialog.component';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
@@ -46,6 +49,9 @@ export class FixkostenPageComponent {
   private pdfReport       = inject(PdfReportService);
   protected householdStore = inject(HouseholdStore);
   protected planspielStore = inject(PlanspielStore);
+  protected txStore        = inject(TransactionsStore);
+  protected projekteStore  = inject(ProjekteStore);
+  protected categoriesStore = inject(CategoriesStore);
   private toast            = inject(KlarToastService);
   private recurring        = inject(RecurringTransactionsService);
 
@@ -458,6 +464,68 @@ grouped.set(key, {
     if (ratio >= 0) return 'text-(--color-income)';
     if (ratio >= -5) return 'text-yellow-400';
     return 'text-(--color-expense)';
+  });
+
+  /**
+   * Status diesen Monat counters — bundle PageFixkosten right rail.
+   * Stub from existing data: counters are derived live from transactions
+   * / recurring / projects / savings categories without a dedicated
+   * workflow-status table.
+   */
+  readonly statusCounters = computed(() => {
+    const txs = this.txStore.items() ?? [];
+    const recurringInMonth = this.enrichedGroups().reduce((s, g) => s + g.items.length, 0);
+    const projects = this.projekteStore.projects()?.projects ?? [];
+    const sparCategoryIds = this.categoriesStore.all()
+      .filter(c => c.type === 'SAVINGS')
+      .map(c => c.id);
+
+    // 1. Buchungen importiert: imported (sourceImportId set) vs total month transactions.
+    const txTotal = txs.length;
+    const txImported = txs.filter(t => (t as { sourceImportId?: string | null }).sourceImportId).length;
+
+    // 2. Fixkosten abgeglichen: recurring with at least one matching tx in month.
+    const recurringMatched = new Set<string>();
+    for (const t of txs) {
+      const rid = (t as { recurringTransactionId?: string | null }).recurringTransactionId;
+      if (rid) recurringMatched.add(rid);
+    }
+
+    // 3. Sparrate übertragen: at least one transaction in a SAVINGS category.
+    const sparTransferred = txs.some(t =>
+      t.categoryId && sparCategoryIds.includes(t.categoryId),
+    );
+
+    // 4. Projektbudgets gedeckt: projects with non-negative balance / total active.
+    const projectsCovered = projects.filter(p => p.balanceCents >= 0).length;
+    const projectsTotal = projects.length;
+
+    return [
+      {
+        label: 'Buchungen importiert',
+        val: `${txImported} / ${txTotal}`,
+        pct: txTotal > 0 ? Math.round((txImported / txTotal) * 100) : 0,
+        tone: txTotal > 0 && txImported / txTotal >= 0.9 ? 'ok' : 'warn',
+      },
+      {
+        label: 'Fixkosten abgeglichen',
+        val: `${recurringMatched.size} / ${recurringInMonth}`,
+        pct: recurringInMonth > 0 ? Math.round((recurringMatched.size / recurringInMonth) * 100) : 0,
+        tone: recurringInMonth > 0 && recurringMatched.size / recurringInMonth >= 0.8 ? 'ok' : 'warn',
+      },
+      {
+        label: 'Sparrate übertragen',
+        val: `${sparTransferred ? 1 : 0} / 1`,
+        pct: sparTransferred ? 100 : 0,
+        tone: sparTransferred ? 'ok' : 'muted',
+      },
+      {
+        label: 'Projektbudgets gedeckt',
+        val: `${projectsCovered} / ${projectsTotal}`,
+        pct: projectsTotal > 0 ? Math.round((projectsCovered / projectsTotal) * 100) : 100,
+        tone: projectsTotal === 0 || projectsCovered === projectsTotal ? 'ok' : 'warn',
+      },
+    ] as const;
   });
 
   readonly incomeBracket = computed(() => {

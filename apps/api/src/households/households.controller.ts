@@ -20,6 +20,7 @@ import { HouseholdMemberGuard } from './guards/household-member.guard';
 import { HouseholdsService } from './households.service';
 
 interface RenameBody { name: string }
+interface UpdateNoteBody { note: string | null }
 interface CreateInviteLinkBody { expiresInDays?: number }
 interface SendInviteEmailBody { email: string }
 
@@ -42,6 +43,12 @@ export class HouseholdsController {
   @UseGuards(HouseholdMemberGuard)
   renameHousehold(@ReqContext() ctx: RequestContext, @Body() body: RenameBody) {
     return this.householdsService.rename(ctx, body.name);
+  }
+
+  @Patch('households/:hid/note')
+  @UseGuards(HouseholdMemberGuard)
+  updateNote(@ReqContext() ctx: RequestContext, @Body() body: UpdateNoteBody) {
+    return this.householdsService.updateNote(ctx, body?.note ?? null);
   }
 
   @Get('households/:hid/members')

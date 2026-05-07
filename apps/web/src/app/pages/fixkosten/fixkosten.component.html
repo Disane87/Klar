@@ -216,9 +216,28 @@
           </div>
         </a>
 
-        <!-- Status diesen Monat -->
+        <!-- Status diesen Monat — bundle PageFixkosten 4 workflow counters -->
         <div class="section-head">Status diesen Monat</div>
         <div class="side-card compact">
+          @for (c of statusCounters(); track c.label) {
+            <div class="status-meter-row">
+              <div class="label">
+                <span>{{ c.label }}</span>
+                <span class="val mono">{{ c.val }}</span>
+              </div>
+              <div class="meter"
+                   [class.ok]="c.tone === 'ok'"
+                   [class.warn]="c.tone === 'warn'"
+                   [class.muted]="c.tone === 'muted'">
+                <i [style.width.%]="c.pct"></i>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Legacy KPI meters (kept as Bewertung-companion details) -->
+        <div class="section-head" hidden>Status (klassisch)</div>
+        <div class="side-card compact" hidden>
           <div class="status-meter-row">
             <div class="label">
               <span>Einnahmen erfasst</span>
@@ -273,7 +292,11 @@
         <!-- Notiz — bundle PageFixkosten right rail -->
         <div class="section-head">Notiz</div>
         <div class="side-card text-[13px] text-(--fg-1) leading-relaxed">
-          <span class="text-(--fg-2)">Noch keine Notiz hinterlegt.</span>
+          @if (householdStore.note(); as text) {
+            <span style="white-space: pre-wrap;">{{ text }}</span>
+          } @else {
+            <span class="text-(--fg-2)">Noch keine Notiz hinterlegt.</span>
+          }
         </div>
       </div>
     </div>

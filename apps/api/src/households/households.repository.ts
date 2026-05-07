@@ -83,6 +83,13 @@ export class HouseholdsRepository {
     });
   }
 
+  updateNote(householdId: string, note: string | null): Promise<Household> {
+    return this.prisma.household.update({
+      where: { id: householdId },
+      data: { note },
+    });
+  }
+
   async countOwnerMemberships(userId: string): Promise<number> {
     const ownedHouseholds = await this.prisma.householdMembership.findMany({
       where: { userId, role: HouseholdRole.OWNER },

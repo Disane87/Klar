@@ -66,6 +66,8 @@ export type HouseholdRole = 'OWNER' | 'MEMBER';
 export type Household = {
   id: string;
   name: string;
+  /** Free-text note rendered in the Fixkosten right-rail Notiz card. */
+  note?: string | null;
   createdAt: string;
 };
 

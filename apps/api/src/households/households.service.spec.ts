@@ -31,6 +31,7 @@ type InvitationLink = {
 const makeHousehold = (overrides: Partial<Household> = {}): Household => ({
   id: 'h-1',
   name: 'Mein Haushalt',
+  note: null,
   createdAt: new Date(),
   ...overrides,
 });

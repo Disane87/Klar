@@ -213,6 +213,8 @@ model TempToken {
 model Household {
   id        String   @id @default(cuid())
   name      String
+  /** Free-text household note shown in the Fixkosten right-rail Notiz card. */
+  note      String?
   createdAt DateTime @default(now())
 
   memberships           HouseholdMembership[]

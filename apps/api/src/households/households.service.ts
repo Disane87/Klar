@@ -88,6 +88,15 @@ export class HouseholdsService {
     return this.repo.updateName(ctx.householdId, trimmed);
   }
 
+  /**
+   * Update the free-text household note (Fixkosten right-rail Notiz card).
+   * Pass null to clear, otherwise the trimmed text is stored verbatim.
+   */
+  async updateNote(ctx: RequestContext, note: string | null): Promise<Household> {
+    const value = note?.trim() ? note.trim() : null;
+    return this.repo.updateNote(ctx.householdId, value);
+  }
+
   async listMembers(ctx: RequestContext): Promise<HouseholdMemberDetail[]> {
     const memberships = await this.repo.findMembershipsByHousehold(ctx.householdId);
     return memberships.map((m) => ({

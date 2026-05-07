@@ -28,6 +28,10 @@ export class HouseholdService {
     return firstValueFrom(this.http.patch<Household>(`${BASE}/${hid}`, { name }));
   }
 
+  updateNote(hid: string, note: string | null): Promise<Household> {
+    return firstValueFrom(this.http.patch<Household>(`${BASE}/${hid}/note`, { note }));
+  }
+
   listMembers(hid: string): Promise<HouseholdMember[]> {
     return firstValueFrom(this.http.get<HouseholdMember[]>(`${BASE}/${hid}/members`));
   }
