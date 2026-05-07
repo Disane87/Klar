@@ -39,7 +39,7 @@ export class MonatPageComponent {
 
   constructor() {
     this.pageHeader.set({
-      title:         'Cashflow',
+      title:         this.monthLabel(),
       subtitle:      'Cashflow · Monatsansicht',
       showPlanspiel: true,
       showAdd:       true,
@@ -52,6 +52,9 @@ export class MonatPageComponent {
     effect(() => { this.txStore.setMonth(this.store.currentMonth()); });
     effect(() => { this.budgetStore.setMonth(this.store.currentMonth()); });
 
+    // Keep header title in sync with the active month.
+    effect(() => { this.pageHeader.title.set(this.monthLabel()); });
+
     effect(() => {
       const cf = this.store.cashflow();
       if (!cf) return;
@@ -61,6 +64,12 @@ export class MonatPageComponent {
         tone:       cf.surplusCents >= 0 ? 'surplus' : 'expense',
       }]);
     });
+  }
+
+  private monthLabel(): string {
+    const [year, month] = this.store.currentMonth().split('-');
+    return new Date(Number(year), Number(month) - 1, 1)
+      .toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
   }
 
   protected openCreate(): void {

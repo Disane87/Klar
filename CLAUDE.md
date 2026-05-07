@@ -286,3 +286,13 @@ Marcos private Prod-Instanz (interne Subdomain, Portainer Stack — Details in M
 ## Bei Unsicherheit
 
 Nicht raten. `// TODO(spec): <Frage>` im Code + Frage an Marco.
+
+---
+
+## Design-Pearl-Bundle — Ausnahmen (NICHT übernehmen)
+
+Das Design-Pearl-Bundle (`C:\tmp\design-pearl\klar\project\`) enthält Test-Hilfen, die **nicht** Teil des Designs sind und nie nach Klar wandern dürfen:
+
+- **`ModeToolbar`** in `app.jsx` (Z. 112–125, gerendert in Z. 175): Pill mit `Mode (Live/Mockup)` + `Theme (Hell/Dunkel)`-Buttons rechts oben. Reines Vorschau-Tooling im Bundle. Theme-Switch in Klar gehört unter Settings → Darstellung (segmented Hell/Dunkel/System), nicht in Header/Topbar.
+
+Generelle Regel: Alles im Bundle, das nur dem Side-by-Side-Vergleich oder Mockup-Toggling dient (Demo-Switches, Variant-Picker, Theme-Pill), gehört nicht in die App.

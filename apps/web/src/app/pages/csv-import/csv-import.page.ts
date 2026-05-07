@@ -70,8 +70,8 @@ export class CsvImportPageComponent {
 
   constructor() {
     inject(PageHeaderService).set({
-      title: 'CSV-Import',
-      subtitle: 'SPARKASSE CAMT V2',
+      title:    'CSV-Import',
+      subtitle: 'Cashflow · Sparkasse CAMT V2',
     });
   }
 

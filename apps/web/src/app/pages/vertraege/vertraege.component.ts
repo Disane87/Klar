@@ -308,7 +308,14 @@ export class VertraegeComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.pageHeader.set({ title: 'Verträge', subtitle: 'Haushalt · Klar erkennt automatisch' });
+    this.pageHeader.set({
+      title:          'Verträge',
+      subtitle:       'Haushalt · Klar erkennt automatisch',
+      showUserSwitch: true,
+      // TODO(spec): Bundle zeigt "Erneut scannen" + "+ Vertrag hinzufügen" als
+      // Header-Actions. Beides braucht Backend-Endpoints (manueller Rescan +
+      // Manual-Create-Dialog) — kommt in Commit 2 / Folge-Phase.
+    });
   }
 
   protected setTab(id: VertraegeTab['id']): void {

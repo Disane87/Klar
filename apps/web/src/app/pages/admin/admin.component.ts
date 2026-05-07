@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { AdminHealthStore } from '../../core/admin/admin-health.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { HlmTabsImports } from '../../shared/ui/hlm/hlm-tabs';
@@ -237,8 +237,21 @@ export class AdminPageComponent implements OnInit {
     return 'Vorfall aktiv.';
   });
 
+  constructor() {
+    this.pageHeader.set({
+      title:    'Admin',
+      subtitle: 'System · Self-Host Instanz',
+      rhsChip:  `v${this.version()} ${this.heroChipLabel()}`,
+    });
+
+    // Keep the version/health chip in sync with health-store updates.
+    effect(() => {
+      this.pageHeader.rhsChip.set(`v${this.version()} ${this.heroChipLabel()}`);
+    });
+  }
+
   ngOnInit(): void {
-    this.pageHeader.set({ title: 'Admin', subtitle: 'System · Self-Host Instanz' });
+    // no-op; header is set in the constructor (injection context for effects).
   }
 
   protected setTab(t: Tab): void {

@@ -28,10 +28,10 @@ export class ProjektePageComponent {
   constructor() {
     inject(PageHeaderService).set({
       title:         'Projekte',
-      subtitle:      'Haushalt · alle aktiv',
+      subtitle:      'Vorhaben · Budgets gegen Ist',
       showPlanspiel: false,
       showAdd:       true,
-      addLabel:      'Projekt',
+      addLabel:      'Neues Projekt',
       onAdd:         () => this.openCreate(),
     });
   }

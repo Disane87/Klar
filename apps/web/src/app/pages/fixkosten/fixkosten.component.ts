@@ -60,13 +60,13 @@ export class FixkostenPageComponent {
   constructor() {
     this.pageHeader.set({
       title:         'Fixkosten-Übersicht',
-      subtitle:      'Haushalt · Marco & Lara WG',
+      subtitle:      this.subtitleLabel(),
       showPlanspiel: false,
       showAdd:       true,
       showExport:    true,
       showUserSwitch: true,
       scopeSegments: [
-        { id: 'month',     label: 'Mai 2026' },
+        { id: 'month',     label: this.monthLabel() },
         { id: 'avg6m',     label: 'Schnitt 6 M' },
         { id: 'year',      label: 'Jahr' },
       ],
@@ -79,6 +79,16 @@ export class FixkostenPageComponent {
 
     this.householdStore.loadMembers();
 
+    // Keep subtitle + month-segment label in sync with the active household / month.
+    effect(() => { this.pageHeader.subtitle.set(this.subtitleLabel()); });
+    effect(() => {
+      this.pageHeader.scopeSegments.set([
+        { id: 'month', label: this.monthLabel() },
+        { id: 'avg6m', label: 'Schnitt 6 M' },
+        { id: 'year',  label: 'Jahr' },
+      ]);
+    });
+
     effect(() => {
       const surplus = this.surplusCents();
       this.pageHeader.stats.set([{
@@ -87,6 +97,17 @@ export class FixkostenPageComponent {
         tone:       surplus >= 0 ? 'surplus' : 'expense',
       }]);
     });
+  }
+
+  private subtitleLabel(): string {
+    const name = this.householdStore.activeName();
+    return name ? `Haushalt · ${name}` : 'Haushalt';
+  }
+
+  private monthLabel(): string {
+    const [year, month] = this.store.currentMonth().split('-');
+    return new Date(Number(year), Number(month) - 1, 1)
+      .toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
   }
 
   togglePlanspiel(): void {

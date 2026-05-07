@@ -19,12 +19,12 @@ export type KlarButtonType = 'button' | 'submit' | 'reset';
 
 const TONE: Record<KlarButtonTone, string> = {
   primary:
-    'bg-(--surface-2) text-foreground border border-(--swiss-40) font-semibold ' +
-    'hover:bg-accent hover:border-(--swiss-50)',
+    'bg-(--accent-soft) text-(--accent) border border-transparent ' +
+    'hover:bg-[oklch(from_var(--accent)_l_c_h_/_0.22)]',
   secondary:
     'bg-(--surface-2) text-foreground border border-border hover:bg-accent',
   ghost:
-    'bg-transparent text-foreground border border-border hover:bg-accent hover:text-accent-foreground',
+    'bg-transparent text-foreground border border-transparent hover:bg-(--bg-2)',
   outline:
     'bg-transparent text-foreground border border-(--swiss-30) hover:bg-accent hover:text-accent-foreground',
   subtle:

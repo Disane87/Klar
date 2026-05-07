@@ -184,6 +184,10 @@ export class StatistikComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.pageHeader.set({ title: 'Statistik', subtitle: 'Auswertung · aktueller Monat' });
+    this.pageHeader.set({
+      title:          'Statistik',
+      subtitle:       'Auswertung · alle Konten',
+      showUserSwitch: true,
+    });
   }
 }
