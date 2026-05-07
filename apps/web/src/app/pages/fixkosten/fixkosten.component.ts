@@ -1,6 +1,5 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
@@ -18,8 +17,6 @@ import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarListComponent, KlarListGroupComponent, KlarListRowComponent } from '../../shared/ui/klar-list.component';
-import { KlarSummaryStripComponent } from '../../shared/ui/klar-summary-strip.component';
-import { KlarToolbarComponent } from '../../shared/ui/klar-toolbar.component';
 import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
@@ -33,7 +30,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarSummaryStripComponent, KlarToolbarComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
   // <iconify-icon> is a web component, not an Angular directive.
@@ -44,7 +41,6 @@ export class FixkostenPageComponent {
   private pageHeader      = inject(PageHeaderService);
   private dialogService   = inject(KlarDialogService);
   private confirm          = inject(KlarConfirmService);
-  private router          = inject(Router);
   private pdfReport       = inject(PdfReportService);
   protected householdStore = inject(HouseholdStore);
   protected planspielStore = inject(PlanspielStore);
@@ -60,21 +56,6 @@ export class FixkostenPageComponent {
     const ms = this.members();
     return ms.map(m => ({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl ?? null }));
   });
-
-  getHoverCardClasses(): string {
-    const viewportHeight = window.innerHeight;
-    const scrollY = window.scrollY;
-    const headerHeight = 48;
-    const availableTop = scrollY;
-    const availableBottom = viewportHeight - scrollY - headerHeight;
-    const cardHeight = 60;
-
-    if (availableTop > cardHeight && availableTop >= availableBottom) {
-      return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
-    } else {
-      return 'top-full left-1/2 -translate-x-1/2 mt-2';
-    }
-  }
 
   constructor() {
     this.pageHeader.set({
@@ -422,6 +403,13 @@ grouped.set(key, {
     const income = this.incomeTotalCents();
     if (income <= 0) return 0;
     return Math.round(income * 0.2);
+  });
+
+  readonly savingsMeterPercent = computed(() => {
+    const surplus = this.surplusCents();
+    const target  = this.optimalSavingsCents();
+    if (surplus <= 0 || target <= 0) return 0;
+    return Math.min(100, Math.round((surplus / target) * 100));
   });
 
   readonly savingsGapCents = computed(() => {

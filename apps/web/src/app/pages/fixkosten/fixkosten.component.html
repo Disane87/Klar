@@ -9,16 +9,16 @@
   (cta)="openCreate()"
 >
   <ng-template klarLoading>
-    <div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-16">
-      <div class="grid grid-cols-3 gap-3 mb-4">
-        <klar-skeleton height="76px" />
-        <klar-skeleton height="76px" />
-        <klar-skeleton height="76px" />
+    <div class="page">
+      <div class="summary-strip">
+        <klar-skeleton height="84px" />
+        <klar-skeleton height="84px" />
+        <klar-skeleton height="84px" />
       </div>
       @for (_ of [1,2,3]; track $index) {
-        <div class="mb-3 rounded-md border border-(--border) overflow-hidden">
-          <div class="flex items-center h-10 px-4 gap-3 border-b border-(--border)">
-            <klar-skeleton height="10px" width="100px" />
+        <div class="rounded-md border border-(--line) overflow-hidden">
+          <div class="flex items-center h-10 px-4 gap-3 border-b border-(--line)">
+            <klar-skeleton height="10px" width="120px" />
             <div class="flex-1"></div>
             <klar-skeleton height="14px" width="70px" />
           </div>
@@ -36,193 +36,263 @@
     </div>
   </ng-template>
 
-<!-- Scrollable area -->
-<div class="flex-1 overflow-y-auto pb-16">
+  <div class="page">
 
-  <!-- Toolbar -->
-  <klar-toolbar label="Übersicht">
+    <!-- Toolbar row: planspiel switch + member filter + selection + PDF -->
+    <div class="toolbar-row">
+      <span class="eyebrow">Übersicht</span>
+
+      <div class="toolbar-actions">
         <label class="flex items-center gap-1.5 cursor-pointer select-none">
-          <span class="text-[10px] text-(--text-muted)">Planspiel</span>
+          <span class="text-[10px] text-(--fg-2)">Planspiel</span>
           <hlm-switch
             [checked]="planspielActive()"
             (checkedChange)="togglePlanspiel()"
             ariaLabel="Planspiel ein/aus"
           />
         </label>
+
         <div class="flex items-center gap-1">
-          <!-- Alle button -->
-          <div class="relative">
-            <button type="button"
-              class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-150 peer"
-              [class.border-(--color-accent)]="memberFilter() === null"
-              [class.bg-(--color-accent)]="memberFilter() === null"
-              [class.text-(--zinc-950)]="memberFilter() === null"
-              [class.border-(--border)]="memberFilter() !== null"
-              [class.bg-(--surface-2)]="memberFilter() !== null"
-              [class.text-(--text-2)]="memberFilter() !== null"
-              (click)="memberFilter.set(null)">
-              <iconify-icon icon="lucide:users" width="14" height="14" />
-            </button>
-            <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
-                 [ngClass]="getHoverCardClasses()">
-              <div class="text-[11px] font-medium text-(--text)">Alle</div>
-              <div class="text-[9px] text-(--text-muted)">{{ memberFilter() === null ? 'Filter aktiv' : 'Klicken zum Filtern' }}</div>
-            </div>
-          </div>
-          <!-- Member buttons -->
+          <button
+            type="button"
+            class="member-btn"
+            [class.active]="memberFilter() === null"
+            title="Alle"
+            (click)="memberFilter.set(null)">
+            <iconify-icon icon="lucide:users" width="14" height="14" />
+          </button>
           @for (opt of memberOptions(); track opt.userId) {
-          <div class="relative">
-            <button type="button"
+            <button
+              type="button"
+              class="member-btn"
               [title]="opt.displayName"
-              class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-150 peer"
-              [class.border-(--color-accent)]="memberFilter() === opt.userId"
-              [class.bg-(--color-accent)]="memberFilter() === opt.userId"
-              [class.text-(--zinc-950)]="memberFilter() === opt.userId"
-              [class.border-(--border)]="memberFilter() !== opt.userId"
-              [class.bg-(--surface-2)]="memberFilter() !== opt.userId"
-              [class.text-(--text-2)]="memberFilter() !== opt.userId"
+              [class.active]="memberFilter() === opt.userId"
               (click)="memberFilter.set(memberFilter() === opt.userId ? null : opt.userId)">
-              <klar-avatar [avatarUrl]="opt.avatarUrl"
-                           [seed]="opt.displayName"
-                           [noBorder]="true"
-                           [size]="24" />
+              <klar-avatar
+                [avatarUrl]="opt.avatarUrl"
+                [seed]="opt.displayName"
+                [noBorder]="true"
+                [size]="22" />
             </button>
-            <div class="absolute px-3 py-2 bg-(--surface) border border-(--border) rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-150 whitespace-nowrap z-50"
-                 [ngClass]="getHoverCardClasses()">
-              <div class="text-[11px] font-medium text-(--text)">{{ opt.displayName }}</div>
-              <div class="text-[9px] text-(--text-muted)">{{ memberFilter() === opt.userId ? 'Filter aktiv' : 'Klicken zum Filtern' }}</div>
-            </div>
-          </div>
           }
         </div>
+
         @if (!planspielActive()) {
-        <button type="button"
-          class="flex items-center gap-1.5 text-[11px] transition-colors"
-          [ngClass]="selectionMode() ? 'text-(--color-accent)' : 'text-(--text-muted) hover:text-(--text)'"
-          (click)="toggleSelectionMode()">
-          <klar-icon [name]="selectionMode() ? 'x' : 'check-square'" [size]="12" />
-          {{ selectionMode() ? 'Abbruch' : 'Auswählen' }}
-        </button>
+          <button
+            type="button"
+            class="toolbar-action"
+            [class.active]="selectionMode()"
+            (click)="toggleSelectionMode()">
+            <klar-icon [name]="selectionMode() ? 'x' : 'check-square'" [size]="12" />
+            {{ selectionMode() ? 'Abbruch' : 'Auswählen' }}
+          </button>
         }
-        <button class="flex items-center gap-1.5 text-[11px] text-(--text-muted) hover:text-(--text) transition-colors"
-          (click)="exportPdf()">
+
+        <button type="button" class="toolbar-action" (click)="exportPdf()">
           <klar-icon name="download" [size]="12" />
           PDF
         </button>
-  </klar-toolbar>
+      </div>
+    </div>
 
-  <klar-summary-strip
-    [incomeCents]="incomeTotalCents()"
-    [expenseCents]="expenseTotalCents()"
-    [balanceCents]="surplusCents()" />
+    <!-- Summary strip — 3 cells with Fraunces hero figures -->
+    <div class="summary-strip">
+      <div class="summary-cell">
+        <span class="label">Einnahmen · fix</span>
+        <span class="value income">{{ incomeTotalCents() | klarMoney }}</span>
+        <span class="delta">
+          <klar-icon name="trending-up" [size]="12" />
+          {{ incomeBracket().label }}
+          @if (incomeBracket().desc) { <span class="text-(--fg-3)">· {{ incomeBracket().desc }}</span> }
+        </span>
+      </div>
+      <div class="summary-cell">
+        <span class="label">Ausgaben · fix</span>
+        <span class="value expense">{{ expenseTotalCents() | klarMoney }}</span>
+        <span class="delta">
+          <klar-icon name="hash" [size]="12" />
+          @if (expenseRatio() !== null) { {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen }
+          @else { keine Einnahmen erfasst }
+        </span>
+      </div>
+      <div class="summary-cell accent" [class.deficit]="surplusCents() < 0">
+        <span class="label">Monatlicher {{ surplusCents() >= 0 ? 'Überschuss' : 'Defizit' }}</span>
+        <span class="value">{{ surplusCents() | klarMoney }}</span>
+        <span class="delta">
+          @if (surplusRatio() !== null) {
+            ≈ {{ surplusRatio() }} % der Einnahmen · {{ surplusRating() }}
+          } @else { –– }
+        </span>
+      </div>
+    </div>
 
-  <!-- Groups as klar-list -->
-  <klar-list>
-    @for (group of enrichedGroups(); track group.categoryId) {
-      <klar-list-group
-        [label]="group.categoryName"
-        [headerDotColor]="group.categoryColor"
-        [headerValue]="group.totalCents | klarMoney"
-        [headerValueClass]="group.totalCents | klarMoneyClass"
-        [collapsible]="true"
-        [collapsed]="isCollapsed(group.categoryId)"
-        (headerAction)="toggleGroup(group.categoryId)">
-        @if (selectionMode() && !planspielActive()) {
-          <div class="flex items-center px-6 py-2 border-b border-(--border)/40 bg-(--surface-2)/30"
-               (click)="$event.stopPropagation(); toggleGroupSelection(group)">
-            <hlm-checkbox
-              [checked]="groupSelectionState(group) === 'all'"
-              [indeterminate]="groupSelectionState(group) === 'partial'"
-              class="cursor-pointer" />
-            <span class="ml-3 text-[11px] text-(--text-muted) select-none cursor-pointer">
-              Gruppe auswählen ({{ group.items.length }})
-            </span>
-          </div>
-        }
-        @for (item of group.items; track item.id) {
-          <klar-list-row [navigable]="true" (rowClick)="openEdit(item)">
-            @if (selectionMode() && !planspielActive()) {
-              <hlm-checkbox
-                [checked]="isSelected(item.id)"
-                class="shrink-0 pointer-events-none" />
-            }
-            <app-brand-icon
-              [name]="item.name"
-              [size]="22"
-              [color]="item.color"
-              [icon]="item.icon"
-              [fallbackIcon]="group.categoryIcon"
-              [fallbackColor]="group.categoryColor"
-              class="shrink-0"
-            />
-            @if (item.dayOfMonth) {
-              <div class="w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-(--border)">
-                <div class="bg-accent h-2.5 flex items-center justify-center">
-                  <span class="text-[6px] font-bold text-white leading-none uppercase">{{ isWeeklyFreq(item) ? 'TAG' : 'TAG' }}</span>
-                </div>
-                <div class="flex items-center justify-center h-[calc(100%-10px)]">
-                  <span class="font-mono text-[12px] tabular-nums text-(--text) leading-none">
-                    {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : item.dayOfMonth }}
+    <!-- 2-col grid: lists left, side panel right -->
+    <div class="grid-2">
+
+      <!-- LEFT — categorized lists + total/surplus footer -->
+      <div>
+        <klar-list>
+          @for (group of enrichedGroups(); track group.categoryId) {
+            <klar-list-group
+              [label]="group.categoryName"
+              [headerDotColor]="group.categoryColor"
+              [headerValue]="group.totalCents | klarMoney"
+              [headerValueClass]="group.totalCents | klarMoneyClass"
+              [collapsible]="true"
+              [collapsed]="isCollapsed(group.categoryId)"
+              (headerAction)="toggleGroup(group.categoryId)">
+              @if (selectionMode() && !planspielActive()) {
+                <div class="flex items-center px-6 py-2 border-b border-(--line)/40 bg-(--bg-2)/30 cursor-pointer"
+                     (click)="$event.stopPropagation(); toggleGroupSelection(group)">
+                  <hlm-checkbox
+                    [checked]="groupSelectionState(group) === 'all'"
+                    [indeterminate]="groupSelectionState(group) === 'partial'"
+                    class="cursor-pointer" />
+                  <span class="ml-3 text-[11px] text-(--fg-2) select-none">
+                    Gruppe auswählen ({{ group.items.length }})
                   </span>
                 </div>
-              </div>
-            }
-            <div class="flex-1 min-w-0">
-              <p class="text-[13px] font-medium truncate">{{ item.name }}</p>
-              <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">{{ formatItemSublabel(item) }}</p>
-            </div>
-            <div class="shrink-0 flex flex-col items-end leading-tight">
-              <span class="font-mono tabular-nums text-[13px]"
-                    [ngClass]="item.amountCents | klarMoneyClass">
-                {{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}
-              </span>
-              @if (item.frequency !== 'MONTHLY' && item.frequency !== 'CUSTOM_DAYS') {
-                <span class="font-mono tabular-nums text-[10px] text-(--text-muted) mt-0.5">
-                  ≈ {{ item.monthlyEquivalentCents | klarMoney }} / Monat
-                </span>
               }
+              @for (item of group.items; track item.id) {
+                <klar-list-row [navigable]="true" (rowClick)="openEdit(item)">
+                  @if (selectionMode() && !planspielActive()) {
+                    <hlm-checkbox
+                      [checked]="isSelected(item.id)"
+                      class="shrink-0 pointer-events-none" />
+                  }
+                  <app-brand-icon
+                    [name]="item.name"
+                    [size]="22"
+                    [color]="item.color"
+                    [icon]="item.icon"
+                    [fallbackIcon]="group.categoryIcon"
+                    [fallbackColor]="group.categoryColor"
+                    class="shrink-0"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[14px] font-medium text-(--fg) truncate">{{ item.name }}</p>
+                    <p class="text-[11px] text-(--fg-2) mt-0.5 truncate">
+                      @if (item.dayOfMonth) {
+                        <span class="font-mono tabular-nums">
+                          {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : formatDay(item.dayOfMonth) }}
+                        </span>
+                        <span class="mx-1">·</span>
+                      }
+                      {{ formatItemSublabel(item) }}
+                    </p>
+                  </div>
+                  <div class="shrink-0 flex flex-col items-end leading-tight">
+                    <span class="font-mono tabular-nums text-[14px]"
+                          [ngClass]="item.amountCents | klarMoneyClass">
+                      {{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}
+                    </span>
+                    @if (item.frequency !== 'MONTHLY' && item.frequency !== 'CUSTOM_DAYS') {
+                      <span class="font-mono tabular-nums text-[10px] text-(--fg-2) mt-0.5">
+                        ≈ {{ item.monthlyEquivalentCents | klarMoney }} / Monat
+                      </span>
+                    }
+                  </div>
+                </klar-list-row>
+              }
+            </klar-list-group>
+          }
+        </klar-list>
+
+        <!-- Total + Surplus footer card -->
+        <div class="total-card">
+          <div class="total-row">
+            <span class="label">Gesamt Ausgaben</span>
+            <span class="value font-mono tabular-nums">{{ expenseTotalCents() | klarMoney }}</span>
+          </div>
+          <div class="surplus-row" [class.deficit]="surplusCents() < 0">
+            <div>
+              <div class="label">Monatlicher {{ surplusCents() >= 0 ? 'Überschuss' : 'Defizit' }}</div>
+              <div class="sub">Basis · vor Sparrate</div>
             </div>
-          </klar-list-row>
-        }
-      </klar-list-group>
-    }
-  </klar-list>
-</div>
+            <div class="value" [class.pos]="surplusCents() >= 0" [class.neg]="surplusCents() < 0">
+              {{ surplusCents() | klarMoney }}
+            </div>
+          </div>
+        </div>
 
-<!-- Frequency legend -->
-@if (enrichedGroups().length > 0) {
-<div class="shrink-0 bg-(--bg) border-t border-(--border) px-5 py-2 flex items-center gap-4">
-  <div class="flex items-center gap-1.5">
-    <span class="w-2 h-2 rounded-full" style="background:#22c55e"></span>
-    <span class="text-[10px] text-(--text-muted)">Monatlich</span>
-  </div>
-  <div class="flex items-center gap-1.5">
-    <span class="w-2 h-2 rounded-full" style="background:#3b82f6"></span>
-    <span class="text-[10px] text-(--text-muted)">Quartalsweise</span>
-  </div>
-  <div class="flex items-center gap-1.5">
-    <span class="w-2 h-2 rounded-full" style="background:#a855f7"></span>
-    <span class="text-[10px] text-(--text-muted)">Jährlich</span>
-  </div>
-  <div class="flex items-center gap-1.5">
-    <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>
-    <span class="text-[10px] text-(--text-muted)">Individuell</span>
-  </div>
-</div>
-}
+        <!-- Frequency legend -->
+        <div class="freq-legend">
+          <span class="freq-item"><span class="freq-dot" style="background:#22c55e"></span>Monatlich</span>
+          <span class="freq-item"><span class="freq-dot" style="background:#3b82f6"></span>Quartalsweise</span>
+          <span class="freq-item"><span class="freq-dot" style="background:#a855f7"></span>Jährlich</span>
+          <span class="freq-item"><span class="freq-dot" style="background:#f59e0b"></span>Individuell</span>
+        </div>
+      </div>
 
-@if (selectionMode() && selectedCount() > 0) {
-  <klar-fab [label]="selectedCount() + ' ausgewählt'">
-    <button type="button" hlmBtn variant="ghost" size="sm" (click)="exitSelection()">
-      Abbrechen
-    </button>
-    <button type="button" hlmBtn variant="destructive" size="sm"
-            [disabled]="bulkDeleting()"
-            (click)="bulkDelete()">
-      <klar-icon name="trash-2" [size]="14" />
-      Löschen
-    </button>
-  </klar-fab>
-}
+      <!-- RIGHT — side panel (status meters + ratings) -->
+      <div>
+        <div class="section-head">Status</div>
+        <div class="side-card compact">
+          <div class="status-meter-row">
+            <div class="label">
+              <span>Einnahmen erfasst</span>
+              <span class="val">{{ incomeTotalCents() | klarMoney }}</span>
+            </div>
+            <div class="meter ok"><i style="width:100%"></i></div>
+          </div>
 
+          <div class="status-meter-row">
+            <div class="label">
+              <span>Ausgaben-Anteil</span>
+              <span class="val">{{ expenseRatio() ?? '–' }}{{ expenseRatio() !== null ? ' %' : '' }}</span>
+            </div>
+            <div class="meter"
+                 [class.ok]="(expenseRatio() ?? 0) <= 70"
+                 [class.warn]="(expenseRatio() ?? 0) > 70 && (expenseRatio() ?? 0) <= 100"
+                 [class.over]="(expenseRatio() ?? 0) > 100">
+              <i [style.width.%]="expenseRatio() === null ? 0 : (expenseRatio()! > 100 ? 100 : expenseRatio()!)"></i>
+            </div>
+          </div>
+
+          <div class="status-meter-row">
+            <div class="label">
+              <span>Sparrate (Ziel 20 %)</span>
+              <span class="val">{{ optimalSavingsCents() | klarMoney }}</span>
+            </div>
+            <div class="meter"
+                 [class.ok]="savingsGapPercent() >= 0"
+                 [class.warn]="savingsGapPercent() < 0 && savingsGapPercent() >= -5"
+                 [class.over]="savingsGapPercent() < -5">
+              <i [style.width.%]="savingsMeterPercent()"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">Bewertung</div>
+        <div class="side-card">
+          <div class="flex items-center justify-between text-[13px] py-1">
+            <span class="text-(--fg-1)">Ausgabenquote</span>
+            <span class="font-mono tabular-nums" [ngClass]="expenseRatingColor()">{{ expenseRating() || '–' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-[13px] py-1">
+            <span class="text-(--fg-1)">Überschussquote</span>
+            <span class="font-mono tabular-nums" [ngClass]="surplusRatingColor()">{{ surplusRating() || '–' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-[13px] py-1">
+            <span class="text-(--fg-1)">Sparrate</span>
+            <span class="font-mono tabular-nums" [ngClass]="savingsRatingColor()">{{ savingsRating() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (selectionMode() && selectedCount() > 0) {
+    <klar-fab [label]="selectedCount() + ' ausgewählt'">
+      <button type="button" hlmBtn variant="ghost" size="sm" (click)="exitSelection()">
+        Abbrechen
+      </button>
+      <button type="button" hlmBtn variant="destructive" size="sm"
+              [disabled]="bulkDeleting()"
+              (click)="bulkDelete()">
+        <klar-icon name="trash-2" [size]="14" />
+        Löschen
+      </button>
+    </klar-fab>
+  }
 </klar-async-state>

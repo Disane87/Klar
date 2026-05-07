@@ -1,0 +1,334 @@
+/* ================================================================
+   Fixkosten — Klar Design Pearl port (PageFixkosten).
+   Mirrors styles.css `.summary-strip`, `.row`, `.card`,
+   `.section-head`, `.surplus-row`, `.total-row`, `.planspiel`,
+   `.meter`, `.grid-2` from the bundle.
+   ================================================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-5) var(--s-6) calc(var(--s-16) + var(--safe-bottom));
+  gap: var(--s-5);
+  animation: klar-enter 160ms ease-out both;
+}
+
+/* ── Toolbar row (member filter, planspiel, selection, PDF) ──────── */
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.toolbar-row .toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+/* ── Summary strip (3 cells) ──────────────────────────────────────── */
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-4);
+}
+
+.summary-cell {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-8);
+  padding: var(--s-4) var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-cell .label {
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  font-weight: 500;
+}
+
+.summary-cell .value {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum";
+  font-size: var(--t-28);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.summary-cell .value.income  { color: var(--success); }
+.summary-cell .value.expense { color: var(--fg); }
+
+.summary-cell .delta {
+  font-size: var(--t-11);
+  font-family: var(--font-mono);
+  color: var(--fg-2);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.summary-cell.accent {
+  border-color: oklch(from var(--success) l c h / 0.4);
+  background:
+    radial-gradient(120% 80% at 100% 0%, oklch(from var(--success) l c h / 0.10), transparent 60%),
+    var(--bg-1);
+}
+
+.summary-cell.accent.deficit {
+  border-color: oklch(from var(--danger) l c h / 0.4);
+  background:
+    radial-gradient(120% 80% at 100% 0%, oklch(from var(--danger) l c h / 0.10), transparent 60%),
+    var(--bg-1);
+}
+
+.summary-cell.accent .value          { color: var(--success); }
+.summary-cell.accent.deficit .value  { color: var(--danger); }
+
+/* ── 2-col layout (lists + side panel) ────────────────────────────── */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--s-5);
+  align-items: start;
+}
+
+/* ── Section head ─────────────────────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-3) 6px;
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  font-weight: 500;
+}
+
+/* ── Total / Surplus card footer ──────────────────────────────────── */
+.total-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  overflow: hidden;
+  margin-top: var(--s-4);
+}
+
+.total-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: var(--s-4) var(--s-5);
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  align-items: baseline;
+}
+
+.total-row .label {
+  font-size: var(--t-11);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+.total-row .value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-16);
+}
+
+.surplus-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  padding: var(--s-5);
+  background:
+    radial-gradient(80% 100% at 100% 50%, oklch(from var(--success) l c h / 0.14), transparent 70%),
+    var(--bg-2);
+  border-top: 2px solid oklch(from var(--success) l c h / 0.3);
+  gap: var(--s-3);
+}
+
+.surplus-row.deficit {
+  background:
+    radial-gradient(80% 100% at 100% 50%, oklch(from var(--danger) l c h / 0.14), transparent 70%),
+    var(--bg-2);
+  border-top-color: oklch(from var(--danger) l c h / 0.3);
+}
+
+.surplus-row .label {
+  font-size: var(--t-11);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+.surplus-row .sub {
+  font-size: var(--t-11);
+  color: var(--fg-2);
+  margin-top: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+}
+
+.surplus-row .value {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum";
+  font-size: var(--t-40);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.surplus-row .value.pos { color: var(--success); }
+.surplus-row .value.neg { color: var(--danger); }
+
+/* ── Side panel cards ─────────────────────────────────────────────── */
+.side-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  padding: var(--s-3) var(--s-4);
+}
+
+.side-card.compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* Status meter rows */
+.status-meter-row .label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--t-12);
+  margin-bottom: 6px;
+}
+
+.status-meter-row .label .val {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-2);
+}
+
+.meter {
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.meter > i {
+  display: block;
+  height: 100%;
+  background: var(--fg-2);
+  border-radius: inherit;
+  transition: width 240ms var(--ease-out);
+}
+
+.meter.ok   > i { background: var(--success); }
+.meter.warn > i { background: var(--warn); }
+.meter.over > i { background: var(--danger); }
+
+/* ── Toolbar buttons ──────────────────────────────────────────────── */
+.toolbar-row .toolbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-11);
+  color: var(--fg-2);
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  border-radius: var(--r-4);
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.toolbar-row .toolbar-action:hover { color: var(--fg); background: var(--bg-2); }
+.toolbar-row .toolbar-action.active { color: var(--accent); }
+
+/* Member-filter circle button */
+.member-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+  padding: 0;
+}
+
+.member-btn:hover { border-color: var(--line-strong); }
+
+.member-btn.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: oklch(0.16 0.012 35);
+}
+
+/* Frequency legend at bottom */
+.freq-legend {
+  display: flex;
+  gap: var(--s-4);
+  padding: var(--s-2) 0;
+  flex-wrap: wrap;
+}
+
+.freq-legend .freq-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-10);
+  color: var(--fg-2);
+  letter-spacing: 0.04em;
+}
+
+.freq-legend .freq-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+@keyframes klar-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tablet/Mobile (< 1024px collapses 2-col to 1-col) ────────────── */
+@media (max-width: 1023px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 767px) {
+  .page              { padding: var(--s-4); gap: var(--s-4); }
+  .summary-strip     { grid-template-columns: 1fr; gap: var(--s-3); }
+  .summary-cell      { padding: var(--s-3) var(--s-4); }
+  .summary-cell .value { font-size: var(--t-24); }
+  .surplus-row       { padding: var(--s-4); }
+  .surplus-row .value { font-size: var(--t-32); }
+  .toolbar-row       { gap: var(--s-2); }
+}
