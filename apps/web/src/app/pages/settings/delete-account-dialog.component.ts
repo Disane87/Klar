@@ -4,13 +4,14 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
 import { AuthStore } from '../../core/auth/auth.store';
 
 @Component({
   selector: 'app-delete-account-dialog',
   standalone: true,
-  imports: [FormsModule, HlmInputDirective, HlmLabelDirective, KlarDialogFooterComponent],
+  imports: [FormsModule, HlmInputDirective, HlmLabelDirective, KlarDialogFooterComponent, KlarDialogCalloutComponent],
   templateUrl: './delete-account-dialog.component.html',
 })
 export class DeleteAccountDialogComponent {

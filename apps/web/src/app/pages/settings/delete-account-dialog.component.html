@@ -1,17 +1,17 @@
-<div class="dialog-body">
-  <p class="dialog-warning">
-    Diese Aktion ist unwiderruflich. Deine Einträge in gemeinsamen Haushalten bleiben anonymisiert erhalten.
-  </p>
-  <div class="field-group">
+<div class="flex flex-col gap-4">
+  <klar-dialog-callout tone="danger" icon="alert">
+    Diese Aktion ist unwiderruflich. Einträge in gemeinsamen Haushalten bleiben anonymisiert erhalten.
+  </klar-dialog-callout>
+  <div class="flex flex-col gap-1.5">
     <label hlmLabel for="confirm-email">
       Gib deine E-Mail-Adresse zur Bestätigung ein:
-      <strong>{{ userEmail() }}</strong>
+      <strong class="font-mono normal-case tracking-normal text-(--text)">{{ userEmail() }}</strong>
     </label>
     <input hlmInput id="confirm-email" type="email" autocomplete="off"
            [ngModel]="confirmEmail()" (ngModelChange)="confirmEmail.set($event)" />
   </div>
   @if (error()) {
-    <p class="dialog-error">{{ error() }}</p>
+    <p class="text-[12px] text-(--color-expense)">{{ error() }}</p>
   }
   <klar-dialog-footer
     confirmLabel="Konto unwiderruflich löschen"
