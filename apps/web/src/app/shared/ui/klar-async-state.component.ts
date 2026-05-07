@@ -51,6 +51,7 @@ export class KlarLoadingTplDirective {
 @Component({
   selector: 'klar-async-state',
   standalone: true,
+  host: { class: 'flex flex-col flex-1 min-h-0' },
   imports: [
     NgTemplateOutlet,
     KlarEmptyStateComponent,
