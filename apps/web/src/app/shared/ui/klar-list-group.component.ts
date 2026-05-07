@@ -7,29 +7,16 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
   selector: 'klar-list-group',
   standalone: true,
   imports: [NgClass, KlarSkeletonRowsComponent, KlarIconComponent],
-  host: { class: 'block border-b border-(--line-soft)' },
+  host: { class: 'setting-group block' },
   template: `
-    <div class="flex items-center justify-between px-6 py-3 border-b"
+    <div class="setting-group-head"
          [class.cursor-pointer]="collapsible()"
          [class.cat-bar]="headerDotColor()"
          [style.--cat-color]="headerDotColor()"
-         [ngClass]="[
-           danger()
-             ? 'bg-(--color-expense)/4 border-(--color-expense)/20'
-             : 'bg-(--bg-2)/40 border-(--line-soft)',
-           collapsible()
-             ? 'hover:bg-(--bg-2)/70 active:bg-(--bg-2) transition-colors'
-             : ''
-         ]"
+         [ngClass]="danger() ? 'text-(--danger)' : ''"
          (click)="collapsible() && headerAction.emit()">
 
-      <!-- Left: label (left-border in --cat-color replaces the old dot per Design Pearl spec) -->
-      <div class="flex items-center min-w-0">
-        <span class="eyebrow truncate"
-              [ngClass]="danger() ? 'text-(--color-expense)' : ''">
-          {{ label() }}
-        </span>
-      </div>
+      <span class="truncate">{{ label() }}</span>
 
       <!-- Right: optional value + action button + chevron -->
       <div class="flex items-center gap-2 ml-3 shrink-0">
@@ -59,16 +46,18 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
       </div>
     </div>
 
-    @if (loading()) {
-      <div class="px-6 py-3">
-        <klar-skeleton-rows [count]="3" />
-      </div>
-    } @else if (!collapsed()) {
-      <ng-content />
-      @if (footnote()) {
-        <p class="px-6 pb-3 pt-1 text-[11px] text-(--text-muted) leading-relaxed">{{ footnote() }}</p>
+    <div class="setting-card">
+      @if (loading()) {
+        <div class="px-6 py-3">
+          <klar-skeleton-rows [count]="3" />
+        </div>
+      } @else if (!collapsed()) {
+        <ng-content />
+        @if (footnote()) {
+          <p class="px-(--s-5) py-(--s-3) text-[11px] text-(--fg-2) leading-relaxed border-t border-(--line-soft)">{{ footnote() }}</p>
+        }
       }
-    }
+    </div>
   `,
 })
 export class KlarListGroupComponent {

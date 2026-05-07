@@ -560,6 +560,201 @@ input, select, textarea {
 }
 
 /* ============================================================
+   Settings primitives — bundle PageSettings .setting-* family
+   Used by /app/settings + /app/haushalt + /app/admin pages.
+   ============================================================ */
+.setting-group {
+  display: block;
+  margin-bottom: var(--s-6);
+}
+.setting-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 0 var(--s-2) 8px;
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  font-weight: 500;
+}
+.setting-group-head > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.setting-group-action {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.setting-group-intro {
+  font-size: var(--t-12);
+  color: var(--fg-2);
+  line-height: 1.5;
+  margin: 0 var(--s-2) 10px;
+  max-width: 70ch;
+}
+.setting-card {
+  border-radius: var(--r-6);
+  overflow: hidden;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--s-4);
+  align-items: center;
+  padding: 14px var(--s-5);
+  border-bottom: 1px solid var(--line-soft);
+  min-height: 56px;
+  transition: background var(--dur-1) ease;
+}
+.setting-row.last,
+.setting-row:last-child { border-bottom: none; }
+.setting-row.interactive { cursor: pointer; }
+.setting-row.interactive:hover { background: var(--bg-2); }
+.setting-row.danger .setting-label { color: var(--danger); }
+.setting-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-6);
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  color: var(--fg-2);
+  border: 1px solid var(--line-soft);
+}
+.setting-row.danger .setting-icon {
+  color: var(--danger);
+  border-color: oklch(from var(--danger) l c h / 0.3);
+  background: var(--danger-soft);
+}
+.setting-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.setting-label {
+  font-size: var(--t-14);
+  color: var(--fg);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.setting-hint {
+  font-size: var(--t-11);
+  color: var(--fg-2);
+  line-height: 1.4;
+}
+.setting-rhs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+  margin-left: auto;
+}
+.setting-meta {
+  font-size: var(--t-12);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+}
+
+/* Avatar — bundle sizes */
+.avatar-xl {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+  border-radius: var(--r-12);
+  display: grid;
+  place-items: center;
+  background: var(--bg-3);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Profile hero card */
+.profile-card { padding: var(--s-5); background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-8); }
+.profile-grid { display: grid; grid-template-columns: 96px 1fr; gap: var(--s-5); }
+.profile-avatar { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.profile-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3) var(--s-4); }
+@media (max-width: 640px) {
+  .profile-grid { grid-template-columns: 1fr; }
+  .profile-fields { grid-template-columns: 1fr; }
+}
+.profile-field { display: flex; flex-direction: column; gap: 4px; }
+.profile-readonly {
+  padding: 9px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-6);
+  background: var(--bg-2);
+  font-size: var(--t-13);
+  color: var(--fg-1);
+}
+.profile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  flex-wrap: wrap;
+}
+
+/* Danger zone */
+.danger-zone .setting-card { border-color: oklch(from var(--danger) l c h / 0.35); }
+.danger-zone .setting-group-head { color: var(--danger); }
+
+/* App info strip (bottom of settings) */
+.app-info {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  overflow: hidden;
+  margin-top: var(--s-4);
+}
+.app-info > div {
+  background: var(--bg-1);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--t-12);
+}
+.app-info > div > span:first-child {
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+@media (max-width: 640px) {
+  .app-info { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Page intro paragraph (above setting-group cards) */
+.page-intro {
+  font-size: var(--t-13);
+  color: var(--fg-2);
+  line-height: 1.55;
+  max-width: 70ch;
+  margin-bottom: var(--s-5);
+}
+.page-intro .link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ============================================================
    Segmented (scope picker — Mai 2026 / Schnitt 6 M / Jahr)
    Bundle styles.css uses .segmented. Single-line pill group.
    ============================================================ */

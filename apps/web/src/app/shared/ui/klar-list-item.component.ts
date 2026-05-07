@@ -7,22 +7,21 @@ import { KlarAvatarComponent } from './klar-avatar.component';
   selector: 'klar-list-item',
   standalone: true,
   imports: [NgClass, NgTemplateOutlet, KlarIconComponent, KlarAvatarComponent],
-  host: { class: 'block w-full border-b border-(--border)/40 last:border-b-0' },
+  host: { class: 'block w-full' },
   template: `
     @if (navigable()) {
       <button type="button"
-              class="w-full flex items-center gap-3 px-6 py-2.5 min-h-11 text-left transition-colors"
+              class="setting-row interactive w-full text-left"
+              [class.danger]="danger()"
               [class.opacity-40]="disabled()"
               [class.pointer-events-none]="disabled()"
-              [ngClass]="danger()
-                ? 'hover:bg-(--color-expense)/6 active:bg-(--color-expense)/10'
-                : 'hover:bg-(--surface-2)/60 active:bg-(--surface-2)'"
               (click)="itemClick.emit()">
         <ng-container *ngTemplateOutlet="row" />
-        <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--text-muted)" />
+        <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--fg-3)" />
       </button>
     } @else {
-      <div class="flex w-full items-center gap-3 px-6 py-2.5 min-h-11 overflow-hidden"
+      <div class="setting-row"
+           [class.danger]="danger()"
            [class.opacity-40]="disabled()">
         <ng-container *ngTemplateOutlet="row" />
       </div>
@@ -32,12 +31,12 @@ import { KlarAvatarComponent } from './klar-avatar.component';
       <!-- Slot: arbitrary leading content (e.g. checkbox), rendered before auto-leading -->
       <ng-content select="[klarLeading]" />
 
-      <!-- Leading: status dot, avatar (url or seed), or icon -->
+      <!-- Leading: status dot, avatar (url or seed), or icon-box (bundle .setting-icon) -->
       @if (dotColor()) {
-        <div class="size-2 rounded-full shrink-0"
-             [ngClass]="dotColor() === 'income'
-               ? 'bg-(--color-income) shadow-[0_0_4px_var(--color-income)]'
-               : 'bg-(--text-muted)'"></div>
+        <span class="setting-icon" [style.color]="dotColor() === 'income' ? 'var(--success)' : 'var(--fg-3)'"
+              [style.background]="dotColor() === 'income' ? 'var(--success-soft)' : 'var(--bg-2)'">
+          <span class="size-1.5 rounded-full" style="background: currentColor;"></span>
+        </span>
       } @else if (avatarUrl() !== undefined || avatarSeed()) {
         <klar-avatar [avatarUrl]="avatarUrl()"
                      [seed]="avatarSeed() ?? ''"
@@ -46,58 +45,49 @@ import { KlarAvatarComponent } from './klar-avatar.component';
                      [tooltipSub]="sublabel()"
                      [hoverCard]="hoverCard()" />
       } @else if (icon()) {
-        <klar-icon [name]="icon()!" [size]="16"
-                   class="shrink-0"
-                   [ngClass]="danger() ? 'text-(--color-expense)' : 'text-(--text-muted)'" />
+        <span class="setting-icon">
+          <klar-icon [name]="icon()!" [size]="14" />
+        </span>
       }
 
-      <!-- Label + sublabel -->
-      <div class="flex-1 min-w-0">
-        <p class="text-[13px] font-medium truncate"
-           [ngClass]="danger() ? 'text-(--color-expense)' : ''">
-          {{ label() }}
-        </p>
+      <!-- Label + sublabel (bundle .setting-text) -->
+      <div class="setting-text">
+        <span class="setting-label">{{ label() }}</span>
         @if (sublabel()) {
-          <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">{{ sublabel() }}</p>
+          <span class="setting-hint">{{ sublabel() }}</span>
         }
       </div>
 
-      <!-- Trailing: badge -->
-      @if (badge()) {
-        <span class="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-xs"
-              [ngClass]="badgeClass() ?? 'bg-(--surface-2) text-(--text-muted)'">
-          {{ badge() }}
-        </span>
-      }
-
-      <!-- Trailing: monospace value -->
-      @if (value()) {
-        <span class="shrink-0 font-mono tabular-nums text-[13px]"
-              [ngClass]="valueClass() ?? 'text-(--text-muted)'">
-          {{ value() }}
-        </span>
-      }
-
-      <!-- Slot: arbitrary trailing content (e.g. select, toggle) before action button -->
-      <ng-content select="[klarTrailing]" />
-
-      <!-- Trailing: action button (label or icon) -->
-      @if (_hasTrailing()) {
-        <button type="button"
-                class="shrink-0 min-h-11 px-2.5 text-[12px] font-medium transition-colors rounded-xs"
-                [class.opacity-40]="trailingActionDisabled()"
-                [class.pointer-events-none]="trailingActionDisabled()"
-                [ngClass]="trailingActionDanger()
-                  ? 'text-(--color-expense) hover:bg-(--color-expense)/10 active:bg-(--color-expense)/10'
-                  : 'text-(--text-muted) hover:text-(--text) hover:bg-(--surface-2) active:bg-(--surface-2)'"
-                (click)="$event.stopPropagation(); trailingActionClick.emit()">
-          @if (trailingActionIcon() && !trailingActionLabel()) {
-            <klar-icon [name]="trailingActionIcon()!" [size]="14" />
-          } @else {
-            {{ trailingActionLabel() }}
-          }
-        </button>
-      }
+      <!-- Trailing actions group (bundle .setting-rhs) -->
+      <div class="setting-rhs">
+        @if (badge()) {
+          <span class="chip"
+                [ngClass]="badgeClass() ?? ''">
+            {{ badge() }}
+          </span>
+        }
+        @if (value()) {
+          <span class="setting-meta"
+                [ngClass]="valueClass() ?? ''">
+            {{ value() }}
+          </span>
+        }
+        <ng-content select="[klarTrailing]" />
+        @if (_hasTrailing()) {
+          <button type="button"
+                  class="btn ghost sm"
+                  [class.danger]="trailingActionDanger()"
+                  [class.opacity-40]="trailingActionDisabled()"
+                  [class.pointer-events-none]="trailingActionDisabled()"
+                  (click)="$event.stopPropagation(); trailingActionClick.emit()">
+            @if (trailingActionIcon() && !trailingActionLabel()) {
+              <klar-icon [name]="trailingActionIcon()!" [size]="14" />
+            } @else {
+              {{ trailingActionLabel() }}
+            }
+          </button>
+        }
+      </div>
     </ng-template>
   `,
 })
