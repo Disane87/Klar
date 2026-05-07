@@ -6,7 +6,7 @@ import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-head
 import { KlarVirtualListComponent } from '../../../shared/ui/klar-virtual-list.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { AdminApiService, type AuditFilter, type AuditLogEntry } from '../admin.service';
-import { usePaginatedList } from './use-paginated-list';
+import { usePaginatedList } from '../../../shared/data/use-paginated-list';
 
 @Component({
   selector: 'klar-admin-audit-tab',

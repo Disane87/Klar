@@ -7,7 +7,7 @@ import { KlarFilterBarComponent } from '../../../shared/ui/klar-filter-bar.compo
 import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-header.component';
 import { KlarVirtualListComponent } from '../../../shared/ui/klar-virtual-list.component';
 import { AdminApiService, type EmailFilter, type EmailLogEntry } from '../admin.service';
-import { usePaginatedList } from './use-paginated-list';
+import { usePaginatedList } from '../../../shared/data/use-paginated-list';
 
 @Component({
   selector: 'klar-admin-emails-tab',
