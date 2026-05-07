@@ -129,31 +129,63 @@
     <!-- 2-col grid: lists left, side panel right -->
     <div class="grid-2">
 
-      <!-- LEFT — categorized lists + total/surplus footer -->
+      <!-- LEFT — Einnahmen + Ausgaben sections + total/surplus footer -->
       <div>
-        <klar-list>
-          @for (group of enrichedGroups(); track group.categoryId) {
-            <klar-list-group
-              [label]="group.categoryName"
-              [headerDotColor]="group.categoryColor"
-              [headerValue]="group.totalCents | klarMoney"
-              [headerValueClass]="group.totalCents | klarMoneyClass"
-              [collapsible]="true"
-              [collapsed]="isCollapsed(group.categoryId)"
-              (headerAction)="toggleGroup(group.categoryId)">
-              @if (selectionMode() && !planspielActive()) {
-                <div class="flex items-center px-6 py-2 border-b border-(--line)/40 bg-(--bg-2)/30 cursor-pointer"
-                     (click)="$event.stopPropagation(); toggleGroupSelection(group)">
-                  <hlm-checkbox
-                    [checked]="groupSelectionState(group) === 'all'"
-                    [indeterminate]="groupSelectionState(group) === 'partial'"
-                    class="cursor-pointer" />
-                  <span class="ml-3 text-[11px] text-(--fg-2) select-none">
-                    Gruppe auswählen ({{ group.items.length }})
-                  </span>
-                </div>
-              }
-              @for (item of group.items; track item.id) {
+        <!-- EINNAHMEN section header (bundle PageFixkosten Z. 151–153) -->
+        @if (incomeGroups().length > 0) {
+          <div class="section-head" style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span>Einnahmen</span>
+            <span class="mono text-(--success)">+ {{ incomeTotalCents() | klarMoney }}</span>
+          </div>
+          <klar-list>
+            @for (group of incomeGroups(); track group.categoryId) {
+              <ng-container
+                [ngTemplateOutlet]="groupTpl"
+                [ngTemplateOutletContext]="{ $implicit: group }"
+              />
+            }
+          </klar-list>
+        }
+
+        <!-- AUSGABEN section header (bundle PageFixkosten Z. 191–193) -->
+        @if (expenseGroups().length > 0) {
+          <div class="section-head" style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span>Ausgaben</span>
+            <span class="mono text-(--fg-2)">− {{ expenseTotalCents() * -1 | klarMoney }}</span>
+          </div>
+          <klar-list>
+            @for (group of expenseGroups(); track group.categoryId) {
+              <ng-container
+                [ngTemplateOutlet]="groupTpl"
+                [ngTemplateOutletContext]="{ $implicit: group }"
+              />
+            }
+          </klar-list>
+        }
+
+        <!-- Shared group renderer template — DRY across Einnahmen + Ausgaben -->
+        <ng-template #groupTpl let-group>
+          <klar-list-group
+            [label]="group.categoryName"
+            [headerDotColor]="group.categoryColor"
+            [headerValue]="group.totalCents | klarMoney"
+            [headerValueClass]="group.totalCents | klarMoneyClass"
+            [collapsible]="true"
+            [collapsed]="isCollapsed(group.categoryId)"
+            (headerAction)="toggleGroup(group.categoryId)">
+            @if (selectionMode() && !planspielActive()) {
+              <div class="flex items-center px-6 py-2 border-b border-(--line)/40 bg-(--bg-2)/30 cursor-pointer"
+                   (click)="$event.stopPropagation(); toggleGroupSelection(group)">
+                <hlm-checkbox
+                  [checked]="groupSelectionState(group) === 'all'"
+                  [indeterminate]="groupSelectionState(group) === 'partial'"
+                  class="cursor-pointer" />
+                <span class="ml-3 text-[11px] text-(--fg-2) select-none">
+                  Gruppe auswählen ({{ group.items.length }})
+                </span>
+              </div>
+            }
+            @for (item of group.items; track item.id) {
                 <klar-list-row [navigable]="true" (rowClick)="openEdit(item)">
                   @if (selectionMode() && !planspielActive()) {
                     <hlm-checkbox
@@ -194,9 +226,8 @@
                   </div>
                 </klar-list-row>
               }
-            </klar-list-group>
-          }
-        </klar-list>
+          </klar-list-group>
+        </ng-template>
 
         <!-- Total + Surplus footer card -->
         <div class="total-card">

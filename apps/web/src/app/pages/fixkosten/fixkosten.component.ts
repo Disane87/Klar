@@ -1,5 +1,5 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { RouterLink } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -32,7 +32,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
+  imports: [NgClass, NgTemplateOutlet, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
   // <iconify-icon> is a web component, not an Angular directive.
@@ -340,6 +340,16 @@ grouped.set(key, {
   });
 
   // ── Summary computed ─────────────────────────────────────────────────────────
+
+  /** Income groups (positive total) — rendered under the EINNAHMEN section. */
+  readonly incomeGroups = computed(() =>
+    this.enrichedGroups().filter(g => g.totalCents >= 0 || g.categoryType === 'INCOME'),
+  );
+
+  /** Expense groups (negative total) — rendered under the AUSGABEN section. */
+  readonly expenseGroups = computed(() =>
+    this.enrichedGroups().filter(g => g.totalCents < 0 && g.categoryType !== 'INCOME'),
+  );
 
   readonly incomeTotalCents = computed(() =>
     this.enrichedGroups().filter(g => g.totalCents > 0).reduce((s, g) => s + g.totalCents, 0)
