@@ -8,6 +8,7 @@ import { HouseholdStore } from '../../core/household/household.store';
 import { AuthStore } from '../../core/auth/auth.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { ApiKeysStore, AVAILABLE_SCOPES } from '../../core/api-keys/api-keys.store';
 import type { ApiKeyListItem } from '../../core/api-keys/api-keys.service';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -43,6 +44,7 @@ export class HaushaltPageComponent implements OnInit {
   private toast = inject(KlarToastService);
   private authStore = inject(AuthStore);
   private dialogService = inject(KlarDialogService);
+  private confirm = inject(KlarConfirmService);
 
   readonly availableScopes = AVAILABLE_SCOPES;
   readonly authUserId = computed(() => this.authStore.user()?.id);
@@ -226,7 +228,12 @@ export class HaushaltPageComponent implements OnInit {
   }
 
   async leaveHousehold(): Promise<void> {
-    const confirmed = window.confirm('Möchtest du diesen Haushalt wirklich verlassen?');
+    const confirmed = await this.confirm.ask({
+      title: 'Haushalt verlassen?',
+      message: 'Möchtest du diesen Haushalt wirklich verlassen?',
+      confirmLabel: 'Verlassen',
+      tone: 'danger',
+    });
     if (!confirmed) return;
     this.leavingHousehold.set(true);
     try {
@@ -242,9 +249,13 @@ export class HaushaltPageComponent implements OnInit {
 
   async deleteHousehold(): Promise<void> {
     const name = this.store.activeName();
-    const confirmed = window.confirm(
-      `Haushalt "${name}" unwiderruflich löschen?\n\nAlle Daten gehen verloren.`,
-    );
+    const confirmed = await this.confirm.ask({
+      title: 'Haushalt löschen?',
+      message: `Haushalt "${name}" unwiderruflich löschen?`,
+      detail: 'Alle Daten gehen verloren.',
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    });
     if (!confirmed) return;
     this.deletingHousehold.set(true);
     try {

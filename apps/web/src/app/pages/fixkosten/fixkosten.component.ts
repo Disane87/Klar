@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
@@ -40,6 +41,7 @@ export class FixkostenPageComponent {
   protected store         = inject(OverviewStore);
   private pageHeader      = inject(PageHeaderService);
   private dialogService   = inject(KlarDialogService);
+  private confirm          = inject(KlarConfirmService);
   private router          = inject(Router);
   private pdfReport       = inject(PdfReportService);
   protected householdStore = inject(HouseholdStore);
@@ -211,9 +213,12 @@ export class FixkostenPageComponent {
     const hid = this.householdStore.activeId();
     if (!hid) return;
 
-    const confirmed = window.confirm(
-      `${ids.length} ${ids.length === 1 ? 'Eintrag' : 'Einträge'} wirklich löschen?`
-    );
+    const confirmed = await this.confirm.ask({
+      title: ids.length === 1 ? 'Eintrag löschen?' : 'Einträge löschen?',
+      message: `${ids.length} ${ids.length === 1 ? 'Eintrag' : 'Einträge'} wirklich löschen?`,
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    });
     if (!confirmed) return;
 
     this.bulkDeleting.set(true);

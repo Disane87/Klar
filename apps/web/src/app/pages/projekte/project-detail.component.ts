@@ -9,6 +9,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewService, type ProjectOverviewItem } from '../../core/overview/overview.service';
 import { ProjectsService, type ProjectResponse } from '../../core/projects/projects.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
@@ -48,6 +49,7 @@ export class ProjectDetailPageComponent {
   private overviewSvc  = inject(OverviewService);
   private projectsSvc  = inject(ProjectsService);
   private dialog       = inject(KlarDialogService);
+  private confirm      = inject(KlarConfirmService);
   private toast        = inject(KlarToastService);
   private pageHeader   = inject(PageHeaderService);
 
@@ -232,7 +234,14 @@ export class ProjectDetailPageComponent {
     if (!p || this.deleting()) return;
     const hid = this.household.activeId();
     if (!hid) return;
-    if (!confirm(`Projekt „${p.name}" wirklich löschen?\n(Hat das Projekt Buchungen, wird es stattdessen archiviert.)`)) return;
+    const ok = await this.confirm.ask({
+      title: 'Projekt löschen?',
+      message: `Projekt „${p.name}" wirklich löschen?`,
+      detail: 'Hat das Projekt Buchungen, wird es stattdessen archiviert.',
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    });
+    if (!ok) return;
 
     this.deleting.set(true);
     try {

@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
@@ -34,6 +35,7 @@ const PRESET_COLORS = [
 })
 export class PlanspielPageComponent {
   protected store = inject(PlanspielStore);
+  private confirm = inject(KlarConfirmService);
 
   protected readonly presetColors = PRESET_COLORS;
 
@@ -136,8 +138,16 @@ export class PlanspielPageComponent {
     });
   }
 
-  confirmReset(): void {
+  async confirmReset(): Promise<void> {
     if (this.store.entries().length === 0) return;
+    const ok = await this.confirm.ask({
+      title: 'Planspiel zurücksetzen?',
+      message: 'Alle Posten dieser Simulation werden entfernt.',
+      detail: 'Daten sind nur lokal gespeichert und können nicht wiederhergestellt werden.',
+      confirmLabel: 'Zurücksetzen',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.store.reset();
   }
 }

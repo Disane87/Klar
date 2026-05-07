@@ -8,6 +8,7 @@ import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { PdfReportService } from '../../core/pdf/pdf-report.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
 
@@ -17,7 +18,7 @@ describe('FixkostenPageComponent — bulk selection', () => {
   let toastSuccess:    ReturnType<typeof vi.fn>;
   let toastError:      ReturnType<typeof vi.fn>;
   let storeReload:     ReturnType<typeof vi.fn>;
-  let confirmSpy:      ReturnType<typeof vi.spyOn>;
+  let confirmAsk:      ReturnType<typeof vi.fn>;
 
   const sampleGroup = {
     categoryId: 'cat-1',
@@ -29,6 +30,7 @@ describe('FixkostenPageComponent — bulk selection', () => {
     toastSuccess    = vi.fn();
     toastError      = vi.fn();
     storeReload     = vi.fn();
+    confirmAsk      = vi.fn().mockResolvedValue(true);
 
     const overviewStub = {
       fixedCosts:   signal(null),
@@ -70,6 +72,7 @@ describe('FixkostenPageComponent — bulk selection', () => {
         { provide: PageHeaderService,             useValue: pageHeaderStub },
         { provide: PdfReportService,              useValue: { exportFixkosten: vi.fn() } },
         { provide: KlarDialogService,             useValue: { open: vi.fn(), close: vi.fn() } },
+        { provide: KlarConfirmService,            useValue: { ask: confirmAsk } },
         { provide: KlarToastService,              useValue: { success: toastSuccess, error: toastError } },
         { provide: RecurringTransactionsService,  useValue: { delete: recurringDelete } },
       ],
@@ -77,12 +80,6 @@ describe('FixkostenPageComponent — bulk selection', () => {
 
     const fixture = TestBed.createComponent(FixkostenPageComponent);
     component = fixture.componentInstance;
-
-    confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-  });
-
-  afterEach(() => {
-    confirmSpy.mockRestore();
   });
 
   it('starts outside selection mode with empty selection', () => {
@@ -163,9 +160,10 @@ describe('FixkostenPageComponent — bulk selection', () => {
     });
 
     it('aborts if user cancels confirm', async () => {
-      confirmSpy.mockReturnValueOnce(false);
+      confirmAsk.mockResolvedValueOnce(false);
       component.toggleItem('i-1');
       await component.bulkDelete();
+      expect(confirmAsk).toHaveBeenCalledOnce();
       expect(recurringDelete).not.toHaveBeenCalled();
     });
 

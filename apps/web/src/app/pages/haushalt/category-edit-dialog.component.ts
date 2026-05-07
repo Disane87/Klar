@@ -4,6 +4,7 @@ import { DialogRef } from '@angular/cdk/dialog';
 import type { Category, CategoryType } from '@klar/shared';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
@@ -140,6 +141,7 @@ export class CategoryEditDialogComponent implements OnInit {
   private store = inject(CategoriesStore);
   private toast = inject(KlarToastService);
   private dialogRef = inject<DialogRef<unknown>>(DialogRef);
+  private confirm = inject(KlarConfirmService);
 
   protected readonly typeOptions = TYPE_OPTIONS;
 
@@ -206,9 +208,13 @@ export class CategoryEditDialogComponent implements OnInit {
   async onDelete(): Promise<void> {
     const c = this.category();
     if (!c) return;
-    const confirmed = window.confirm(
-      `Kategorie "${c.name}" löschen?\n\nFalls bereits Buchungen darauf verweisen, wird sie nur archiviert.`,
-    );
+    const confirmed = await this.confirm.ask({
+      title: 'Kategorie löschen?',
+      message: `Kategorie "${c.name}" löschen?`,
+      detail: 'Falls bereits Buchungen darauf verweisen, wird sie nur archiviert.',
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    });
     if (!confirmed) return;
     this.deleting.set(true);
     try {
