@@ -38,6 +38,7 @@
 | **📈 Statistik** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
 | **🪪 Sessions Verwaltung** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
 | **⚙️ Einstellungen** | Hero profile card with avatar / display name / email (verified chip) / member-since / role; SettingGroups for Security (2FA, Passkeys, OIDC), Sessions, Darstellung (theme via segmented), Verknüpfte Konten, Daten (Export/Import), Danger Zone; bottom .app-info strip (Version / Build / Server / Sprache) |
+| **🏠 Haushalt** | Hero info card with name (Fraunces) + ID chip + role + Auflösen/Verlassen action; SettingGroups for Members (role-chip OWNER/MEMBER tone-mapped to success/default), Mail-Templates (klar-list rows), Kategorien (manage tile-grid), API-Keys (one-time-reveal + revoke), Danger-Zone (delete) |
 | **🧷 Splits** | A booking can be intern split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
 | **✏️ Bulk-Aktionen** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
 | **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETISCH chip for Planspiel projections |
@@ -274,6 +275,10 @@ A single `Transaction` can carry one or more `TransactionSplit` rows (still casc
 ### 🔌 Connected Apps
 
 `ConnectedApp` model (`provider`, `externalId`, `scopes[]`, `lastUsedAt`) lets the Settings page show a per-user list of OIDC linkages (PocketID / GitHub / Google / claude.ai / …) with edit + unlink. Endpoints scoped to the user (`/me/connected-apps`, behind `JwtAuthGuard`).
+
+### 🏠 Haushalt
+
+`/app/haushalt` opens with a tight bundle `.profile-card` hero — household name in Fraunces (24 px, -0.02 em tracking), short ID rendered as a `.chip.outline.mono` next to it, member count + role line, and a quick-action row (Umbenennen for owners; Auflösen if you're the sole owner, Verlassen otherwise). The page-header gains a static `WG` rhsChip plus, for owners, a `+ Einladen` action that opens the invite dialog. Below the hero, every section uses the bundle `.setting-group` pattern (eyebrow head + `.setting-card`): Meine Haushalte switcher (when you belong to more than one), Mitglieder with role chips tone-mapped to `.chip.success` (OWNER) / default `.chip` (MEMBER) and trash trailing-action for invite cleanup, Einladungen, Mail-Vorlagen, Kategorien-Manager (tile grid with category-color rail; `klar-select` searchable+addable upgrade is deferred to Haushalt-2), API-Schlüssel with one-time reveal banner + scope checkboxes + warn chip on revoked keys, and finally a `.danger-zone` modifier wrapping the formal delete/leave block.
 
 ### 🛠️ Mode Toolbar (mockup helper)
 
