@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { KlarAsyncStateComponent } from './klar-async-state.component';
+import { KlarAsyncStateComponent, KlarLoadingTplDirective } from './klar-async-state.component';
 
 describe('KlarAsyncStateComponent', () => {
   @Component({
@@ -70,5 +70,32 @@ describe('KlarAsyncStateComponent', () => {
     const fx = setup({ error: 'x', empty: true });
     expect(fx.nativeElement.querySelector('klar-error-bar')).toBeTruthy();
     expect(fx.nativeElement.querySelector('klar-empty-state')).toBeFalsy();
+  });
+});
+
+describe('KlarAsyncStateComponent — custom loading slot', () => {
+  @Component({
+    standalone: true,
+    imports: [KlarAsyncStateComponent, KlarLoadingTplDirective],
+    template: `
+      <klar-async-state [loading]="true" [empty]="false" emptyMessage="x">
+        <ng-template klarLoading>
+          <div data-test="custom-skeleton">CUSTOM</div>
+        </ng-template>
+        <div data-test="content">CONTENT</div>
+      </klar-async-state>
+    `,
+  })
+  class Host {}
+
+  it('renders custom skeleton when klarLoading template is projected', () => {
+    TestBed.configureTestingModule({
+      imports: [Host],
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
+    const fx = TestBed.createComponent(Host);
+    fx.detectChanges();
+    expect(fx.nativeElement.querySelector('[data-test="custom-skeleton"]')).toBeTruthy();
+    expect(fx.nativeElement.querySelector('klar-skeleton-rows')).toBeFalsy();
   });
 });
