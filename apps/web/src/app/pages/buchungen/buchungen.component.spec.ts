@@ -14,6 +14,7 @@ describe('BuchungenPageComponent', () => {
       currentMonth: signal('2026-05'),
       loading:     signal(false),
       error:       signal(null),
+      isEmpty:     signal(false),
       reload:      vi.fn(),
       setMonth:    vi.fn(),
     };

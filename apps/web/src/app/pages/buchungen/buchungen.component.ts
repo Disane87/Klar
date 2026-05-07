@@ -18,6 +18,10 @@ type Filter = 'alle' | 'rec' | 'manual' | 'income';
 /**
  * Filter predicates — single source of truth shared between
  * `filtered()` and `filterCounts()`.
+ *
+ * The four tabs are independent lenses, not a partition: e.g. a manual
+ * income transaction is counted in both 'manual' and 'income'. `alle`
+ * does NOT equal rec + manual + income — do not "fix" the overlap.
  */
 const FILTER_PREDICATES: Record<Exclude<Filter, 'alle'>, (t: Transaction) => boolean> = {
   rec:    t => !!t.recurringTransactionId && t.amountCents < 0,
