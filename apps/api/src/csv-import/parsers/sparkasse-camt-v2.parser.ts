@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as iconv from 'iconv-lite';
 import * as Papa from 'papaparse';
-import { counterpartyKey } from '../utils/counterparty-key';
+import { counterpartyKey } from '../../import-pipeline/utils/counterparty-key';
 
 export interface ParsedRow {
   rowIndex: number;

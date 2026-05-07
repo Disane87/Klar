@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { RecurringSuggester, type HistoryEntry } from './recurring-suggester';
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 
-const row = (overrides: Partial<ParsedRow> = {}): ParsedRow => ({
+const row = (overrides: Partial<BookingRow> = {}): BookingRow => ({
   rowIndex: 0,
   date: '2026-04-15',
   amountCents: -1299,

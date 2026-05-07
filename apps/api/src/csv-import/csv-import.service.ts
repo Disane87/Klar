@@ -12,14 +12,14 @@ import {
 } from './parsers/sparkasse-camt-v2.parser';
 import { CsvImportRepository } from './csv-import.repository';
 import { AccountsService } from '../accounts/accounts.service';
-import { DuplicateDetector } from './detection/duplicate-detector';
+import { DuplicateDetector } from '../import-pipeline/detection/duplicate-detector';
 import {
   FixedCostMatcher,
   type RecurringForMatch,
-} from './detection/fixed-cost-matcher';
-import { RecurringSuggester } from './detection/recurring-suggester';
-import { CategorySuggester } from './detection/category-suggester';
-import { counterpartyKey } from './utils/counterparty-key';
+} from '../import-pipeline/detection/fixed-cost-matcher';
+import { RecurringSuggester } from '../import-pipeline/detection/recurring-suggester';
+import { CategorySuggester } from '../import-pipeline/detection/category-suggester';
+import { counterpartyKey } from '../import-pipeline/utils/counterparty-key';
 
 export type RowStatus = 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_SUGGESTION';
 

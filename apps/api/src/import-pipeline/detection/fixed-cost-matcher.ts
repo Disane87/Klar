@@ -1,5 +1,5 @@
 import { safeDayOfMonth } from '@klar/shared';
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 
 export interface RecurringForMatch {
   id: string;
@@ -28,7 +28,7 @@ export class FixedCostMatcher {
       .map(r => ({ ...r, tokens: tokenize(`${r.nameNorm} ${r.noteNorm}`) }));
   }
 
-  match(row: ParsedRow): RecurringForMatch | null {
+  match(row: BookingRow): RecurringForMatch | null {
     const rowTokens = tokenize(`${row.counterpartyNorm} ${row.purposeNorm}`);
     if (rowTokens.length === 0) return null;
 

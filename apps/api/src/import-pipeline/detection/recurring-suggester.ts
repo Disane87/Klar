@@ -1,4 +1,4 @@
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 
 export interface HistoryEntry {
   counterpartyNorm: string;
@@ -26,7 +26,7 @@ export class RecurringSuggester {
     }
   }
 
-  suggest(row: ParsedRow): SuggestionResult | null {
+  suggest(row: BookingRow): SuggestionResult | null {
     if (!row.counterpartyNorm) return null;
     const all = this.byCp.get(row.counterpartyNorm) ?? [];
     const matches = all.filter(e => this.amountMatches(e.amountCents, row.amountCents));

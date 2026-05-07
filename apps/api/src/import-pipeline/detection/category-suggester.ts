@@ -1,4 +1,4 @@
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 
 export type Confidence = 'EXACT' | 'LEARNED' | 'NONE';
 
@@ -18,7 +18,7 @@ export class CategorySuggester {
     private readonly learnings: Map<string, string>,
   ) {}
 
-  suggest(row: ParsedRow): CategorySuggestion {
+  suggest(row: BookingRow): CategorySuggestion {
     if (!row.counterpartyNorm) return { categoryId: null, confidence: 'NONE' };
 
     for (const rec of this.recurrings) {

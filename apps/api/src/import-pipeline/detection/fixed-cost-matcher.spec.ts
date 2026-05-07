@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { FixedCostMatcher, type RecurringForMatch } from './fixed-cost-matcher';
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 import { counterpartyKey } from '../utils/counterparty-key';
 
-const row = (overrides: Partial<ParsedRow> = {}): ParsedRow => ({
+const row = (overrides: Partial<BookingRow> = {}): BookingRow => ({
   rowIndex: 0,
   date: '2026-04-01',
   amountCents: -999,
@@ -32,7 +32,7 @@ const realRow = (
   purpose: string,
   amountCents: number,
   date: string,
-): ParsedRow => ({
+): BookingRow => ({
   rowIndex: 0,
   date,
   amountCents,

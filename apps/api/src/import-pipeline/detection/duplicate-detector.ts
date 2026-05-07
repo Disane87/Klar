@@ -1,4 +1,4 @@
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 import { rowHash } from '../utils/row-hash';
 
 export class DuplicateDetector {
@@ -7,7 +7,7 @@ export class DuplicateDetector {
     private readonly existingHashes: Set<string>,
   ) {}
 
-  static computeHash(row: ParsedRow): string {
+  static computeHash(row: BookingRow): string {
     return rowHash({
       date: row.date,
       amountCents: row.amountCents,
@@ -16,7 +16,7 @@ export class DuplicateDetector {
     });
   }
 
-  isDuplicate(row: ParsedRow): boolean {
+  isDuplicate(row: BookingRow): boolean {
     if (row.externalRef && this.existingRefs.has(row.externalRef)) return true;
     return this.existingHashes.has(DuplicateDetector.computeHash(row));
   }

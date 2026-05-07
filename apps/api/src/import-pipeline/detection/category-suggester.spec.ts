@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { CategorySuggester } from './category-suggester';
-import type { ParsedRow } from '../parsers/sparkasse-camt-v2.parser';
+import type { BookingRow } from '../types';
 
-const row = (cp = 'spotify'): ParsedRow => ({
+const row = (cp = 'spotify'): BookingRow => ({
   rowIndex: 0,
   date: '2026-04-01',
   amountCents: -999,
