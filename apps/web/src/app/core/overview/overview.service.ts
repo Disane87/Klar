@@ -24,6 +24,7 @@ export interface FixedCostGroup {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  categoryIcon: string | null;
   categoryType: string;
   categorySortOrder: number;
   totalCents: number;

@@ -31,6 +31,7 @@ export interface FixedCostsGroupResponse {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  categoryIcon: string | null;
   categoryType: string;
   categorySortOrder: number;
   totalCents: number;
@@ -177,6 +178,7 @@ export class OverviewService {
         categoryId: category.id,
         categoryName: category.name,
         categoryColor: category.color,
+        categoryIcon: category.icon ?? null,
         categoryType: category.type,
         categorySortOrder: category.sortOrder,
         totalCents,
