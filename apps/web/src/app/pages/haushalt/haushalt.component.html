@@ -1,49 +1,43 @@
 <div class="flex flex-col overflow-y-auto pb-16 animate-[klar-enter_160ms_ease-out_both]">
-  <!-- ── HOUSEHOLD HERO ─────────────────────────────────────
-       Mirrors PageHaushalt hero card from Klar Design Pearl.
-       Uses live store data; no faked stats. -->
-  <section class="px-4 md:px-6 pt-4 md:pt-6">
-    <div class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden
-                grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:gap-6
-                p-5 md:p-6 relative">
-      <div class="min-w-0 flex flex-col gap-2">
-        <span class="text-[10px] uppercase tracking-[0.14em] font-medium text-(--fg-2) truncate">
-          Haushalt · ID {{ store.activeId()?.slice(0, 8) }}
-        </span>
+  <div class="flex flex-col gap-(--s-5) p-(--s-6) pb-16">
+
+    <!-- ── HERO INFO CARD — bundle .profile-card ───────────── -->
+    <section class="card profile-card flex flex-col gap-(--s-3)">
+      <div class="flex items-baseline justify-between gap-(--s-3) flex-wrap">
         @if (editingName()) {
-          <div class="flex flex-wrap gap-2 items-center">
+          <div class="flex flex-wrap gap-2 items-center w-full">
             <klar-input class="flex-1 min-w-50" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
             <klar-button size="sm" tone="primary" [loading]="savingName()" (click)="saveName()">Speichern</klar-button>
             <klar-button size="sm" tone="link" (click)="cancelEditName()">Abbruch</klar-button>
           </div>
         } @else {
-          <h1 class="font-(family-name:--font-display) text-[28px] md:text-[36px] font-normal leading-none tracking-[-0.02em] truncate">
+          <h1 class="text-[24px] m-0 truncate"
+              style="font-family: var(--font-display); letter-spacing: -0.02em; font-weight: 500;">
             {{ store.activeName() }}
           </h1>
+          @if (store.activeId(); as hid) {
+            <span class="chip outline mono">{{ hid.slice(0, 8) }}</span>
+          }
         }
-        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-(--fg-2) font-mono">
-          <span class="inline-flex items-center gap-1.5">
-            <klar-icon name="haushalt" [size]="11" /> {{ store.members().length }} Mitglieder
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <klar-icon name="tag" [size]="11" /> {{ categoriesStore.active().length }} Kategorien
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <klar-icon name="key" [size]="11" /> {{ (apiKeysStore.keys() ?? []).length }} API-Keys
-          </span>
-        </div>
       </div>
-      @if (canManage() && !editingName()) {
-        <div class="flex md:flex-col md:items-end gap-2 md:justify-center shrink-0">
-          <klar-button size="sm" tone="ghost" (click)="startEditName()">
-            Umbenennen
-          </klar-button>
+      @if (!editingName()) {
+        <p class="text-[13px] text-(--fg-2) m-0">
+          {{ store.members().length }} Mitglied(er) · {{ store.activeRole() === 'OWNER' ? 'Eigner' : 'Mitglied' }}
+        </p>
+        <div class="flex gap-(--s-2) mt-(--s-2) flex-wrap">
+          @if (canManage()) {
+            <button type="button" class="btn ghost" (click)="startEditName()">Umbenennen</button>
+          }
+          @if (canManage() && isSoleOwner()) {
+            <button type="button" class="btn ghost danger" [disabled]="deletingHousehold()" (click)="deleteHousehold()">Auflösen</button>
+          } @else {
+            <button type="button" class="btn ghost danger" [disabled]="leavingHousehold()" (click)="leaveHousehold()">Verlassen</button>
+          }
         </div>
       }
-    </div>
-  </section>
+    </section>
 
-  <klar-list>
+    <klar-list>
 
     <!-- ── MEINE HAUSHALTE (wenn mehrere) ───────────────── -->
     @if (store.households().length > 1) {
@@ -251,5 +245,7 @@
       </div>
     </klar-list-group>
 
-  </klar-list>
+    </klar-list>
+
+  </div>
 </div>

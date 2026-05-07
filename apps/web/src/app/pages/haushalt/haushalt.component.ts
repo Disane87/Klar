@@ -67,10 +67,14 @@ export class HaushaltPageComponent implements OnInit {
     return owners.length === 1;
   });
 
+  private pageHeader = inject(PageHeaderService);
+
   constructor() {
-    inject(PageHeaderService).set({
+    // Initial header — refined once members load (subtitle uses live count).
+    this.pageHeader.set({
       title:    'Haushalt',
-      subtitle: 'VERWALTUNG & EINSTELLUNGEN',
+      subtitle: this.store.activeName(),
+      rhsChip:  'WG',
     });
   }
 
@@ -79,6 +83,19 @@ export class HaushaltPageComponent implements OnInit {
       this.store.loadMembers(),
       this.canManage() ? this.store.loadInvites() : Promise.resolve(),
     ]);
+    this.refreshPageHeader();
+  }
+
+  private refreshPageHeader(): void {
+    const memberCount = this.store.members().length;
+    this.pageHeader.set({
+      title:    'Haushalt',
+      subtitle: `${this.store.activeName()} · ${memberCount} Mitglieder`,
+      rhsChip:  'WG',
+      showAdd:  this.canInvite(),
+      addLabel: '+ Einladen',
+      onAdd:    () => this.openInviteDialog(),
+    });
   }
 
   startEditName(): void {
