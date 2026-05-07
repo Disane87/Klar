@@ -9,12 +9,13 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import type { RecurringFrequency } from '@klar/shared';
 import { toMonthlyEquivalent } from '@klar/shared';
 
 interface AddForm {
   label: string;
-  amountEuro: string;      // string for input binding
+  amountCents: number | null;
   type: 'income' | 'expense';
   frequency: RecurringFrequency;
   color: string;
@@ -29,7 +30,7 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-planspiel',
   standalone: true,
-  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective],
+  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarMoneyInputComponent],
   templateUrl: './planspiel.component.html',
   styleUrl: './planspiel.component.css',
 })
@@ -62,7 +63,7 @@ export class PlanspielPageComponent {
 
   protected form = signal<AddForm>({
     label: '',
-    amountEuro: '',
+    amountCents: null,
     type: 'expense',
     frequency: 'MONTHLY',
     color: PRESET_COLORS[0],
@@ -70,8 +71,7 @@ export class PlanspielPageComponent {
 
   protected readonly formValid = computed(() => {
     const f = this.form();
-    const amount = parseFloat(String(f.amountEuro ?? '').replace(',', '.'));
-    return f.label.trim().length > 0 && !isNaN(amount) && amount > 0;
+    return f.label.trim().length > 0 && f.amountCents !== null && f.amountCents > 0;
   });
 
   // ── Frequency label helper ─────────────────────────────────────────────────
@@ -107,9 +107,7 @@ export class PlanspielPageComponent {
   submitEntry(): void {
     if (!this.formValid()) return;
     const f = this.form();
-    const absAmount = Math.round(
-      parseFloat(String(f.amountEuro ?? '').replace(',', '.')) * 100
-    );
+    const absAmount = Math.abs(f.amountCents ?? 0);
     const amountCents = f.type === 'income' ? absAmount : -absAmount;
 
     this.store.addEntry({
@@ -120,7 +118,7 @@ export class PlanspielPageComponent {
     });
 
     // Reset form but keep type/frequency/color for quick repeat entry
-    this.form.update(current => ({ ...current, label: '', amountEuro: '' }));
+    this.form.update(current => ({ ...current, label: '', amountCents: null }));
   }
 
   openForm(): void {
@@ -131,7 +129,7 @@ export class PlanspielPageComponent {
     this.showForm.set(false);
     this.form.set({
       label: '',
-      amountEuro: '',
+      amountCents: null,
       type: 'expense',
       frequency: 'MONTHLY',
       color: PRESET_COLORS[0],

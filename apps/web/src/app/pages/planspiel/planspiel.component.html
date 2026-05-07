@@ -170,16 +170,11 @@
       <!-- Amount input -->
       <div class="flex flex-col gap-1.5">
         <label hlmLabel>Betrag (€)</label>
-        <input
-          hlmInput
-          class="font-mono tabular-nums"
-          type="number"
-          inputmode="decimal"
+        <klar-money-input
+          [allowNegative]="false"
           placeholder="0,00"
-          min="0"
-          step="0.01"
-          [ngModel]="form().amountEuro"
-          (ngModelChange)="updateForm({ amountEuro: $event })" />
+          [amountCents]="form().amountCents"
+          (amountCentsChange)="updateForm({ amountCents: $event })" />
       </div>
 
       <!-- Frequency select -->
