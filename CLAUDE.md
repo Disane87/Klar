@@ -161,7 +161,15 @@ Niemals nackte `<input>`, `<select>`, `<button>` ohne `hlm*`-Direktive. Avatar/I
 
 **Datentabellen:** Desktop = Tabelle, Mobile = Card-List (Disclosure-Pattern). Lange Listen (> 50 Items potenziell): IMMER Virtual-Scrolling (Angular CDK oder `klar-list` mit Pagination/Lazy) — Standard für CSV-Import, Buchungen, Audit-Log.
 
-**PWA:** `@angular/pwa` (Manifest, ngsw-config, iOS Meta-Tags + Apple-Touch-Icons + Splash). Caching-Strategie `freshness` für API-Calls. Install-Prompt: nativ auf Android/Chrome, manueller Hint auf iOS (einmalig nach erstem Login, in `localStorage` als gesehen markiert — einzige localStorage-Ausnahme).
+**PWA:** `@angular/pwa` (Manifest, ngsw-config, iOS Meta-Tags + Apple-Touch-Icons + Splash). Caching-Strategie `freshness` für API-Calls. Install-Prompt: nativ auf Android/Chrome, manueller Hint auf iOS (einmalig nach erstem Login, in `localStorage` als gesehen markiert).
+
+**`localStorage` Whitelist (alles andere verboten):**
+- PWA-Install-Hint (`klar.installPromptSeen` o. ä.)
+- Theme-Persistenz (`theme.service.ts`)
+- Changelog-seen-Marker (`version.service.ts`)
+- `sessionStorage` ist unrestricted (verschwindet beim Tab-Close); aktuelle Nutzung: `pendingInviteToken`, `postLoginReturnUrl`.
+
+Alles andere user-state-mäßige gehört in den Backend-User-Settings-Endpoint. Niemals Tokens, niemals Beträge, niemals haushaltsspezifische Daten in `localStorage`.
 
 ---
 

@@ -201,6 +201,8 @@ The `OAuthClient.displayName` is resolved at read time, so renaming a connected 
 | **Backend** | NestJS 11 + Fastify 5 |
 | **Frontend** | Angular 21 (Zoneless, Signal Forms) |
 | **Styling** | Tailwind CSS 4 + Dark Mode |
+| **UI Primitives** | Spartan UI (helm wrappers in `apps/web/src/app/shared/ui/hlm/`) — input, select, button, label, calendar, checkbox, dialog, toggle-group, switch, tabs, tooltip, sheet, alert-dialog, separator |
+| **UI Composites** | Klar (`apps/web/src/app/shared/ui/`) — async-state, money-input, date-input, dialog-footer, action-tile, switch, confirm-dialog/service, list, virtual-list, combobox, color-picker, etc. |
 | **Database** | PostgreSQL 16 |
 | **ORM** | Prisma |
 | **Auth** | Local + OIDC (Passport) + API Keys |
@@ -494,6 +496,9 @@ Want to help make Klar better? Awesome! 🎉
 | Recurring transactions | Never persisted — computed on-the-fly |
 | CSS | `100dvh` not `100vh` (iOS Safari bug) |
 | Font size | ≥ 16px on all form inputs (iOS auto-zoom prevention) |
+| Form controls | Native `<input>`/`<select>`/`<textarea>` must use the `hlm*` directive — enforced by `scripts/ui-hygiene-check.sh` (CI gate) |
+| Browser dialogs | No `window.alert` / `window.prompt` / `window.confirm` — use `klar-toast` and `klar-confirm.service` |
+| `localStorage` | Whitelisted to theme, version-seen, install-prompt only — see CLAUDE.md |
 
 ---
 

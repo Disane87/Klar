@@ -14,6 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  ui-hygiene:
+    name: UI Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native control / window.confirm / console / localStorage gate
+        run: bash scripts/ui-hygiene-check.sh
+
   lint-and-build:
     name: Lint & Build
     runs-on: ubuntu-latest
