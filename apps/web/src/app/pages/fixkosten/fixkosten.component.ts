@@ -22,6 +22,7 @@ import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/u
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
+import { PdfExportDialogComponent, type PdfDialogInputData } from './pdf-export-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 
@@ -648,7 +649,7 @@ grouped.set(key, {
           .filter(g => g.items.length > 0)
       : data.groups;
 
-    await this.pdfReport.exportFixkosten({
+    const fixkostenData = {
       groups,
       incomeTotalCents:   this.incomeTotalCents(),
       expenseTotalCents:  this.expenseTotalCents(),
@@ -661,6 +662,52 @@ grouped.set(key, {
       surplusRating:      this.surplusRating(),
       incomeBracket:      this.incomeBracket(),
       showCreator:        !filterUserId,
+    };
+
+    const itemCount = groups.reduce((s, g) => s + g.items.length, 0);
+    const previewRows = groups.flatMap(g =>
+      g.items.slice(0, 3).map(i => ({
+        label: i.name,
+        frequency: this.shortFrequency(i.frequency),
+        amountCents: i.monthlyEquivalentCents,
+      })),
+    );
+
+    const dialogData: PdfDialogInputData = {
+      kind:           'fixkosten',
+      householdName:  scopeName,
+      monthLabel:     this.formatMonthLabel(this.store.currentMonth()),
+      itemCount,
+      categoryCount:  groups.length,
+      incomeCents:    this.incomeTotalCents(),
+      expenseCents:   this.expenseTotalCents(),
+      surplusCents:   this.surplusCents(),
+      previewRows,
+      fixkosten:      fixkostenData,
+    };
+
+    this.dialogService.open({
+      title:     'Fixkosten als PDF',
+      component: PdfExportDialogComponent,
+      width:     'xl',
+      inputs:    { data: dialogData },
     });
+  }
+
+  private formatMonthLabel(month: string): string {
+    const [year, m] = month.split('-');
+    const d = new Date(Number(year), Number(m) - 1, 1);
+    return d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  }
+
+  private shortFrequency(freq: RecurringFrequency): string {
+    switch (freq) {
+      case 'WEEKLY':      return 'Wö.';
+      case 'MONTHLY':     return 'Mtl.';
+      case 'QUARTERLY':   return 'Qrt.';
+      case 'HALF_YEARLY': return 'Halbj.';
+      case 'YEARLY':      return 'Jährl.';
+      default:            return freq;
+    }
   }
 }

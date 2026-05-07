@@ -1,6 +1,19 @@
 import { Injectable } from '@angular/core';
 import type { FixedCostGroup } from '../overview/overview.service';
 
+export type PdfLayout      = 'compact' | 'report' | 'auszug';
+export type PdfGrouping    = 'kategorie' | 'datum' | 'person' | 'keine';
+export type PdfOrientation = 'portrait' | 'landscape';
+
+export interface PdfExportOptions {
+  layout:        PdfLayout;
+  grouping:      PdfGrouping;
+  orientation:   PdfOrientation;
+  includeNotes:  boolean;
+  includeCharts: boolean;
+  includeBank:   boolean;
+}
+
 export interface FixkostenPdfData {
   groups: FixedCostGroup[];
   incomeTotalCents: number;
@@ -14,6 +27,7 @@ export interface FixkostenPdfData {
   surplusRating: string;
   incomeBracket: { label: string; desc: string };
   showCreator: boolean;
+  options?: PdfExportOptions;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,7 +38,8 @@ export class PdfReportService {
       import('jspdf'),
       import('jspdf-autotable'),
     ]);
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const orientation = data.options?.orientation ?? 'portrait';
+    const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     const marginL = 14;
     const marginR = 14;
