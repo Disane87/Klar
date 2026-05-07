@@ -161,26 +161,6 @@
   border-color: var(--line-soft);
 }
 
-/* ── Meter (uses bundle's .meter token) ────────────────────────────── */
-.meter {
-  height: 6px;
-  background: var(--bg-3);
-  border-radius: 999px;
-  overflow: hidden;
-  position: relative;
-}
-
-.meter > i {
-  display: block;
-  height: 100%;
-  background: var(--fg-2);
-  border-radius: inherit;
-  transition: width 240ms var(--ease-out);
-}
-
-.meter.over > i { background: var(--danger); }
-.meter.warn > i { background: var(--warn); }
-
 /* ── 3-col numbers row, hairline above ─────────────────────────────── */
 .pc-numbers {
   display: grid;

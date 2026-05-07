@@ -22,7 +22,7 @@
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
 | **📒 Buchungen** | Flat transactions list with filter tabs (Alle / Wiederkehrend / Manuell / Eingänge), category-tone per row, recurring chip on auto-generated bookings, summary strip with monthly income / expense / surplus |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
-| **🎯 Project Tracking** | Assign transactions to projects, track budget vs. actual vs. remaining |
+| **🎯 Projekte** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Ausgegeben / Bilanz metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
 | **🤖 MCP Server (OAuth 2.1)** | Claude Desktop / Cursor / Codex read, create, update & delete with per-scope user consent |
