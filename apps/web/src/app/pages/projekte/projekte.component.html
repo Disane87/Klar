@@ -15,38 +15,35 @@
     </div>
   }
 
-  <!-- Loading -->
-  @if (store.loading()) {
-    <div class="project-list">
-      @for (_ of [1, 2, 3]; track $index) {
-        <div class="sk-card">
-          <div class="sk-card-header">
-            <klar-skeleton height="14px" width="55%"/>
-            <klar-skeleton height="10px" width="60px"/>
+  <klar-async-state
+    [loading]="store.loading()"
+    [error]="store.error()"
+    [empty]="store.isEmpty()"
+    errorMessage="Fehler beim Laden der Projekte."
+    emptyMessage="Keine Projekte vorhanden"
+    emptyCtaLabel="Projekt erstellen"
+    (retry)="store.reload()"
+    (cta)="openCreate()"
+  >
+    <ng-template klarLoading>
+      <div class="project-list">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="sk-card">
+            <div class="sk-card-header">
+              <klar-skeleton height="14px" width="55%"/>
+              <klar-skeleton height="10px" width="60px"/>
+            </div>
+            <klar-skeleton height="4px" width="100%"/>
+            <div class="sk-stat-row">
+              <klar-skeleton height="12px" width="30%"/>
+              <klar-skeleton height="12px" width="30%"/>
+              <klar-skeleton height="12px" width="30%"/>
+            </div>
           </div>
-          <klar-skeleton height="4px" width="100%"/>
-          <div class="sk-stat-row">
-            <klar-skeleton height="12px" width="30%"/>
-            <klar-skeleton height="12px" width="30%"/>
-            <klar-skeleton height="12px" width="30%"/>
-          </div>
-        </div>
-      }
-    </div>
-  }
+        }
+      </div>
+    </ng-template>
 
-  <!-- Error -->
-  @else if (store.error()) {
-    <klar-error-bar message="Fehler beim Laden der Projekte." (retry)="store.reload()" />
-  }
-
-  <!-- Empty -->
-  @else if (store.isEmpty()) {
-    <klar-empty-state message="Keine Projekte vorhanden" ctaLabel="Projekt erstellen" (ctaClick)="openCreate()" />
-  }
-
-  <!-- Project List -->
-  @else {
     <div class="project-list">
       @for (item of store.projects()!.projects; track item.id) {
         <div class="project-card" [style.--project-color]="item.color"
@@ -113,6 +110,6 @@
         </div>
       }
     </div>
-  }
+  </klar-async-state>
 
 </div>

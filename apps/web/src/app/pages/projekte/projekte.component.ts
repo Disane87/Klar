@@ -6,8 +6,7 @@ import { ProjekteStore } from '../../core/overview/projekte.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
-import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
-import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
+import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import type { ProjectOverviewItem } from '../../core/overview/overview.service';
@@ -16,7 +15,7 @@ import type { ProjectOverviewItem } from '../../core/overview/overview.service';
   selector: 'app-projekte',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective],
   templateUrl: './projekte.component.html',
   styleUrl: './projekte.component.css',
 })
