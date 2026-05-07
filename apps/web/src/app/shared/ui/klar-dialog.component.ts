@@ -9,7 +9,6 @@ import type { DialogConfig } from './klar-dialog.service';
   standalone: true,
   imports: [NgComponentOutlet, KlarIconComponent],
   templateUrl: './klar-dialog.component.html',
-  styleUrl: './klar-dialog.component.css',
 })
 export class KlarDialogComponent {
   protected cfg = inject<DialogConfig>(DIALOG_DATA);

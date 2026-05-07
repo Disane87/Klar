@@ -1,11 +1,28 @@
-<div class="panel" [class.panel--tall]="cfg.height === 'tall'">
-  <div class="panel-header">
-    <span class="panel-title">{{ cfg.title }}</span>
-    <button class="close-btn" type="button" title="Schließen" (click)="close()">
+<div
+  class="flex flex-col w-full bg-(--surface) border border-(--border) rounded-(--r-12) overflow-hidden shadow-(--shadow-modal)"
+  [class.h-full]="cfg.height === 'tall'"
+>
+  <div class="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-(--border-soft) shrink-0">
+    <span class="font-(family-name:--font-display) text-[18px] font-medium tracking-[-0.01em] text-(--text)">
+      {{ cfg.title }}
+    </span>
+    <button
+      class="ml-auto inline-flex items-center justify-center min-w-11 min-h-11 w-11 h-11 rounded-sm
+             text-(--text-muted) bg-transparent border-0 cursor-pointer
+             hover:text-(--text) hover:bg-(--text)/5 transition-colors"
+      type="button"
+      title="Schließen"
+      (click)="close()"
+    >
       <klar-icon name="x" [size]="14" />
     </button>
   </div>
-  <div class="panel-body">
+  <div
+    class="flex-1 p-5 flex flex-col gap-3 *:last:mb-0"
+    [class.overflow-y-auto]="cfg.height !== 'tall'"
+    [class.overflow-hidden]="cfg.height === 'tall'"
+    [style.max-height]="cfg.height === 'tall' ? null : 'calc(100dvh - 120px)'"
+  >
     <ng-container
       [ngComponentOutlet]="cfg.component"
       [ngComponentOutletInputs]="cfg.inputs ?? {}" />

@@ -14,7 +14,8 @@ export interface DialogConfig {
   disableBackdropClose?: boolean;
 }
 
-const WIDTH_MAP = { sm: '400px', md: '520px', lg: '680px', xl: '980px' } as const;
+// Aligned with the design-pearl modal sizes: confirm 420 · standard 460 · wide 640 · workbench 920.
+const WIDTH_MAP = { sm: '420px', md: '460px', lg: '640px', xl: '920px' } as const;
 
 @Injectable({ providedIn: 'root' })
 export class KlarDialogService {
