@@ -1,5 +1,9 @@
 <div class="flex flex-col gap-4">
 
+  <klar-dialog-callout tone="info" icon="info">
+    Wird ab dem nächsten Buchungstag erwartet · matcht eingehende CSV-Imports automatisch.
+  </klar-dialog-callout>
+
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="rcd-name">Name</label>
     <input id="rcd-name" hlmInput type="text"
@@ -8,59 +12,63 @@
            (input)="name.set($any($event.target).value)" />
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="rcd-amount">{{ amountLabel() }}</label>
-    <klar-money-input
-      [inputId]="'rcd-amount'"
-      placeholder="0,00"
-      [(amountCents)]="amountCents"
-    />
-  </div>
-
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel>Kategorie</label>
-    <klar-combobox
-      [items]="cats.active()"
-      [value]="categoryId()"
-      (valueChange)="categoryId.set($event)"
-      [idOf]="catId"
-      [displayWith]="catName"
-      placeholder="Kategorie wählen…"
-      searchPlaceholder="Kategorie suchen…"
-      [addLabel]="addCategoryLabel"
-      ariaLabel="Kategorie wählen"
-      (addNew)="onAddCategory($event)" />
-  </div>
-
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="rcd-freq">Frequenz</label>
-    <klar-select
-      [options]="freqOptions"
-      [value]="frequency()"
-      (valueChange)="frequency.set($any($event))"
-      ariaLabel="Frequenz"
-    />
-  </div>
-
-  @if (isWeekly()) {
+  <div class="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr] gap-3">
     <div class="flex flex-col gap-1.5">
-      <label hlmLabel for="rcd-weekday">Buchungstag</label>
-      <klar-select
-        [options]="weekdayOptions"
-        [value]="dayOfWeek()"
-        (valueChange)="dayOfWeek.set($event)"
-        ariaLabel="Wochentag"
+      <label hlmLabel>Kategorie</label>
+      <klar-combobox
+        [items]="cats.active()"
+        [value]="categoryId()"
+        (valueChange)="categoryId.set($event)"
+        [idOf]="catId"
+        [displayWith]="catName"
+        placeholder="Kategorie wählen…"
+        searchPlaceholder="Kategorie suchen…"
+        [addLabel]="addCategoryLabel"
+        ariaLabel="Kategorie wählen"
+        (addNew)="onAddCategory($event)" />
+    </div>
+
+    @if (isWeekly()) {
+      <div class="flex flex-col gap-1.5">
+        <label hlmLabel for="rcd-weekday">Tag</label>
+        <klar-select
+          [options]="weekdayOptions"
+          [value]="dayOfWeek()"
+          (valueChange)="dayOfWeek.set($event)"
+          ariaLabel="Wochentag"
+        />
+      </div>
+    } @else {
+      <div class="flex flex-col gap-1.5">
+        <label hlmLabel for="rcd-day">Tag (1–31)</label>
+        <input id="rcd-day" hlmInput class="font-mono tabular-nums" type="number"
+               min="1" max="31" placeholder="–"
+               [value]="dayOfMonth()"
+               (input)="dayOfMonth.set($any($event.target).value)" />
+      </div>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="rcd-amount">{{ amountLabel() }}</label>
+      <klar-money-input
+        [inputId]="'rcd-amount'"
+        placeholder="0,00"
+        [(amountCents)]="amountCents"
       />
     </div>
-  } @else {
+
     <div class="flex flex-col gap-1.5">
-      <label hlmLabel for="rcd-day">Buchungstag (1–31)</label>
-      <input id="rcd-day" hlmInput class="font-mono tabular-nums" type="number"
-             min="1" max="31" placeholder="–"
-             [value]="dayOfMonth()"
-             (input)="dayOfMonth.set($any($event.target).value)" />
+      <label hlmLabel for="rcd-freq">Frequenz</label>
+      <klar-select
+        [options]="freqOptions"
+        [value]="frequency()"
+        (valueChange)="frequency.set($any($event))"
+        ariaLabel="Frequenz"
+      />
     </div>
-  }
+  </div>
 
   <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
     <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>

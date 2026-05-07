@@ -8,6 +8,7 @@ import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
 import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -23,7 +24,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 @Component({
   selector: 'app-transaction-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent, KlarColorPickerComponent, KlarIconPickerComponent],
+  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent, KlarDialogCalloutComponent, KlarColorPickerComponent, KlarIconPickerComponent],
   templateUrl: './transaction-dialog.component.html',
   styleUrl: './transaction-dialog.component.css',
 })

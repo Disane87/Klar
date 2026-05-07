@@ -8,58 +8,65 @@
            (input)="description.set($any($event.target).value)" />
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="td-amount">
-      {{ isPlanned() ? 'Geplanter Betrag' : 'Betrag' }} (€, negativ = Ausgabe)
-    </label>
-    <klar-money-input
-      [inputId]="'td-amount'"
-      placeholder="-50,00"
-      [(amountCents)]="amountCents"
-    />
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="td-amount">
+        {{ isPlanned() ? 'Geplanter Betrag' : 'Betrag' }} <span class="normal-case opacity-70">(neg. = Ausgabe)</span>
+      </label>
+      <klar-money-input
+        [inputId]="'td-amount'"
+        placeholder="-50,00"
+        [(amountCents)]="amountCents"
+      />
+    </div>
 
-    @if (realizingNow() && tx() && deviationCents() !== null) {
-      <span class="text-[11px] text-(--text-muted) font-mono tabular-nums">
-        Plan: {{ centsToDisplay(tx()!.amountCents) }} €
-        @if (deviationCents() !== 0) {
-          · Abweichung
-          <span [class.text-(--color-expense)]="(deviationCents() ?? 0) < 0"
-                [class.text-(--color-income)]="(deviationCents() ?? 0) > 0">
-            {{ (deviationCents() ?? 0) > 0 ? '+' : '' }}{{ centsToDisplay(deviationCents() ?? 0) }} €
-          </span>
-        }
-      </span>
-    }
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="td-date">Datum</label>
+      <klar-date-input [inputId]="'td-date'" [(value)]="date" />
+    </div>
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="td-date">Datum</label>
-    <klar-date-input [inputId]="'td-date'" [(value)]="date" />
-  </div>
+  @if (realizingNow() && tx() && deviationCents() !== null) {
+    <klar-dialog-callout tone="accent">
+      <span lead>Plan {{ centsToDisplay(tx()!.amountCents) }} €</span>
+      @if (deviationCents() !== 0) {
+        — Abweichung
+        <span class="font-mono tabular-nums"
+              [class.text-(--color-expense)]="(deviationCents() ?? 0) < 0"
+              [class.text-(--color-income)]="(deviationCents() ?? 0) > 0">
+          {{ (deviationCents() ?? 0) > 0 ? '+' : '' }}{{ centsToDisplay(deviationCents() ?? 0) }} €
+        </span>
+      } @else {
+        — keine Abweichung.
+      }
+    </klar-dialog-callout>
+  }
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel>Kategorie</label>
-    <klar-combobox
-      [items]="cats.active()"
-      [value]="categoryId() || null"
-      (valueChange)="categoryId.set($event ?? '')"
-      [idOf]="catId"
-      [displayWith]="catName"
-      placeholder="Kategorie wählen…"
-      searchPlaceholder="Kategorie suchen…"
-      [addLabel]="addCategoryLabel"
-      ariaLabel="Kategorie wählen"
-      (addNew)="onAddCategory($event)" />
-  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr] gap-3">
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel>Kategorie</label>
+      <klar-combobox
+        [items]="cats.active()"
+        [value]="categoryId() || null"
+        (valueChange)="categoryId.set($event ?? '')"
+        [idOf]="catId"
+        [displayWith]="catName"
+        placeholder="Kategorie wählen…"
+        searchPlaceholder="Kategorie suchen…"
+        [addLabel]="addCategoryLabel"
+        ariaLabel="Kategorie wählen"
+        (addNew)="onAddCategory($event)" />
+    </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label hlmLabel for="td-vis">Sichtbarkeit</label>
-    <klar-select
-      [options]="visibilityOpts"
-      [value]="visibility()"
-      (valueChange)="visibility.set($any($event))"
-      ariaLabel="Sichtbarkeit"
-    />
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="td-vis">Sichtbarkeit</label>
+      <klar-select
+        [options]="visibilityOpts"
+        [value]="visibility()"
+        (valueChange)="visibility.set($any($event))"
+        ariaLabel="Sichtbarkeit"
+      />
+    </div>
   </div>
 
   <div class="flex flex-col gap-1.5">
