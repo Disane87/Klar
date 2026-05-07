@@ -45,8 +45,8 @@ scan "Native <input> without hlmInput / klar-input / klar-money-input / klar-dat
   "<input[[:space:]]+(?!.*(hlmInput|hlmCheckbox|type=\"file\"|type=\"hidden\"|type=\"checkbox\"|type=\"radio\"))" \
   "klar-input|klar-money-input|klar-date-input|klar-color-picker|klar-icon-picker"
 
-scan "Native <select> without hlmSelect" \
-  "<select[[:space:]](?!.*hlmSelect)"
+scan "Native <select> forbidden — use <klar-select> (Spartan-backed)" \
+  "<select[[:space:]>]"
 
 scan "Native <textarea> without hlmInput" \
   "<textarea[[:space:]](?!.*hlmInput)"

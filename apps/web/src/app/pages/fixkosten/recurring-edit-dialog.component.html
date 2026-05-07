@@ -34,23 +34,23 @@
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="red-freq">Frequenz</label>
-    <select id="red-freq" hlmSelect class="scheme-dark"
-            (change)="frequency.set($any($event.target).value)">
-      @for (opt of freqOptions; track opt.value) {
-        <option [value]="opt.value" [selected]="opt.value === frequency()">{{ opt.label }}</option>
-      }
-    </select>
+    <klar-select
+      [options]="freqOptions"
+      [value]="frequency()"
+      (valueChange)="frequency.set($any($event))"
+      ariaLabel="Frequenz"
+    />
   </div>
 
   @if (isWeekly()) {
     <div class="flex flex-col gap-1.5">
       <label hlmLabel for="red-weekday">Buchungstag</label>
-      <select id="red-weekday" hlmSelect class="scheme-dark"
-              (change)="dayOfWeek.set($any($event.target).value)">
-        @for (opt of weekdayOptions; track opt.value) {
-          <option [value]="opt.value" [selected]="opt.value === dayOfWeek()">{{ opt.label }}</option>
-        }
-      </select>
+      <klar-select
+        [options]="weekdayOptions"
+        [value]="dayOfWeek()"
+        (valueChange)="dayOfWeek.set($event)"
+        ariaLabel="Wochentag"
+      />
     </div>
   } @else {
     <div class="flex flex-col gap-1.5">

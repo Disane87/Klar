@@ -2,7 +2,7 @@ import { Component, inject, input, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -12,7 +12,7 @@ import type { AnalyzeResponse, ConfirmBody } from '../../core/data-transfer/data
 @Component({
   selector: 'app-import-mapping-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmLabelDirective, HlmSelectNativeDirective],
+  imports: [FormsModule, KlarButtonComponent, HlmLabelDirective, KlarSelectComponent],
   templateUrl: './import-mapping-dialog.component.html',
 })
 export class ImportMappingDialogComponent {
@@ -48,6 +48,16 @@ export class ImportMappingDialogComponent {
     );
     return catOk && projOk;
   });
+
+  readonly categoryOpts = computed<KlarSelectOption[]>(() => [
+    { value: '', label: '— Kategorie wählen —' },
+    ...this.analyzeResult().availableCategories.map((c) => ({ value: c.id, label: c.name })),
+  ]);
+
+  readonly projectOpts = computed<KlarSelectOption[]>(() => [
+    { value: '', label: '— Projekt wählen —' },
+    ...this.analyzeResult().availableProjects.map((p) => ({ value: p.id, label: p.name })),
+  ]);
 
   setCategoryMapping(key: string, targetId: string): void {
     this.categorySelections.update(s => ({ ...s, [key]: targetId }));

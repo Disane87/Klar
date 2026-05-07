@@ -175,16 +175,12 @@
       <!-- Frequency select -->
       <div class="flex flex-col gap-1.5">
         <label hlmLabel>Häufigkeit</label>
-        <select
-          hlmSelect
-          [ngModel]="form().frequency"
-          (ngModelChange)="updateForm({ frequency: $event })">
-          <option value="WEEKLY">Wöchentlich</option>
-          <option value="MONTHLY">Monatlich</option>
-          <option value="QUARTERLY">Quartalsweise</option>
-          <option value="HALF_YEARLY">Halbjährlich</option>
-          <option value="YEARLY">Jährlich</option>
-        </select>
+        <klar-select
+          [options]="frequencyOpts"
+          [value]="form().frequency"
+          (valueChange)="updateForm({ frequency: $any($event) })"
+          ariaLabel="Häufigkeit"
+        />
       </div>
 
       <!-- Color picker -->

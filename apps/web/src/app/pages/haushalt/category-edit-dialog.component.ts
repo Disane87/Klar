@@ -8,7 +8,7 @@ import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 
 const TYPE_LABELS: Record<CategoryType, string> = {
   FIXED_INCOME: 'Festes Einkommen',
@@ -37,7 +37,7 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-category-edit-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, HlmLabelDirective, HlmSelectNativeDirective],
+  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, HlmLabelDirective, KlarSelectComponent],
   template: `
     <div class="flex flex-col gap-5 p-1">
       <!-- Name -->
@@ -55,18 +55,13 @@ const PRESET_COLORS = [
       <!-- Type — beim Edit nicht änderbar -->
       <div class="flex flex-col gap-1.5">
         <label hlmLabel for="cat-type">Typ</label>
-        <select
-          id="cat-type"
-          hlmSelect
-          class="scheme-dark"
+        <klar-select
+          [options]="typeSelectOpts"
+          [value]="type()"
           [disabled]="isEdit()"
-          [ngModel]="type()"
-          (ngModelChange)="type.set($event)"
-        >
-          @for (t of typeOptions; track t) {
-            <option [value]="t">{{ typeLabel(t) }}</option>
-          }
-        </select>
+          (valueChange)="type.set($any($event))"
+          ariaLabel="Kategorie-Typ"
+        />
         @if (isEdit()) {
           <span class="text-xs text-muted-foreground">Typ kann nach Anlegen nicht mehr geändert werden.</span>
         }
@@ -146,6 +141,10 @@ export class CategoryEditDialogComponent implements OnInit {
   private confirm = inject(KlarConfirmService);
 
   protected readonly typeOptions = TYPE_OPTIONS;
+  protected readonly typeSelectOpts: KlarSelectOption<CategoryType>[] = TYPE_OPTIONS.map((t) => ({
+    value: t,
+    label: TYPE_LABELS[t],
+  }));
 
   readonly name = signal('');
   readonly type = signal<CategoryType>('VARIABLE_EXPENSE');

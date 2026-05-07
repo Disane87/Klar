@@ -127,9 +127,9 @@ VS Code Workspace (`.vscode/`) ist eingecheckt — Extensions, Tasks, Launch-Con
 
 Workflow für jedes Control: (1) `spartan.ng` prüfen, (2) `hlm*`-Direktive aus `apps/web/src/app/shared/ui/hlm/` nutzen, (3) bei Wiederholung in `app-*` oder `klar-*`-Komponente kapseln.
 
-Niemals nackte `<input>`, `<select>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials immer `<klar-avatar>`. Bei ≥ 2 ähnlichen UI-Strukturen: in `klar-*`-Komponente kapseln, nicht duplizieren — vor neuem Element prüfen ob existierende `klar-*`-Komponente passt.
+Niemals nackte `<input>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials immer `<klar-avatar>`. Bei ≥ 2 ähnlichen UI-Strukturen: in `klar-*`-Komponente kapseln, nicht duplizieren — vor neuem Element prüfen ob existierende `klar-*`-Komponente passt.
 
-`<select hlmSelect>` braucht zusätzlich `class="scheme-dark"` (nativer Dropdown kennt sonst kein Dark Mode).
+**Selects: niemals nativ.** `<select>` ist app-weit verboten — IMMER `<klar-select [options]="opts" [(value)]="x">` (gewrapptes Spartan brn-select). Native `<select>` rendert in Safari/iOS unverändert ohne Dark-Mode und ohne unsere Tastatur-/Fokus-Konventionen. CI-Hygiene-Gate (`scripts/ui-hygiene-check.sh`) blockt jeden neuen `<select>`-Tag.
 
 ### Design-System
 

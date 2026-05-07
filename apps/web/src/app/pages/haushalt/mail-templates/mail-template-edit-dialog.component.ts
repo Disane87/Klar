@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../../shared/ui/klar-select.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
 import { KlarCodeEditorComponent } from '../../../shared/ui/klar-code-editor.component';
 import { HouseholdStore } from '../../../core/household/household.store';
@@ -78,7 +78,7 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
     KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
-    HlmSelectNativeDirective,
+    KlarSelectComponent,
     KlarCodeEditorComponent,
   ],
   host: { class: 'flex flex-col h-full' },
@@ -88,16 +88,12 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
           <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Typ</label>
-          <select hlmSelect class="scheme-dark" [(ngModel)]="formTemplateType" [disabled]="!isNew()">
-            <option value="INVITE">Einladung</option>
-            <option value="REMINDER">Erinnerung</option>
-            <option value="CUSTOM">Benutzerdefiniert</option>
-            <option value="EMAIL_VERIFY">E-Mail bestätigen</option>
-            <option value="PASSWORD_RESET">Passwort zurücksetzen</option>
-            <option value="TOTP_ENABLE">2FA aktiviert</option>
-            <option value="TOTP_DISABLE">2FA deaktiviert</option>
-            <option value="API_KEY_CREATED">API-Key erstellt</option>
-          </select>
+          <klar-select
+            [options]="templateTypeOpts"
+            [(ngModel)]="formTemplateType"
+            [disabled]="!isNew()"
+            ariaLabel="Template-Typ"
+          />
         </div>
         <div class="flex flex-col gap-1.5">
           <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Name</label>
@@ -232,6 +228,18 @@ export class MailTemplateEditDialogComponent {
   readonly err    = signal('');
 
   formTemplateType = 'INVITE' as MailTemplateType;
+
+  protected readonly templateTypeOpts: KlarSelectOption<MailTemplateType>[] = [
+    { value: 'INVITE',          label: 'Einladung' },
+    { value: 'REMINDER',        label: 'Erinnerung' },
+    { value: 'CUSTOM',          label: 'Benutzerdefiniert' },
+    { value: 'EMAIL_VERIFY',    label: 'E-Mail bestätigen' },
+    { value: 'PASSWORD_RESET',  label: 'Passwort zurücksetzen' },
+    { value: 'TOTP_ENABLE',     label: '2FA aktiviert' },
+    { value: 'TOTP_DISABLE',    label: '2FA deaktiviert' },
+    { value: 'API_KEY_CREATED', label: 'API-Key erstellt' },
+  ];
+
   readonly formName    = signal('');
   readonly formSubject = signal('');
   readonly formBody    = signal('');

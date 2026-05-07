@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
@@ -20,7 +20,7 @@ const DEFAULT_COLOR = '#6366f1';
   imports: [
     HlmInputDirective,
     HlmLabelDirective,
-    HlmSelectNativeDirective,
+    KlarSelectComponent,
     KlarColorPickerComponent,
     KlarMoneyInputComponent,
     KlarDateInputComponent,
@@ -67,12 +67,12 @@ const DEFAULT_COLOR = '#6366f1';
 
       <div class="flex flex-col gap-1.5">
         <label hlmLabel for="pcd-status">Status</label>
-        <select id="pcd-status" hlmSelect class="scheme-dark"
-                (change)="status.set($any($event.target).value)">
-          @for (opt of statusOptions; track opt.value) {
-            <option [value]="opt.value" [selected]="opt.value === status()">{{ opt.label }}</option>
-          }
-        </select>
+        <klar-select
+          [options]="statusOptions"
+          [value]="status()"
+          (valueChange)="status.set($any($event))"
+          ariaLabel="Status"
+        />
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -116,7 +116,7 @@ export class ProjectCreateDialogComponent {
   readonly err         = signal('');
   private initialized  = false;
 
-  readonly statusOptions: { value: ProjectStatus; label: string }[] = [
+  readonly statusOptions: KlarSelectOption<ProjectStatus>[] = [
     { value: 'ACTIVE',    label: 'Aktiv' },
     { value: 'COMPLETED', label: 'Abgeschlossen' },
     { value: 'ARCHIVED',  label: 'Archiviert' },

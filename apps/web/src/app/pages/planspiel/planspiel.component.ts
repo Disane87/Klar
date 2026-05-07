@@ -8,7 +8,7 @@ import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import type { RecurringFrequency } from '@klar/shared';
@@ -31,13 +31,21 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-planspiel',
   standalone: true,
-  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarMoneyInputComponent, KlarButtonComponent],
+  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarMoneyInputComponent, KlarButtonComponent],
   templateUrl: './planspiel.component.html',
   styleUrl: './planspiel.component.css',
 })
 export class PlanspielPageComponent {
   protected store = inject(PlanspielStore);
   private confirm = inject(KlarConfirmService);
+
+  protected readonly frequencyOpts: KlarSelectOption<RecurringFrequency>[] = [
+    { value: 'WEEKLY',      label: 'Wöchentlich' },
+    { value: 'MONTHLY',     label: 'Monatlich' },
+    { value: 'QUARTERLY',   label: 'Quartalsweise' },
+    { value: 'HALF_YEARLY', label: 'Halbjährlich' },
+    { value: 'YEARLY',      label: 'Jährlich' },
+  ];
 
   protected readonly presetColors = PRESET_COLORS;
 

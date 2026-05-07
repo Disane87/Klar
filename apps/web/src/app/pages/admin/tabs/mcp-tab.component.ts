@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HlmBadgeDirective } from '../../../shared/ui/hlm/hlm-badge.directive';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
-import { HlmSelectNativeDirective } from '../../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../../shared/ui/klar-select.component';
 import { KlarAvatarComponent } from '../../../shared/ui/klar-avatar.component';
 import { KlarFilterBarComponent } from '../../../shared/ui/klar-filter-bar.component';
 import { KlarSectionHeaderComponent } from '../../../shared/ui/klar-section-header.component';
@@ -17,7 +17,7 @@ import { usePaginatedList } from '../../../shared/data/use-paginated-list';
     FormsModule,
     HlmBadgeDirective,
     HlmInputDirective,
-    HlmSelectNativeDirective,
+    KlarSelectComponent,
     KlarAvatarComponent,
     KlarFilterBarComponent,
     KlarSectionHeaderComponent,
@@ -40,11 +40,12 @@ import { usePaginatedList } from '../../../shared/data/use-paginated-list';
         </label>
         <label class="flex flex-col gap-1 min-w-[140px]">
           <span hlmLabel>Status</span>
-          <select hlmSelect class="scheme-dark" [ngModel]="filterOk()" (ngModelChange)="onOk($event)">
-            <option [ngValue]="''">Alle</option>
-            <option [ngValue]="'true'">OK</option>
-            <option [ngValue]="'false'">Fehler</option>
-          </select>
+          <klar-select
+            [options]="okOpts"
+            [value]="filterOk()"
+            (valueChange)="onOk($event)"
+            ariaLabel="Status"
+          />
         </label>
         <label class="flex flex-col gap-1 min-w-[180px]">
           <span hlmLabel>User-ID</span>
@@ -129,6 +130,12 @@ export class AdminMcpTabComponent {
   private api = inject(AdminApiService);
 
   protected readonly rowH = 44;
+
+  protected readonly okOpts: KlarSelectOption<'' | 'true' | 'false'>[] = [
+    { value: '',      label: 'Alle' },
+    { value: 'true',  label: 'OK' },
+    { value: 'false', label: 'Fehler' },
+  ];
 
   protected list = usePaginatedList<McpAuditEntry, McpFilter>({
     fetch: (filter, cursor) => this.api.listMcpAuditLogs(filter, cursor),

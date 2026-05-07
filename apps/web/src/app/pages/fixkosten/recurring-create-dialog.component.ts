@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent } from '../../shared/ui/klar-select.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
@@ -22,7 +22,7 @@ import { safeDayOfMonth } from '@klar/shared';
   selector: 'app-recurring-create-dialog',
   standalone: true,
   imports: [
-    HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective,
+    HlmInputDirective, HlmLabelDirective, KlarSelectComponent,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
     KlarMoneyInputComponent, KlarDialogFooterComponent,
   ],

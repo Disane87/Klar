@@ -54,20 +54,22 @@
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-vis">Sichtbarkeit</label>
-    <select id="td-vis" hlmSelect
-            (change)="visibility.set($any($event.target).value)">
-      <option value="SHARED" [selected]="visibility() === 'SHARED'">Geteilt</option>
-      <option value="PRIVATE" [selected]="visibility() === 'PRIVATE'">Privat</option>
-    </select>
+    <klar-select
+      [options]="visibilityOpts"
+      [value]="visibility()"
+      (valueChange)="visibility.set($any($event))"
+      ariaLabel="Sichtbarkeit"
+    />
   </div>
 
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-status">Status</label>
-    <select id="td-status" hlmSelect
-            (change)="isPlanned.set($any($event.target).value === 'true')">
-      <option value="false" [selected]="!isPlanned()">Realisiert</option>
-      <option value="true"  [selected]="isPlanned()">Geplant</option>
-    </select>
+    <klar-select
+      [options]="plannedOpts"
+      [value]="isPlannedStr()"
+      (valueChange)="isPlanned.set($event === 'true')"
+      ariaLabel="Status"
+    />
     @if (realizingNow()) {
       <span class="text-[11px] text-(--text-muted)">
         Wird realisiert — Plan wird archiviert.

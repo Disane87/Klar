@@ -3,7 +3,7 @@ import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
-import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
@@ -21,7 +21,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 @Component({
   selector: 'app-transaction-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent],
+  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent],
   templateUrl: './transaction-dialog.component.html',
   styleUrl: './transaction-dialog.component.css',
 })
@@ -46,6 +46,16 @@ export class TransactionDialogComponent {
   readonly categoryId  = signal('');
   readonly visibility  = signal<'SHARED' | 'PRIVATE'>('SHARED');
   readonly isPlanned   = signal(false);
+  readonly isPlannedStr = computed(() => String(this.isPlanned()) as 'true' | 'false');
+
+  protected readonly visibilityOpts: KlarSelectOption<'SHARED' | 'PRIVATE'>[] = [
+    { value: 'SHARED',  label: 'Geteilt' },
+    { value: 'PRIVATE', label: 'Privat' },
+  ];
+  protected readonly plannedOpts: KlarSelectOption<'true' | 'false'>[] = [
+    { value: 'false', label: 'Realisiert' },
+    { value: 'true',  label: 'Geplant' },
+  ];
   readonly projectId   = signal<string | null>(null);
   readonly saving      = signal(false);
   readonly err         = signal('');
