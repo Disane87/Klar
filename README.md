@@ -20,6 +20,7 @@
 | **📊 Fixed Costs Dashboard** | Grouped by category, color-coded, net surplus calculation |
 | **🔁 Recurring Transactions** | Monthly, quarterly, yearly, or custom intervals — computed on-the-fly (no data bloat!) |
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
+| **📒 Buchungen** | Flat transactions list with filter tabs (Alle / Wiederkehrend / Manuell / Eingänge), category-tone per row, recurring chip on auto-generated bookings, summary strip with monthly income / expense / surplus |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
 | **🎯 Project Tracking** | Assign transactions to projects, track budget vs. actual vs. remaining |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
