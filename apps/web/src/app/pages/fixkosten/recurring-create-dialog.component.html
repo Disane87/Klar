@@ -80,11 +80,13 @@
     <p class="text-[12px] text-(--color-expense)">{{ err() }}</p>
   }
 
-  <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
-    <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
-    <klar-button tone="primary" size="sm"
-                 [disabled]="!isValid()" [loading]="saving()" (click)="save()">
-      Erstellen
-    </klar-button>
-  </div>
+  <klar-dialog-footer
+    class="pt-2 border-t border-(--border)"
+    confirmLabel="Erstellen"
+    [confirmDisabled]="!isValid()"
+    [confirmLoading]="saving()"
+    [autoCloseOnCancel]="false"
+    (cancel)="cancel()"
+    (confirm)="save()"
+  />
 </div>

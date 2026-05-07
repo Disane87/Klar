@@ -13,10 +13,11 @@
   @if (error()) {
     <p class="dialog-error">{{ error() }}</p>
   }
-  <div class="dialog-actions">
-    <klar-button tone="danger" [disabled]="!canDelete()" [loading]="deleting()" (click)="confirm()">
-      Konto unwiderruflich löschen
-    </klar-button>
-    <klar-button tone="ghost" (click)="dialog.close()">Abbrechen</klar-button>
-  </div>
+  <klar-dialog-footer
+    confirmLabel="Konto unwiderruflich löschen"
+    confirmTone="danger"
+    [confirmDisabled]="!canDelete()"
+    [confirmLoading]="deleting()"
+    (confirm)="confirm()"
+  />
 </div>

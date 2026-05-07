@@ -80,14 +80,17 @@
     <p class="text-[12px] text-expense">{{ err() }}</p>
   }
 
-  <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
-    <klar-button tone="danger" size="sm" [loading]="saving()" (click)="remove()">
+  <klar-dialog-footer
+    class="pt-2 border-t border-(--border)"
+    confirmLabel="Speichern"
+    [confirmDisabled]="!isValid()"
+    [confirmLoading]="saving()"
+    [autoCloseOnCancel]="false"
+    (cancel)="cancel()"
+    (confirm)="save()"
+  >
+    <klar-button start tone="danger" size="sm" [loading]="saving()" (click)="remove()">
       Löschen
     </klar-button>
-    <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
-    <klar-button tone="primary" size="sm"
-                 [disabled]="!isValid()" [loading]="saving()" (click)="save()">
-      Speichern
-    </klar-button>
-  </div>
+  </klar-dialog-footer>
 </div>

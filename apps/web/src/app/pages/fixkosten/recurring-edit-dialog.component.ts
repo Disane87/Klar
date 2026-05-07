@@ -5,6 +5,7 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
@@ -26,7 +27,7 @@ import { safeDayOfMonth } from '@klar/shared';
   imports: [
     KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
-    KlarMoneyInputComponent,
+    KlarMoneyInputComponent, KlarDialogFooterComponent,
   ],
   templateUrl: './recurring-edit-dialog.component.html',
   styleUrl: './recurring-edit-dialog.component.css',

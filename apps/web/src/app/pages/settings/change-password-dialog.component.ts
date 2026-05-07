@@ -4,13 +4,14 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
 
 @Component({
   selector: 'app-change-password-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmInputDirective, HlmLabelDirective],
+  imports: [FormsModule, KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarDialogFooterComponent],
   templateUrl: './change-password-dialog.component.html',
 })
 export class ChangePasswordDialogComponent {

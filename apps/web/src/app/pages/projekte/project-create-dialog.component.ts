@@ -7,6 +7,7 @@ import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-sel
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { ProjectsService, type ProjectStatus, type ProjectResponse } from '../../core/projects/projects.service';
 import { ProjekteStore } from '../../core/overview/projekte.store';
@@ -25,6 +26,7 @@ const DEFAULT_COLOR = '#6366f1';
     KlarColorPickerComponent,
     KlarMoneyInputComponent,
     KlarDateInputComponent,
+    KlarDialogFooterComponent,
   ],
   template: `
     <div class="flex flex-col gap-4">
@@ -84,13 +86,15 @@ const DEFAULT_COLOR = '#6366f1';
         <p class="text-[12px] text-(--color-expense)">{{ err() }}</p>
       }
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-(--border)">
-        <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
-        <klar-button tone="primary" size="sm"
-                     [disabled]="!isValid()" [loading]="saving()" (click)="save()">
-          {{ item() ? 'Speichern' : 'Erstellen' }}
-        </klar-button>
-      </div>
+      <klar-dialog-footer
+        class="pt-2 border-t border-(--border)"
+        [confirmLabel]="item() ? 'Speichern' : 'Erstellen'"
+        [confirmDisabled]="!isValid()"
+        [confirmLoading]="saving()"
+        [autoCloseOnCancel]="false"
+        (cancel)="cancel()"
+        (confirm)="save()"
+      />
     </div>
   `,
 })

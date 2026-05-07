@@ -17,8 +17,10 @@ import { KlarDialogService } from './klar-dialog.service';
   standalone: true,
   imports: [KlarButtonComponent],
   template: `
-    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-      <ng-content select="[start]" />
+    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+      <div class="sm:flex-1 flex flex-col-reverse gap-2 sm:flex-row">
+        <ng-content select="[start]" />
+      </div>
       <klar-button tone="ghost" size="sm" (click)="onCancel()">
         {{ cancelLabel() }}
       </klar-button>

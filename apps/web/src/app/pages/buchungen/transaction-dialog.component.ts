@@ -7,6 +7,7 @@ import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-sel
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { TransactionsService } from '../../core/transactions/transactions.service';
@@ -20,7 +21,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 @Component({
   selector: 'app-transaction-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent],
+  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent],
   templateUrl: './transaction-dialog.component.html',
   styleUrl: './transaction-dialog.component.css',
 })
