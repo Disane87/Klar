@@ -21,19 +21,23 @@ type Tab = 'audit' | 'mcp' | 'emails' | 'households';
     AdminMcpTabComponent,
   ],
   template: `
-    <div class="flex flex-col gap-4 p-4 md:p-6 max-w-350 mx-auto h-[calc(100dvh-var(--page-header-h,64px))]">
-      <!-- Hero strip · eyebrow + Fraunces title (Klar Design Pearl) -->
-      <section class="flex flex-col gap-1">
-        <span class="text-[10px] uppercase tracking-[0.14em] font-medium text-(--fg-2)">
-          System · Self-Host Instanz
-        </span>
-        <h1 class="font-(family-name:--font-display) text-[28px] md:text-[32px] font-normal leading-none tracking-[-0.02em]">
-          Admin
-        </h1>
-        <p class="text-[12px] text-(--fg-2) max-w-prose">
-          System-weite Übersicht über Audit-Log, MCP-Tool-Calls, ausgehende E-Mails
-          und alle Haushalte dieser Instanz.
-        </p>
+    <div class="flex flex-col gap-4 p-(--s-6) max-w-350 mx-auto h-[calc(100dvh-var(--page-header-h,64px))]">
+      <!-- Admin hero — bundle PageAdmin admin-hero card -->
+      <section class="card flex flex-col md:flex-row gap-(--s-4) p-5 items-start md:items-center">
+        <div class="flex-1 min-w-0 flex flex-col gap-1">
+          <span class="eyebrow">Klar Self-Host · {{ instanceHost() }}</span>
+          <h1 class="text-[24px] md:text-[28px] leading-none"
+              style="font-family: var(--font-display); letter-spacing: -0.02em; font-weight: 500;">
+            Alles läuft.
+          </h1>
+          <p class="text-[12px] text-(--fg-2) max-w-prose mt-1">
+            Audit-Log, MCP-Tool-Calls, ausgehende E-Mails und alle Haushalte dieser Instanz —
+            zentralisiert für die System-Übersicht.
+          </p>
+        </div>
+        <div class="flex flex-col gap-2 shrink-0">
+          <span class="chip success dot self-start md:self-end">v{{ version() }} healthy</span>
+        </div>
       </section>
 
       <!-- Header stats — 4 metric tiles, 2 col on mobile, 4 col ≥ md -->
@@ -84,8 +88,15 @@ export class AdminPageComponent implements OnInit {
   protected readonly emailCount     = signal('—');
   protected readonly householdCount = signal('—');
 
+  /** Hostname of the instance — bundle hero shows klar.local; resolves at runtime. */
+  protected readonly instanceHost = signal<string>(
+    typeof window !== 'undefined' ? window.location.hostname : 'klar.local',
+  );
+  /** Version string for the hero chip; will be wired to /version once API exposes it. */
+  protected readonly version = signal('1.0.0');
+
   ngOnInit(): void {
-    this.pageHeader.set({ title: 'Admin', subtitle: 'System-weite Übersicht' });
+    this.pageHeader.set({ title: 'Admin', subtitle: 'System · Self-Host Instanz' });
   }
 
   protected setTab(t: Tab): void {
