@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
-import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarActionTileComponent } from '../../shared/ui/klar-action-tile.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { HouseholdService } from '../../core/household/household.service';
@@ -20,7 +19,6 @@ type Mode = 'choose' | 'create' | 'join';
     KlarWordmarkComponent,
     KlarButtonComponent,
     KlarInputComponent,
-    KlarIconComponent,
     KlarActionTileComponent,
   ],
   host: { class: 'block' },

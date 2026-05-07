@@ -1,6 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
@@ -19,7 +18,6 @@ const DEFAULT_COLOR = '#6366f1';
   selector: 'app-project-create-dialog',
   standalone: true,
   imports: [
-    KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
     HlmSelectNativeDirective,
