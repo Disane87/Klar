@@ -1,17 +1,24 @@
 <div class="page">
 
-  <!-- Filter Bar — only shown when not loading -->
+  <!-- Page intro + segmented filter — matches PageProjects header from design bundle -->
   @if (!store.loading()) {
-    <div class="filter-bar">
-      @for (f of filters; track f.value) {
-        <button
-          class="filter-btn"
-          [class.active]="store.statusFilter() === f.value"
-          type="button"
-          (click)="setFilter(f.value)">
-          {{ f.label }}
-        </button>
-      }
+    <div class="page-intro-row">
+      <p class="page-intro">
+        Ein Projekt bündelt Ausgaben gegen ein festes Budget — Hochzeit, Renovierung, Reise.
+        Buchungen werden manuell oder per Import einem Projekt zugeordnet.
+      </p>
+      <div class="segmented" role="tablist">
+        @for (f of filters; track f.value) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="store.statusFilter() === f.value"
+            [class.active]="store.statusFilter() === f.value"
+            (click)="setFilter(f.value)">
+            {{ f.label }}
+          </button>
+        }
+      </div>
     </div>
   }
 
@@ -26,87 +33,103 @@
     (cta)="openCreate()"
   >
     <ng-template klarLoading>
-      <div class="project-list">
+      <div class="project-grid">
         @for (_ of [1, 2, 3]; track $index) {
           <div class="sk-card">
             <div class="sk-card-header">
-              <klar-skeleton height="14px" width="55%"/>
+              <klar-skeleton height="18px" width="55%"/>
               <klar-skeleton height="10px" width="60px"/>
             </div>
-            <klar-skeleton height="4px" width="100%"/>
+            <klar-skeleton height="6px" width="100%"/>
             <div class="sk-stat-row">
-              <klar-skeleton height="12px" width="30%"/>
-              <klar-skeleton height="12px" width="30%"/>
-              <klar-skeleton height="12px" width="30%"/>
+              <klar-skeleton height="14px" width="30%"/>
+              <klar-skeleton height="14px" width="30%"/>
+              <klar-skeleton height="14px" width="30%"/>
             </div>
           </div>
         }
       </div>
     </ng-template>
 
-    <div class="project-list">
+    <div class="project-grid">
       @for (item of store.projects()?.projects ?? []; track item.id) {
-        <div class="project-card" [style.--project-color]="item.color"
+        <div class="project-card"
+             [style.--project-color]="item.color"
              (click)="openProject(item)" tabindex="0"
-             role="button" [attr.aria-label]="item.name + ' öffnen'">
+             role="button"
+             (keydown.enter)="openProject(item)"
+             [attr.aria-label]="item.name + ' öffnen'">
 
-          <!-- Card Header: name + status badge -->
-          <div class="card-header">
-            <span class="project-name">{{ item.name }}</span>
-            <span class="status-badge"
-                  [class.badge-active]="item.status === 'ACTIVE'"
-                  [class.badge-completed]="item.status === 'COMPLETED'"
-                  [class.badge-archived]="item.status === 'ARCHIVED'">
-              {{ statusLabel(item.status) }}
-            </span>
+          <!-- pc-head: title + status -->
+          <div class="pc-head">
+            <div class="pc-title">
+              <span class="pc-color-bar" aria-hidden="true"></span>
+              <div class="min-w-0">
+                <div class="pc-name">{{ item.name }}</div>
+                <div class="pc-meta">
+                  <span class="status-chip"
+                        [class.chip-active]="item.status === 'ACTIVE'"
+                        [class.chip-completed]="item.status === 'COMPLETED'"
+                        [class.chip-archived]="item.status === 'ARCHIVED'">
+                    {{ statusLabel(item.status) }}
+                  </span>
+                  <span>{{ item.transactionCount }}&nbsp;{{ item.transactionCount === 1 ? 'Buchung' : 'Buchungen' }}</span>
+                </div>
+              </div>
+            </div>
+            @if (item.totalBudgetCents !== null) {
+              <span class="font-mono tabular-nums text-[12px] text-(--fg-2)">
+                {{ progressPercent(item) }}&nbsp;%
+              </span>
+            }
           </div>
 
-          <!-- Budget progress bar (only if budget is set) -->
+          <!-- meter (uses design `.meter` style, tinted by project color) -->
           @if (item.totalBudgetCents !== null) {
-            <div class="progress-wrap">
-              <div class="progress-bar-track">
-                <div class="progress-bar-fill" [style.width.%]="progressPercent(item)"></div>
-              </div>
-              <span class="progress-label">
-                {{ progressPercent(item) }}&nbsp;% von {{ item.totalBudgetCents | klarMoney }}
-              </span>
+            <div class="meter"
+                 [class.over]="progressPercent(item) > 95"
+                 [class.warn]="progressPercent(item) > 80 && progressPercent(item) <= 95">
+              <i [style.width.%]="progressPercent(item)" [style.background]="item.color"></i>
             </div>
           }
 
-          <!-- Stats row: Balance | Ausgaben | Einnahmen -->
-          <div class="stat-row">
-            <div class="stat-cell">
-              <span class="stat-label">BILANZ</span>
-              <span class="stat-value font-mono tabular-nums" [ngClass]="item.balanceCents | klarMoneyClass">
+          <!-- pc-numbers: 3-column hairline-separated -->
+          <div class="pc-numbers">
+            <div>
+              <div class="lbl">Budget</div>
+              <div class="val">
+                {{ item.totalBudgetCents !== null ? (item.totalBudgetCents | klarMoney) : '—' }}
+              </div>
+            </div>
+            <div>
+              <div class="lbl">Ausgegeben</div>
+              <div class="val font-mono tabular-nums" [ngClass]="item.spentCents | klarMoneyClass">
+                {{ item.spentCents | klarMoney }}
+              </div>
+            </div>
+            <div>
+              <div class="lbl">Bilanz</div>
+              <div class="val font-mono tabular-nums" [ngClass]="item.balanceCents | klarMoneyClass">
                 {{ item.balanceCents | klarMoney }}
-              </span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-cell">
-              <span class="stat-label">AUSGABEN</span>
-              <span class="stat-value font-mono tabular-nums" [ngClass]="item.spentCents | klarMoneyClass">{{ item.spentCents | klarMoney }}</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-cell">
-              <span class="stat-label">EINNAHMEN</span>
-              <span class="stat-value font-mono tabular-nums" [ngClass]="item.incomeCents | klarMoneyClass">{{ item.incomeCents | klarMoney }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- Transaction count + planned/deviation hints -->
-          <div class="tx-count">
-            {{ item.transactionCount }}&nbsp;{{ item.transactionCount === 1 ? 'Buchung' : 'Buchungen' }}
-            @if (item.plannedSpentCents > 0 || item.plannedIncomeCents > 0) {
-              · <span class="text-(--color-accent)">{{ item.plannedSpentCents | klarMoney }} geplant</span>
-            }
-            @if (item.deviationCents !== 0) {
-              · <span [class.text-(--color-income)]="item.deviationCents > 0"
+          @if (item.deviationCents !== 0 || item.plannedSpentCents > 0) {
+            <div class="pc-footnote">
+              @if (item.plannedSpentCents > 0) {
+                <span class="text-(--accent)">
+                  {{ item.plannedSpentCents | klarMoney }} geplant
+                </span>
+              }
+              @if (item.deviationCents !== 0) {
+                <span [class.text-(--color-income)]="item.deviationCents > 0"
                       [class.text-(--color-expense)]="item.deviationCents < 0">
-                Abw. {{ item.deviationCents > 0 ? '+' : '' }}{{ item.deviationCents | klarMoney }}
-              </span>
-            }
-          </div>
-
+                  Abw. {{ item.deviationCents > 0 ? '+' : '' }}{{ item.deviationCents | klarMoney }}
+                </span>
+              }
+            </div>
+          }
         </div>
       }
     </div>

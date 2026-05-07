@@ -1,24 +1,25 @@
 <div class="page">
 
-  <!-- Back bar -->
+  <!-- Back / breadcrumb (matches PageProjectDetail crumb in bundle) -->
   <div class="back-bar">
     <button type="button" class="back-btn" (click)="back()" aria-label="Zurück zu Projekten">
-      <klar-icon name="chevron-left" [size]="16" />
+      <klar-icon name="chevron-left" [size]="14" />
       <span>Projekte</span>
     </button>
   </div>
 
   @if (loading()) {
     <div class="hero">
-      <klar-skeleton height="22px" width="60%" />
+      <klar-skeleton height="28px" width="60%" />
       <klar-skeleton height="14px" width="35%" />
       <klar-skeleton height="6px" width="100%" />
     </div>
-    <div class="stat-strip">
-      @for (_ of [1,2,3,4]; track $index) {
-        <div class="stat">
-          <klar-skeleton height="10px" width="60px" />
-          <klar-skeleton height="20px" width="80%" />
+    <div class="summary-strip">
+      @for (_ of [1,2,3]; track $index) {
+        <div class="metric-skeleton">
+          <klar-skeleton height="10px" width="80px" />
+          <klar-skeleton height="28px" width="70%" />
+          <klar-skeleton height="11px" width="50%" />
         </div>
       }
     </div>
@@ -34,17 +35,17 @@
 
   @else if (project(); as p) {
 
-    <!-- Hero -->
-    <div class="hero" [style.--project-color]="p.color">
+    <!-- ─── Hero ─────────────────────────────────────────────────── -->
+    <header class="hero" [style.--project-color]="p.color">
       <div class="hero-top">
         <div class="hero-name-wrap">
-          <span class="hero-color-dot"></span>
+          <span class="hero-color-bar" aria-hidden="true"></span>
           <h1 class="hero-name">{{ p.name }}</h1>
         </div>
-        <span class="status-badge"
-              [class.badge-active]="p.status === 'ACTIVE'"
-              [class.badge-completed]="p.status === 'COMPLETED'"
-              [class.badge-archived]="p.status === 'ARCHIVED'">
+        <span class="status-chip"
+              [class.chip-active]="p.status === 'ACTIVE'"
+              [class.chip-completed]="p.status === 'COMPLETED'"
+              [class.chip-archived]="p.status === 'ARCHIVED'">
           {{ statusLabel(p.status) }}
         </span>
       </div>
@@ -60,11 +61,12 @@
       @if (stats(); as s) {
         @if (s.totalBudgetCents !== null) {
           <div class="progress-wrap">
-            <div class="progress-bar-track">
-              <!-- planned segment (muted, behind) -->
-              <div class="progress-bar-planned" [style.width.%]="plannedProgressPercent()"></div>
-              <!-- realized segment (full color, on top) -->
-              <div class="progress-bar-fill" [style.width.%]="progressPercent()"></div>
+            <div class="meter" role="progressbar"
+                 [attr.aria-valuenow]="progressPercent()"
+                 aria-valuemin="0" aria-valuemax="100">
+              <i class="meter-planned" [style.width.%]="plannedProgressPercent()"></i>
+              <i class="meter-realized" [style.width.%]="progressPercent()"
+                 [style.background]="p.color"></i>
             </div>
             <span class="progress-label">
               {{ progressPercent() }}&nbsp;% realisiert
@@ -76,103 +78,70 @@
           </div>
         }
       }
+    </header>
 
-      <div class="hero-actions">
-        <klar-button tone="primary" size="sm" (click)="openCreateTransaction(false)">
-          + Buchung
-        </klar-button>
-        <klar-button tone="ghost" size="sm" (click)="openCreateTransaction(true)">
-          + Geplant
-        </klar-button>
-        <klar-button tone="ghost" size="sm" (click)="openEdit()">Bearbeiten</klar-button>
-        @if (p.status !== 'ARCHIVED') {
-          <klar-button tone="ghost" size="sm" [disabled]="deleting()" (click)="archive()">Archivieren</klar-button>
-        }
-        <klar-button tone="danger" size="sm" [disabled]="deleting()" (click)="remove()">Löschen</klar-button>
-      </div>
-    </div>
-
-    <!-- Stat strip -->
+    <!-- ─── Summary strip — three metric tiles ───────────────────── -->
     @if (stats(); as s) {
-      <div class="stat-strip">
-        <div class="stat">
-          <span class="stat-label">BUDGET</span>
-          <span class="stat-value font-mono tabular-nums">
-            {{ s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—' }}
-          </span>
-        </div>
-        <div class="stat-rule"></div>
-        <div class="stat">
-          <span class="stat-label">GEPLANT</span>
-          <span class="stat-value font-mono tabular-nums text-muted-foreground">
-            {{ -(s.plannedSpentCents) + s.plannedIncomeCents | klarMoney }}
-          </span>
-        </div>
-        <div class="stat-rule"></div>
-        <div class="stat">
-          <span class="stat-label">AUSGABEN</span>
-          <span class="stat-value font-mono tabular-nums" [ngClass]="(-s.spentCents) | klarMoneyClass">
-            {{ -s.spentCents | klarMoney }}
-          </span>
-        </div>
-        <div class="stat-rule"></div>
-        <div class="stat">
-          <span class="stat-label">EINNAHMEN</span>
-          <span class="stat-value font-mono tabular-nums" [ngClass]="s.incomeCents | klarMoneyClass">
-            {{ s.incomeCents | klarMoney }}
-          </span>
-        </div>
-        <div class="stat-rule"></div>
-        <div class="stat">
-          <span class="stat-label">BILANZ</span>
-          <span class="stat-value font-mono tabular-nums" [ngClass]="s.balanceCents | klarMoneyClass">
-            {{ s.balanceCents | klarMoney }}
-          </span>
-          @if (s.deviationCents !== 0) {
-            <span class="stat-sub font-mono tabular-nums"
-                  [class.text-(--color-income)]="s.deviationCents > 0"
-                  [class.text-(--color-expense)]="s.deviationCents < 0">
-              Abw. {{ s.deviationCents > 0 ? '+' : '' }}{{ s.deviationCents | klarMoney }}
-            </span>
-          }
-        </div>
-      </div>
+      <section class="summary-strip">
+        <klar-metric-tile
+          label="BUDGET"
+          [value]="s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—'"
+          [sub]="p.startDate ? 'festgelegt ' + formatDate(p.startDate) : ''" />
+
+        <klar-metric-tile
+          label="AUSGEGEBEN"
+          [value]="(-s.spentCents) | klarMoney"
+          [sub]="(s.transactionCount ?? 0) + ' Buchungen'" />
+
+        <klar-metric-tile
+          label="VERFÜGBAR"
+          [accent]="true"
+          [value]="(s.balanceCents) | klarMoney"
+          [sub]="s.totalBudgetCents !== null
+                  ? '≈ ' + (100 - progressPercent()) + ' % verbleibend'
+                  : ''" />
+      </section>
     }
 
-    <!-- Planned section -->
+    <!-- ─── Geplante Buchungen ───────────────────────────────────── -->
     @if (plannedTx().length > 0) {
-      <div class="tx-section">
-        <div class="tx-section-header">
-          <span class="tx-section-title">Geplant</span>
-          <span class="tx-section-count">
+      <section class="tx-section">
+        <div class="section-head">
+          <span class="section-title">Geplant</span>
+          <span class="section-count font-mono">
             {{ plannedTx().length }}&nbsp;{{ plannedTx().length === 1 ? 'Eintrag' : 'Einträge' }}
           </span>
         </div>
-        <div class="tx-list">
+        <div class="tx-card">
           @for (t of plannedTx(); track t.id) {
-            <div class="tx-row tx-row-planned" (click)="openEditTransaction(t)">
-              <div class="tx-date-brand">
-                <app-brand-icon [name]="t.description ?? ''" [size]="12" />
-                <span class="tx-date">{{ formatDate(t.date) }}</span>
-              </div>
-              <span class="tx-info">
-                <span class="tx-desc">{{ t.description }}</span>
-                <span class="tx-badge tx-badge-planned">GEPLANT</span>
+            <button type="button" class="tx-row tx-row-planned"
+                    (click)="openEditTransaction(t)">
+              <span class="tx-icon">
+                <app-brand-icon [name]="t.description ?? ''" [size]="20" />
               </span>
-              <span class="tx-amount font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
+              <div class="tx-lhs">
+                <span class="tx-name">
+                  {{ t.description }}
+                  <span class="chip warn">GEPLANT</span>
+                </span>
+                <span class="tx-meta">
+                  <span class="font-mono">{{ formatDate(t.date) }}</span>
+                </span>
+              </div>
+              <span class="tx-amt font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
                 {{ t.amountCents | klarMoney }}
               </span>
-            </div>
+            </button>
           }
         </div>
-      </div>
+      </section>
     }
 
-    <!-- Realized section -->
-    <div class="tx-section">
-      <div class="tx-section-header">
-        <span class="tx-section-title">Realisiert</span>
-        <span class="tx-section-count">
+    <!-- ─── Realisierte Buchungen ────────────────────────────────── -->
+    <section class="tx-section">
+      <div class="section-head">
+        <span class="section-title">Realisiert</span>
+        <span class="section-count font-mono">
           {{ realizedTx().length }}&nbsp;{{ realizedTx().length === 1 ? 'Eintrag' : 'Einträge' }}
         </span>
       </div>
@@ -180,35 +149,50 @@
       @if (realizedTx().length === 0) {
         <klar-empty-state message="Noch keine realisierten Buchungen für dieses Projekt" />
       } @else {
-        <div class="tx-list">
+        <div class="tx-card">
           @for (t of realizedTx(); track t.id) {
-            <div class="tx-row" (click)="openEditTransaction(t)">
-              <div class="tx-date-brand">
-                <app-brand-icon [name]="t.description ?? ''" [size]="12" />
-                <span class="tx-date">{{ formatDate(t.date) }}</span>
-              </div>
-              <span class="tx-info">
-                <span class="tx-desc">{{ t.description }}</span>
-                @if (deviationFor(t); as d) {
-                  <span class="tx-badge tx-badge-deviation"
-                        [class.dev-positive]="d > 0"
-                        [class.dev-negative]="d < 0"
-                        [class.dev-zero]="d === 0">
-                    Abw. {{ d > 0 ? '+' : '' }}{{ d | klarMoney }}
-                  </span>
-                }
-                @if (t.visibility === 'PRIVATE') {
-                  <span class="tx-badge tx-badge-private">PRIVAT</span>
-                }
+            <button type="button" class="tx-row" (click)="openEditTransaction(t)">
+              <span class="tx-icon">
+                <app-brand-icon [name]="t.description ?? ''" [size]="20" />
               </span>
-              <span class="tx-amount font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
+              <div class="tx-lhs">
+                <span class="tx-name">
+                  {{ t.description }}
+                  @if (t.visibility === 'PRIVATE') {
+                    <span class="chip outline">PRIVAT</span>
+                  }
+                  @if (deviationFor(t); as d) {
+                    <span class="chip"
+                          [class.success]="d > 0"
+                          [class.danger]="d < 0">
+                      Abw. {{ d > 0 ? '+' : '' }}{{ d | klarMoney }}
+                    </span>
+                  }
+                </span>
+                <span class="tx-meta">
+                  <span class="font-mono">{{ formatDate(t.date) }}</span>
+                </span>
+              </div>
+              <span class="tx-amt font-mono tabular-nums" [ngClass]="t.amountCents | klarMoneyClass">
                 {{ t.amountCents | klarMoney }}
               </span>
-            </div>
+            </button>
           }
         </div>
       }
-    </div>
+    </section>
+
+    <!-- ─── Sticky footer actions (mobile + desktop) ─────────────── -->
+    <footer class="sticky-actions">
+      <klar-button tone="primary" size="sm" (click)="openCreateTransaction(false)">+ Buchung</klar-button>
+      <klar-button tone="ghost" size="sm" (click)="openCreateTransaction(true)">+ Geplant</klar-button>
+      <klar-button tone="ghost" size="sm" (click)="openEdit()">Bearbeiten</klar-button>
+      @if (p.status !== 'ARCHIVED') {
+        <klar-button tone="ghost" size="sm" [disabled]="deleting()" (click)="archive()">Archivieren</klar-button>
+      }
+      <klar-button tone="danger" size="sm" [disabled]="deleting()" (click)="remove()">Löschen</klar-button>
+    </footer>
+
   }
 
 </div>

@@ -28,6 +28,7 @@ import { OAuthModule } from './oauth/oauth.module';
 import { McpModule } from './mcp/mcp.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContractsModule } from './contracts/contracts.module';
+import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -95,6 +96,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     McpModule,
     NotificationsModule,
     ContractsModule,
+    ConnectedAppsModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({

@@ -113,6 +113,7 @@ model User {
   oauthGrants           OAuthGrant[]
   oauthConsents         OAuthConsent[]
   notifications         Notification[]
+  connectedApps         ConnectedApp[]
 
   @@index([email])
   @@index([isDeleted])
@@ -747,4 +748,24 @@ model Contract {
 
   @@index([householdId, status])
   @@index([householdId, nextRenewalAt])
+}
+
+// ─────────────────────────────────────────────
+// CONNECTED APPS (Settings → Connected Apps)
+// ─────────────────────────────────────────────
+// Generic per-user link to external identity / integration providers.
+// Distinct from ApiKey (M2M tokens) and OidcIdentity (login-only).
+model ConnectedApp {
+  id         String    @id @default(cuid())
+  userId     String
+  provider   String // pocketid | github | google | claude_ai | …
+  externalId String
+  scopes     String[]  @default([])
+  linkedAt   DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, externalId])
+  @@index([userId])
 }

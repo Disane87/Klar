@@ -19,6 +19,7 @@ import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
+import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
 import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
 import type { Transaction } from '../../core/transactions/transactions.store';
@@ -37,6 +38,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
     BrandIconComponent,
     KlarMoneyPipe,
     KlarMoneyClassPipe,
+    KlarMetricTileComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',

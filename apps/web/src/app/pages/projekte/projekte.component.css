@@ -1,247 +1,230 @@
+/* ================================================================
+   Projekte list — Klar Design Pearl port (PageProjects).
+   Mirrors styles.css `.project-card`, `.meter`, `.segmented`,
+   `.pc-head/-name/-meta/-numbers`, `.page-intro` from the bundle.
+   ================================================================ */
+
 .page {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: 4rem;
+  padding: var(--s-5) var(--s-6) calc(var(--s-16) + var(--safe-bottom));
+  gap: var(--s-5);
   animation: klar-enter 160ms ease-out both;
 }
 
-/* ── Filter Bar ──────────────────────────────────────────────────── */
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  flex-shrink: 0;
-}
-
-.filter-btn {
-  min-height: 44px;
-  padding: 0 14px;
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  cursor: pointer;
-  transition: color 100ms, background 100ms, border-color 100ms;
-}
-
-.filter-btn:hover {
-  color: var(--text);
-  background: color-mix(in oklab, var(--text) 6%, var(--surface));
-}
-
-.filter-btn:active {
-  background: color-mix(in oklab, var(--text) 10%, var(--surface));
-}
-
-.filter-btn.active {
-  color: var(--color-accent);
-  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
-  border-color: color-mix(in oklab, var(--color-accent) 40%, transparent);
-}
-
-/* ── Project List ────────────────────────────────────────────────── */
-.project-list {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-/* ── Project Card ────────────────────────────────────────────────── */
-.project-card {
-  border-bottom: 1px solid var(--border);
-  border-left: 3px solid var(--project-color, var(--border));
-  padding: 14px 24px;
-  background: var(--bg);
-  cursor: pointer;
-  transition: background 100ms ease;
-}
-
-.project-card:hover {
-  background: color-mix(in oklab, var(--project-color, var(--text)) 3%, var(--bg));
-}
-
-/* ── Card Header ─────────────────────────────────────────────────── */
-.card-header {
+/* ── Page intro row (intro copy + segmented filter) ───────────────── */
+.page-intro-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--s-4);
+  flex-wrap: wrap;
 }
 
-.project-name {
-  font-size: var(--body-sm);
+.page-intro {
+  font-size: var(--t-13);
+  color: var(--fg-2);
+  max-width: 64ch;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* segmented — port of bundle's .segmented */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--bg-1);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.segmented button {
+  padding: 6px var(--s-3);
+  font-size: var(--t-12);
   font-weight: 500;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Status Badge ─────────────────────────────────────────────────── */
-.status-badge {
-  flex-shrink: 0;
-  font-size: 9px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  padding: 2px 7px;
-  border-radius: 2px;
-  background: var(--surface);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.status-badge.badge-active {
-  color: var(--color-income);
-  background: color-mix(in oklab, var(--color-income) 10%, transparent);
-  border-color: color-mix(in oklab, var(--color-income) 30%, transparent);
-}
-
-.status-badge.badge-completed {
-  color: var(--color-surplus);
-  background: color-mix(in oklab, var(--color-surplus) 10%, transparent);
-  border-color: color-mix(in oklab, var(--color-surplus) 30%, transparent);
-}
-
-.status-badge.badge-archived {
-  color: var(--text-muted);
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-/* ── Progress Bar ─────────────────────────────────────────────────── */
-.progress-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-
-.progress-bar-track {
-  height: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: var(--color-accent);
-  border-radius: 2px;
-  transition: width 200ms ease;
-}
-
-.progress-label {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  text-align: right;
-}
-
-/* ── Stat Row ─────────────────────────────────────────────────────── */
-.stat-row {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  margin-bottom: 8px;
-}
-
-.stat-cell {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stat-divider {
-  width: 1px;
-  background: var(--border-subtle);
-  margin: 0 12px;
-  flex-shrink: 0;
-}
-
-.stat-label {
-  font-size: 9px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-}
-
-.stat-value {
-  font-size: var(--body-sm);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.stat-value.income  { color: var(--color-income); }
-.stat-value.expense { color: var(--color-expense); }
-
-/* ── Transaction Count ─────────────────────────────────────────────── */
-.tx-count {
-  font-size: var(--label);
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-}
-
-/* ── Error / Empty / Loading ─────────────────────────────────────── */
-.error-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-bottom: 1px solid color-mix(in oklab, var(--color-expense) 30%, transparent);
-  background: color-mix(in oklab, var(--color-expense) 8%, transparent);
-  font-size: var(--label-2);
-  color: var(--color-expense);
-}
-
-.retry-btn {
-  margin-left: auto;
-  font-size: var(--label);
-  text-decoration: underline;
-  color: var(--color-expense);
-  background: none;
-  border: none;
+  border-radius: var(--r-4);
+  color: var(--fg-2);
+  background: transparent;
+  border: 0;
   cursor: pointer;
-  min-height: 44px;
+  min-height: 32px;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
-.empty-state {
+.segmented button:hover  { color: var(--fg); }
+.segmented button.active { background: var(--bg-3); color: var(--fg); }
+
+/* ── Project grid (a single column on mobile, stacked cards) ──────── */
+.project-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-3);
+}
+
+/* ── Project card — mirrors bundle's .project-card ─────────────────── */
+.project-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-8);
+  background: var(--bg-1);
+  padding: var(--s-4) var(--s-5);
+  display: grid;
+  gap: var(--s-3);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+
+.project-card:hover  { border-color: var(--line-strong); }
+.project-card:active { background: var(--bg-2); }
+
+.project-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ── Card head ─────────────────────────────────────────────────────── */
+.pc-head {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.pc-title {
+  display: flex;
   align-items: center;
   gap: 10px;
-  padding: 64px 24px;
-  color: var(--text-muted);
-  font-size: var(--label-2);
+  min-width: 0;
 }
 
-/* ── Skeleton Cards ───────────────────────────────────────────────── */
+.pc-color-bar {
+  width: 4px;
+  height: 24px;
+  background: var(--project-color, var(--accent));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.pc-name {
+  font-family: var(--font-display);
+  font-size: var(--t-18);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pc-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-11);
+  color: var(--fg-2);
+  margin-top: 2px;
+}
+
+/* ── Status chip (pearl-style) ─────────────────────────────────────── */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: var(--fg-2);
+  border: 1px solid var(--line-soft);
+}
+
+.status-chip.chip-active {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: transparent;
+}
+
+.status-chip.chip-completed {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.status-chip.chip-archived {
+  color: var(--fg-2);
+  background: var(--bg-2);
+  border-color: var(--line-soft);
+}
+
+/* ── Meter (uses bundle's .meter token) ────────────────────────────── */
+.meter {
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.meter > i {
+  display: block;
+  height: 100%;
+  background: var(--fg-2);
+  border-radius: inherit;
+  transition: width 240ms var(--ease-out);
+}
+
+.meter.over > i { background: var(--danger); }
+.meter.warn > i { background: var(--warn); }
+
+/* ── 3-col numbers row, hairline above ─────────────────────────────── */
+.pc-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.pc-numbers .lbl {
+  font-size: var(--t-10);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.pc-numbers .val {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-15);
+  color: var(--fg);
+}
+
+/* ── Footnote line (planned / deviation) ───────────────────────────── */
+.pc-footnote {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-11);
+  color: var(--fg-2);
+}
+
+/* ── Skeletons ─────────────────────────────────────────────────────── */
 .sk-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  border-left: 3px solid var(--border-subtle);
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-8);
+  background: var(--bg-1);
 }
 
 .sk-card-header {
@@ -252,14 +235,16 @@
 
 .sk-stat-row {
   display: flex;
-  gap: 12px;
+  gap: var(--s-3);
 }
 
-/* ── Mobile ──────────────────────────────────────────────────────── */
+/* ── Mobile (≤ 767px) ──────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .filter-bar     { padding: 8px 16px; gap: 4px; }
-  .project-card   { padding: 12px 16px; }
-  .sk-card        { padding: 12px 16px; }
-  .stat-divider   { margin: 0 8px; }
-  .stat-value     { font-size: var(--label-2); }
+  .page              { padding: var(--s-4); gap: var(--s-4); }
+  .project-card      { padding: var(--s-3) var(--s-4); }
+  .pc-numbers        { grid-template-columns: 1fr 1fr; }
+  .pc-numbers > :nth-child(3) { grid-column: span 2; }
+  .page-intro-row    { flex-direction: column; align-items: stretch; }
+  .segmented         { width: 100%; }
+  .segmented button  { flex: 1; }
 }
