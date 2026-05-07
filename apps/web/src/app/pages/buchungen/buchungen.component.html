@@ -67,8 +67,10 @@
                 <app-brand-icon
                   [name]="primaryLabel(tx)"
                   [size]="22"
-                  [icon]="tx.icon ?? group.categoryIcon ?? null"
-                  [color]="tx.color ?? group.categoryColor ?? null"
+                  [icon]="tx.icon"
+                  [color]="tx.color"
+                  [fallbackIcon]="group.categoryIcon"
+                  [fallbackColor]="group.categoryColor"
                   class="shrink-0"
                 />
                 <div class="flex-1 min-w-0">

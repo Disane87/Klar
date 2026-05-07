@@ -291,7 +291,7 @@ export class FixkostenPageComponent {
   readonly enrichedGroups = computed(() => {
     if (this.planspielActive()) {
       const entries = this.planspielStore.entries();
-      const grouped = new Map<string, { categoryId: string; categoryName: string; categoryColor: string; categoryType: string; categorySortOrder: number; totalCents: number; items: any[] }>();
+      const grouped = new Map<string, { categoryId: string; categoryName: string; categoryColor: string; categoryIcon: string | null; categoryType: string; categorySortOrder: number; totalCents: number; items: any[] }>();
       for (const entry of entries) {
         const key = entry.categoryId ?? 'other';
         const existing = grouped.get(key);
@@ -315,6 +315,7 @@ grouped.set(key, {
             categoryId: key,
             categoryName: entry.categoryName ?? 'Sonstige',
             categoryColor: entry.color,
+            categoryIcon: null,
             categoryType: entry.categoryType ?? (entry.amountCents >= 0 ? 'INCOME' : 'EXPENSE'),
             categorySortOrder: entry.categorySortOrder ?? 0,
             totalCents: entry.amountCents,

@@ -146,7 +146,15 @@
                 [checked]="isSelected(item.id)"
                 class="shrink-0 pointer-events-none" />
             }
-            <app-brand-icon [name]="item.name" [size]="22" [color]="item.color" [icon]="item.icon" class="shrink-0" />
+            <app-brand-icon
+              [name]="item.name"
+              [size]="22"
+              [color]="item.color"
+              [icon]="item.icon"
+              [fallbackIcon]="group.categoryIcon"
+              [fallbackColor]="group.categoryColor"
+              class="shrink-0"
+            />
             @if (item.dayOfMonth) {
               <div class="w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-(--border)">
                 <div class="bg-accent h-2.5 flex items-center justify-center">

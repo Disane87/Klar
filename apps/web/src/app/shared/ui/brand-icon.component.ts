@@ -52,6 +52,18 @@ export const BRAND_COLORS: Record<string, string> = {
   zoom:       '#2D8CFF',
 };
 
+// Bare names (e.g. seed `home`, `briefcase`) default to lucide.
+function normalizeIconKey(key: string): string {
+  return key.includes(':') ? key : `lucide:${key}`;
+}
+
+function colorForKey(key: string): string | null {
+  if (key.startsWith('simple-icons:')) {
+    return BRAND_COLORS[key.slice('simple-icons:'.length)] ?? null;
+  }
+  return null; // lucide etc. inherit currentColor
+}
+
 @Component({
   selector: 'app-brand-icon',
   standalone: true,
@@ -62,14 +74,16 @@ export const BRAND_COLORS: Record<string, string> = {
   styleUrl: './brand-icon.component.css',
 })
 export class BrandIconComponent {
-  name  = input.required<string>();
-  size  = input(14);
-  color = input<string | null>(null);
-  icon  = input<string | null>(null);
+  name          = input.required<string>();
+  size          = input(14);
+  color         = input<string | null>(null);
+  icon          = input<string | null>(null);
+  fallbackIcon  = input<string | null>(null);
+  fallbackColor = input<string | null>(null);
 
-  // Auto-detect brand slug from name (used when no explicit icon)
+  // Auto-detect brand slug from name (only when no per-row icon override)
   readonly slug = computed(() => {
-    if (this.icon()) return null; // explicit icon set, skip auto-detect
+    if (this.icon()) return null;
     const lower = this.name().toLowerCase();
     for (const [keyword, slug] of BRAND_MAP) {
       if (lower.includes(keyword)) return slug;
@@ -77,12 +91,14 @@ export class BrandIconComponent {
     return null;
   });
 
-  // Effective icon key to render
+  // Priority: explicit per-row icon > name-based brand match > fallback (category)
   readonly iconKey = computed(() => {
     const explicit = this.icon();
-    if (explicit) return explicit;
+    if (explicit) return normalizeIconKey(explicit);
     const s = this.slug();
-    return s ? `simple-icons:${s}` : null;
+    if (s) return `simple-icons:${s}`;
+    const fb = this.fallbackIcon();
+    return fb ? normalizeIconKey(fb) : null;
   });
 
   readonly effectiveColor = computed(() => {
@@ -90,13 +106,11 @@ export class BrandIconComponent {
     if (explicit) return explicit;
 
     const ei = this.icon();
-    if (ei?.startsWith('simple-icons:')) {
-      const slug = ei.replace('simple-icons:', '');
-      return BRAND_COLORS[slug] ?? null;
-    }
-    if (ei?.startsWith('lucide:')) return null;
+    if (ei) return colorForKey(normalizeIconKey(ei));
 
     const s = this.slug();
-    return s ? (BRAND_COLORS[s] ?? null) : null;
+    if (s) return BRAND_COLORS[s] ?? null;
+
+    return this.fallbackColor() ?? null;
   });
 }
