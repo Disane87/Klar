@@ -9,6 +9,7 @@ import type { KlarExportFile, CategoryType as SharedCategoryType } from '@klar/s
 import type { RequestContext } from '../common/types/request-context.type';
 import { DataTransferRepository } from './data-transfer.repository';
 import type { ExportOpts } from './data-transfer.repository';
+import { AccountsService } from '../accounts/accounts.service';
 
 export interface AnalyzeResult {
   summary: { transactions: number; recurringTransactions: number };
@@ -55,7 +56,10 @@ function parseAndValidateFile(fileContent: string): KlarExportFile {
 export class DataTransferService {
   private readonly logger = new Logger(DataTransferService.name);
 
-  constructor(private readonly repo: DataTransferRepository) {}
+  constructor(
+    private readonly repo: DataTransferRepository,
+    private readonly accounts: AccountsService,
+  ) {}
 
   async export(ctx: RequestContext, opts: ExportOpts): Promise<KlarExportFile> {
     const include = opts.include ?? ['transactions', 'recurringTransactions'];
@@ -238,6 +242,8 @@ export class DataTransferService {
     let rtImported = 0;
     let skipped = 0;
 
+    const accountId = await this.accounts.ensureDefaultAccountId(ctx.householdId);
+
     for (const tx of file.transactions ?? []) {
       const catKey = `${tx.category.name.toLowerCase()}::${tx.category.type}`;
       const categoryId = catMap.get(catKey);
@@ -250,6 +256,7 @@ export class DataTransferService {
       try {
         await this.repo.createTransaction({
           householdId: ctx.householdId,
+          accountId,
           createdByUserId: ctx.userId,
           amountCents: tx.amountCents,
           categoryId,

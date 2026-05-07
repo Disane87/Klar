@@ -7,6 +7,7 @@ import {
 import type { Transaction } from '@prisma/client';
 import { Visibility } from '@prisma/client';
 import type { RequestContext } from '../common/types/request-context.type';
+import { AccountsService } from '../accounts/accounts.service';
 import {
   TransactionsRepository,
   type FindAllOpts,
@@ -40,6 +41,12 @@ export interface CreateTransactionInput {
   icon?: string | null;
   /** Optional internal split breakdown — sum must equal amountCents. */
   splits?: TransactionSplitInput[];
+  /**
+   * Optional account selection. When omitted, the household's default
+   * csv_only account is used (FinTS Foundation 14a.1). Front-end picker
+   * lands in a later UI phase.
+   */
+  accountId?: string;
 }
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
@@ -58,7 +65,10 @@ function parsePlainDate(iso: string): Date {
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly repo: TransactionsRepository) {}
+  constructor(
+    private readonly repo: TransactionsRepository,
+    private readonly accounts: AccountsService,
+  ) {}
 
   list(ctx: RequestContext, opts: ListOpts = {}): Promise<TransactionWithSplits[]> {
     const repoOpts: FindAllOpts = {
@@ -74,8 +84,13 @@ export class TransactionsService {
     }
     this.validateSplitsSum(input.splits, input.amountCents);
 
+    const accountId = input.accountId
+      ? (await this.accounts.findById(input.accountId, ctx.householdId)).id
+      : await this.accounts.ensureDefaultAccountId(ctx.householdId);
+
     const created = await this.repo.create({
       householdId: ctx.householdId,
+      accountId,
       createdByUserId: ctx.userId,
       amountCents: input.amountCents,
       plannedAmountCents: input.plannedAmountCents ?? null,

@@ -78,6 +78,23 @@ enum ContractCycle {
   CUSTOM
 }
 
+// FinTS-Foundation (Phase 14a.1) — Konto als eigenständige Entität.
+// Vorher hingen Transaktionen direkt am Household; mit FinTS bekommt jeder
+// Eingangskanal (Bank-Konto, Bargeld-Wallet, CSV-Import-Topf) ein Account.
+enum AccountType {
+  fints // FinTS-synchronisiertes Bank-Konto, Bank-Felder readonly
+  csv_only // Klassischer CSV-Import-Topf (Default für Bestand)
+  cash // Bargeld/Wallet, alles manuell
+  manual // Frei-Manuell ohne CSV/FinTS
+}
+
+// Quelle einer Transaction. Ergänzt das bestehende sourceImportId-Feld.
+enum TxSource {
+  manual
+  csv
+  fints
+}
+
 enum ContractStatus {
   CANDIDATE
   DETECTED
@@ -114,6 +131,7 @@ model User {
   oauthConsents         OAuthConsent[]
   notifications         Notification[]
   connectedApps         ConnectedApp[]
+  ownedAccounts         Account[]              @relation("AccountOwner")
 
   @@index([email])
   @@index([isDeleted])
@@ -230,6 +248,38 @@ model Household {
   importLearnings       ImportLearning[]
   notifications         Notification[]
   contracts             Contract[]
+  accounts              Account[]
+}
+
+// FinTS-Foundation (Phase 14a.1):
+// Konto-Entität — kapselt Bank-Konten (FinTS-synchronisiert), Bargeld-Töpfe,
+// und den Default-CSV-Topf für Bestandsdaten. Alle Transactions hängen
+// jetzt zusätzlich an einem Account; Visibility regelt Sichtbarkeit für
+// andere Household-Member analog zur Transaction.visibility.
+//
+// ownerId trägt nur bei type=fints den Besitzer der späteren FintsConnection
+// (Spätere Phase 14a.3 ergänzt fintsConnectionId + fintsAccountRef).
+model Account {
+  id           String       @id @default(cuid())
+  householdId  String
+  ownerId      String?
+  name         String
+  type         AccountType
+  currency     String       @default("EUR")
+  iban         String?
+  bic          String?
+  visibility   Visibility   @default(SHARED)
+  archivedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  household    Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  owner        User?        @relation("AccountOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@index([householdId])
+  @@index([householdId, type])
+  @@index([ownerId])
 }
 
 model HouseholdMembership {
@@ -417,10 +467,24 @@ model Transaction {
   // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
   // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
   recurringTransactionId String?
-  externalRef            String? // Sparkasse Endto-End-Ref / Mandatsref / Kundenreferenz
+  externalRef            String? // Sparkasse Endto-End-Ref / Mandatsref / Kundenreferenz / FinTS endToEndId
   externalHash           String? // SHA-256 über (date|amountCents|counterpartyNorm|purposeNorm)
-  counterparty           String? // Empfänger/Absender aus CSV
+  counterparty           String? // Empfänger/Absender aus CSV/FinTS
   sourceImportId         String? // FK auf CsvImport, Audit-Trail
+  // FinTS-Foundation (Phase 14a.1):
+  // accountId — Zuordnung zum Account (Bargeld, CSV-Topf, FinTS-Konto).
+  // Backfill-Migration setzt für alle Bestands-Transactions den Default-
+  // "Hauptkonto"-Account des Haushalts. Alle neuen Inserts MÜSSEN accountId
+  // setzen (typsicher via `account` connect).
+  accountId              String
+  // source — Herkunft der Buchung. Vorher implizit über sourceImportId
+  // (NULL = manuell, gesetzt = CSV); jetzt explizit, weil FinTS hinzukommt.
+  source                 TxSource   @default(manual)
+  // bankFieldsLockedAt — wenn gesetzt, gelten Bank-Felder (amount, date,
+  // counterparty, externalRef) als read-only (z. B. bei FinTS-Buchungen).
+  // User-Klassifikationen (Kategorie, Projekt, Notiz, Icon, Farbe) bleiben
+  // editierbar.
+  bankFieldsLockedAt     DateTime?
   // Optionaler per-Buchung-Override (sonst zieht UI Icon/Farbe der Kategorie).
   // Spiegelt RecurringTransaction.color/icon — gleicher Edit-Dialog für beide.
   color                  String? // hex, z.B. "#22c55e"
@@ -434,6 +498,7 @@ model Transaction {
   recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
   csvImport            CsvImport?            @relation(fields: [sourceImportId], references: [id])
   splits               TransactionSplit[]
+  account              Account               @relation(fields: [accountId], references: [id], onDelete: Restrict)
 
   @@unique([householdId, externalRef])
   @@index([householdId, date])
@@ -445,6 +510,8 @@ model Transaction {
   @@index([sourceImportId])
   @@index([createdByUserId])
   @@index([recurringTransactionId])
+  @@index([accountId])
+  @@index([accountId, source])
 }
 
 // ─────────────────────────────────────────────

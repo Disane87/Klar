@@ -20,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProjectsModule } from './projects/projects.module';
 import { RecurringTransactionsModule } from './recurring-transactions/recurring-transactions.module';
+import { AccountsModule } from './accounts/accounts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { OverviewModule } from './overview/overview.module';
@@ -101,6 +102,7 @@ const REDACT_PATHS = [
     CategoriesModule,
     ProjectsModule,
     RecurringTransactionsModule,
+    AccountsModule,
     TransactionsModule,
     BudgetsModule,
     OverviewModule,

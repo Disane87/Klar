@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CsvImportService } from './csv-import.service';
 import { SparkasseCamtV2Parser } from './parsers/sparkasse-camt-v2.parser';
 import type { CsvImportRepository } from './csv-import.repository';
+import type { AccountsService } from '../accounts/accounts.service';
 import type { RequestContext } from '../common/types/request-context.type';
 
 const ctx: RequestContext = { userId: 'user1', householdId: 'hh1', source: 'web' };
@@ -38,13 +39,24 @@ function makeRepo(): CsvImportRepository {
   } as unknown as CsvImportRepository;
 }
 
+function makeAccounts(): AccountsService {
+  return {
+    ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
+    findById: vi.fn(),
+    list: vi.fn(),
+    toResponse: vi.fn(),
+  } as unknown as AccountsService;
+}
+
 describe('CsvImportService', () => {
   let repo: CsvImportRepository;
+  let accounts: AccountsService;
   let service: CsvImportService;
 
   beforeEach(() => {
     repo = makeRepo();
-    service = new CsvImportService(new SparkasseCamtV2Parser(), repo);
+    accounts = makeAccounts();
+    service = new CsvImportService(new SparkasseCamtV2Parser(), repo, accounts);
   });
 
   it('analyze returns NEW status for unseen row', async () => {

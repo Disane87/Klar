@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, Transaction, TransactionSplit, Visibility } from '@prisma/client';
+import type { Prisma, Transaction, TransactionSplit, TxSource, Visibility } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type TransactionWithSplits = Transaction & { splits: TransactionSplit[] };
 
 export interface CreateTransactionData {
   householdId: string;
+  /** FinTS Foundation (14a.1): every transaction belongs to an account. */
+  accountId: string;
   createdByUserId: string;
   amountCents: number;
   plannedAmountCents?: number | null;
@@ -18,6 +20,8 @@ export interface CreateTransactionData {
   recurringTransactionId?: string | null;
   color?: string | null;
   icon?: string | null;
+  /** Optional: defaults to 'manual'. CSV import passes 'csv', FinTS passes 'fints'. */
+  source?: TxSource;
 }
 
 export interface UpdateTransactionData {

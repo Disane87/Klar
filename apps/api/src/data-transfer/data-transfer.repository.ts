@@ -95,6 +95,8 @@ export class DataTransferRepository {
 
   createTransaction(data: {
     householdId: string;
+    /** FinTS Foundation (14a.1): import goes into the household's default csv_only account. */
+    accountId: string;
     createdByUserId: string;
     amountCents: number;
     categoryId: string;

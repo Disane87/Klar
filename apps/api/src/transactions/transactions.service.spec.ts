@@ -3,6 +3,7 @@ import { NotFoundException, ForbiddenException, BadRequestException } from '@nes
 import { Visibility } from '@prisma/client';
 import { TransactionsService } from './transactions.service';
 import type { TransactionsRepository, TransactionWithSplits } from './transactions.repository';
+import type { AccountsService } from '../accounts/accounts.service';
 import type { RequestContext } from '../common/types/request-context.type';
 
 const ctx: RequestContext = { userId: 'u1', householdId: 'hh1', source: 'web' };
@@ -10,6 +11,7 @@ const ctx: RequestContext = { userId: 'u1', householdId: 'hh1', source: 'web' };
 const makeTx = (overrides: Partial<TransactionWithSplits> = {}): TransactionWithSplits => ({
   id: 'tx-1',
   householdId: 'hh1',
+  accountId: 'acc-default',
   createdByUserId: 'u1',
   amountCents: -5000,
   plannedAmountCents: null,
@@ -24,6 +26,8 @@ const makeTx = (overrides: Partial<TransactionWithSplits> = {}): TransactionWith
   externalHash: null,
   counterparty: null,
   sourceImportId: null,
+  source: 'manual',
+  bankFieldsLockedAt: null,
   color: null,
   icon: null,
   createdAt: new Date('2026-04-01'),
@@ -40,8 +44,12 @@ function buildService() {
     update: vi.fn(),
     delete: vi.fn(),
   } as unknown as TransactionsRepository;
-  const service = new TransactionsService(repo);
-  return { service, repo };
+  const accounts = {
+    ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
+    findById: vi.fn(),
+  } as unknown as AccountsService;
+  const service = new TransactionsService(repo, accounts);
+  return { service, repo, accounts };
 }
 
 describe('TransactionsService', () => {

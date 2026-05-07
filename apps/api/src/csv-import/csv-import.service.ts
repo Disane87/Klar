@@ -11,6 +11,7 @@ import {
   type ParsedRow,
 } from './parsers/sparkasse-camt-v2.parser';
 import { CsvImportRepository } from './csv-import.repository';
+import { AccountsService } from '../accounts/accounts.service';
 import { DuplicateDetector } from './detection/duplicate-detector';
 import {
   FixedCostMatcher,
@@ -89,6 +90,7 @@ export class CsvImportService {
   constructor(
     private readonly parser: SparkasseCamtV2Parser,
     private readonly repo: CsvImportRepository,
+    private readonly accounts: AccountsService,
   ) {}
 
   async analyze(ctx: RequestContext, fileBase64: string): Promise<AnalyzeResponse> {
@@ -202,6 +204,8 @@ export class CsvImportService {
     const buffer = this.decodeBase64(fileBase64);
     const parsed = this.parseOrThrow(buffer);
 
+    const accountId = await this.accounts.ensureDefaultAccountId(ctx.householdId);
+
     const csvImport = await this.repo.createCsvImport({
       householdId: ctx.householdId,
       createdByUserId: ctx.userId,
@@ -263,6 +267,7 @@ export class CsvImportService {
 
       await this.repo.createTransaction({
         householdId: ctx.householdId,
+        accountId,
         createdByUserId: ctx.userId,
         amountCents: row.amountCents,
         categoryId: sel.categoryId,

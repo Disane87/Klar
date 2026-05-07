@@ -3,6 +3,7 @@ import { BadRequestException, UnprocessableEntityException } from '@nestjs/commo
 import { CategoryType } from '@prisma/client';
 import { DataTransferService } from './data-transfer.service';
 import type { DataTransferRepository } from './data-transfer.repository';
+import type { AccountsService } from '../accounts/accounts.service';
 import type { RequestContext } from '../common/types/request-context.type';
 import * as sharedSchemas from '@klar/shared';
 
@@ -27,7 +28,13 @@ function buildService() {
     createTransaction: vi.fn(),
     createRecurringTransaction: vi.fn(),
   } as unknown as DataTransferRepository;
-  return { service: new DataTransferService(repo), repo };
+  const accounts = {
+    ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
+    findById: vi.fn(),
+    list: vi.fn(),
+    toResponse: vi.fn(),
+  } as unknown as AccountsService;
+  return { service: new DataTransferService(repo, accounts), repo, accounts };
 }
 
 const validFile = JSON.stringify({

@@ -10,6 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateTransactionFromImport {
   householdId: string;
+  /** FinTS Foundation (14a.1): household's default csv_only account id. */
+  accountId: string;
   createdByUserId: string;
   amountCents: number;
   categoryId: string;
@@ -121,7 +123,7 @@ export class CsvImportRepository {
   }
 
   createTransaction(data: CreateTransactionFromImport): Promise<Transaction> {
-    return this.prisma.transaction.create({ data });
+    return this.prisma.transaction.create({ data: { ...data, source: 'csv' } });
   }
 
   createRecurring(data: CreateRecurringFromImport): Promise<RecurringTransaction> {
