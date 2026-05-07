@@ -28,6 +28,7 @@
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
 | **🤖 MCP Server (OAuth 2.1)** | Claude Desktop / Cursor / Codex read, create, update & delete with per-scope user consent |
 | **🔐 Authentication** | Local (email/password), OIDC (PocketID + any OIDC provider), API Keys |
+| **🔐 Authentication UX** | Two-pane bundle layout: brand pane left (Fraunces 'klar genug' hero + ARGON2ID/100% LOKAL/RS256 chips) hidden on mobile, form pane right; applied to login / register / verify-email / oauth-consent / onboarding / join / auth-callback |
 | **📱 PWA — Mobile-First** | Installable on iOS/Android, dark mode, safe area support |
 | **🤖 Home Assistant / n8n** | Hook up homelab automations via API keys |
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
