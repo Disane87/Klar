@@ -178,6 +178,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/spec/spec.component').then(m => m.SpecPageComponent),
       },
+      {
+        path: 'crud',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./pages/crud/crud.component').then(m => m.CrudPageComponent),
+      },
     ],
   },
   {
