@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
+import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -10,7 +11,7 @@ import type { InvitationLink } from '@klar/shared';
 @Component({
   selector: 'app-invite-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmSpinnerComponent, KlarInputComponent],
+  imports: [FormsModule, KlarButtonComponent, HlmSpinnerComponent, HlmInputDirective, KlarInputComponent],
   template: `
     <div class="flex flex-col gap-6 p-1">
       @if (loading()) {
@@ -52,7 +53,8 @@ import type { InvitationLink } from '@klar/shared';
           @if (invite()) {
             <div class="flex gap-2">
               <input
-                class="flex-1 rounded-md border border-input bg-muted px-3 py-2 text-xs text-muted-foreground font-mono truncate min-h-[44px]"
+                hlmInput
+                class="flex-1 bg-muted text-xs text-muted-foreground font-mono truncate min-h-11"
                 [value]="invite()!.link"
                 readonly
               />

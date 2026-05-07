@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
+import { HlmSelectNativeDirective } from '../../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
 import { KlarCodeEditorComponent } from '../../../shared/ui/klar-code-editor.component';
 import { HouseholdStore } from '../../../core/household/household.store';
@@ -77,6 +78,7 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
     KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
+    HlmSelectNativeDirective,
     KlarCodeEditorComponent,
   ],
   host: { class: 'flex flex-col h-full' },
@@ -86,7 +88,7 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
           <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Typ</label>
-          <select hlmInput [(ngModel)]="formTemplateType" [disabled]="!isNew()">
+          <select hlmSelect class="scheme-dark" [(ngModel)]="formTemplateType" [disabled]="!isNew()">
             <option value="INVITE">Einladung</option>
             <option value="REMINDER">Erinnerung</option>
             <option value="CUSTOM">Benutzerdefiniert</option>

@@ -25,6 +25,7 @@ import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { HlmSwitchComponent } from '../../shared/ui/hlm/hlm-switch.component';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
@@ -33,7 +34,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarSummaryStripComponent, KlarToolbarComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarErrorBarComponent, KlarEmptyStateComponent, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarSummaryStripComponent, KlarToolbarComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })

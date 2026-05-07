@@ -50,15 +50,11 @@
   <klar-toolbar label="Übersicht">
         <label class="flex items-center gap-1.5 cursor-pointer select-none">
           <span class="text-[10px] text-(--text-muted)">Planspiel</span>
-          <button role="switch"
-            class="relative inline-flex h-4.5 w-8 shrink-0 rounded-full border border-(--border) transition-colors duration-200"
-            [class.bg-(--color-accent)]="planspielActive()" [class.bg-(--surface-2)]="!planspielActive()"
-            [attr.aria-checked]="planspielActive()" (click)="togglePlanspiel()">
-            <span
-              class="pointer-events-none inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform duration-200"
-              [class.translate-x-[14px]]="planspielActive()" [class.translate-x-0]="!planspielActive()"
-              style="margin-top:1px; margin-left:2px;"></span>
-          </button>
+          <hlm-switch
+            [checked]="planspielActive()"
+            (checkedChange)="togglePlanspiel()"
+            ariaLabel="Planspiel ein/aus"
+          />
         </label>
         <div class="flex items-center gap-1">
           <!-- Alle button -->

@@ -8,6 +8,7 @@ import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
+import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 
 const TYPE_LABELS: Record<CategoryType, string> = {
   FIXED_INCOME: 'Festes Einkommen',
@@ -36,7 +37,7 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-category-edit-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, HlmLabelDirective],
+  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, HlmLabelDirective, HlmSelectNativeDirective],
   template: `
     <div class="flex flex-col gap-5 p-1">
       <!-- Name -->
@@ -56,7 +57,8 @@ const PRESET_COLORS = [
         <label hlmLabel for="cat-type">Typ</label>
         <select
           id="cat-type"
-          class="w-full scheme-dark rounded border border-input bg-background px-3 py-2 text-base"
+          hlmSelect
+          class="scheme-dark"
           [disabled]="isEdit()"
           [ngModel]="type()"
           (ngModelChange)="type.set($event)"
