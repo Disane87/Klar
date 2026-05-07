@@ -358,6 +358,25 @@ model FintsConnection {
   @@index([status])
 }
 
+// BLZ-Registry (Phase 14a.4):
+// Single-Row-Snapshot der hbci4j-Bankenliste. Bei jedem erfolgreichen
+// Refresh wird eine neue Zeile angelegt und alte gelöscht. Audit-Trail
+// historischer Versionen läuft via AuditLog (changed/added/removed).
+model BlzRegistry {
+  id           Int      @id @default(autoincrement())
+  fetchedAt    DateTime @default(now())
+  /** ETag/Commit-SHA aus HTTP-Response — für If-None-Match. */
+  sourceCommit String?
+  sourceUrl    String
+  recordCount  Int
+  /** BankRecord[] indexed by BLZ als JSON. */
+  banks        Json
+  /** sha256 der Roh-Datei — Änderungs-Detection. */
+  contentHash  String
+
+  @@index([fetchedAt])
+}
+
 // FinTS-Sync-Run (Phase 14a.3):
 // Pro Sync-Versuch ein Eintrag. Hält TAN-Challenge solange Status=TAN_REQUIRED;
 // nach erfolgreicher TAN-Eingabe wird tanChallenge gelöscht.
