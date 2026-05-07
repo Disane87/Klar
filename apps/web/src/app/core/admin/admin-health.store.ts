@@ -46,7 +46,25 @@ export interface AdminHealthJobsResponse {
   jobs: AdminHealthJob[];
 }
 
+export interface AdminHealthDbQueryHistory {
+  points: number[];
+  peak: number;
+  avg: number;
+}
+
+export type LiveLogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export interface LiveLogEntry {
+  ts: string;
+  level: LiveLogLevel;
+  msg: string;
+  context?: string;
+}
+export interface AdminHealthLiveLogResponse {
+  entries: LiveLogEntry[];
+}
+
 const REFRESH_INTERVAL_MS = 30_000;
+const LIVE_LOG_LIMIT = 50;
 
 /**
  * Admin telemetry store — polls /admin/health/* + /admin/jobs every 30 s.
@@ -97,10 +115,38 @@ export class AdminHealthStore {
       firstValueFrom(this.http.get<AdminHealthJobsResponse>('/api/v1/admin/jobs')),
   });
 
+  private readonly dbQueriesResource = resource<
+    AdminHealthDbQueryHistory | undefined,
+    { tick: number }
+  >({
+    params: () => ({ tick: this.tick() }),
+    loader: () =>
+      firstValueFrom(
+        this.http.get<AdminHealthDbQueryHistory>('/api/v1/admin/health/db-queries'),
+      ),
+  });
+
+  private readonly liveLogResource = resource<
+    AdminHealthLiveLogResponse | undefined,
+    { tick: number }
+  >({
+    params: () => ({ tick: this.tick() }),
+    loader: () =>
+      firstValueFrom(
+        this.http.get<AdminHealthLiveLogResponse>(
+          `/api/v1/admin/health/live-log?limit=${LIVE_LOG_LIMIT}`,
+        ),
+      ),
+  });
+
   readonly status = computed(() => this.statusResource.value());
   readonly services = computed(() => this.servicesResource.value()?.services ?? []);
   readonly performance = computed(() => this.performanceResource.value()?.rows ?? []);
   readonly jobs = computed(() => this.jobsResource.value()?.jobs ?? []);
+  readonly dbQueries = computed<AdminHealthDbQueryHistory>(
+    () => this.dbQueriesResource.value() ?? { points: [], peak: 0, avg: 0 },
+  );
+  readonly liveLog = computed(() => this.liveLogResource.value()?.entries ?? []);
 
   readonly loading = computed(
     () =>

@@ -3,7 +3,11 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { LoggerModule } from 'nestjs-pino';
+import * as pino from 'pino';
+import pinoPretty from 'pino-pretty';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { LiveLogModule } from './admin/health/live-log.module';
+import { LiveLogBuffer } from './admin/health/live-log.buffer';
 import { HealthModule } from './health/health.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AppConfigModule } from './config/config.module';
@@ -32,41 +36,53 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
+const REDACT_PATHS = [
+  'req.headers.authorization',
+  'req.body.password',
+  'req.body.currentPassword',
+  'req.body.newPassword',
+  'req.body.apiKey',
+  'req.body.secret',
+  'req.body.hashedSecret',
+  'req.body.token',
+  'req.body.accessToken',
+  'req.body.refreshToken',
+  'req.body.tokenHash',
+  'req.body.code',
+  'req.body.codeVerifier',
+  'req.body.state',
+  'req.body.clientSecret',
+  // OAuth 2.1 / MCP
+  'req.body.code_verifier',
+  'req.body.refresh_token',
+  'req.body.access_token',
+  'req.body.client_secret',
+  'req.body.registration_access_token',
+  'res.body.access_token',
+  'res.body.refresh_token',
+  'res.body.client_secret',
+  'res.body.registration_access_token',
+];
+
 @Module({
   imports: [
-    LoggerModule.forRoot({
-      pinoHttp: {
-        transport:
-          process.env['NODE_ENV'] !== 'production'
-            ? { target: 'pino-pretty' }
-            : undefined,
-        redact: [
-          'req.headers.authorization',
-          'req.body.password',
-          'req.body.currentPassword',
-          'req.body.newPassword',
-          'req.body.apiKey',
-          'req.body.secret',
-          'req.body.hashedSecret',
-          'req.body.token',
-          'req.body.accessToken',
-          'req.body.refreshToken',
-          'req.body.tokenHash',
-          'req.body.code',
-          'req.body.codeVerifier',
-          'req.body.state',
-          'req.body.clientSecret',
-          // OAuth 2.1 / MCP
-          'req.body.code_verifier',
-          'req.body.refresh_token',
-          'req.body.access_token',
-          'req.body.client_secret',
-          'req.body.registration_access_token',
-          'res.body.access_token',
-          'res.body.refresh_token',
-          'res.body.client_secret',
-          'res.body.registration_access_token',
-        ],
+    LiveLogModule,
+    LoggerModule.forRootAsync({
+      imports: [LiveLogModule],
+      inject: [LiveLogBuffer],
+      useFactory: (liveLog: LiveLogBuffer) => {
+        const streams: pino.StreamEntry[] = [{ stream: liveLog.asPinoStream() }];
+        if (process.env['NODE_ENV'] !== 'production') {
+          streams.push({ stream: pinoPretty({ colorize: true, translateTime: 'SYS:standard' }) });
+        } else {
+          streams.push({ stream: process.stdout });
+        }
+        return {
+          pinoHttp: {
+            stream: pino.multistream(streams),
+            redact: REDACT_PATHS,
+          },
+        };
       },
     }),
     ThrottlerModule.forRoot([{
