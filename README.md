@@ -22,6 +22,7 @@
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
 | **📒 Buchungen** | Flat transactions list with filter tabs (Alle / Wiederkehrend / Manuell / Eingänge), category-tone per row, recurring chip on auto-generated bookings, summary strip with monthly income / expense / surplus |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
+| **📈 Soll vs. Ist (Monat)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Soll / Ist amounts, signed delta and threshold-based tone (ok / warn / over) |
 | **🎯 Projekte** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Ausgegeben / Bilanz metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
@@ -247,6 +248,12 @@ The page `/app/vertraege` shows the hero strip (count of active + candidates, mo
 ### 📅 Kalender
 
 `/app/kalender` renders a Monday-based 7-column month grid bound to the existing `TransactionsStore`. Each cell shows up to 3 distinct category-colored dots, the day's signed total in mono, and (for the current day) an `--accent` outline. Clicking a day opens a drawer with the day's bookings rendered with `cat-bar` rails in the per-transaction category color. Recurring entries continue to be expanded on the fly — nothing is persisted just for the calendar view.
+
+### 📈 Soll vs. Ist (Cashflow Monat)
+
+The Cashflow page (`/app/monat`) renders a per-category **Soll vs. Ist** card directly under the surplus hero, computed by a new aggregation endpoint `GET /api/v1/households/:hid/overview/budgets-vs-actuals?month=YYYY-MM`. Soll is taken from the stored `Budget` rows (positive cents) and signed at read-time according to the category type (expense → negative, income → positive). Ist is the sum of every realized transaction in the requested month plus every active recurring transaction expanded to its monthly equivalent (via the shared `toMonthlyEquivalent` helper) — PRIVATE entries owned by other users are filtered out before aggregation, so privacy guarantees match the rest of the overview surface.
+
+The pure shaping function lives in `@klar/shared` (`budgetsVsActuals` in `packages/shared/src/budgets/budgets-vs-actuals.ts`) and emits one row per budgeted category with a clamped meter ratio (`pct = min(1.2, |ist| / |soll|)`) and a tone state (`ok` ≤ 90 %, `warn` 90-100 %, `over` > 100 %). The web UI uses that ratio to fill a thin meter tinted in the category color, prints both Soll and Ist mono with `tabular-nums`, and shows the signed delta in `text-(--success)` / `text-(--warn)` / `text-(--danger)` depending on the state.
 
 ### 📈 Statistik
 
