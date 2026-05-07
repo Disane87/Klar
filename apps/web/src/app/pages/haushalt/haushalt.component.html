@@ -1,25 +1,49 @@
 <div class="flex flex-col overflow-y-auto pb-16 animate-[klar-enter_160ms_ease-out_both]">
-  <klar-list>
-
-    <!-- ── NAME ──────────────────────────────────────────── -->
-    <klar-list-group label="Name"
-                     [headerActionLabel]="canManage() && !editingName() ? 'Bearbeiten' : undefined"
-                     (headerAction)="startEditName()">
-      @if (editingName()) {
-        <div class="flex gap-2 px-6 py-4 items-center">
-          <klar-input class="flex-1" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
-          <klar-button size="sm" tone="primary" [loading]="savingName()" (click)="saveName()">
-            Speichern
-          </klar-button>
-          <klar-button size="sm" tone="link" (click)="cancelEditName()">Abbruch</klar-button>
+  <!-- ── HOUSEHOLD HERO ─────────────────────────────────────
+       Mirrors PageHaushalt hero card from Klar Design Pearl.
+       Uses live store data; no faked stats. -->
+  <section class="px-4 md:px-6 pt-4 md:pt-6">
+    <div class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden
+                grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:gap-6
+                p-5 md:p-6 relative">
+      <div class="min-w-0 flex flex-col gap-2">
+        <span class="text-[10px] uppercase tracking-[0.14em] font-medium text-(--fg-2) truncate">
+          Haushalt · ID {{ store.activeId()?.slice(0, 8) }}
+        </span>
+        @if (editingName()) {
+          <div class="flex flex-wrap gap-2 items-center">
+            <klar-input class="flex-1 min-w-50" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
+            <klar-button size="sm" tone="primary" [loading]="savingName()" (click)="saveName()">Speichern</klar-button>
+            <klar-button size="sm" tone="link" (click)="cancelEditName()">Abbruch</klar-button>
+          </div>
+        } @else {
+          <h1 class="font-(family-name:--font-display) text-[28px] md:text-[36px] font-normal leading-none tracking-[-0.02em] truncate">
+            {{ store.activeName() }}
+          </h1>
+        }
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-(--fg-2) font-mono">
+          <span class="inline-flex items-center gap-1.5">
+            <klar-icon name="haushalt" [size]="11" /> {{ store.members().length }} Mitglieder
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <klar-icon name="tag" [size]="11" /> {{ categoriesStore.active().length }} Kategorien
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <klar-icon name="key" [size]="11" /> {{ (apiKeysStore.keys() ?? []).length }} API-Keys
+          </span>
         </div>
-      } @else {
-        <div class="px-6 pt-4 pb-4">
-          <p class="text-[17px] font-medium">{{ store.activeName() }}</p>
-          <p class="font-mono text-[12px] text-(--text-muted) mt-1">Haushalt-ID · {{ store.activeId()?.slice(0, 8) }}</p>
+      </div>
+      @if (canManage() && !editingName()) {
+        <div class="flex md:flex-col md:items-end gap-2 md:justify-center shrink-0">
+          <klar-button size="sm" tone="ghost" (click)="startEditName()">
+            Umbenennen
+          </klar-button>
         </div>
       }
-    </klar-list-group>
+    </div>
+  </section>
+
+  <klar-list>
 
     <!-- ── MEINE HAUSHALTE (wenn mehrere) ───────────────── -->
     @if (store.households().length > 1) {
@@ -44,7 +68,9 @@
                         [label]="member.displayName"
                         [sublabel]="member.email"
                         [badge]="member.role"
-                        badgeClass="font-mono uppercase tracking-[0.1em] text-[9px] bg-(--surface-2) text-(--text-muted)"
+                        [badgeClass]="member.role === 'OWNER'
+                          ? 'font-mono uppercase tracking-[0.1em] text-[9px] bg-(--success)/15 text-(--success)'
+                          : 'font-mono uppercase tracking-[0.1em] text-[9px] bg-(--surface-2) text-(--text-muted)'"
                         [trailingActionIcon]="canManage() && member.userId !== authUserId() ? 'close' : undefined"
                         [trailingActionDanger]="true"
                         (trailingActionClick)="removeMember(member.userId)" />
@@ -87,22 +113,35 @@
         } @else if (categoriesStore.all().length === 0) {
           <p class="px-6 py-4 text-[13px] text-(--text-muted)">Noch keine Kategorien angelegt.</p>
         } @else {
-          @for (cat of categoriesStore.all(); track cat.id) {
-            <button type="button"
-                    class="w-full flex items-center gap-3 px-6 py-2.5 min-h-11 text-left border-b border-(--border)/40 last:border-b-0 hover:bg-(--surface-2)/60 active:bg-(--surface-2) transition-colors"
-                    [class.opacity-50]="cat.isArchived"
-                    (click)="openEditCategoryDialog(cat)">
-              <span class="size-5 rounded-full shrink-0 border border-(--border)"
-                    [style.background]="cat.color"></span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[13px] font-medium truncate">{{ cat.name }}</p>
-                <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
-                  {{ categoryTypeLabel(cat.type) }}{{ cat.isDefault ? ' · Standard' : '' }}{{ cat.isArchived ? ' · Archiviert' : '' }}
-                </p>
-              </div>
-              <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--text-muted)" />
-            </button>
-          }
+          <!-- Tile grid per Klar Design Pearl: 1/2/3 cols, 2 px left bar in
+               category color. Click opens edit dialog (modal-only edit rule). -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 px-4 md:px-6 py-4">
+            @for (cat of categoriesStore.all(); track cat.id) {
+              <button type="button"
+                      class="group flex items-center gap-3 px-3 py-2.5 min-h-11 text-left
+                             rounded-md border border-(--line) bg-(--bg-1)
+                             hover:bg-(--surface-2)/60 active:bg-(--surface-2)
+                             transition-colors"
+                      [class.opacity-50]="cat.isArchived"
+                      (click)="openEditCategoryDialog(cat)">
+                <span class="w-1 h-8 shrink-0 rounded-full"
+                      [style.background]="cat.color"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-medium truncate">{{ cat.name }}</p>
+                  <p class="text-[11px] text-(--text-muted) mt-0.5 truncate flex items-center gap-1.5">
+                    <span class="truncate">{{ categoryTypeLabel(cat.type) }}</span>
+                    @if (cat.isDefault) {
+                      <span class="text-[9px] px-1 py-px rounded-xs border border-(--line-strong) text-(--fg-2) shrink-0 uppercase tracking-[0.06em]">standard</span>
+                    }
+                    @if (cat.isArchived) {
+                      <span class="text-[9px] px-1 py-px rounded-xs border border-(--warn)/40 text-(--warn) shrink-0 uppercase tracking-[0.06em]">archiv</span>
+                    }
+                  </p>
+                </div>
+                <klar-icon name="chevron-right" [size]="12" class="shrink-0 text-(--text-muted) group-hover:text-(--fg)" />
+              </button>
+            }
+          </div>
         }
       </klar-list-group>
     }
