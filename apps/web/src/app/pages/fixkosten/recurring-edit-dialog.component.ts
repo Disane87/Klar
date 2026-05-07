@@ -6,6 +6,7 @@ import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarSelectComponent } from '../../shared/ui/klar-select.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
@@ -27,7 +28,7 @@ import { safeDayOfMonth } from '@klar/shared';
   imports: [
     KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
-    KlarMoneyInputComponent, KlarDialogFooterComponent,
+    KlarMoneyInputComponent, KlarDialogFooterComponent, KlarDialogCalloutComponent,
   ],
   templateUrl: './recurring-edit-dialog.component.html',
   styleUrl: './recurring-edit-dialog.component.css',
@@ -110,6 +111,22 @@ export class RecurringEditDialogComponent {
   });
 
   readonly isWeekly = computed(() => this.frequency() === 'WEEKLY');
+
+  private readonly fmt = new Intl.NumberFormat('de-DE', {
+    style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
+  });
+  readonly originalAmount = computed(() => this.fmt.format(this.item().amountCents / 100));
+  readonly amountChanged  = computed(() => (this.amountCents() ?? 0) !== this.item().amountCents);
+  readonly changeSummary  = computed(() => {
+    const parts: string[] = [];
+    const i = this.item();
+    if (this.name().trim() !== i.name) parts.push('Name');
+    if ((this.amountCents() ?? 0) !== i.amountCents) parts.push('Betrag');
+    if (this.categoryId() !== i.categoryId) parts.push('Kategorie');
+    if (this.frequency() !== i.frequency) parts.push('Frequenz');
+    if (!parts.length) return '';
+    return parts.length === 1 ? `1 Änderung — ${parts[0]}` : `${parts.length} Änderungen — ${parts.join(', ')}`;
+  });
 
   readonly addCategoryLabel = (q: string) => `"${q}" als neue Kategorie anlegen`;
   readonly catId = (c: Category) => c.id;
