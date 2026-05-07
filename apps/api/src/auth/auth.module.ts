@@ -11,7 +11,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { OidcModule } from '../oidc/oidc.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
+import { AuthController, SessionsController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -55,7 +55,7 @@ import { TempTokenRepository } from './repositories/temp-token.repository';
     OidcModule,
     CategoriesModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, SessionsController],
   providers: [
     AuthService,
     LocalStrategy,
