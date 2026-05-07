@@ -16,6 +16,9 @@ export interface Transaction {
   counterparty: string | null;
   date: string; // YYYY-MM-DD
   visibility: 'SHARED' | 'PRIVATE';
+  /** Optional per-transaction override; UI falls back to category color/icon when null. */
+  color: string | null;
+  icon: string | null;
   createdAt: string;
 }
 

@@ -25,6 +25,8 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   externalHash: null,
   counterparty: null,
   sourceImportId: null,
+  color: null,
+  icon: null,
   createdAt: new Date('2026-04-01'),
   updatedAt: new Date('2026-04-01'),
   ...overrides,

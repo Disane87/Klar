@@ -25,6 +25,8 @@ export interface CreateTransactionInput {
   description?: string | null;
   visibility?: Visibility;
   recurringTransactionId?: string | null;
+  color?: string | null;
+  icon?: string | null;
 }
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
@@ -70,6 +72,8 @@ export class TransactionsService {
       description: input.description ?? null,
       visibility: input.visibility ?? Visibility.SHARED,
       recurringTransactionId: input.recurringTransactionId ?? null,
+      color: input.color ?? null,
+      icon: input.icon ?? null,
     });
   }
 
@@ -97,6 +101,8 @@ export class TransactionsService {
     if (input.plannedAmountCents !== undefined) {
       data.plannedAmountCents = input.plannedAmountCents;
     }
+    if (input.color !== undefined) data.color = input.color;
+    if (input.icon !== undefined) data.icon = input.icon;
 
     // Auto-archive on planned -> realized transition: preserve the original
     // planned amount so the deviation (current amountCents - plannedAmountCents)

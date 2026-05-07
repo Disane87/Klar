@@ -8,6 +8,8 @@ import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
 import { KlarDateInputComponent } from '../../shared/ui/klar-date-input.component';
 import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
+import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { TransactionsService } from '../../core/transactions/transactions.service';
@@ -21,7 +23,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
 @Component({
   selector: 'app-transaction-dialog',
   standalone: true,
-  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent],
+  imports: [KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarSelectComponent, KlarComboboxComponent, KlarMoneyInputComponent, KlarDateInputComponent, KlarDialogFooterComponent, KlarColorPickerComponent, KlarIconPickerComponent],
   templateUrl: './transaction-dialog.component.html',
   styleUrl: './transaction-dialog.component.css',
 })
@@ -57,6 +59,8 @@ export class TransactionDialogComponent {
     { value: 'true',  label: 'Geplant' },
   ];
   readonly projectId   = signal<string | null>(null);
+  readonly color       = signal<string | null>(null);
+  readonly icon        = signal<string | null>(null);
   readonly saving      = signal(false);
   readonly err         = signal('');
 
@@ -88,6 +92,8 @@ export class TransactionDialogComponent {
         this.visibility.set(t.visibility);
         this.isPlanned.set(t.isPlanned);
         this.projectId.set(t.projectId ?? null);
+        this.color.set(t.color ?? null);
+        this.icon.set(t.icon ?? null);
       } else {
         this.description.set('');
         this.amountCents.set(null);
@@ -96,6 +102,8 @@ export class TransactionDialogComponent {
         this.visibility.set('SHARED');
         this.isPlanned.set(this.presetPlanned());
         this.projectId.set(this.presetProjectId());
+        this.color.set(null);
+        this.icon.set(null);
       }
     });
   }
@@ -121,6 +129,8 @@ export class TransactionDialogComponent {
       visibility:  this.visibility(),
       isPlanned:   this.isPlanned(),
       projectId:   this.projectId(),
+      color:       this.color(),
+      icon:        this.icon(),
     };
 
     this.saving.set(true);

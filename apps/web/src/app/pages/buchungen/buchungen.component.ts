@@ -35,6 +35,7 @@ interface TxGroup {
   categoryId: string | null;
   categoryName: string;
   categoryColor: string;
+  categoryIcon: string | null;
   categoryType: string;
   categorySortOrder: number;
   totalCents: number;
@@ -95,6 +96,7 @@ export class BuchungenPageComponent {
           categoryId: tx.categoryId,
           categoryName: cat?.name ?? 'Ohne Kategorie',
           categoryColor: cat?.color ?? '#6b7280',
+          categoryIcon: cat?.icon ?? null,
           categoryType: cat?.type ?? (tx.amountCents >= 0 ? 'INCOME' : 'EXPENSE'),
           categorySortOrder: cat?.sortOrder ?? 999,
           totalCents: 0,
@@ -175,6 +177,7 @@ interface Category {
   id: string;
   name: string;
   color: string;
+  icon: string | null;
   type: string;
   sortOrder: number;
 }

@@ -243,6 +243,11 @@ export type Transaction = {
   description: string | null;
   visibility: Visibility;
   recurringTransactionId: string | null;
+  /** Optional per-transaction override; UI falls back to category color when null.
+   *  Mirrors RecurringTransaction.color so both share one edit dialog. */
+  color: string | null;
+  /** Optional per-transaction icon (iconify key). Falls back to category icon. */
+  icon: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -257,6 +262,8 @@ export type CreateTransactionRequest = {
   projectId?: string | null;
   visibility?: Visibility;
   recurringTransactionId?: string | null;
+  color?: string | null;
+  icon?: string | null;
 };
 
 export type UpdateTransactionRequest = Partial<CreateTransactionRequest>;

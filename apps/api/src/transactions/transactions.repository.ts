@@ -14,6 +14,8 @@ export interface CreateTransactionData {
   description?: string | null;
   visibility: Visibility;
   recurringTransactionId?: string | null;
+  color?: string | null;
+  icon?: string | null;
 }
 
 export interface UpdateTransactionData {
@@ -26,6 +28,8 @@ export interface UpdateTransactionData {
   description?: string | null;
   visibility?: Visibility;
   recurringTransactionId?: string | null;
+  color?: string | null;
+  icon?: string | null;
 }
 
 export interface FindAllOpts {

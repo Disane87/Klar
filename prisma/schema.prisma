@@ -365,6 +365,10 @@ model Transaction {
   externalHash           String? // SHA-256 über (date|amountCents|counterpartyNorm|purposeNorm)
   counterparty           String? // Empfänger/Absender aus CSV
   sourceImportId         String? // FK auf CsvImport, Audit-Trail
+  // Optionaler per-Buchung-Override (sonst zieht UI Icon/Farbe der Kategorie).
+  // Spiegelt RecurringTransaction.color/icon — gleicher Edit-Dialog für beide.
+  color                  String? // hex, z.B. "#22c55e"
+  icon                   String? // iconify key, z.B. "lucide:shopping-cart"
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
 

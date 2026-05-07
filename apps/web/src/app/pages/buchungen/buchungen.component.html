@@ -64,7 +64,13 @@
             (headerAction)="toggleGroup(groupKey(group))">
             @for (tx of group.items; track tx.id) {
               <klar-list-row [navigable]="true" (rowClick)="openEdit(tx)">
-                <app-brand-icon [name]="primaryLabel(tx)" [size]="22" class="shrink-0" />
+                <app-brand-icon
+                  [name]="primaryLabel(tx)"
+                  [size]="22"
+                  [icon]="tx.icon ?? group.categoryIcon ?? null"
+                  [color]="tx.color ?? group.categoryColor ?? null"
+                  class="shrink-0"
+                />
                 <div class="flex-1 min-w-0">
                   <p class="text-[13px] font-medium truncate" [class.opacity-60]="tx.isPlanned">
                     {{ primaryLabel(tx) }}
