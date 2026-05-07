@@ -95,6 +95,8 @@ const ENDPOINTS = [
   '/api/v1/admin/health/status',
   '/api/v1/admin/health/services',
   '/api/v1/admin/health/performance',
+  '/api/v1/admin/health/db-queries',
+  '/api/v1/admin/health/live-log',
   '/api/v1/admin/jobs',
 ] as const;
 
@@ -185,5 +187,29 @@ describe('Admin telemetry endpoints — payload shape', () => {
     expect(body.jobs.length).toBeGreaterThan(0);
     expect(body.jobs[0]!.name).toBeTruthy();
     expect(body.jobs[0]!.cron).toBeTruthy();
+  });
+
+  it('GET /admin/health/db-queries returns points + peak + avg', async () => {
+    const token = await adminLogin('a-dbq@test.com');
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/admin/health/db-queries',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const body = JSON.parse(res.body) as { points: number[]; peak: number; avg: number };
+    expect(Array.isArray(body.points)).toBe(true);
+    expect(typeof body.peak).toBe('number');
+    expect(typeof body.avg).toBe('number');
+  });
+
+  it('GET /admin/health/live-log returns an entries array', async () => {
+    const token = await adminLogin('a-log@test.com');
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/admin/health/live-log?limit=10',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const body = JSON.parse(res.body) as { entries: unknown[] };
+    expect(Array.isArray(body.entries)).toBe(true);
   });
 });

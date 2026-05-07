@@ -1,6 +1,12 @@
 import * as os from 'node:os';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { LiveLogBuffer, type LiveLogEntry } from './live-log.buffer';
+import {
+  MetricsCollectorService,
+  type ServiceProbe,
+  type ServiceProbeState,
+} from './metrics-collector.service';
 
 export interface AdminHealthStatus {
   uptimePct: number;
@@ -50,15 +56,34 @@ export interface AdminHealthJobsResponse {
   jobs: AdminHealthJob[];
 }
 
+export interface AdminHealthDbQueryHistoryResponse {
+  points: number[];
+  peak: number;
+  avg: number;
+}
+
+export interface AdminHealthLiveLogResponse {
+  entries: LiveLogEntry[];
+}
+
 const THIRTY_DAYS_S = 30 * 24 * 60 * 60;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
-export class AdminHealthServiceImpl {
+export class AdminHealthServiceImpl implements OnApplicationBootstrap {
   private readonly logger = new Logger(AdminHealthServiceImpl.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly collector?: MetricsCollectorService,
+    private readonly liveLog?: LiveLogBuffer,
+  ) {}
+
+  onApplicationBootstrap(): void {
+    if (!this.collector) return;
+    this.collector.registerProbes(this.buildProbes());
+  }
 
   async getStatus(): Promise<AdminHealthStatus> {
     const [dbSizeBytes, warningCount, activeSessions] = await Promise.all([
@@ -81,36 +106,66 @@ export class AdminHealthServiceImpl {
   }
 
   async getServices(): Promise<AdminHealthServicesResponse> {
-    const okBars = Array.from({ length: 30 }, () => 1);
+    // Prefer real, sampled buckets from the collector. Fall back to a
+    // synchronous probe + flat-OK history if the collector hasn't ticked yet
+    // (immediately after bootstrap or in tests that skip the timer).
+    if (this.collector) {
+      const records = this.collector.getServiceBuckets();
+      const services: AdminHealthService[] = records.map((r) => ({
+        name: r.name,
+        meta: r.meta,
+        state: r.state,
+        uptimeBars: bucketsToBars(r.buckets),
+      }));
+      if (services.length > 0) return { services };
+    }
 
-    const postgresState = await this.probePostgres();
-    const mcpState = await this.probeMcp();
-    const mailState = await this.probeMail();
+    const probes = this.buildProbes();
+    const states = await Promise.all(probes.map(async (p) => ({
+      name: p.name(),
+      meta: p.meta(),
+      state: await p.probe().catch((): ServiceState => 'error'),
+    })));
 
-    const services: AdminHealthService[] = [
-      { name: 'Web-App', meta: 'Angular SPA · static', state: 'ok', uptimeBars: okBars },
-      { name: 'API', meta: 'NestJS · Fastify', state: 'ok', uptimeBars: okBars },
+    const services: AdminHealthService[] = states.map((s) => ({
+      name: s.name,
+      meta: s.meta,
+      state: s.state,
+      uptimeBars: bucketsToBars([s.state]),
+    }));
+    return { services };
+  }
+
+  getDbQueryHistory(): AdminHealthDbQueryHistoryResponse {
+    if (!this.collector) return { points: [], peak: 0, avg: 0 };
+    return this.collector.getDbQueryHistory();
+  }
+
+  getLiveLog(limit = 50): AdminHealthLiveLogResponse {
+    if (!this.liveLog) return { entries: [] };
+    return { entries: this.liveLog.getRecent(limit) };
+  }
+
+  private buildProbes(): ServiceProbe[] {
+    return [
+      { name: () => 'Web-App',     meta: () => 'Angular SPA · static',  probe: async () => 'ok' },
+      { name: () => 'API',         meta: () => 'NestJS · Fastify',      probe: async () => 'ok' },
       {
-        name: 'Postgres 16',
-        meta: postgresState === 'ok' ? 'verbunden' : 'nicht erreichbar',
-        state: postgresState,
-        uptimeBars: postgresState === 'ok' ? okBars : okBars.map((_, i) => (i === 29 ? 0.5 : 1)),
+        name: () => 'Postgres 16',
+        meta: () => 'verbunden',
+        probe: async () => (await this.probePostgres()) as ServiceProbeState,
       },
       {
-        name: 'MCP Bridge',
-        meta: mcpState === 'ok' ? 'Tool-Calls in der letzten Stunde' : 'keine Aktivität < 1 h',
-        state: mcpState,
-        uptimeBars: okBars,
+        name: () => 'MCP Bridge',
+        meta: () => 'Tool-Calls in der letzten Stunde',
+        probe: async () => (await this.probeMcp()) as ServiceProbeState,
       },
       {
-        name: 'Mail-Queue',
-        meta: mailState === 'ok' ? 'letzte 5 Mails OK' : 'Fehler in den letzten Mails',
-        state: mailState,
-        uptimeBars: okBars,
+        name: () => 'Mail-Queue',
+        meta: () => 'letzte 5 Mails OK',
+        probe: async () => (await this.probeMail()) as ServiceProbeState,
       },
     ];
-
-    return { services };
   }
 
   async getPerformance(): Promise<AdminHealthPerformanceResponse> {
@@ -286,6 +341,18 @@ export class AdminHealthServiceImpl {
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
+}
+
+/** Map probe-state buckets onto the 0/0.5/1 numeric bar values the FE expects. */
+function bucketsToBars(buckets: ServiceProbeState[]): number[] {
+  const target = 30;
+  if (buckets.length === 0) return Array.from({ length: target }, () => 1);
+  const padCount = Math.max(0, target - buckets.length);
+  const padded: ServiceProbeState[] = [
+    ...Array.from({ length: padCount }, () => buckets[0] ?? 'ok' as ServiceProbeState),
+    ...buckets,
+  ].slice(-target);
+  return padded.map((s) => (s === 'ok' ? 1 : s === 'warn' ? 0.5 : 0));
 }
 
 function computeCpuPct(): number {

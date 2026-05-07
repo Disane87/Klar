@@ -1,9 +1,11 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, DefaultValuePipe, Get, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AppAdminGuard } from '../../common/guards/app-admin.guard';
 import {
   AdminHealthServiceImpl,
+  type AdminHealthDbQueryHistoryResponse,
   type AdminHealthJobsResponse,
+  type AdminHealthLiveLogResponse,
   type AdminHealthPerformanceResponse,
   type AdminHealthServicesResponse,
   type AdminHealthStatus,
@@ -28,6 +30,18 @@ export class AdminHealthController {
   @Get('health/performance')
   performance(): Promise<AdminHealthPerformanceResponse> {
     return this.service.getPerformance();
+  }
+
+  @Get('health/db-queries')
+  dbQueries(): AdminHealthDbQueryHistoryResponse {
+    return this.service.getDbQueryHistory();
+  }
+
+  @Get('health/live-log')
+  liveLog(
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ): AdminHealthLiveLogResponse {
+    return this.service.getLiveLog(limit);
   }
 
   @Get('jobs')
