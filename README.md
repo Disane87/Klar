@@ -30,6 +30,14 @@
 | **🤖 Home Assistant / n8n** | Hook up homelab automations via API keys |
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
 | **🛠️ Admin Panel** | Audit log, MCP tool-call audit, sent emails, household overview — all virtualized + searchable + filterable |
+| **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
+| **📜 Verträge (Contracts) — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
+| **📅 Kalender** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
+| **📈 Statistik** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
+| **🪪 Sessions Verwaltung** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
+| **🧷 Splits** | A booking can be intern split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
+| **✏️ Bulk-Aktionen** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
+| **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETISCH chip for Planspiel projections |
 
 > [!NOTE]
 > 🔢 **Everything in cents.** All amounts stored as signed integers (`amountCents`). Positive = income, negative = expense. No floating point, no rounding surprises.
@@ -214,6 +222,53 @@ The `OAuthClient.displayName` is resolved at read time, so renaming a connected 
 | **CI/CD** | GitHub Actions |
 | **Deploy** | Docker Compose + Traefik |
 | **PWA** | @angular/pwa + iOS meta-tags |
+| **Design System** | Klar Design Pearl: Fraunces (display) + Inter (body) + JetBrains Mono (data), warm OKLCH palette, amber accent, 8 earthy category tones, 2 px left-border rails on grouped lists |
+
+---
+
+## 🆕 Design Pearl additions
+
+The following user-facing modules ship with the editorial-technical refresh and live alongside the existing pages.
+
+### 🔔 Notifications
+
+In-app notification feed (`Notification` model + `NotificationKind` enum: `CONTRACT_RENEWAL`, `CONTRACT_PRICE_CHANGE`, `RECURRING_DUE`, `IMPORT_READY`, `BUDGET_THRESHOLD`, `MEMBER_INVITE`, `SYSTEM`). The bell in the page header lights up with an amber glow when there are unread items; the popover (animated via `klar-pop`) groups by date, marks read on click, and supports bulk "Alle gelesen" plus per-item delete. The store polls every 60 seconds; mutations always reload to reconcile against the authoritative server state.
+
+**Privacy:** notifications are scoped to the household and optionally to a single user (`userId IS NULL` = household-wide). Only the household's members can read them.
+
+### 📜 Verträge — Auto-Detection
+
+`Contract` model (cycle: `MONTHLY` / `QUARTERLY` / `YEARLY` / `CUSTOM`, status: `CANDIDATE` / `DETECTED` / `CONFIRMED` / `CANCELLED`). The detection service in `packages/shared/contracts/detect.ts` groups recurring transactions by merchant + amount tolerance ± 5 % and emits a confidence score per candidate. `POST /h/:hid/contracts/recompute` re-runs detection on demand (e.g. after a CSV import).
+
+The page `/app/vertraege` shows the hero strip (count of active + candidates, monthly fix sum, annualized estimate, next action), renewal/price-change alerts, tabs (Aktiv / Vorschläge / Beendet), per-row `klar-confidence-bar` and `cat-bar` accent, and a sliding detail drawer with hero amount in Fraunces, metric tiles for next renewal / cancel-by / status / cycle, and one-click Confirm / Cancel / Delete.
+
+### 📅 Kalender
+
+`/app/kalender` renders a Monday-based 7-column month grid bound to the existing `TransactionsStore`. Each cell shows up to 3 distinct category-colored dots, the day's signed total in mono, and (for the current day) an `--accent` outline. Clicking a day opens a drawer with the day's bookings rendered with `cat-bar` rails in the per-transaction category color. Recurring entries continue to be expanded on the fly — nothing is persisted just for the calendar view.
+
+### 📈 Statistik
+
+`/app/statistik` derives a KPI strip (Einnahmen / Ausgaben / Überschuss / Sparquote) from `OverviewStore` plus a category-mix card (top-down list with inline 80 px progress bar tinted in the category color) and a top-movers card (top 5 bookings of the current month by absolute amount). A multi-month trend, weekday heatmap, and recurring-spend breakdown will land once the dedicated Statistics-API ships — the page is intentionally kept lean so it always reflects what the existing aggregations can answer.
+
+### 🪪 Sessions Verwaltung
+
+`RefreshToken` extended with `userAgent`, `ipHash` (sha256 of the IP + secret — plain IP never leaves the server) and `lastActiveAt` (bumped on every refresh-token rotation). New endpoints `GET /me/sessions` and `DELETE /me/sessions/:id` power the Settings/Security page so users can audit and revoke their own sessions individually. The user only ever sees the IP hash, never the plain address.
+
+### 🧷 Transaction Splits
+
+A single `Transaction` can carry one or more `TransactionSplit` rows (still cascade-deleted with the parent), enabling the salary-as-(base + bonus) pattern surfaced by the CSV import without changing how the booking appears as one row in lists. Splits are visible in the booking detail dialog only.
+
+### ✏️ Bulk Actions
+
+`POST /h/:hid/transactions/bulk-move`, `DELETE /h/:hid/transactions/bulk`, and `POST /h/:hid/recurring-transactions/bulk-pause` bring multi-select to lists. The web UI surfaces a floating action bar that appears while items are selected; the server filters every id through the same PRIVATE-only-by-creator authorization used for single-row writes so a member can never accidentally bulk-mutate someone else's PRIVATE entries.
+
+### 🔌 Connected Apps
+
+`ConnectedApp` model (`provider`, `externalId`, `scopes[]`, `lastUsedAt`) lets the Settings page show a per-user list of OIDC linkages (PocketID / GitHub / Google / claude.ai / …) with edit + unlink. Endpoints scoped to the user (`/me/connected-apps`, behind `JwtAuthGuard`).
+
+### 🛠️ Mode Toolbar (mockup helper)
+
+A sticky top-center pill flips the shell live between Desktop and Mobile preview widths (`html.mode-mobile-preview` clamps to ≤ 390 px) and toggles the warm OKLCH palette between dark and light. Built in for designers to review the editorial-technical theme without leaving the running app — no special build mode needed.
 
 ---
 
