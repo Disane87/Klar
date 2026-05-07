@@ -45,7 +45,7 @@
     </ng-template>
 
     <div class="project-list">
-      @for (item of store.projects()!.projects; track item.id) {
+      @for (item of store.projects()?.projects ?? []; track item.id) {
         <div class="project-card" [style.--project-color]="item.color"
              (click)="openProject(item)" tabindex="0"
              role="button" [attr.aria-label]="item.name + ' öffnen'">
