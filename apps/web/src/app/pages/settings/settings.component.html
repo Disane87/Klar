@@ -1,208 +1,250 @@
 <div class="flex flex-col overflow-y-auto pb-16 animate-[klar-enter_160ms_ease-out_both]">
-  <klar-list>
+  <div class="flex flex-col gap-(--s-5) p-(--s-6) pb-16">
 
-    <!-- ── PROFIL ──────────────────────────────────────────── -->
-    <klar-list-group label="Profil" [loading]="store.loading()"
-                     [headerActionLabel]="editingProfile() ? undefined : 'Bearbeiten'"
-                     (headerAction)="startEditProfile()">
-      @if (editingProfile()) {
-        <div class="px-6 py-4 flex flex-col gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="edit-name">Anzeigename</label>
-            <input hlmInput id="edit-name" type="text"
-                   [ngModel]="editDisplayName()" (ngModelChange)="editDisplayName.set($event)" />
-          </div>
-          <div class="flex gap-2 items-center">
-            <klar-button size="sm" tone="primary" [loading]="savingProfile()" (click)="saveProfile()">
-              Speichern
-            </klar-button>
-            <klar-button size="sm" tone="link" (click)="cancelEditProfile()">Abbruch</klar-button>
-          </div>
-        </div>
-      } @else {
-        <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
-          <klar-avatar [avatarUrl]="authStore.user()?.avatarUrl"
-                       [seed]="authStore.user()?.displayName ?? ''"
-                       [initials]="avatarInitials()"
-                       [size]="40" />
-          <div class="flex-1 min-w-0">
-            <p class="text-[13px] font-medium truncate">Profilfoto</p>
-            <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
-              @if (authStore.user()?.avatarUrl) { Eigenes Foto } @else { Initialen-Avatar }
-            </p>
-          </div>
-          @if (authStore.user()?.avatarUrl) {
+    <p class="page-intro">
+      Profil, Sicherheit, Anmeldung und Datenexport. Was den ganzen Haushalt betrifft —
+      Mitglieder, Kategorien, Mail-Vorlagen — findest du unter
+      <a class="link" routerLink="/app/haushalt">Haushalt</a>.
+    </p>
+
+    <!-- ── PROFIL — hero card ──────────────────────────────── -->
+    <section class="setting-group">
+      <div class="setting-group-head"><span>Profil</span></div>
+      <div class="card profile-card">
+        <div class="profile-grid">
+          <div class="profile-avatar">
+            <klar-avatar
+              [avatarUrl]="authStore.user()?.avatarUrl"
+              [seed]="authStore.user()?.displayName ?? ''"
+              [size]="64"
+              [initials]="avatarInitials()" />
             <button type="button"
+                    class="btn ghost sm"
                     [disabled]="avatarBusy()"
-                    class="shrink-0 min-h-11 px-2.5 text-[12px] font-medium rounded-xs transition-colors
-                           text-(--color-expense) hover:bg-(--color-expense)/10
-                           disabled:opacity-40 disabled:pointer-events-none"
-                    (click)="removeAvatar()">
-              Entfernen
+                    (click)="triggerAvatarFile()">
+              Foto ändern
             </button>
-          }
-          <button type="button"
-                  [disabled]="avatarBusy()"
-                  class="shrink-0 min-h-11 px-2.5 text-[12px] font-medium rounded-xs transition-colors
-                         text-(--text-muted) hover:text-(--text) hover:bg-(--surface-2)
-                         disabled:opacity-40 disabled:pointer-events-none"
-                  (click)="triggerAvatarFile()">
-            Ändern
-          </button>
+            @if (authStore.user()?.avatarUrl) {
+              <button type="button"
+                      class="btn ghost sm danger"
+                      [disabled]="avatarBusy()"
+                      (click)="removeAvatar()">
+                Entfernen
+              </button>
+            }
+            <input #avatarInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+                   aria-label="Profilfoto wählen" title="Profilfoto wählen"
+                   class="sr-only" (change)="onAvatarFileSelected($event)" />
+          </div>
+          <div class="profile-fields">
+            <div class="profile-field">
+              <label class="field-label" for="profile-name">Anzeigename</label>
+              @if (editingProfile()) {
+                <input class="input" id="profile-name"
+                       [ngModel]="editDisplayName()" (ngModelChange)="editDisplayName.set($event)" />
+              } @else {
+                <div class="profile-readonly">{{ store.profile()?.displayName ?? '—' }}</div>
+              }
+            </div>
+            <div class="profile-field">
+              <label class="field-label">
+                E-Mail-Adresse
+                @if (store.profile()?.emailVerified) {
+                  <span class="chip success" style="margin-left: 6px; height: 16px; font-size: 9px;">verifiziert</span>
+                }
+              </label>
+              <div class="profile-readonly">{{ store.profile()?.email ?? '—' }}</div>
+            </div>
+            <div class="profile-field">
+              <label class="field-label">Mitglied seit</label>
+              <div class="profile-readonly mono">{{ formatDate(store.profile()?.createdAt) }}</div>
+            </div>
+            <div class="profile-field">
+              <label class="field-label">Rolle im Haushalt</label>
+              <div class="profile-readonly">{{ hhStore.activeRole() ?? '—' }} · {{ hhStore.activeName() }}</div>
+            </div>
+          </div>
         </div>
-        <input #avatarInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-               aria-label="Profilfoto wählen" title="Profilfoto wählen"
-               class="sr-only" (change)="onAvatarFileSelected($event)" />
-        <klar-list-item icon="user"
-                        label="Anzeigename"
-                        [value]="store.profile()?.displayName" />
-        <klar-list-item icon="mail"
-                        label="E-Mail"
-                        [value]="store.profile()?.email"
-                        [badge]="store.profile()?.emailVerified ? 'Verifiziert' : 'Nicht verifiziert'"
-                        [badgeClass]="store.profile()?.emailVerified
-                          ? 'bg-(--color-income)/12 text-(--color-income)'
-                          : 'bg-(--surface-2) text-(--text-muted)'" />
-        <klar-list-item icon="calendar"
-                        label="Mitglied seit"
-                        [value]="formatDate(store.profile()?.createdAt)" />
-      }
-    </klar-list-group>
-
-    <!-- ── SICHERHEIT ──────────────────────────────────────── -->
-    <klar-list-group label="Sicherheit">
-      @if (store.profile()?.totpEnabled) {
-        <klar-list-item icon="shield-check"
-                        label="2-Faktor-Authentifizierung"
-                        sublabel="Authenticator-App aktiv"
-                        badge="Aktiv"
-                        badgeClass="bg-(--color-income)/12 text-(--color-income)"
-                        trailingActionLabel="2FA deaktivieren"
-                        (trailingActionClick)="disableTotp()" />
-      } @else {
-        <klar-list-item icon="shield"
-                        label="2-Faktor-Authentifizierung"
-                        sublabel="Schütze dein Konto mit einer Authenticator-App"
-                        [navigable]="true"
-                        (itemClick)="openTotpSetup()" />
-      }
-      @if (store.hasPassword()) {
-        <klar-list-item icon="key-round"
-                        label="Passwort"
-                        value="••••••••••••"
-                        trailingActionLabel="Ändern"
-                        (trailingActionClick)="openChangePassword()" />
-      }
-    </klar-list-group>
-
-    <!-- ── VERBUNDENE APPS ──────────────────────────────────── -->
-    <klar-list-group label="Verbundene Apps">
-      <klar-list-item icon="key"
-                      label="Verbundene Apps"
-                      [sublabel]="connectedAppsLabel()"
-                      [navigable]="true"
-                      (itemClick)="openConnectedApps()" />
-    </klar-list-group>
-
-    <!-- ── HAUSHALT ────────────────────────────────────────── -->
-    <klar-list-group label="Haushalt">
-      <klar-list-item icon="home"
-                      label="Haushalt verwalten"
-                      [sublabel]="hhStore.activeName()"
-                      [navigable]="true"
-                      (itemClick)="router.navigate(['/app/haushalt'])" />
-    </klar-list-group>
-
-    <!-- ── DARSTELLUNG ────────────────────────────────────── -->
-    <klar-list-group label="Darstellung">
-      <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
-        <klar-icon name="sun" [size]="16" class="shrink-0 text-(--text-muted)" />
-        <span class="flex-1 min-w-0 text-[13px] font-medium">Farbschema</span>
-        <div hlmToggleGroup type="single"
-             [value]="themeService.theme()"
-             (valueChange)="setTheme($event)">
-          @for (opt of themeOptions; track opt.value) {
-            <button type="button" hlmToggleGroupItem [value]="opt.value" class="min-h-8 px-2.5">{{ opt.label }}</button>
-          }
+        <div class="profile-foot">
+          <span class="setting-hint">Änderungen werden lokal gespeichert — nichts verlässt deinen Server.</span>
+          <div class="flex gap-(--s-2)">
+            @if (editingProfile()) {
+              <button type="button" class="btn ghost" (click)="cancelEditProfile()">Verwerfen</button>
+              <button type="button" class="btn primary" [disabled]="savingProfile()" (click)="saveProfile()">
+                <klar-icon name="check" [size]="14" /> Speichern
+              </button>
+            } @else {
+              <button type="button" class="btn ghost" (click)="startEditProfile()">Bearbeiten</button>
+            }
+          </div>
         </div>
       </div>
-      <klar-list-item icon="languages"
-                      label="Sprache"
-                      value="Deutsch" />
-    </klar-list-group>
+    </section>
+
+    <!-- ── SICHERHEIT ──────────────────────────────────────── -->
+    <section>
+      <klar-list-group label="Sicherheit">
+        @if (store.profile()?.totpEnabled) {
+          <klar-list-item icon="shield-check"
+                          label="2-Faktor-Authentifizierung"
+                          sublabel="Authenticator-App aktiv"
+                          badge="Aktiv"
+                          badgeClass="bg-(--color-income)/12 text-(--color-income)"
+                          trailingActionLabel="2FA deaktivieren"
+                          (trailingActionClick)="disableTotp()" />
+        } @else {
+          <klar-list-item icon="shield"
+                          label="2-Faktor-Authentifizierung"
+                          sublabel="Schütze dein Konto mit einer Authenticator-App"
+                          [navigable]="true"
+                          (itemClick)="openTotpSetup()" />
+        }
+        @if (store.hasPassword()) {
+          <klar-list-item icon="key-round"
+                          label="Passwort"
+                          value="••••••••••••"
+                          trailingActionLabel="Ändern"
+                          (trailingActionClick)="openChangePassword()" />
+        }
+      </klar-list-group>
+    </section>
+
+    <!-- ── VERBUNDENE APPS ──────────────────────────────────── -->
+    <section>
+      <klar-list-group label="Verbundene Apps">
+        <klar-list-item icon="key"
+                        label="Verbundene Apps"
+                        [sublabel]="connectedAppsLabel()"
+                        [navigable]="true"
+                        (itemClick)="openConnectedApps()" />
+      </klar-list-group>
+    </section>
+
+    <!-- ── HAUSHALT ────────────────────────────────────────── -->
+    <section>
+      <klar-list-group label="Haushalt">
+        <klar-list-item icon="home"
+                        label="Haushalt verwalten"
+                        [sublabel]="hhStore.activeName()"
+                        [navigable]="true"
+                        (itemClick)="router.navigate(['/app/haushalt'])" />
+      </klar-list-group>
+    </section>
+
+    <!-- ── DARSTELLUNG ────────────────────────────────────── -->
+    <section>
+      <klar-list-group label="Darstellung">
+        <div class="flex items-center gap-3 px-6 py-2.5 min-h-11 border-b border-(--border)/40">
+          <klar-icon name="sun" [size]="16" class="shrink-0 text-(--text-muted)" />
+          <span class="flex-1 min-w-0 text-[13px] font-medium">Farbschema</span>
+          <div hlmToggleGroup type="single"
+               [value]="themeService.theme()"
+               (valueChange)="setTheme($event)">
+            @for (opt of themeOptions; track opt.value) {
+              <button type="button" hlmToggleGroupItem [value]="opt.value" class="min-h-8 px-2.5">{{ opt.label }}</button>
+            }
+          </div>
+        </div>
+        <klar-list-item icon="languages"
+                        label="Sprache"
+                        value="Deutsch" />
+      </klar-list-group>
+    </section>
 
     <!-- ── VERKNÜPFTE KONTEN ──────────────────────────────── -->
-    <klar-list-group label="Verknüpfte Konten"
-                     footnote="Mindestens eine Anmeldemethode muss aktiv bleiben.">
-      @for (identity of store.oidcIdentities(); track identity.id) {
-        <klar-list-item icon="link"
-                        [label]="identity.providerName"
-                        [sublabel]="identity.email + ' · verbunden seit ' + (identity.createdAt | date:'dd.MM.yyyy')"
-                        trailingActionLabel="Trennen"
-                        [trailingActionDanger]="true"
-                        [trailingActionDisabled]="!store.canUnlinkOidc()"
-                        (trailingActionClick)="unlinkOidc(identity.id)" />
-      }
-      @if (store.oidcIdentities().length === 0) {
-        <klar-list-item label="Keine verknüpften Konten." [disabled]="true" />
-      }
-    </klar-list-group>
+    <section>
+      <klar-list-group label="Verknüpfte Konten"
+                       footnote="Mindestens eine Anmeldemethode muss aktiv bleiben.">
+        @for (identity of store.oidcIdentities(); track identity.id) {
+          <klar-list-item icon="link"
+                          [label]="identity.providerName"
+                          [sublabel]="identity.email + ' · verbunden seit ' + (identity.createdAt | date:'dd.MM.yyyy')"
+                          trailingActionLabel="Trennen"
+                          [trailingActionDanger]="true"
+                          [trailingActionDisabled]="!store.canUnlinkOidc()"
+                          (trailingActionClick)="unlinkOidc(identity.id)" />
+        }
+        @if (store.oidcIdentities().length === 0) {
+          <klar-list-item label="Keine verknüpften Konten." [disabled]="true" />
+        }
+      </klar-list-group>
+    </section>
 
     <!-- ── AKTIVE SITZUNGEN ───────────────────────────────── -->
-    <klar-list-group label="Aktive Sitzungen"
-                     [loading]="store.sessionsLoading()"
-                     [headerActionLabel]="otherSessions().length > 0 ? 'Alle widerrufen' : undefined"
-                     [headerActionDanger]="true"
-                     (headerAction)="revokeAllSessions()">
-      @for (session of currentSessions(); track session.id) {
-        <klar-list-item dotColor="income"
-                        [label]="session.userAgent ?? 'Unbekanntes Gerät'"
-                        [sublabel]="(session.ip ?? '—') + ' · ' + formatRelativeTime(session.createdAt)"
-                        badge="Diese Sitzung"
-                        badgeClass="bg-(--color-income)/12 text-(--color-income) font-mono uppercase tracking-[0.06em] font-bold text-[9px]" />
-      }
-      @for (session of otherSessions(); track session.id) {
-        <klar-list-item dotColor="muted"
-                        [label]="session.userAgent ?? 'Unbekanntes Gerät'"
-                        [sublabel]="(session.ip ?? '—') + ' · ' + formatRelativeTime(session.createdAt)"
-                        trailingActionIcon="close"
-                        [trailingActionDanger]="true"
-                        (trailingActionClick)="revokeSession(session.id)" />
-      }
-    </klar-list-group>
+    <section>
+      <klar-list-group label="Aktive Sitzungen"
+                       [loading]="store.sessionsLoading()"
+                       [headerActionLabel]="otherSessions().length > 0 ? 'Alle widerrufen' : undefined"
+                       [headerActionDanger]="true"
+                       (headerAction)="revokeAllSessions()">
+        @for (session of currentSessions(); track session.id) {
+          <klar-list-item dotColor="income"
+                          [label]="session.userAgent ?? 'Unbekanntes Gerät'"
+                          [sublabel]="(session.ip ?? '—') + ' · ' + formatRelativeTime(session.createdAt)"
+                          badge="Diese Sitzung"
+                          badgeClass="bg-(--color-income)/12 text-(--color-income) font-mono uppercase tracking-[0.06em] font-bold text-[9px]" />
+        }
+        @for (session of otherSessions(); track session.id) {
+          <klar-list-item dotColor="muted"
+                          [label]="session.userAgent ?? 'Unbekanntes Gerät'"
+                          [sublabel]="(session.ip ?? '—') + ' · ' + formatRelativeTime(session.createdAt)"
+                          trailingActionIcon="close"
+                          [trailingActionDanger]="true"
+                          (trailingActionClick)="revokeSession(session.id)" />
+        }
+      </klar-list-group>
+    </section>
 
     <!-- ── IMPORT / EXPORT ────────────────────────────────── -->
-    <klar-list-group label="Import / Export">
-      <klar-list-item icon="download"
-                      label="Exportieren"
-                      sublabel="Buchungen und Fixkosten als JSON herunterladen"
-                      [navigable]="true"
-                      (itemClick)="openExport()" />
-      <klar-list-item icon="upload"
-                      label="Importieren"
-                      [sublabel]="importing() ? 'Datei wird analysiert …' : 'Klar-Export-Datei (.json) importieren'"
-                      [navigable]="true"
-                      (itemClick)="openImport()" />
-      <input #importInput type="file" accept=".json,application/json"
-             aria-label="Import-Datei wählen" title="Import-Datei wählen"
-             class="sr-only" (change)="onImportFileSelected($event)" />
-    </klar-list-group>
-
-    <!-- ── APP-INFOS ──────────────────────────────────────── -->
-    <klar-list-group label="App-Infos">
-      <klar-list-item icon="landmark" label="Währung" value="€  Euro" />
-      <klar-list-item icon="tag"      label="Version" value="1.0.0" />
-    </klar-list-group>
+    <section>
+      <klar-list-group label="Import / Export">
+        <klar-list-item icon="download"
+                        label="Exportieren"
+                        sublabel="Buchungen und Fixkosten als JSON herunterladen"
+                        [navigable]="true"
+                        (itemClick)="openExport()" />
+        <klar-list-item icon="upload"
+                        label="Importieren"
+                        [sublabel]="importing() ? 'Datei wird analysiert …' : 'Klar-Export-Datei (.json) importieren'"
+                        [navigable]="true"
+                        (itemClick)="openImport()" />
+        <input #importInput type="file" accept=".json,application/json"
+               aria-label="Import-Datei wählen" title="Import-Datei wählen"
+               class="sr-only" (change)="onImportFileSelected($event)" />
+      </klar-list-group>
+    </section>
 
     <!-- ── KONTO / DANGER ────────────────────────────────── -->
-    <klar-list-group label="Konto">
-      <klar-list-item icon="trash-2"
-                      label="Konto löschen"
-                      sublabel="Löscht deinen Account unwiderruflich."
-                      [danger]="true"
-                      [navigable]="true"
-                      (itemClick)="openDeleteAccount()" />
-    </klar-list-group>
+    <section>
+      <klar-list-group label="Konto">
+        <klar-list-item icon="trash-2"
+                        label="Konto löschen"
+                        sublabel="Löscht deinen Account unwiderruflich."
+                        [danger]="true"
+                        [navigable]="true"
+                        (itemClick)="openDeleteAccount()" />
+      </klar-list-group>
+    </section>
 
-  </klar-list>
+    <!-- ── APP-INFOS strip ────────────────────────────────── -->
+    <div class="app-info">
+      <div>
+        <span>Version</span>
+        <span class="mono">{{ version() }}</span>
+      </div>
+      <div>
+        <span>Build</span>
+        <span class="mono">{{ buildId() }}</span>
+      </div>
+      <div>
+        <span>Server</span>
+        <span class="mono">{{ serverHost() }}</span>
+      </div>
+      <div>
+        <span>Sprache</span>
+        <span>Deutsch</span>
+      </div>
+    </div>
+
+  </div>
 </div>

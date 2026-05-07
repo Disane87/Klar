@@ -1,11 +1,8 @@
 import { Component, computed, effect, inject, signal, viewChild, type ElementRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
-import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
-import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
 import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -14,7 +11,6 @@ import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarImageCropDialogComponent } from '../../shared/ui/klar-image-crop-dialog.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import {
-  KlarListComponent,
   KlarListGroupComponent,
   KlarListItemComponent,
 } from '../../shared/ui/klar-list.component';
@@ -40,10 +36,7 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
   imports: [
     DatePipe,
     FormsModule,
-    KlarButtonComponent,
-    HlmInputDirective,
-    HlmLabelDirective,
-    KlarListComponent,
+    RouterLink,
     KlarListGroupComponent,
     KlarListItemComponent,
     KlarAvatarComponent,
@@ -65,6 +58,13 @@ export class SettingsPageComponent {
   private toast = inject(KlarToastService);
   private dtService = inject(DataTransferService);
   private oauthGrantsService = inject(OAuthGrantsService);
+  private pageHeader = inject(PageHeaderService);
+
+  protected readonly version = signal('1.0.0');
+  protected readonly buildId = signal('—');
+  protected readonly serverHost = signal(
+    typeof window !== 'undefined' ? window.location.hostname : 'klar.local',
+  );
 
   readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
   readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
@@ -84,7 +84,11 @@ export class SettingsPageComponent {
   });
 
   constructor() {
-    inject(PageHeaderService).set({ title: 'Einstellungen', subtitle: 'PROFIL & APP' });
+    this.pageHeader.set({
+      title: 'Einstellungen',
+      subtitle: 'Konto',
+      rhsChip: this.authStore.user()?.email,
+    });
     void this.refreshConnectedAppsCount();
     // Beim Schließen des Connected-Apps-Dialogs Counter neu laden, damit
     // ein Revoke aus dem Dialog sofort in der Settings-Liste reflektiert wird.
