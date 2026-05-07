@@ -1,7 +1,9 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
+import { RouterLink } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarHypoChipComponent } from '../../shared/ui/klar-hypo-chip.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -30,7 +32,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
+  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
   // <iconify-icon> is a web component, not an Angular directive.
@@ -59,12 +61,14 @@ export class FixkostenPageComponent {
 
   constructor() {
     this.pageHeader.set({
-      title:         'Fixkosten',
+      title:         'Fixkosten-Übersicht',
+      subtitle:      'Haushalt · Marco & Lara WG',
       showPlanspiel: false,
       showAdd:       true,
-      showExport:    false,
-      addLabel:      'Fixkosten',
+      showExport:    true,
+      addLabel:      'Position',
       onAdd:         () => this.openCreate(),
+      onExport:      () => this.exportPdf(),
     });
 
     this.householdStore.loadMembers();
