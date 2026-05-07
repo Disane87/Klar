@@ -42,7 +42,7 @@ describe('KlarSelectComponent', () => {
   it('trigger has 16px font size (iOS no-zoom rule)', () => {
     const fx = setup();
     const trigger = fx.nativeElement.querySelector('button[brnSelectTrigger]') as HTMLElement;
-    expect(trigger.className).toContain('text-[1rem]');
+    expect(trigger.className).toContain('text-base');
   });
 
   it('aria-label falls back to placeholder', () => {

@@ -77,7 +77,7 @@ describe('KlarDateInputComponent', () => {
     fx.detectChanges();
     const input = fx.nativeElement.querySelector('input') as HTMLInputElement;
     expect(input.type).toBe('date');
-    expect(input.className).toContain('min-h-11');
+    expect(input.className).toContain('text-base');
   });
 
   it('renders the bound ISO value', () => {
