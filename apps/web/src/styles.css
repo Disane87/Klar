@@ -135,7 +135,8 @@
 }
 
 /* ---------- LIGHT ---------- */
-[data-theme="light"] {
+[data-theme="light"],
+.light {
   --bg:         oklch(0.985 0.005 80);
   --bg-1:       oklch(1 0.003 80);
   --bg-2:       oklch(0.965 0.008 70);
@@ -543,6 +544,14 @@ input, select, textarea {
 }
 .klar-pop {
   animation: klar-pop var(--dur-2) var(--ease-out) both;
+}
+
+/* Mode-Toolbar mobile preview — clamps the shell to a phone-sized frame
+   so reviewers can flip between desktop and mobile widths in one click. */
+html.mode-mobile-preview body > * {
+  max-width: 390px;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 /* Centered popovers preserve their translateX(-50%) — apply this variant
    when the popover is anchored to the horizontal center. */
