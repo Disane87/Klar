@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { HouseholdsModule } from '../households/households.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ImportPipelineModule } from '../import-pipeline/import-pipeline.module';
 import { FintsCryptoService } from './crypto/fints-crypto.service';
@@ -11,6 +12,8 @@ import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
 import { FintsClientService } from './client/fints-client.service';
 import { FintsSyncRunRepository } from './sync/fints-sync-run.repository';
 import { FintsSyncService } from './sync/fints-sync.service';
+import { FintsService } from './fints.service';
+import { FintsController } from './fints.controller';
 
 /**
  * FinTS module (Phases 14a.3 + 14a.4 + 14a.7-partial).
@@ -30,7 +33,7 @@ import { FintsSyncService } from './sync/fints-sync.service';
  *   14a.8 — lockout UI integration (frontend-side)
  */
 @Module({
-  imports: [PrismaModule, NotificationsModule, ImportPipelineModule],
+  imports: [PrismaModule, HouseholdsModule, NotificationsModule, ImportPipelineModule],
   providers: [
     FintsCryptoService,
     BankRegistryRepository,
@@ -41,7 +44,9 @@ import { FintsSyncService } from './sync/fints-sync.service';
     FintsClientService,
     FintsSyncRunRepository,
     FintsSyncService,
+    FintsService,
   ],
+  controllers: [FintsController],
   exports: [
     FintsCryptoService,
     BankRegistryService,
