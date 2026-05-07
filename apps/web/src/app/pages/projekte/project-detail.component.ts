@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { CategoriesStore } from '../../core/categories/categories.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewService, type ProjectOverviewItem } from '../../core/overview/overview.service';
@@ -14,11 +14,8 @@ import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
-import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
 import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
@@ -29,15 +26,11 @@ import type { Transaction } from '../../core/transactions/transactions.store';
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
   imports: [
-    NgClass,
     KlarSkeletonComponent,
     KlarErrorBarComponent,
     KlarEmptyStateComponent,
-    KlarButtonComponent,
     KlarIconComponent,
-    BrandIconComponent,
     KlarMoneyPipe,
-    KlarMoneyClassPipe,
     KlarMetricTileComponent,
   ],
   templateUrl: './project-detail.component.html',
@@ -48,6 +41,7 @@ export class ProjectDetailPageComponent {
   private router       = inject(Router);
   private http         = inject(HttpClient);
   private household    = inject(HouseholdStore);
+  private categoriesStore = inject(CategoriesStore);
   private overviewSvc  = inject(OverviewService);
   private projectsSvc  = inject(ProjectsService);
   private dialog       = inject(KlarDialogService);
@@ -140,7 +134,19 @@ export class ProjectDetailPageComponent {
   constructor() {
     this.pageHeader.set({
       title:    'Projekt',
-      subtitle: 'DETAILS',
+      subtitle: 'Projekte · Detail',
+      showAdd:  false,
+    });
+
+    effect(() => {
+      const p = this.project();
+      if (p) {
+        this.pageHeader.set({
+          title:    p.name,
+          subtitle: 'Projekte · Detail',
+          showAdd:  false,
+        });
+      }
     });
 
     effect(() => {
@@ -181,6 +187,28 @@ export class ProjectDetailPageComponent {
   back(): void {
     void this.router.navigate(['/app/projekte']);
   }
+
+  goBack(): void { this.back(); }
+
+  categoryColor(tx: Transaction): string {
+    const cat = tx.categoryId ? this.categoriesStore.byId(tx.categoryId) : null;
+    return cat?.color ?? (tx.amountCents >= 0 ? 'var(--success)' : 'var(--fg-3)');
+  }
+
+  rowIcon(tx: Transaction): string {
+    if (tx.icon) return tx.icon;
+    if (!tx.categoryId) return tx.amountCents > 0 ? 'trending' : 'receipt';
+    const cat = this.categoriesStore.byId(tx.categoryId);
+    return cat?.icon ?? 'receipt';
+  }
+
+  formatTxDay(tx: { date: string }): string {
+    const dd = tx.date.split('-')[2] ?? '';
+    const mm = tx.date.split('-')[1] ?? '';
+    return `${dd}.${mm}.`;
+  }
+
+  openTx(tx: Transaction): void { this.openEditTransaction(tx); }
 
   openEdit(): void {
     const p = this.project();
