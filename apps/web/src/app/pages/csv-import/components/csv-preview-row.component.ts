@@ -33,10 +33,10 @@ const FREQ_LABEL: Record<string, string> = {
     KlarIconComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block w-full border-b border-(--border)/40' },
+  host: { class: 'block w-full border-b border-(--line-soft)' },
   template: `
     <div
-      class="grid items-center gap-3 px-6 h-14 transition-colors hover:bg-(--surface-2)/40"
+      class="grid items-center gap-3 px-5 h-14 transition-colors hover:bg-(--bg-2)/40"
       [class.opacity-50]="selection().skip"
       style="grid-template-columns: 24px 28px minmax(0, 1fr) 88px 92px 168px 32px;"
     >
@@ -57,13 +57,13 @@ const FREQ_LABEL: Record<string, string> = {
 
       <!-- Label + sublabel -->
       <div class="min-w-0">
-        <p class="text-[13px] font-medium truncate">{{ row().counterparty ?? '—' }}</p>
-        <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">{{ sublabel() }}</p>
+        <p class="text-[13px] font-medium truncate text-(--fg)">{{ row().counterparty ?? '—' }}</p>
+        <p class="text-[11px] text-(--fg-2) mt-0.5 truncate mono">{{ sublabel() }}</p>
       </div>
 
       <!-- Badge -->
       <span
-        class="justify-self-start text-[10px] font-medium px-1.5 py-0.5 rounded-xs whitespace-nowrap"
+        class="justify-self-start text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap border"
         [ngClass]="badgeClass()"
       >
         {{ statusLabel() }}
@@ -71,7 +71,7 @@ const FREQ_LABEL: Record<string, string> = {
 
       <!-- Amount (right-aligned mono) -->
       <span
-        class="justify-self-end font-mono tabular-nums text-[13px]"
+        class="justify-self-end mono text-[13px]"
         [ngClass]="amountClass()"
       >
         {{ formatAmount(row().amountCents) }}
@@ -171,15 +171,15 @@ export class CsvPreviewRowComponent {
   readonly badgeClass = computed(() => {
     switch (this.row().status) {
       case 'NEW':
-        return 'bg-success/10 text-success';
+        return 'bg-(--accent-soft) text-(--accent) border-(--accent)/30';
       case 'RECURRING_SUGGESTION':
-        return 'bg-warning/10 text-warning';
+        return 'bg-(--warn-soft) text-(--warn) border-(--warn)/30';
       case 'FIXED_COST_MATCH':
         return this.selection().skip
-          ? 'bg-primary/10 text-primary'
-          : 'bg-warning/10 text-warning';
+          ? 'bg-(--success-soft) text-(--success) border-(--success)/30'
+          : 'bg-(--warn-soft) text-(--warn) border-(--warn)/30';
       default:
-        return 'bg-muted/40 text-muted-foreground';
+        return 'bg-(--bg-2) text-(--fg-2) border-(--line-soft)';
     }
   });
 
@@ -197,7 +197,7 @@ export class CsvPreviewRowComponent {
   });
 
   readonly amountClass = computed(() =>
-    this.row().amountCents > 0 ? 'text-success' : 'text-danger',
+    this.row().amountCents > 0 ? 'text-(--success)' : 'text-(--danger)',
   );
 
   readonly showCategory = computed(

@@ -1,25 +1,42 @@
 import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
 import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive';
+import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
 
 @Component({
   selector: 'app-csv-upload-step',
   standalone: true,
-  imports: [HlmButtonDirective],
+  imports: [HlmButtonDirective, KlarIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-col gap-4 rounded-lg border border-border bg-card p-6">
-      <header class="flex flex-col gap-1">
-        <h2 class="text-lg font-semibold">CSV-Import — Sparkasse</h2>
-        <p class="text-sm text-muted-foreground">
-          Online-Banking → Umsätze → Export → CSV-CAMT v2
-        </p>
+    <div class="rounded-md border border-(--line) bg-(--bg-1) overflow-hidden">
+      <header class="flex items-start gap-3 px-5 py-4 border-b border-(--line-soft)">
+        <span class="grid place-items-center size-7 rounded-md border border-(--line-soft) bg-(--bg-2) text-(--accent) shrink-0">
+          <klar-icon name="upload" [size]="14" />
+        </span>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <div class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+            CSV-Import · Sparkasse · CAMT v2
+          </div>
+          <div class="serif text-[20px] leading-tight">
+            Buchungen analysieren
+          </div>
+          <div class="text-[12px] text-(--fg-2) mt-1">
+            Klar matcht automatisch <strong class="text-(--fg-1) font-medium">Fixkosten</strong>,
+            schlägt <strong class="text-(--fg-1) font-medium">Kategorien</strong> &amp;
+            <strong class="text-(--fg-1) font-medium">Verträge</strong> vor und erkennt
+            <strong class="text-(--fg-1) font-medium">Duplikate</strong>.
+          </div>
+        </div>
       </header>
 
       <label
-        class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-background py-10 text-center min-h-[44px] cursor-pointer hover:bg-accent/30 active:bg-accent/40 transition-colors"
+        class="flex flex-col items-center justify-center gap-2 mx-5 my-5 rounded-md border border-dashed border-(--line) bg-(--bg)/40 py-10 text-center min-h-44 cursor-pointer hover:bg-(--bg-2)/40 active:bg-(--bg-2)/60 transition-colors"
       >
-        <span class="text-base text-foreground">Datei auswählen…</span>
-        <span class="text-xs text-muted-foreground">
+        <span class="size-10 grid place-items-center rounded-full bg-(--accent-soft) text-(--accent)">
+          <klar-icon name="upload" [size]="18" />
+        </span>
+        <span class="text-base text-(--fg)">Datei auswählen…</span>
+        <span class="text-xs text-(--fg-2)">
           {{ fileName() ?? 'CSV, max. 5 MB' }}
         </span>
         <input
@@ -31,10 +48,10 @@ import { HlmButtonDirective } from '../../../shared/ui/hlm/hlm-button.directive'
       </label>
 
       @if (errorMessage()) {
-        <p class="text-sm text-danger">{{ errorMessage() }}</p>
+        <p class="px-5 -mt-2 mb-3 text-sm text-(--danger)">{{ errorMessage() }}</p>
       }
 
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-2 px-5 py-3 border-t border-(--line-soft) bg-(--bg)/40">
         <button
           hlmBtn
           variant="default"

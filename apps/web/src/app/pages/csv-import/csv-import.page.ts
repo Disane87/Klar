@@ -35,7 +35,7 @@ type Step = 'upload' | 'preview' | 'done';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="min-h-dvh flex flex-col gap-4 p-4 md:p-6 max-w-5xl mx-auto">
+    <main class="flex flex-col gap-4 p-4 md:p-6 max-w-5xl mx-auto w-full">
       @switch (step()) {
         @case ('upload') {
           <app-csv-upload-step (fileSelected)="onFileSelected($event)" />

@@ -39,6 +39,7 @@ interface CategoryOption {
 }
 
 type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_SUGGESTION';
+type ChipTone = 'primary' | 'info' | 'success' | 'warn' | 'muted';
 
 @Component({
   selector: 'app-csv-preview-table',
@@ -138,11 +139,14 @@ type FilterKey = 'all' | 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_S
         </ng-container>
       </cdk-virtual-scroll-viewport>
 
-      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between sticky bottom-0 bg-background py-3 border-t border-border">
-        <span class="text-sm text-muted-foreground">
-          {{ importableCount() }} importieren · {{ skippedCount() }} übersprungen
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between sticky bottom-0 bg-(--bg) py-3 border-t border-(--line)">
+        <span class="text-[12px] text-(--fg-2) flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span><strong class="text-(--fg-1) font-medium mono">{{ importableCount() }}</strong> importieren</span>
+          <span class="size-1 rounded-full bg-(--line-strong) inline-block"></span>
+          <span><span class="mono">{{ skippedCount() }}</span> übersprungen</span>
           @if (missingCategoryCount() > 0) {
-            <span class="ml-1 text-warning">· {{ missingCategoryCount() }} ohne Kategorie (werden übersprungen)</span>
+            <span class="size-1 rounded-full bg-(--line-strong) inline-block"></span>
+            <span class="text-(--warn)"><span class="mono">{{ missingCategoryCount() }}</span> ohne Kategorie (werden übersprungen)</span>
           }
         </span>
         <button
@@ -327,13 +331,27 @@ export class CsvPreviewTableComponent {
   readonly chips = computed(() => {
     const s = this.analyzeResult().summary;
     return [
-      { key: 'all' as FilterKey, label: 'Alle', count: s.total },
-      { key: 'NEW' as FilterKey, label: 'Neu', count: s.new },
-      { key: 'FIXED_COST_MATCH' as FilterKey, label: 'Fixkosten', count: s.fixedCostMatches },
-      { key: 'RECURRING_SUGGESTION' as FilterKey, label: 'Fixkosten-Vorschläge', count: s.recurringSuggestions },
-      { key: 'DUPLICATE' as FilterKey, label: 'Duplikate', count: s.duplicates },
+      { key: 'all' as FilterKey, label: 'Alle', count: s.total, tone: 'primary' as ChipTone },
+      { key: 'NEW' as FilterKey, label: 'Neu', count: s.new, tone: 'info' as ChipTone },
+      { key: 'FIXED_COST_MATCH' as FilterKey, label: 'Fixkosten', count: s.fixedCostMatches, tone: 'success' as ChipTone },
+      { key: 'RECURRING_SUGGESTION' as FilterKey, label: 'Fixkosten-Vorschläge', count: s.recurringSuggestions, tone: 'warn' as ChipTone },
+      { key: 'DUPLICATE' as FilterKey, label: 'Duplikate', count: s.duplicates, tone: 'muted' as ChipTone },
     ];
   });
+
+  pillClass(key: FilterKey, tone: ChipTone): string {
+    const active = this.filter() === key;
+    if (!active) {
+      return 'border-(--line-soft) text-(--fg-2) hover:text-(--fg-1) hover:border-(--line)';
+    }
+    switch (tone) {
+      case 'success': return 'border-(--success)/40 bg-(--success-soft) text-(--success)';
+      case 'warn':    return 'border-(--warn)/40 bg-(--warn-soft) text-(--warn)';
+      case 'info':    return 'border-(--accent)/40 bg-(--accent-soft) text-(--accent)';
+      case 'muted':   return 'border-(--line) bg-(--bg-2) text-(--fg-1)';
+      default:        return 'border-(--accent)/50 bg-(--accent-soft) text-(--accent)';
+    }
+  }
 
   readonly filteredRows = computed(() => {
     const f = this.filter();
