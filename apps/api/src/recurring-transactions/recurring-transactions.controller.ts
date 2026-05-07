@@ -106,4 +106,15 @@ export class RecurringTransactionsController {
     const item = await this.service.setActive(ctx, id, body.isActive);
     return this.service.toResponse(item);
   }
+
+  @Post('bulk-pause')
+  async bulkPause(
+    @ReqContext() ctx: RequestContext,
+    @Body() body: { ids: string[]; isActive?: boolean },
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(body?.ids)) throw new BadRequestException('ids muss ein Array sein');
+    // Default action: pause (isActive=false). Pass isActive=true to bulk-resume.
+    const isActive = body.isActive === true ? true : false;
+    return this.service.bulkSetActive(ctx, body.ids, isActive);
+  }
 }

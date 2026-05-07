@@ -92,4 +92,33 @@ export class TransactionsRepository {
   delete(id: string): Promise<Transaction> {
     return this.prisma.transaction.delete({ where: { id } });
   }
+
+  /** Find every transaction matching the given ids that belongs to the household. */
+  findManyByIds(ids: string[], householdId: string): Promise<Transaction[]> {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.prisma.transaction.findMany({
+      where: { id: { in: ids }, householdId },
+    });
+  }
+
+  /** Bulk update categoryId for transactions belonging to the household. */
+  bulkUpdateCategory(
+    ids: string[],
+    householdId: string,
+    categoryId: string,
+  ): Promise<{ count: number }> {
+    if (ids.length === 0) return Promise.resolve({ count: 0 });
+    return this.prisma.transaction.updateMany({
+      where: { id: { in: ids }, householdId },
+      data: { categoryId },
+    });
+  }
+
+  /** Bulk delete transactions belonging to the household. */
+  bulkDelete(ids: string[], householdId: string): Promise<{ count: number }> {
+    if (ids.length === 0) return Promise.resolve({ count: 0 });
+    return this.prisma.transaction.deleteMany({
+      where: { id: { in: ids }, householdId },
+    });
+  }
 }

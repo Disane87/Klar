@@ -91,4 +91,25 @@ export class RecurringTransactionsRepository {
   setActive(id: string, isActive: boolean): Promise<RecurringTransaction> {
     return this.prisma.recurringTransaction.update({ where: { id }, data: { isActive } });
   }
+
+  /** Bulk setActive for recurring templates belonging to the household. */
+  bulkSetActive(
+    ids: string[],
+    householdId: string,
+    isActive: boolean,
+  ): Promise<{ count: number }> {
+    if (ids.length === 0) return Promise.resolve({ count: 0 });
+    return this.prisma.recurringTransaction.updateMany({
+      where: { id: { in: ids }, householdId },
+      data: { isActive },
+    });
+  }
+
+  /** Find every recurring template matching the given ids that belongs to the household. */
+  findManyByIds(ids: string[], householdId: string): Promise<RecurringTransaction[]> {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.prisma.recurringTransaction.findMany({
+      where: { id: { in: ids }, householdId },
+    });
+  }
 }

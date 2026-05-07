@@ -144,6 +144,24 @@ export class RecurringTransactionsService {
     return this.repo.setActive(existing.id, isActive);
   }
 
+  /**
+   * Bulk pause / resume of recurring templates. Each id is filtered through
+   * the same PRIVATE-by-creator authorization used for single-row writes.
+   * Returns the count actually updated.
+   */
+  async bulkSetActive(
+    ctx: RequestContext,
+    ids: string[],
+    isActive: boolean,
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(ids) || ids.length === 0) return { count: 0 };
+    const found = await this.repo.findManyByIds(ids, ctx.householdId);
+    const allowed = found
+      .filter(rt => rt.visibility !== Visibility.PRIVATE || rt.createdByUserId === ctx.userId)
+      .map(rt => rt.id);
+    return this.repo.bulkSetActive(allowed, ctx.householdId, isActive);
+  }
+
   toResponse(rt: RecurringTransaction) {
     return {
       id: rt.id,

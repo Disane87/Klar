@@ -124,6 +124,41 @@ export class TransactionsService {
     await this.repo.delete(existing.id);
   }
 
+  /**
+   * Bulk-move a set of transactions into a new category. Each id is
+   * authorized via the same rules as single-update (PRIVATE only by creator).
+   * Returns the count actually updated.
+   */
+  async bulkMove(ctx: RequestContext, ids: string[], categoryId: string): Promise<{ count: number }> {
+    if (!Array.isArray(ids) || ids.length === 0) return { count: 0 };
+    if (!categoryId) throw new BadRequestException('categoryId ist erforderlich');
+    const allowedIds = await this.collectAuthorizedIds(ctx, ids);
+    return this.repo.bulkUpdateCategory(allowedIds, ctx.householdId, categoryId);
+  }
+
+  /**
+   * Bulk-delete transactions. Each id is authorized via the same rules as
+   * single-delete. Returns the count actually deleted.
+   */
+  async bulkDelete(ctx: RequestContext, ids: string[]): Promise<{ count: number }> {
+    if (!Array.isArray(ids) || ids.length === 0) return { count: 0 };
+    const allowedIds = await this.collectAuthorizedIds(ctx, ids);
+    return this.repo.bulkDelete(allowedIds, ctx.householdId);
+  }
+
+  /**
+   * Centralized authorization for bulk operations: returns the subset of ids
+   * that exist in the household AND the user is allowed to mutate.
+   * PRIVATE transactions are only mutable by their creator (mirrors
+   * findAndAuthorize() for single-row writes).
+   */
+  private async collectAuthorizedIds(ctx: RequestContext, ids: string[]): Promise<string[]> {
+    const found = await this.repo.findManyByIds(ids, ctx.householdId);
+    return found
+      .filter(tx => tx.visibility !== Visibility.PRIVATE || tx.createdByUserId === ctx.userId)
+      .map(tx => tx.id);
+  }
+
   toResponse(tx: Transaction) {
     return {
       id: tx.id,

@@ -81,4 +81,23 @@ export class TransactionsController {
   ): Promise<void> {
     await this.service.remove(ctx, id);
   }
+
+  @Post('bulk-move')
+  async bulkMove(
+    @ReqContext() ctx: RequestContext,
+    @Body() body: { ids: string[]; categoryId: string },
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(body?.ids)) throw new BadRequestException('ids muss ein Array sein');
+    if (!body?.categoryId) throw new BadRequestException('categoryId ist erforderlich');
+    return this.service.bulkMove(ctx, body.ids, body.categoryId);
+  }
+
+  @Delete('bulk')
+  async bulkRemove(
+    @ReqContext() ctx: RequestContext,
+    @Body() body: { ids: string[] },
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(body?.ids)) throw new BadRequestException('ids muss ein Array sein');
+    return this.service.bulkDelete(ctx, body.ids);
+  }
 }
