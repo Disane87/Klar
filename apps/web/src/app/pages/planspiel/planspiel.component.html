@@ -7,14 +7,9 @@
       <p class="text-[11px] text-muted-foreground mt-0.5">Simulation ohne API — rein lokal</p>
     </div>
     @if (!store.isEmpty()) {
-      <button
-        type="button"
-        (click)="confirmReset()"
-        class="flex items-center gap-1.5 text-xs text-muted-foreground active:text-danger
-               min-h-[44px] min-w-[44px] px-2 transition-colors rounded-lg active:bg-danger/10">
-        <klar-icon name="rotate-ccw" [size]="14" />
+      <klar-button tone="ghost" size="sm" icon="rotate-ccw" (click)="confirmReset()">
         Zurücksetzen
-      </button>
+      </klar-button>
     }
   </div>
 
@@ -238,15 +233,9 @@
 
   <!-- ── Floating add button (when form is hidden) ──────────────────────────── -->
   @if (!showForm()) {
-    <button
-      type="button"
-      (click)="openForm()"
-      class="flex items-center justify-center gap-2 w-full rounded-lg border border-dashed
-             border-border py-3 text-sm text-muted-foreground active:bg-muted/30
-             transition-colors min-h-[44px]">
-      <klar-icon name="plus" [size]="16" />
+    <klar-button tone="ghost" size="lg" icon="plus" class="w-full justify-center border-dashed" (click)="openForm()">
       Posten hinzufügen
-    </button>
+    </klar-button>
   }
 
 </div>

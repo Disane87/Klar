@@ -10,6 +10,7 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { HlmSelectNativeDirective } from '../../shared/ui/hlm/hlm-select/hlm-select-native.directive';
 import { KlarMoneyInputComponent } from '../../shared/ui/klar-money-input.component';
+import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import type { RecurringFrequency } from '@klar/shared';
 import { toMonthlyEquivalent } from '@klar/shared';
 
@@ -30,7 +31,7 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-planspiel',
   standalone: true,
-  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarMoneyInputComponent],
+  imports: [FormsModule, KlarIconComponent, KlarBadgeComponent, HlmInputDirective, HlmLabelDirective, HlmSelectNativeDirective, KlarMoneyInputComponent, KlarButtonComponent],
   templateUrl: './planspiel.component.html',
   styleUrl: './planspiel.component.css',
 })
