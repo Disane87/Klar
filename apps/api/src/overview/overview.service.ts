@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import type { Category, Project, RecurringTransaction, Transaction } from '@prisma/client';
 import { ProjectStatus, Visibility } from '@prisma/client';
-import type { RecurringFrequency } from '@klar/shared';
+import type { BudgetVsActualRow, RecurringFrequency } from '@klar/shared';
 import {
+  budgetsVsActuals,
   calculateMonthlyOverview,
   currentYearMonth,
   toMonthlyEquivalent,
@@ -84,6 +85,11 @@ export interface ProjectOverviewItem {
 
 export interface ProjectsOverviewResponse {
   projects: ProjectOverviewItem[];
+}
+
+export interface BudgetsVsActualsResponse {
+  month: string;
+  rows: BudgetVsActualRow[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -379,5 +385,92 @@ export class OverviewService {
     });
 
     return { projects: result };
+  }
+
+  // ── 4. Budgets vs. Actuals ──────────────────────────────────────────────────
+
+  async getBudgetsVsActuals(
+    ctx: RequestContext,
+    month?: string,
+  ): Promise<BudgetsVsActualsResponse> {
+    const ym = month ?? currentYearMonth();
+    const { firstDay, lastDay } = parseMonth(ym);
+
+    // 1. Load budgets for the month + their categories so we can sign Soll
+    //    correctly (expense categories → negative).
+    const budgetMonth = new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), 1));
+    const budgetRows = await this.prisma.budget.findMany({
+      where: { householdId: ctx.householdId, month: budgetMonth },
+      include: { category: true },
+    });
+
+    if (budgetRows.length === 0) {
+      return { month: ym, rows: [] };
+    }
+
+    const expenseTypes = new Set(['FIXED_EXPENSE', 'VARIABLE_EXPENSE', 'EXPENSE', 'SAVINGS']);
+    const isExpenseCategory = (type: string): boolean => expenseTypes.has(type);
+
+    const budgets = budgetRows.map((b) => ({
+      categoryId: b.categoryId,
+      // Stored as positive integer; sign it according to category type.
+      sollCents: isExpenseCategory(b.category.type) ? -b.amountCents : b.amountCents,
+    }));
+
+    const categoryIds = budgetRows.map((b) => b.categoryId);
+
+    // 2. Sum realized transactions in the month per category (visible to user).
+    const txs = await this.prisma.transaction.findMany({
+      where: {
+        householdId: ctx.householdId,
+        date: { gte: firstDay, lte: lastDay },
+        isPlanned: false,
+        categoryId: { in: categoryIds },
+      },
+      select: {
+        categoryId: true,
+        amountCents: true,
+        visibility: true,
+        createdByUserId: true,
+      },
+    });
+
+    const actualsByCat = new Map<string, number>();
+    for (const tx of txs) {
+      if (!tx.categoryId) continue;
+      if (!isVisible(tx, ctx.userId)) continue;
+      actualsByCat.set(
+        tx.categoryId,
+        (actualsByCat.get(tx.categoryId) ?? 0) + tx.amountCents,
+      );
+    }
+
+    // 3. Add active recurring transactions expanded to monthly equivalent.
+    const rts = await this.prisma.recurringTransaction.findMany({
+      where: {
+        householdId: ctx.householdId,
+        isActive: true,
+        categoryId: { in: categoryIds },
+      },
+    });
+
+    for (const rt of rts) {
+      if (!isActiveInMonth(rt, firstDay, lastDay)) continue;
+      if (!isVisible(rt, ctx.userId)) continue;
+      const monthly = toMonthlyEquivalent(rt.amountCents, rt.frequency as RecurringFrequency);
+      actualsByCat.set(
+        rt.categoryId,
+        (actualsByCat.get(rt.categoryId) ?? 0) + monthly,
+      );
+    }
+
+    const actuals = Array.from(actualsByCat.entries()).map(([categoryId, istCents]) => ({
+      categoryId,
+      istCents,
+    }));
+
+    const rows = budgetsVsActuals({ budgets, actuals });
+
+    return { month: ym, rows };
   }
 }

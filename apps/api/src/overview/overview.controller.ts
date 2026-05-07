@@ -42,6 +42,20 @@ export class OverviewController {
    *
    * Returns all visible projects with their transaction totals.
    */
+  /**
+   * GET /api/v1/households/:hid/overview/budgets-vs-actuals?month=YYYY-MM
+   *
+   * Returns per-category Soll vs. Ist for the month (target budget vs.
+   * realized transactions + monthly recurring equivalents).
+   */
+  @Get('budgets-vs-actuals')
+  async getBudgetsVsActuals(
+    @ReqContext() ctx: RequestContext,
+    @Query('month') month?: string,
+  ) {
+    return this.service.getBudgetsVsActuals(ctx, month);
+  }
+
   @Get('projects')
   async getProjects(
     @ReqContext() ctx: RequestContext,

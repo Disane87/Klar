@@ -209,6 +209,39 @@ describe('GET /api/v1/households/:hid/overview/projects', () => {
   });
 });
 
+describe('GET /api/v1/households/:hid/overview/budgets-vs-actuals', () => {
+  it('returns 200 with empty rows when no budgets exist', async () => {
+    const { accessToken } = await registerAndLogin('alice-bva@test.com');
+    const householdId = await getHouseholdId(accessToken);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/households/${householdId}/overview/budgets-vs-actuals?month=2026-05`,
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body) as { month: string; rows: unknown[] };
+    expect(body.month).toBe('2026-05');
+    expect(body.rows).toEqual([]);
+  });
+
+  it('defaults month to current year-month when query param is omitted', async () => {
+    const { accessToken } = await registerAndLogin('alice-bva2@test.com');
+    const householdId = await getHouseholdId(accessToken);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/households/${householdId}/overview/budgets-vs-actuals`,
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body) as { month: string };
+    expect(body.month).toMatch(/^\d{4}-\d{2}$/);
+  });
+});
+
 describe('Overview: cross-tenant security', () => {
   it('returns 403 when user B tries to access user A overview/fixed-costs', async () => {
     const alice = await registerAndLogin('alice-ct-ov@test.com');
@@ -248,6 +281,28 @@ describe('Overview: cross-tenant security', () => {
     const res = await app.inject({
       method: 'GET',
       url: `/api/v1/households/${aliceHouseholdId}/overview/cashflow`,
+      headers: { authorization: `Bearer ${bob.accessToken}` },
+    });
+
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('returns 403 when user B tries to access user A overview/budgets-vs-actuals', async () => {
+    const alice = await registerAndLogin('alice-ct-bva@test.com');
+    await registerAndLogin('bob-ct-bva@test.com');
+
+    const aliceHouseholdId = await getHouseholdId(alice.accessToken);
+
+    const bobLoginRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { email: 'bob-ct-bva@test.com', password: 'TestPass123!' },
+    });
+    const bob = JSON.parse(bobLoginRes.body) as AuthTokens;
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/households/${aliceHouseholdId}/overview/budgets-vs-actuals`,
       headers: { authorization: `Bearer ${bob.accessToken}` },
     });
 

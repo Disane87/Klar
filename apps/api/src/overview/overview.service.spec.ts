@@ -91,6 +91,7 @@ function buildService(): { service: OverviewService; prisma: PrismaService } {
     },
     category: { findMany: vi.fn().mockResolvedValue([]) },
     project: { findMany: vi.fn().mockResolvedValue([]) },
+    budget: { findMany: vi.fn().mockResolvedValue([]) },
   } as unknown as PrismaService;
 
   const service = new OverviewService(prisma);
@@ -296,6 +297,78 @@ describe('OverviewService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('getBudgetsVsActuals', () => {
+    it('returns empty rows when no budgets exist for the month', async () => {
+      const { service } = buildService();
+
+      const result = await service.getBudgetsVsActuals(ctx, '2026-05');
+
+      expect(result.month).toBe('2026-05');
+      expect(result.rows).toEqual([]);
+    });
+
+    it('signs Soll negative for expense categories and aggregates tx + recurring as Ist', async () => {
+      const { service, prisma } = buildService();
+
+      const cat = makeCat({ type: 'VARIABLE_EXPENSE' });
+      vi.mocked(prisma.budget.findMany).mockResolvedValue([
+        { categoryId: 'cat-1', amountCents: 50000, category: cat },
+      ] as never);
+
+      vi.mocked(prisma.transaction.findMany).mockResolvedValue([
+        makeTx({ amountCents: -20000 }),
+      ] as never);
+
+      vi.mocked(prisma.recurringTransaction.findMany).mockResolvedValue([
+        makeRt({ amountCents: -10000, frequency: 'MONTHLY' }),
+      ] as never);
+
+      const result = await service.getBudgetsVsActuals(ctx, '2026-05');
+
+      expect(result.rows).toHaveLength(1);
+      const row = result.rows[0];
+      expect(row.categoryId).toBe('cat-1');
+      expect(row.sollCents).toBe(-50000);
+      // -20000 (tx) + -10000 (recurring monthly) = -30000
+      expect(row.istCents).toBe(-30000);
+      expect(row.deltaCents).toBe(-20000);
+      expect(row.state).toBe('ok');
+    });
+
+    it('keeps Soll positive for income categories', async () => {
+      const { service, prisma } = buildService();
+
+      const cat = makeCat({ id: 'cat-inc', type: 'FIXED_INCOME' });
+      vi.mocked(prisma.budget.findMany).mockResolvedValue([
+        { categoryId: 'cat-inc', amountCents: 300000, category: cat },
+      ] as never);
+
+      const result = await service.getBudgetsVsActuals(ctx, '2026-05');
+
+      expect(result.rows[0].sollCents).toBe(300000);
+      expect(result.rows[0].istCents).toBe(0);
+    });
+
+    it('excludes PRIVATE transactions of other users from Ist', async () => {
+      const { service, prisma } = buildService();
+
+      const cat = makeCat({ type: 'VARIABLE_EXPENSE' });
+      vi.mocked(prisma.budget.findMany).mockResolvedValue([
+        { categoryId: 'cat-1', amountCents: 10000, category: cat },
+      ] as never);
+
+      vi.mocked(prisma.transaction.findMany).mockResolvedValue([
+        makeTx({ amountCents: -5000, visibility: Visibility.PRIVATE, createdByUserId: 'other' }),
+        makeTx({ id: 'tx-2', amountCents: -3000, visibility: Visibility.SHARED }),
+      ] as never);
+
+      const result = await service.getBudgetsVsActuals(ctx, '2026-05');
+
+      // Only the shared one counts
+      expect(result.rows[0].istCents).toBe(-3000);
     });
   });
 });
