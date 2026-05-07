@@ -18,6 +18,7 @@ const MAIN_ITEMS: NavItem[] = [
   { id: 'fixkosten', label: 'Fixkosten',  icon: 'fixkosten', route: '/app/fixkosten', tone: 'var(--cat-abos)' },
   { id: 'monat',     label: 'Cashflow',   icon: 'trending',  route: '/app/monat',     tone: 'var(--cat-essen)' },
   { id: 'kalender',  label: 'Kalender',   icon: 'planspiel', route: '/app/kalender',  tone: 'var(--cat-mobil)' },
+  { id: 'statistik', label: 'Statistik',  icon: 'trending',  route: '/app/statistik', tone: 'var(--cat-freizeit)' },
   { id: 'buchungen', label: 'Buchungen',  icon: 'receipt',   route: '/app/buchungen', tone: 'var(--cat-mobil)' },
   { id: 'projekte',  label: 'Projekte',   icon: 'folder',    route: '/app/projekte',  tone: 'var(--cat-freizeit)' },
   { id: 'vertraege', label: 'Verträge',   icon: 'shield',    route: '/app/vertraege', tone: 'var(--cat-versicher)' },

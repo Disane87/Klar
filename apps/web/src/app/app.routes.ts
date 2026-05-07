@@ -130,6 +130,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'statistik',
+        loadComponent: () =>
+          import('./pages/statistik/statistik.component').then(
+            m => m.StatistikComponent,
+          ),
+      },
+      {
         path: 'import',
         loadComponent: () =>
           import('./pages/csv-import/csv-import.page').then(
