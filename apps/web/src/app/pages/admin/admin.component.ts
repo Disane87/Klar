@@ -8,6 +8,8 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
+import { KlarStatTileComponent, type KlarStatTileTone } from '../../shared/ui/klar-stat-tile.component';
 import { AdminAuditTabComponent } from './tabs/audit-tab.component';
 import { AdminEmailsTabComponent } from './tabs/emails-tab.component';
 import { AdminHouseholdsTabComponent } from './tabs/households-tab.component';
@@ -36,6 +38,8 @@ const JOB_ICONS: Record<string, string> = {
     HlmInputDirective,
     KlarButtonComponent,
     KlarIconComponent,
+    KlarHeroComponent,
+    KlarStatTileComponent,
     AdminAuditTabComponent,
     AdminEmailsTabComponent,
     AdminHouseholdsTabComponent,
@@ -45,40 +49,46 @@ const JOB_ICONS: Record<string, string> = {
     <div class="flex flex-col gap-(--s-5) p-(--s-6) max-w-350 mx-auto pb-(--s-8)">
 
       <!-- Hero -->
-      <section class="admin-hero">
-        <div class="admin-hero-text">
-          <div class="admin-hero-eyebrow">Klar Self-Host · {{ instanceHost() }}</div>
-          <div class="admin-hero-title">{{ heroTitle() }}</div>
-          <div class="admin-hero-sub">{{ heroDescription() }}</div>
-        </div>
-        <div class="admin-hero-side">
-          <klar-button tone="ghost" size="sm" icon="pulse">Live-Statistik</klar-button>
+      <klar-hero
+        variant="admin"
+        [eyebrow]="'Klar Self-Host · ' + instanceHost()"
+        [title]="heroTitle()"
+        [sub]="heroDescription()"
+      >
+        <ng-container heroActions>
+          <klar-button tone="ghost"   size="sm" icon="pulse">Live-Statistik</klar-button>
           <klar-button tone="primary" size="sm" icon="key">Backup jetzt</klar-button>
-        </div>
-      </section>
+        </ng-container>
+      </klar-hero>
 
       <!-- Status grid -->
-      <section class="admin-status-grid">
-        <div class="admin-stat" [class.ok]="uptimeTone() === 'ok'" [class.warn]="uptimeTone() === 'warn'">
-          <span class="label"><klar-icon name="pulse" [size]="11" /> Uptime · 30 T</span>
-          <span class="value">{{ uptimeText() }}</span>
-          <span class="delta">{{ uptimeDelta() }}</span>
-        </div>
-        <div class="admin-stat">
-          <span class="label"><klar-icon name="key" [size]="11" /> Datenbank</span>
-          <span class="value">{{ dbSizeText() }}</span>
-          <span class="delta">Postgres total</span>
-        </div>
-        <div class="admin-stat" [class.warn]="warningTone() === 'warn'">
-          <span class="label"><klar-icon name="alert" [size]="11" /> Warnungen</span>
-          <span class="value">{{ warningText() }}</span>
-          <span class="delta">letzte 24 h</span>
-        </div>
-        <div class="admin-stat">
-          <span class="label"><klar-icon name="haushalt" [size]="11" /> Aktive Sessions</span>
-          <span class="value">{{ sessionsText() }}</span>
-          <span class="delta">Refresh-Tokens</span>
-        </div>
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-(--s-3)">
+        <klar-stat-tile
+          icon="pulse"
+          label="Uptime · 30 T"
+          [value]="uptimeText()"
+          [delta]="uptimeDelta()"
+          [tone]="statTone(uptimeTone())"
+        />
+        <klar-stat-tile
+          icon="key"
+          label="Datenbank"
+          [value]="dbSizeText()"
+          delta="Postgres total"
+        />
+        <klar-stat-tile
+          icon="alert"
+          label="Warnungen"
+          [value]="warningText()"
+          delta="letzte 24 h"
+          [tone]="statTone(warningTone())"
+        />
+        <klar-stat-tile
+          icon="haushalt"
+          label="Aktive Sessions"
+          [value]="sessionsText()"
+          delta="Refresh-Tokens"
+        />
       </section>
 
       <!-- Side-by-side: Dienste + Performance -->
@@ -481,6 +491,10 @@ export class AdminPageComponent implements OnInit {
 
   protected setTab(t: Tab): void {
     this.tab.set(t);
+  }
+
+  protected statTone(t: Tone): KlarStatTileTone {
+    return t === '' ? 'neutral' : t;
   }
 
   protected format(n: number | null): string {
