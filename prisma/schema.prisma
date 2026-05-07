@@ -71,6 +71,20 @@ enum NotificationKind {
   SYSTEM
 }
 
+enum ContractCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+enum ContractStatus {
+  CANDIDATE
+  DETECTED
+  CONFIRMED
+  CANCELLED
+}
+
 // ─────────────────────────────────────────────
 // AUTH & USER
 // ─────────────────────────────────────────────
@@ -210,6 +224,7 @@ model Household {
   csvImports            CsvImport[]
   importLearnings       ImportLearning[]
   notifications         Notification[]
+  contracts             Contract[]
 }
 
 model HouseholdMembership {
@@ -704,4 +719,32 @@ model Notification {
 
   @@index([householdId, userId, readAt])
   @@index([householdId, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// CONTRACTS (Verträge / Subscriptions)
+// ─────────────────────────────────────────────
+// Detected from CSV-Import + Recurring patterns via packages/shared/contracts/detect.ts
+// confidence ∈ [0,1] aus Heuristik (Anzahl Wiederholungen, Beträge-Stabilität).
+// detectedFromTransactionIds: Audit-Trail welche Transactions zur Erkennung führten.
+model Contract {
+  id                         String         @id @default(cuid())
+  householdId                String
+  name                       String
+  merchant                   String?
+  categoryId                 String?
+  amountCents                Int
+  cycle                      ContractCycle
+  nextRenewalAt              DateTime?      @db.Date
+  cancelByAt                 DateTime?      @db.Date
+  confidence                 Float          @default(0)
+  status                     ContractStatus @default(CANDIDATE)
+  detectedFromTransactionIds String[]       @default([])
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, status])
+  @@index([householdId, nextRenewalAt])
 }
