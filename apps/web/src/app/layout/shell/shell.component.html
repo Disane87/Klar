@@ -36,7 +36,10 @@
             style="font-family: var(--font-display); letter-spacing: -0.02em;"
           >{{ pageHeader.title() }}</span>
         </div>
-        <klar-header-user />
+        <div class="flex items-center gap-1">
+          <klar-notification-bell />
+          <klar-header-user />
+        </div>
       </header>
     }
     <router-outlet />

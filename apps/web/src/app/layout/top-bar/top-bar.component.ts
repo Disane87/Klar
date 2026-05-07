@@ -3,13 +3,20 @@ import { NgClass } from '@angular/common';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
+import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
 import type { PageStat } from '../../core/page-header/page-header.service';
 
 @Component({
   selector: 'klar-top-bar',
   standalone: true,
   host: { class: 'block w-full' },
-  imports: [NgClass, KlarButtonComponent, KlarHeaderUserComponent, KlarMoneyPipe],
+  imports: [
+    NgClass,
+    KlarButtonComponent,
+    KlarHeaderUserComponent,
+    KlarMoneyPipe,
+    KlarNotificationBellComponent,
+  ],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
 })
