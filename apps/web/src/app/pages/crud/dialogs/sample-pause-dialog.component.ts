@@ -9,7 +9,7 @@ import { KlarSwitchComponent } from '../../../shared/ui/klar-switch.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KlarSwitchComponent, KlarDialogFooterComponent],
   template: `
-    <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+    <div class="flex flex-col gap-(--s-4)">
       <div class="card px-(--s-4)">
         <klar-switch
           [(checked)]="paused"

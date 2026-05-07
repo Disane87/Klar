@@ -8,7 +8,7 @@ import { KlarDialogFooterComponent } from '../../../shared/ui/klar-dialog-footer
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KlarDialogFooterComponent],
   template: `
-    <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+    <div class="flex flex-col gap-(--s-4)">
       <div class="card p-0">
         <div class="setting-row">
           <div class="setting-text">

@@ -85,7 +85,6 @@ const DEFAULT_COLOR = '#6366f1';
       }
 
       <klar-dialog-footer
-        class="pt-2 border-t border-(--border)"
         [confirmLabel]="item() ? 'Speichern' : 'Erstellen'"
         [confirmDisabled]="!isValid()"
         [confirmLoading]="saving()"

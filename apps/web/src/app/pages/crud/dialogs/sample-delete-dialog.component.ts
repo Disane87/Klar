@@ -8,7 +8,7 @@ import { KlarDialogFooterComponent } from '../../../shared/ui/klar-dialog-footer
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KlarDialogFooterComponent],
   template: `
-    <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+    <div class="flex flex-col gap-(--s-4)">
       <p class="text-[14px] text-(--fg-1) leading-relaxed">
         Eintrag <strong>"Lebensmittel"</strong> wirklich löschen?
         Diese Aktion kann nicht rückgängig gemacht werden.

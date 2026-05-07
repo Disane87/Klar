@@ -16,6 +16,7 @@ import { KlarDialogService } from './klar-dialog.service';
   selector: 'klar-dialog-footer',
   standalone: true,
   imports: [KlarButtonComponent],
+  host: { class: 'block pt-3 border-t border-(--border)' },
   template: `
     <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
       <div class="sm:flex-1 flex flex-col-reverse gap-2 sm:flex-row">

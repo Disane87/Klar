@@ -14,7 +14,7 @@ interface DemoItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HlmCheckboxComponent, KlarDialogFooterComponent],
   template: `
-    <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+    <div class="flex flex-col gap-(--s-4)">
       <div class="card p-0">
         @for (item of items; track item.id) {
           <label class="setting-row interactive cursor-pointer">

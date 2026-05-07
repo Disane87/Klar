@@ -15,7 +15,7 @@ import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
   imports: [FormsModule, HlmInputDirective, KlarDialogFooterComponent],
   template: `
     @if (!confirmingDiscard()) {
-      <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+      <div class="flex flex-col gap-(--s-4)">
         <div class="flex flex-col gap-1.5">
           <label class="field-label" for="sample-discard-name">Name</label>
           <input
@@ -39,7 +39,7 @@ import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
         />
       </div>
     } @else {
-      <div class="flex flex-col gap-(--s-4) p-(--s-5)">
+      <div class="flex flex-col gap-(--s-4)">
         <p class="text-[14px] text-(--fg-1) leading-relaxed">
           Du hast ungespeicherte Änderungen. Wirklich verwerfen?
         </p>
