@@ -123,6 +123,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'kalender',
+        loadComponent: () =>
+          import('./pages/kalender/kalender.component').then(
+            m => m.KalenderComponent,
+          ),
+      },
+      {
         path: 'import',
         loadComponent: () =>
           import('./pages/csv-import/csv-import.page').then(

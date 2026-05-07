@@ -31,6 +31,18 @@ export class CategoriesStore {
   readonly loading  = this._resource.isLoading;
   readonly error    = this._resource.error;
 
+  /** Lookup map keyed by category id — kept as a computed for downstream byId() reuse. */
+  readonly byIdMap = computed(() => {
+    const map = new Map<string, Category>();
+    for (const c of this.all()) map.set(c.id, c);
+    return map;
+  });
+
+  /** Returns the category by id, or undefined if not loaded yet / archived-filtered. */
+  byId(id: string): Category | undefined {
+    return this.byIdMap().get(id);
+  }
+
   reload(): void {
     this._resource.reload();
   }
