@@ -1,1 +1,42 @@
-/* All styles migrated to Tailwind utility classes in side-nav.component.html */
+/* Klar Design Pearl — sidebar nav-item active state with --nav-tone tinting */
+
+.nav-item .ico {
+  color: var(--nav-tone, var(--fg-2));
+  opacity: 0.9;
+  transition: color var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out);
+}
+
+.nav-item:hover {
+  background: oklch(from var(--accent) l c h / 0.08);
+}
+
+.nav-item:hover .ico {
+  color: var(--nav-tone, var(--accent));
+  opacity: 1;
+}
+
+.nav-item.active {
+  background: linear-gradient(
+    90deg,
+    oklch(from var(--nav-tone, var(--accent)) l c h / 0.18),
+    oklch(from var(--nav-tone, var(--accent)) l c h / 0.04)
+  );
+  color: var(--fg);
+}
+
+.nav-item.active .ico {
+  color: var(--nav-tone, var(--accent));
+  opacity: 1;
+}
+
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--nav-tone, var(--accent));
+  border-radius: 2px;
+  box-shadow: 0 0 8px 0 var(--nav-tone, var(--accent));
+}

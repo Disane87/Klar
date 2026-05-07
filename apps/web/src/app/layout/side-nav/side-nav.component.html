@@ -1,27 +1,73 @@
-<aside class="w-56 shrink-0 bg-(--surface) border-r border-(--border) flex flex-col h-full overflow-y-auto">
-  <div class="px-4 border-b border-(--border) mb-3 h-[var(--header-height)] flex items-center gap-2.5">
-    <!-- Icon-Pill mit Gradient-Logo auf dunklem Hintergrund -->
-    <div class="size-8 rounded-lg bg-(--surface-3) flex items-center justify-center shrink-0">
-      <klar-logo-mark [size]="20" />
+<aside
+  class="w-(--sidebar-w) shrink-0 flex flex-col h-full overflow-y-auto border-r border-(--line)"
+  style="background: linear-gradient(180deg, oklch(from var(--accent) l c h / 0.10) 0%, transparent 220px), var(--bg-side);"
+  role="navigation"
+  aria-label="Hauptnavigation"
+>
+  <!-- Brand -->
+  <div class="px-5 pt-5 pb-5 flex items-center gap-3">
+    <div
+      class="size-[26px] rounded-md flex items-center justify-center font-medium text-[15px] shrink-0"
+      style="
+        background: linear-gradient(135deg, var(--accent), oklch(from var(--accent) calc(l - 0.10) c calc(h + 30)));
+        color: oklch(0.16 0.012 35);
+        font-family: var(--font-display);
+        box-shadow: 0 4px 12px -2px oklch(from var(--accent) l c h / 0.5);
+      "
+    >K</div>
+    <div class="flex flex-col leading-tight min-w-0">
+      <span class="font-medium text-[18px] tracking-[-0.01em]" style="font-family: var(--font-display);">Klar</span>
+      <span class="text-[11px] text-(--fg-2) tracking-[0.04em] mono truncate">v0.9.4 · self-host</span>
     </div>
-    <span class="font-medium tracking-[-0.035em] text-[15px]">klar</span>
   </div>
 
-  <div class="px-5 pt-4 pb-2 text-[10px] uppercase tracking-[0.15em] text-(--text-muted) font-medium">Übersicht</div>
-  @for (item of mainItems; track item.id) {
-    <a [routerLink]="item.route" routerLinkActive="active" class="nav-item flex items-center gap-3 py-2.5 px-5 mx-2 mb-1 text-[13px] font-medium text-(--text-2) no-underline border-l-[3px] border-transparent rounded transition-colors duration-150 hover:bg-(--surface-2) hover:text-(--text) [&.active]:text-(--text) [&.active]:bg-(--surface-2) [&.active]:border-l-accent">
-      <klar-icon [name]="item.icon" [size]="16" />
-      <span>{{ item.label }}</span>
-    </a>
-  }
+  <!-- Household switcher -->
+  <div class="px-3 pb-2">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 py-1.5 px-3 rounded border border-(--line) bg-(--bg-2) text-[12px] text-(--fg-1) hover:bg-(--bg-3) transition-colors duration-150"
+      title="Haushalt wechseln"
+    >
+      <span class="size-[22px] rounded flex items-center justify-center text-[11px] font-semibold bg-(--bg-3) shrink-0">WG</span>
+      <span class="flex-1 text-left truncate">Haushalt</span>
+      <klar-icon name="chevron-down" [size]="12" class="text-(--fg-2)" />
+    </button>
+  </div>
 
-  <div class="mt-auto">
-    <div class="px-5 pt-6 pb-2 text-[10px] uppercase tracking-[0.15em] text-(--text-muted) font-medium">System</div>
-    @for (item of sysItems(); track item.id) {
-      <a [routerLink]="item.route" routerLinkActive="active" class="nav-item flex items-center gap-3 py-2.5 px-5 mx-2 mb-1 text-[13px] font-medium text-(--text-2) no-underline border-l-[3px] border-transparent rounded transition-colors duration-150 hover:bg-(--surface-2) hover:text-(--text) [&.active]:text-(--text) [&.active]:bg-(--surface-2) [&.active]:border-l-accent">
-        <klar-icon [name]="item.icon" [size]="16" />
+  <!-- Main group -->
+  <div class="px-3 pt-2">
+    <div class="px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-(--fg-3) font-medium">Haushalt</div>
+    @for (item of mainItems; track item.id) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item relative flex items-center gap-3 py-2 px-3 rounded-md text-[13px] text-(--fg-1) no-underline transition-colors duration-[var(--dur-1)] hover:text-(--fg)"
+        [style.--nav-tone]="item.tone"
+      >
+        <klar-icon [name]="item.icon" [size]="16" class="ico shrink-0" />
         <span>{{ item.label }}</span>
       </a>
     }
+  </div>
+
+  <!-- System group -->
+  <div class="px-3 pt-3 mt-auto">
+    <div class="px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-(--fg-3) font-medium">System</div>
+    @for (item of sysItems(); track item.id) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item relative flex items-center gap-3 py-2 px-3 rounded-md text-[13px] text-(--fg-1) no-underline transition-colors duration-[var(--dur-1)] hover:text-(--fg)"
+        [style.--nav-tone]="item.tone"
+      >
+        <klar-icon [name]="item.icon" [size]="16" class="ico shrink-0" />
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </div>
+
+  <!-- Foot — user identity + logout -->
+  <div class="border-t border-(--line-soft) mt-3 px-3 py-3 flex items-center gap-3 text-[12px]">
+    <klar-header-user />
   </div>
 </aside>

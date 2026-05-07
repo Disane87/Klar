@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarLogoMarkComponent } from '../../shared/brand/klar-logo-mark.component';
+import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { AuthStore } from '../../core/auth/auth.store';
 
 interface NavItem {
@@ -9,30 +9,33 @@ interface NavItem {
   label: string;
   icon: string;
   route: string;
+  /** Category tone CSS var that paints the active-state border, glow, and icon hover. */
+  tone: string;
 }
 
+// Tone mapping is taken verbatim from the Klar Design Pearl bundle (klar/project/app.jsx).
 const MAIN_ITEMS: NavItem[] = [
-  { id: 'fixkosten', label: 'Fixkosten',     icon: 'fixkosten',     route: '/app/fixkosten' },
-  { id: 'monat',     label: 'Monat',         icon: 'trending',      route: '/app/monat' },
-  { id: 'projekte',  label: 'Projekte',      icon: 'folder',        route: '/app/projekte' },
-  { id: 'buchungen', label: 'Buchungen',     icon: 'receipt',       route: '/app/buchungen' },
-  { id: 'import',    label: 'CSV-Import',    icon: 'arrow-up',      route: '/app/import' },
+  { id: 'fixkosten', label: 'Fixkosten',  icon: 'fixkosten', route: '/app/fixkosten', tone: 'var(--cat-abos)' },
+  { id: 'monat',     label: 'Cashflow',   icon: 'trending',  route: '/app/monat',     tone: 'var(--cat-essen)' },
+  { id: 'buchungen', label: 'Buchungen',  icon: 'receipt',   route: '/app/buchungen', tone: 'var(--cat-mobil)' },
+  { id: 'projekte',  label: 'Projekte',   icon: 'folder',    route: '/app/projekte',  tone: 'var(--cat-freizeit)' },
+  { id: 'import',    label: 'CSV-Import', icon: 'arrow-up',  route: '/app/import',    tone: 'var(--cat-gesund)' },
 ];
 
 const SYS_ITEMS: NavItem[] = [
-  { id: 'haushalt', label: 'Haushalt',      icon: 'haushalt', route: '/app/haushalt' },
-  { id: 'tresor',   label: 'Tresor',        icon: 'tresor',   route: '/app/tresor' },
-  { id: 'settings', label: 'Einstellungen', icon: 'settings', route: '/app/settings' },
-  { id: 'health',   label: 'System',        icon: 'pulse',    route: '/app/health' },
+  { id: 'haushalt', label: 'Haushalt',      icon: 'haushalt', route: '/app/haushalt', tone: 'var(--cat-essen)' },
+  { id: 'tresor',   label: 'Tresor',        icon: 'tresor',   route: '/app/tresor',   tone: 'var(--cat-versicher)' },
+  { id: 'settings', label: 'Einstellungen', icon: 'settings', route: '/app/settings', tone: 'var(--cat-spar)' },
+  { id: 'health',   label: 'System',        icon: 'pulse',    route: '/app/health',   tone: 'var(--cat-wohnen)' },
 ];
 
-const ADMIN_ITEM: NavItem = { id: 'admin', label: 'Admin', icon: 'shield', route: '/app/admin' };
+const ADMIN_ITEM: NavItem = { id: 'admin', label: 'Admin', icon: 'shield', route: '/app/admin', tone: 'var(--cat-mobil)' };
 
 @Component({
   selector: 'klar-side-nav',
   standalone: true,
   host: { class: 'contents' },
-  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarLogoMarkComponent],
+  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarHeaderUserComponent],
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.css',
 })
