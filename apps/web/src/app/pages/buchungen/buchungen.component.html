@@ -65,7 +65,7 @@
           <div class="row"
                [style.border-left-color]="categoryColor(tx)"
                role="button" tabindex="0"
-               (click)="openEdit(tx)" (keydown.enter)="openEdit(tx)">
+               (click)="openEdit(tx)" (keydown.enter)="openEdit(tx)" (keydown.space)="openEdit(tx)">
             <span class="row-ico-slot" [style.color]="categoryColor(tx)">
               <klar-icon [name]="rowIcon(tx)" [size]="16" />
             </span>

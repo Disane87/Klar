@@ -115,12 +115,6 @@ export class BuchungenPageComponent {
     });
   }
 
-  formatDate(dateStr: string): string {
-    const parts = dateStr.split('-');
-    if (parts.length < 3) return dateStr;
-    return `${parts[2]}.${parts[1]}.`;
-  }
-
   formatDayMeta(tx: Transaction): string {
     const dd = tx.date.split('-')[2] ?? '';
     const mm = tx.date.split('-')[1] ?? '';
