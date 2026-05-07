@@ -264,6 +264,22 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Stage background — radial-gradient ambience behind the app frame
+   (Klar Design Pearl bundle styles.css Z. 205–211 / 213–217). */
+body {
+  background:
+    radial-gradient(60% 50% at 18% 0%, oklch(0.30 0.06 50) 0%, transparent 60%),
+    radial-gradient(50% 40% at 88% 100%, oklch(0.26 0.07 280) 0%, transparent 65%),
+    var(--bg);
+}
+[data-theme="light"] body,
+.light body {
+  background:
+    radial-gradient(60% 50% at 18% 0%, oklch(0.93 0.05 50) 0%, transparent 60%),
+    radial-gradient(50% 40% at 88% 100%, oklch(0.94 0.04 270) 0%, transparent 65%),
+    var(--bg);
+}
+
 /* Desktop: scale up the entire UI to match what 120% browser zoom looks like.
    Mobile/tablet stay at 16px so iOS auto-zoom rules and tap targets remain valid. */
 @media (min-width: 1024px) {
@@ -552,6 +568,13 @@ html.mode-mobile-preview body > * {
   max-width: 390px;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+/* Page header — translucent blur over the warm body, matches the bundle. */
+.page-header {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background: oklch(from var(--bg) l c h / 0.85);
 }
 /* Centered popovers preserve their translateX(-50%) — apply this variant
    when the popover is anchored to the horizontal center. */
