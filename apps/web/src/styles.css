@@ -498,6 +498,95 @@ input, select, textarea {
 }
 
 /* ============================================================
+   UserSwitch — pill group of 3 (Haushalt / Member1 / Member2)
+   from the bundle alerts.jsx + styles.css. --us-tone per pill.
+   ============================================================ */
+.user-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+.user-switch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: var(--t-12);
+  cursor: pointer;
+  transition: all var(--dur-1) ease;
+}
+.user-switch-pill:hover {
+  color: var(--fg);
+  background: var(--bg-3);
+}
+.user-switch-pill.active {
+  background: var(--bg);
+  color: var(--fg);
+  border-color: var(--line);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.15);
+}
+.user-switch-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  background: var(--us-tone, var(--accent));
+}
+.user-switch-pill.active .user-switch-av {
+  box-shadow: 0 0 0 2px oklch(from var(--us-tone, var(--accent)) l c h / 0.25);
+}
+.user-switch-label {
+  padding-right: 4px;
+}
+.sep-v {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+  margin: 0 6px;
+  display: inline-block;
+}
+
+/* ============================================================
+   Segmented (scope picker — Mai 2026 / Schnitt 6 M / Jahr)
+   Bundle styles.css uses .segmented. Single-line pill group.
+   ============================================================ */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--bg-2);
+  padding: 2px;
+}
+.segmented button {
+  padding: 4px 10px;
+  border-radius: var(--r-4);
+  font-size: var(--t-12);
+  color: var(--fg-2);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background var(--dur-1) ease, color var(--dur-1) ease;
+}
+.segmented button:hover { color: var(--fg); }
+.segmented button.active {
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.12);
+}
+
+/* ============================================================
    Category accent — 2px left-border for grouped lists
    Consumers set --cat-color via inline style or class.
    ============================================================ */

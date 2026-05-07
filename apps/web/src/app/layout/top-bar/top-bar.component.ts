@@ -1,9 +1,12 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
+import { KlarUserSwitchComponent } from '../../shared/ui/klar-user-switch.component';
+import { KlarScopeSegmentComponent } from '../../shared/ui/klar-scope-segment.component';
+import { PageHeaderService } from '../../core/page-header/page-header.service';
 import type { PageStat } from '../../core/page-header/page-header.service';
 
 @Component({
@@ -16,11 +19,15 @@ import type { PageStat } from '../../core/page-header/page-header.service';
     KlarHeaderUserComponent,
     KlarMoneyPipe,
     KlarNotificationBellComponent,
+    KlarUserSwitchComponent,
+    KlarScopeSegmentComponent,
   ],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
 })
 export class TopBarComponent {
+  protected readonly pageHeader = inject(PageHeaderService);
+
   title         = input('');
   subtitle      = input<string>();
   monthChip     = input('April 2026');
@@ -33,6 +40,36 @@ export class TopBarComponent {
   addClick       = output<void>();
   planspielClick = output<void>();
   exportClick    = output<void>();
+
+  /** Local mirror of the service's scope value — gives us a model<> sink. */
+  protected readonly scopeValue = computed(() => this.pageHeader.scopeValue());
+  /** Local mirror of the service's user-switch value. */
+  protected readonly userSwitchValue = computed(() => this.pageHeader.userSwitchValue());
+
+  protected readonly showUserSwitch = computed(() => this.pageHeader.showUserSwitch());
+  protected readonly scopeSegments = computed(() => this.pageHeader.scopeSegments());
+
+  constructor() {
+    // Forward changes from the user-switch / scope segment back to the
+    // host page through the service's onScopeChange / onUserSwitchChange
+    // hooks. Pages set those in pageHeader.set({...}) at component init.
+    effect(() => {
+      const id = this.pageHeader.scopeValue();
+      this.pageHeader.onScopeChange()?.(id);
+    });
+    effect(() => {
+      const id = this.pageHeader.userSwitchValue();
+      this.pageHeader.onUserSwitchChange()?.(id);
+    });
+  }
+
+  protected onScopeChange(id: string): void {
+    this.pageHeader.scopeValue.set(id);
+  }
+
+  protected onUserSwitchChange(id: string): void {
+    this.pageHeader.userSwitchValue.set(id);
+  }
 
   statColor(tone: PageStat['tone']): string {
     switch (tone) {

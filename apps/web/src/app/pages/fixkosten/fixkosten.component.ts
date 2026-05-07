@@ -66,9 +66,17 @@ export class FixkostenPageComponent {
       showPlanspiel: false,
       showAdd:       true,
       showExport:    true,
+      showUserSwitch: true,
+      scopeSegments: [
+        { id: 'month',     label: 'Mai 2026' },
+        { id: 'avg6m',     label: 'Schnitt 6 M' },
+        { id: 'year',      label: 'Jahr' },
+      ],
+      scopeValue: 'month',
       addLabel:      'Position',
       onAdd:         () => this.openCreate(),
       onExport:      () => this.exportPdf(),
+      onUserSwitchChange: (id) => this.memberFilter.set(id === 'all' ? null : id),
     });
 
     this.householdStore.loadMembers();
