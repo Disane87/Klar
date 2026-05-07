@@ -62,6 +62,14 @@ function hashToken(raw: string): string {
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
+function hashIp(ip: string | undefined, secret: string): string | undefined {
+  if (!ip) return undefined;
+  return crypto
+    .createHash('sha256')
+    .update(`${ip}|${secret}`)
+    .digest('hex');
+}
+
 function generateToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -226,12 +234,17 @@ export class AuthService {
     const ttlMs = opts.rememberMe ? REFRESH_TTL_REMEMBER_MS : REFRESH_TTL_DEFAULT_MS;
     const expiresAt = new Date(Date.now() + ttlMs);
 
+    const ipHashSecret =
+      this.config.get<string>('auth.ipHashSecret') ??
+      this.config.get<string>('jwt.privateKeyPath') ??
+      'klar-ip-hash-default';
     const createdRefreshToken = await this.refreshTokenRepo.create({
       userId: user.id,
       tokenHash,
       expiresAt,
       userAgent: extractUserAgent(req),
       ip: req.ip,
+      ipHash: hashIp(req.ip, ipHashSecret),
     });
 
     const accessToken = this.signAccessToken(user, createdRefreshToken.id);
@@ -271,12 +284,17 @@ export class AuthService {
     const remainingMs = Math.max(stored.expiresAt.getTime() - Date.now(), 0);
     const expiresAt = new Date(Date.now() + remainingMs);
 
+    const ipHashSecret =
+      this.config.get<string>('auth.ipHashSecret') ??
+      this.config.get<string>('jwt.privateKeyPath') ??
+      'klar-ip-hash-default';
     const newToken = await this.refreshTokenRepo.create({
       userId: user.id,
       tokenHash: newHash,
       expiresAt,
       userAgent: extractUserAgent(req),
       ip: req.ip,
+      ipHash: hashIp(req.ip, ipHashSecret),
     });
 
     const accessToken = this.signAccessToken(user, newToken.id);
@@ -304,6 +322,42 @@ export class AuthService {
       await this.refreshTokenRepo.revoke(stored.id);
     }
     this.auditService.log({ action: 'user.logout', userId });
+  }
+
+  /** Lists all active refresh-token sessions for the current user. */
+  async listSessions(userId: string): Promise<
+    Array<{
+      id: string;
+      userAgent: string | null;
+      ipHash: string | null;
+      lastActiveAt: string | null;
+      createdAt: string;
+      expiresAt: string;
+    }>
+  > {
+    const tokens = await this.refreshTokenRepo.findActiveByUser(userId);
+    return tokens.map(t => ({
+      id: t.id,
+      userAgent: t.userAgent,
+      ipHash: t.ipHash,
+      lastActiveAt: t.lastActiveAt ? t.lastActiveAt.toISOString() : null,
+      createdAt: t.createdAt.toISOString(),
+      expiresAt: t.expiresAt.toISOString(),
+    }));
+  }
+
+  /** Revokes a specific session for the current user. Returns true if revoked. */
+  async revokeSession(userId: string, sessionId: string): Promise<boolean> {
+    const result = await this.refreshTokenRepo.revokeForUser(userId, sessionId);
+    if (result.count > 0) {
+      this.auditService.log({
+        action: 'user.session_revoked',
+        userId,
+        metadata: { sessionId },
+      });
+      return true;
+    }
+    return false;
   }
 
   async verifyEmail(token: string): Promise<void> {

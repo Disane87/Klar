@@ -174,14 +174,16 @@ model OneTimeHandoverCode {
 }
 
 model RefreshToken {
-  id        String    @id @default(cuid())
-  userId    String
-  tokenHash String    @unique // Argon2id-Hash des tatsächlichen Tokens
-  expiresAt DateTime
-  revokedAt DateTime? // null = noch gültig
-  userAgent String?
-  ip        String?
-  createdAt DateTime  @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique // Argon2id-Hash des tatsächlichen Tokens
+  expiresAt    DateTime
+  revokedAt    DateTime? // null = noch gültig
+  userAgent    String?
+  ip           String?
+  ipHash       String? // sha256(ip + secret) — für Sessions-UI ohne Plaintext-IP
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

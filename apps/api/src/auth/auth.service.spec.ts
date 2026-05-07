@@ -58,6 +58,8 @@ const makeRefreshToken = (overrides: Partial<RefreshToken> = {}): RefreshToken =
   revokedAt: null,
   userAgent: null,
   ip: null,
+  ipHash: null,
+  lastActiveAt: null,
   createdAt: new Date(),
   ...overrides,
 });

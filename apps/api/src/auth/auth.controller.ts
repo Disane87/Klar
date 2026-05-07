@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
@@ -362,5 +363,37 @@ export class AuthController {
     @CurrentUser() payload: JwtPayload,
   ): Promise<void> {
     await this.authService.disableTotp(payload.sub);
+  }
+}
+
+/**
+ * Sessions controller — Settings/Security UI lists active refresh tokens
+ * (= sessions) and lets the user revoke individual ones.
+ *
+ * Mounted on /me/sessions, separate from /auth so the frontend can call it
+ * without going through the cookie-bound auth flow.
+ */
+@Controller('me/sessions')
+@UseGuards(ThrottlerGuard, JwtAuthGuard)
+export class SessionsController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Get()
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async list(@CurrentUser() payload: JwtPayload) {
+    return this.authService.listSessions(payload.sub);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async revoke(
+    @CurrentUser() payload: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<void> {
+    const revoked = await this.authService.revokeSession(payload.sub, id);
+    if (!revoked) {
+      throw new NotFoundException(`Session ${id} nicht gefunden`);
+    }
   }
 }

@@ -8,6 +8,7 @@ interface CreateRefreshTokenData {
   expiresAt: Date;
   userAgent?: string;
   ip?: string;
+  ipHash?: string;
 }
 
 @Injectable()
@@ -15,7 +16,12 @@ export class RefreshTokenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateRefreshTokenData): Promise<RefreshToken> {
-    return this.prisma.refreshToken.create({ data });
+    return this.prisma.refreshToken.create({
+      data: {
+        ...data,
+        lastActiveAt: new Date(),
+      },
+    });
   }
 
   findByTokenHash(hash: string): Promise<RefreshToken | null> {
@@ -26,6 +32,20 @@ export class RefreshTokenRepository {
     await this.prisma.refreshToken.update({
       where: { id },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async revokeForUser(userId: string, id: string): Promise<{ count: number }> {
+    return this.prisma.refreshToken.updateMany({
+      where: { userId, id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async touchLastActive(id: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { id, revokedAt: null },
+      data: { lastActiveAt: new Date() },
     });
   }
 
