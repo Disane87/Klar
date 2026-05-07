@@ -61,6 +61,16 @@ enum ProjectStatus {
   ARCHIVED
 }
 
+enum NotificationKind {
+  CONTRACT_RENEWAL
+  CONTRACT_PRICE_CHANGE
+  RECURRING_DUE
+  IMPORT_READY
+  BUDGET_THRESHOLD
+  MEMBER_INVITE
+  SYSTEM
+}
+
 // ─────────────────────────────────────────────
 // AUTH & USER
 // ─────────────────────────────────────────────
@@ -88,6 +98,7 @@ model User {
   oauthAuthCodes        OAuthAuthCode[]
   oauthGrants           OAuthGrant[]
   oauthConsents         OAuthConsent[]
+  notifications         Notification[]
 
   @@index([email])
   @@index([isDeleted])
@@ -198,6 +209,7 @@ model Household {
   mailTemplates         HouseholdMailTemplate[]
   csvImports            CsvImport[]
   importLearnings       ImportLearning[]
+  notifications         Notification[]
 }
 
 model HouseholdMembership {
@@ -669,4 +681,27 @@ model HouseholdMailTemplate {
 
   @@unique([householdId, templateType])
   @@index([householdId])
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+// Notification-Center + Bell. userId=null → household-wide.
+// Trigger via NotificationsService.enqueue(ctx, kind, ...).
+model Notification {
+  id          String           @id @default(cuid())
+  householdId String
+  userId      String? // null = household-wide
+  kind        NotificationKind
+  title       String
+  body        String?
+  payloadJson Json?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, userId, readAt])
+  @@index([householdId, createdAt])
 }

@@ -373,6 +373,187 @@ input, select, textarea {
   border-radius: inherit;
 }
 
+/* ============================================================
+   Buttons (.btn) — soft default tones + opt-in .solid variants
+   Source of truth: Klar Design Pearl bundle (styles.css Z. 440–506)
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px var(--s-3);
+  border-radius: var(--r-6);
+  font-size: var(--t-13);
+  font-weight: 500;
+  background: var(--bg-2);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  min-height: 32px;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn:hover { background: var(--bg-3); }
+
+.btn.primary { background: var(--accent-soft);  color: var(--accent);  border-color: transparent; }
+.btn.primary:hover { background: oklch(from var(--accent) l c h / 0.22); }
+.btn.danger  { background: var(--danger-soft);  color: var(--danger);  border-color: transparent; }
+.btn.danger:hover  { background: oklch(from var(--danger) l c h / 0.22); }
+.btn.success { background: var(--success-soft); color: var(--success); border-color: transparent; }
+.btn.success:hover { background: oklch(from var(--success) l c h / 0.22); }
+.btn.warn    { background: var(--warn-soft);    color: var(--warn);    border-color: transparent; }
+.btn.warn:hover    { background: oklch(from var(--warn) l c h / 0.22); }
+
+.btn.primary.solid { background: var(--accent);  color: oklch(0.16 0.012 35); border-color: var(--accent); }
+.btn.primary.solid:hover { filter: brightness(0.95); background: var(--accent); }
+.btn.danger.solid  { background: var(--danger);  color: #fff; border-color: var(--danger); }
+.btn.danger.solid:hover  { filter: brightness(0.95); }
+.btn.success.solid { background: var(--success); color: #fff; border-color: var(--success); }
+.btn.success.solid:hover { filter: brightness(0.95); }
+.btn.warn.solid    { background: var(--warn);    color: oklch(0.16 0.012 60); border-color: var(--warn); }
+.btn.warn.solid:hover    { filter: brightness(0.95); }
+
+.btn.ghost { background: transparent; border-color: transparent; color: var(--fg-1); }
+.btn.ghost:hover { background: var(--bg-2); }
+.btn.ghost.danger { color: var(--danger); background: transparent; }
+.btn.ghost.danger:hover { background: var(--danger-soft); }
+.btn.icon-only { padding: 0; width: 32px; justify-content: center; }
+.btn.lg { min-height: 40px; padding: 0 var(--s-4); font-size: var(--t-14); }
+.btn.sm { min-height: 26px; padding: 4px var(--s-2); font-size: var(--t-12); }
+
+/* ============================================================
+   Chips
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  font-size: var(--t-11);
+  font-weight: 500;
+  background: var(--bg-2);
+  border: 1px solid var(--line-soft);
+  color: var(--fg-1);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  height: 22px;
+}
+.chip.success { color: var(--success); background: var(--success-soft); border-color: transparent; }
+.chip.danger  { color: var(--danger);  background: var(--danger-soft);  border-color: transparent; }
+.chip.warn    { color: var(--warn);    background: var(--warn-soft);    border-color: transparent; }
+.chip.outline { background: transparent; }
+.chip.dot::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: var(--t-11);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--fg-2);
+}
+
+/* ============================================================
+   Inputs (.input / .money-input / .field-label)
+   ============================================================ */
+.input,
+.textfield {
+  font-family: var(--font-sans);
+  font-size: var(--t-16); /* iOS rule: ≥ 16px */
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  padding: 10px var(--s-3);
+  color: var(--fg);
+  width: 100%;
+  outline: none;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+  min-height: 40px;
+}
+.input:focus,
+.textfield:focus {
+  border-color: var(--line-strong);
+  background: var(--bg-2);
+}
+.input.mono {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-label {
+  font-size: var(--t-11);
+  color: var(--fg-2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.money-input {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--bg-1);
+  overflow: hidden;
+  min-height: 40px;
+}
+.money-input:focus-within {
+  border-color: var(--line-strong);
+  background: var(--bg-2);
+}
+.money-input .sign {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  font-family: var(--font-mono);
+  color: var(--fg-2);
+  border-right: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+.money-input input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-16);
+  color: var(--fg);
+  padding: 0 var(--s-3);
+  text-align: right;
+  min-width: 0;
+}
+
+/* ============================================================
+   Klar Pop animation — popovers, dropdowns, sheets
+   ============================================================ */
+@keyframes klar-pop {
+  from { transform: translateY(-4px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+.klar-pop {
+  animation: klar-pop var(--dur-2) var(--ease-out) both;
+}
+/* Centered popovers preserve their translateX(-50%) — apply this variant
+   when the popover is anchored to the horizontal center. */
+@keyframes klar-pop-center {
+  from { transform: translate(-50%, -4px) scale(0.96); opacity: 0; }
+  to   { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+.klar-pop-center {
+  animation: klar-pop-center var(--dur-2) var(--ease-out) both;
+}
+
 .klar-hairline { border-top: 1px solid var(--border); }
 
 /* Skeleton animation */

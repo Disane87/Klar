@@ -3,7 +3,10 @@
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-lg font-semibold tracking-tight dark:text-white">Planspiel</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-lg font-semibold tracking-tight dark:text-white" style="font-family: var(--font-display); letter-spacing: -0.02em;">Planspiel</h1>
+        <span class="hypo-chip" aria-label="Diese Werte sind hypothetisch und werden nicht gespeichert">Hypothetisch</span>
+      </div>
       <p class="text-[11px] text-muted-foreground mt-0.5">Simulation ohne API — rein lokal</p>
     </div>
     @if (!store.isEmpty()) {
@@ -24,9 +27,10 @@
           [class.text-danger]="!store.surplusPositive()">
       {{ store.surplusPositive() ? 'Überschuss' : 'Defizit' }}
     </span>
-    <span class="font-mono tabular-nums text-3xl font-bold"
+    <span class="serif italic text-4xl"
           [class.text-success]="store.surplusPositive()"
-          [class.text-danger]="!store.surplusPositive()">
+          [class.text-danger]="!store.surplusPositive()"
+          style="font-weight: 500;">
       {{ formatCents(store.result().surplusCents) }}
     </span>
     <div class="flex gap-4 mt-2">
