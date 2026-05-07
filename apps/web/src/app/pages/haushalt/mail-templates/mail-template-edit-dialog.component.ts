@@ -10,11 +10,11 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
 import { KlarSelectComponent, type KlarSelectOption } from '../../../shared/ui/klar-select.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
+import { KlarDialogFooterComponent } from '../../../shared/ui/klar-dialog-footer.component';
 import { KlarCodeEditorComponent } from '../../../shared/ui/klar-code-editor.component';
 import { HouseholdStore } from '../../../core/household/household.store';
 import {
@@ -75,10 +75,10 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    KlarButtonComponent,
     HlmInputDirective,
     HlmLabelDirective,
     KlarSelectComponent,
+    KlarDialogFooterComponent,
     KlarCodeEditorComponent,
   ],
   host: { class: 'flex flex-col h-full' },
@@ -196,20 +196,18 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="flex items-center justify-between pt-4 mt-4 border-t border-(--border) flex-shrink-0">
+    <klar-dialog-footer
+      class="mt-4 shrink-0"
+      confirmLabel="Speichern"
+      [confirmLoading]="saving()"
+      [autoCloseOnCancel]="false"
+      (cancel)="cancel()"
+      (confirm)="onSave()"
+    >
       @if (err()) {
-        <p class="text-[12px] text-(--color-expense)">{{ err() }}</p>
-      } @else {
-        <span></span>
+        <p start class="text-[12px] text-(--color-expense) self-center">{{ err() }}</p>
       }
-      <div class="flex gap-2">
-        <klar-button tone="ghost" size="sm" (click)="cancel()">Abbrechen</klar-button>
-        <klar-button tone="primary" size="sm" [loading]="saving()" (click)="onSave()">
-          Speichern
-        </klar-button>
-      </div>
-    </div>
+    </klar-dialog-footer>
   `,
 })
 export class MailTemplateEditDialogComponent {

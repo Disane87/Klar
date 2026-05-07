@@ -2,9 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import * as QRCode from 'qrcode';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserSettingsStore } from '../../core/user/user-settings.store';
@@ -12,7 +12,7 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
 @Component({
   selector: 'app-totp-setup-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmInputDirective],
+  imports: [FormsModule, HlmInputDirective, KlarDialogFooterComponent],
   template: `
     <div class="flex flex-col gap-4">
       <div class="text-center">
@@ -45,16 +45,12 @@ import { UserSettingsStore } from '../../core/user/user-settings.store';
         }
       </div>
 
-      <div class="flex gap-2">
-        <klar-button tone="outline" class="flex-1" (click)="dialog.close()">
-          Abbrechen
-        </klar-button>
-        <klar-button tone="primary" class="flex-1"
-                     [loading]="saving()" [disabled]="code().length < 6"
-                     (click)="enable()">
-          2FA aktivieren
-        </klar-button>
-      </div>
+      <klar-dialog-footer
+        confirmLabel="2FA aktivieren"
+        [confirmDisabled]="code().length < 6"
+        [confirmLoading]="saving()"
+        (confirm)="enable()"
+      />
     </div>
   `,
 })

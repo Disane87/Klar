@@ -7,6 +7,7 @@ import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 
@@ -37,9 +38,9 @@ const PRESET_COLORS = [
 @Component({
   selector: 'app-category-edit-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, HlmLabelDirective, KlarSelectComponent],
+  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, KlarDialogFooterComponent, HlmLabelDirective, KlarSelectComponent],
   template: `
-    <div class="flex flex-col gap-5 p-1">
+    <div class="flex flex-col gap-5">
       <!-- Name -->
       <div class="flex flex-col gap-1.5">
         <label hlmLabel for="cat-name">Name</label>
@@ -106,27 +107,20 @@ const PRESET_COLORS = [
         <span class="text-xs text-muted-foreground">Lucide- oder iconify-Name</span>
       </div>
 
-      <!-- Actions -->
-      <div class="flex justify-between gap-2 pt-3 border-t border-border">
+      <klar-dialog-footer
+        [confirmLabel]="isEdit() ? 'Speichern' : 'Anlegen'"
+        [confirmDisabled]="!name().trim() || !color()"
+        [confirmLoading]="saving()"
+        [autoCloseOnCancel]="false"
+        (cancel)="onCancel()"
+        (confirm)="onSave()"
+      >
         @if (isEdit() && !category()?.isDefault) {
-          <klar-button tone="danger" [loading]="deleting()" (click)="onDelete()">
+          <klar-button start tone="danger" size="sm" [loading]="deleting()" (click)="onDelete()">
             Löschen
           </klar-button>
-        } @else {
-          <span></span>
         }
-        <div class="flex gap-2">
-          <klar-button tone="ghost" (click)="onCancel()">Abbrechen</klar-button>
-          <klar-button
-            tone="primary"
-            [loading]="saving()"
-            [disabled]="!name().trim() || !color()"
-            (click)="onSave()"
-          >
-            {{ isEdit() ? 'Speichern' : 'Anlegen' }}
-          </klar-button>
-        </div>
-      </div>
+      </klar-dialog-footer>
     </div>
   `,
 })

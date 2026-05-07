@@ -41,10 +41,11 @@
     </div>
   }
 
-  <div class="flex justify-end gap-2 pt-2">
-    <klar-button tone="ghost" (click)="dialog.close()">Abbruch</klar-button>
-    <klar-button tone="primary" [disabled]="!canConfirm()" [loading]="saving()" (click)="confirm()">
-      Importieren
-    </klar-button>
-  </div>
+  <klar-dialog-footer
+    cancelLabel="Abbruch"
+    confirmLabel="Importieren"
+    [confirmDisabled]="!canConfirm()"
+    [confirmLoading]="saving()"
+    (confirm)="confirm()"
+  />
 </div>
