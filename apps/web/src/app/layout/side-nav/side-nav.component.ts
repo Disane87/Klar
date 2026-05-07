@@ -19,6 +19,7 @@ const MAIN_ITEMS: NavItem[] = [
   { id: 'monat',     label: 'Cashflow',   icon: 'trending',  route: '/app/monat',     tone: 'var(--cat-essen)' },
   { id: 'buchungen', label: 'Buchungen',  icon: 'receipt',   route: '/app/buchungen', tone: 'var(--cat-mobil)' },
   { id: 'projekte',  label: 'Projekte',   icon: 'folder',    route: '/app/projekte',  tone: 'var(--cat-freizeit)' },
+  { id: 'vertraege', label: 'Verträge',   icon: 'shield',    route: '/app/vertraege', tone: 'var(--cat-versicher)' },
   { id: 'import',    label: 'CSV-Import', icon: 'arrow-up',  route: '/app/import',    tone: 'var(--cat-gesund)' },
 ];
 

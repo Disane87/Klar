@@ -116,6 +116,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'vertraege',
+        loadComponent: () =>
+          import('./pages/vertraege/vertraege.component').then(
+            m => m.VertraegeComponent,
+          ),
+      },
+      {
         path: 'import',
         loadComponent: () =>
           import('./pages/csv-import/csv-import.page').then(
