@@ -199,6 +199,8 @@ Red → Green → Refactor pro Feature. Reihenfolge: Service-Unit (mock Repo) �
 
 **Playwright-Test nach Implementation ist Pflicht** (Marco-Vorgabe).
 
+**Bestehende Tests bei Refactorings:** Wenn ein Refactoring (z. B. Wrapper-Migration, API-Änderung an Shared-Komponente) bestehende Tests betrifft, MÜSSEN diese im selben Commit angepasst werden — niemals `it.skip()`, niemals löschen, niemals auskommentieren. Ein roter Test nach Refactoring ist immer ein Anpassungs-Auftrag, nie ein Lösch-Auftrag. Ausnahme: Test prüft entferntes Feature → Test im selben Commit löschen, im Commit-Message begründen.
+
 ---
 
 ## Definition of Done — vor jedem Commit
