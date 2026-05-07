@@ -52,7 +52,8 @@
       "Bash(pnpm --filter api exec prisma migrate status)",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
       "Bash(npm view *)",
-      "Bash(npm search *)"
+      "Bash(npm search *)",
+      "Bash(pnpm --filter web build)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",

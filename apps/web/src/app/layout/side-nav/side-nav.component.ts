@@ -2,7 +2,9 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { AuthStore } from '../../core/auth/auth.store';
+import { HouseholdStore } from '../../core/household/household.store';
 
 interface NavItem {
   id: string;
@@ -40,14 +42,34 @@ const ADMIN_ITEM:    NavItem = { id: 'admin', label: 'Admin',         icon: 'shi
   selector: 'klar-side-nav',
   standalone: true,
   host: { class: 'contents' },
-  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarHeaderUserComponent],
+  imports: [RouterLink, RouterLinkActive, KlarIconComponent, KlarHeaderUserComponent, KlarSelectComponent],
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.css',
 })
 export class SideNavComponent {
   private auth = inject(AuthStore);
+  protected householdStore = inject(HouseholdStore);
+
   protected mainItems = MAIN_ITEMS;
   protected sysItems = computed<NavItem[]>(() =>
     this.auth.user()?.appRole === 'ADMIN' ? [...SYS_ITEMS, ADMIN_ITEM] : SYS_ITEMS,
   );
+
+  protected showSwitcher = computed(() => this.householdStore.households().length > 1);
+
+  protected householdOptions = computed<KlarSelectOption[]>(() =>
+    this.householdStore.households().map(h => ({
+      value: h.household.id,
+      label: h.household.name,
+    })),
+  );
+
+  protected activeHouseholdId = computed(() => this.householdStore.activeId() ?? '');
+
+  protected onHouseholdChange(id: string): void {
+    if (!id || id === this.householdStore.activeId()) return;
+    this.householdStore.setActiveHousehold(id);
+    // Hard reload so every domain store pulls data for the new household context.
+    if (typeof window !== 'undefined') window.location.reload();
+  }
 }

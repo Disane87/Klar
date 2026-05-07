@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
-import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { KlarUserSwitchComponent } from '../../shared/ui/klar-user-switch.component';
@@ -16,7 +15,6 @@ import type { PageStat } from '../../core/page-header/page-header.service';
   imports: [
     NgClass,
     KlarButtonComponent,
-    KlarHeaderUserComponent,
     KlarMoneyPipe,
     KlarNotificationBellComponent,
     KlarUserSwitchComponent,

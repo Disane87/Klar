@@ -6,7 +6,6 @@ import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarToastContainerComponent } from '../../shared/ui/klar-toast.component';
 import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.component';
 import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
-import { KlarModeToolbarComponent } from '../mode-toolbar/mode-toolbar.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { UpdateBannerComponent } from '../../core/version/update-banner.component';
@@ -35,7 +34,6 @@ const BOTTOM_TABS: BottomTab[] = [
     SideNavComponent, TopBarComponent, KlarIconComponent,
     KlarToastContainerComponent, KlarHeaderUserComponent,
     KlarNotificationBellComponent,
-    KlarModeToolbarComponent,
     UpdateBannerComponent,
   ],
   templateUrl: './shell.component.html',
