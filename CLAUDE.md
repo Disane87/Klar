@@ -45,6 +45,7 @@ Nach jedem Task: `memory_store(key="klar-[phase]-[modul]", namespace="klar-app")
 - Commit-Sprache: **Englisch** (auch bei deutscher Konversation)
 - Kein `Co-Authored-By: Claude`
 - Niemals `--no-verify`
+- **Vor JEDEM Commit:** `pnpm lint` + `pnpm test` lokal laufen lassen — kein Commit bei rotem Linter/Test, auch nicht bei "kleinen" Änderungen
 
 ---
 
