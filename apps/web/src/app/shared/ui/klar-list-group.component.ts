@@ -7,27 +7,26 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
   selector: 'klar-list-group',
   standalone: true,
   imports: [NgClass, KlarSkeletonRowsComponent, KlarIconComponent],
-  host: { class: 'block border-b border-(--border)' },
+  host: { class: 'block border-b border-(--line-soft)' },
   template: `
     <div class="flex items-center justify-between px-6 py-3 border-b"
          [class.cursor-pointer]="collapsible()"
+         [class.cat-bar]="headerDotColor()"
+         [style.--cat-color]="headerDotColor()"
          [ngClass]="[
            danger()
              ? 'bg-(--color-expense)/4 border-(--color-expense)/20'
-             : 'bg-(--surface-2)/40 border-(--border)/50',
+             : 'bg-(--bg-2)/40 border-(--line-soft)',
            collapsible()
-             ? 'hover:bg-(--surface-2)/70 active:bg-(--surface-2) transition-colors'
+             ? 'hover:bg-(--bg-2)/70 active:bg-(--bg-2) transition-colors'
              : ''
          ]"
          (click)="collapsible() && headerAction.emit()">
 
-      <!-- Left: optional dot + label -->
-      <div class="flex items-center gap-2 min-w-0">
-        @if (headerDotColor()) {
-          <span class="w-2 h-2 rounded-full shrink-0" [style.background]="headerDotColor()"></span>
-        }
-        <span class="text-[10px] uppercase tracking-[0.12em] font-medium truncate"
-              [ngClass]="danger() ? 'text-(--color-expense)' : 'text-(--text-muted)'">
+      <!-- Left: label (left-border in --cat-color replaces the old dot per Design Pearl spec) -->
+      <div class="flex items-center min-w-0">
+        <span class="eyebrow truncate"
+              [ngClass]="danger() ? 'text-(--color-expense)' : ''">
           {{ label() }}
         </span>
       </div>
