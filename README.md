@@ -43,6 +43,8 @@
 | **🧷 Splits** | A booking can be intern split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
 | **✏️ Bulk-Aktionen** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
 | **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETISCH chip for Planspiel projections |
+| **🔧 Komponenten-Spec** | Admin-only `/app/spec` page rendering every primitive (buttons × tones × solid/soft × sizes, chips, inputs, cards, setting rows, metric tiles, progress rings, confidence bars, hypo-chips, animations, type scale) |
+| **📑 CRUD-Demo** | Admin-only `/app/crud` page with 8 dialog patterns (Anlegen / Detail / Bearbeiten / Löschen / Verschieben / Massenaktion / Pausieren / Verwerfen-Schutz) |
 
 > [!NOTE]
 > 🔢 **Everything in cents.** All amounts stored as signed integers (`amountCents`). Positive = income, negative = expense. No floating point, no rounding surprises.
