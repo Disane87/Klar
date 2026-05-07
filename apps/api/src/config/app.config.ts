@@ -49,3 +49,19 @@ export const oidcConfig = registerAs('oidc', () => ({
   adminGroup: process.env['OIDC_ADMIN_GROUP'] ?? '',
   autoJoinHouseholdId: process.env['OIDC_AUTO_JOIN_HOUSEHOLD_ID'] ?? '',
 }));
+
+// FinTS-Foundation (Phase 14a.3):
+// Master-Key (32-Byte hex) für AES-256-GCM-Verschlüsselung von PIN +
+// lib-fints-Sitzungs-State. Generierung via `openssl rand -hex 32`.
+// Niemals ins Repo, niemals in Logs (siehe Pino-Redaction in app.module.ts).
+// Backup separat zur DB sichern; ohne Master-Key sind Credentials
+// unwiederherstellbar.
+export const fintsConfig = registerAs('fints', () => ({
+  masterKeyHex: process.env['FINTS_MASTER_KEY'] ?? '',
+  /** PSD2 Strong-Customer-Authentication-Window in Tagen (default 89). */
+  scaWindowDays: Number(process.env['FINTS_SCA_WINDOW_DAYS'] ?? 89),
+  /** Zusätzliche BLZ-Datenquellen (komma-separiert) für Phase 14a.4. */
+  blzSourceUrls: (process.env['FINTS_BLZ_SOURCES'] ??
+    'https://raw.githubusercontent.com/hbci4j/hbci4java/master/src/main/resources/blz.properties')
+    .split(',').map(s => s.trim()).filter(Boolean),
+}));

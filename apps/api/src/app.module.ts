@@ -35,6 +35,7 @@ import { McpModule } from './mcp/mcp.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
+import { FintsModule } from './fints/fints.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 const REDACT_PATHS = [
@@ -63,6 +64,14 @@ const REDACT_PATHS = [
   'res.body.refresh_token',
   'res.body.client_secret',
   'res.body.registration_access_token',
+  // FinTS (Phase 14a.3)
+  'req.body.pin',
+  'req.body.tan',
+  'req.body.fintsPin',
+  'req.body.fintsTan',
+  'req.body.credentialsCipher',
+  'req.body.tanChallenge',
+  'res.body.tanChallenge',
 ];
 
 @Module({
@@ -117,6 +126,7 @@ const REDACT_PATHS = [
     NotificationsModule,
     ContractsModule,
     ConnectedAppsModule,
+    FintsModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({
