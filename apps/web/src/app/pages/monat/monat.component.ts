@@ -6,6 +6,8 @@ import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { OverviewStore } from '../../core/overview/overview.store';
+import { BudgetVsActualsStore } from '../../core/overview/budgets-vs-actuals.store';
+import { CategoriesStore } from '../../core/categories/categories.store';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 
@@ -25,10 +27,15 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
   styleUrl: './monat.component.css',
 })
 export class MonatPageComponent {
-  protected store  = inject(OverviewStore);
-  private txStore  = inject(TransactionsStore);
-  private pageHeader = inject(PageHeaderService);
-  private router    = inject(Router);
+  protected store         = inject(OverviewStore);
+  protected budgetStore   = inject(BudgetVsActualsStore);
+  private categoriesStore = inject(CategoriesStore);
+  private txStore         = inject(TransactionsStore);
+  private pageHeader      = inject(PageHeaderService);
+  private router          = inject(Router);
+
+  // Expose Math to the template for clamping the meter width.
+  protected readonly Math = Math;
 
   constructor() {
     this.pageHeader.set({
@@ -43,6 +50,7 @@ export class MonatPageComponent {
     });
 
     effect(() => { this.txStore.setMonth(this.store.currentMonth()); });
+    effect(() => { this.budgetStore.setMonth(this.store.currentMonth()); });
 
     effect(() => {
       const cf = this.store.cashflow();
@@ -77,6 +85,14 @@ export class MonatPageComponent {
     return new Date(Number(year), Number(month) - 1, 1)
       .toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
   });
+
+  protected categoryName(id: string): string {
+    return this.categoriesStore.byId(id)?.name ?? '—';
+  }
+
+  protected categoryColor(id: string): string {
+    return this.categoriesStore.byId(id)?.color ?? 'var(--fg-3)';
+  }
 
   protected readonly isCurrentMonth = computed(() => {
     const [year, month] = this.store.currentMonth().split('-');

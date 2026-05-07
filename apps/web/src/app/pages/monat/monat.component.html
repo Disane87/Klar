@@ -35,6 +35,39 @@
       </div>
     </div>
 
+    <!-- Soll vs. Ist (per category) — budget meter -->
+    @if (budgetStore.rows().length > 0) {
+      <section class="flex flex-col gap-(--s-3)">
+        <div class="section-head">
+          <span>Soll vs. Ist</span>
+          <span class="mono text-(--fg-2)">{{ budgetStore.rows().length }} Kategorien</span>
+        </div>
+        <div class="card">
+          @for (row of budgetStore.rows(); track row.categoryId) {
+            <div class="row" [style.border-left-color]="categoryColor(row.categoryId)">
+              <div class="lhs flex-1 min-w-0">
+                <span class="name truncate">{{ categoryName(row.categoryId) }}</span>
+                <div class="flex items-center gap-(--s-3) mt-1">
+                  <div class="relative h-1 rounded-full overflow-hidden bg-(--line-soft) flex-1">
+                    <span class="absolute inset-y-0 left-0 rounded-full"
+                          [style.width.%]="Math.min(100, row.pct * 100)"
+                          [style.background]="categoryColor(row.categoryId)"></span>
+                  </div>
+                  <span class="text-[11px] mono shrink-0"
+                        [style.color]="row.state === 'over' ? 'var(--danger)' : (row.state === 'warn' ? 'var(--warn)' : 'var(--fg-2)')">
+                    {{ row.deltaCents >= 0 ? '+ ' : '− ' }}{{ Math.abs(row.deltaCents) | klarMoney }}
+                  </span>
+                </div>
+              </div>
+              <span class="amt mono text-(--fg-2)">
+                <span class="text-(--fg)">{{ row.istCents | klarMoney }}</span> / {{ row.sollCents | klarMoney }}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
     <!-- Einnahmen / Ausgaben Aufschlüsselung — bundle .card + .row pattern -->
     <div>
       <div class="section-head">

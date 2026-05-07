@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { RecurringFrequency } from '@klar/shared';
+import type { BudgetVsActualRow, RecurringFrequency } from '@klar/shared';
 
 // ─── Response shapes ──────────────────────────────────────────────────────────
 
@@ -77,6 +77,11 @@ export interface ProjectsOverview {
   projects: ProjectOverviewItem[];
 }
 
+export interface BudgetsVsActualsOverview {
+  month: string;
+  rows: BudgetVsActualRow[];
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -97,6 +102,18 @@ export class OverviewService {
     const params: Record<string, string> = {};
     if (month) params['month'] = month;
     return this.http.get<CashflowOverview>(`${this.base(householdId)}/cashflow`, { params });
+  }
+
+  getBudgetsVsActuals(
+    householdId: string,
+    month?: string,
+  ): Observable<BudgetsVsActualsOverview> {
+    const params: Record<string, string> = {};
+    if (month) params['month'] = month;
+    return this.http.get<BudgetsVsActualsOverview>(
+      `${this.base(householdId)}/budgets-vs-actuals`,
+      { params },
+    );
   }
 
   getProjects(householdId: string, status?: string): Observable<ProjectsOverview> {
