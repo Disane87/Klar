@@ -1,96 +1,96 @@
-<div class="page">
-
-  <!-- Month nav -->
-  <klar-month-picker
-    class="month-nav"
-    [month]="store.currentMonth()"
-    (monthChange)="store.setMonth($event)" />
-
-  <!-- Loading -->
-  @if (store.loading()) {
-    <div class="stat-strip">
-      <div class="stat">
-        <klar-skeleton height="10px" width="80px"/>
-        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
-      </div>
-      <div class="stat-rule"></div>
-      <div class="stat">
-        <klar-skeleton height="10px" width="80px"/>
-        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
-      </div>
-      <div class="stat-rule"></div>
-      <div class="stat">
-        <klar-skeleton height="10px" width="80px"/>
-        <klar-skeleton class="sk-gap-8" height="26px" width="70%"/>
-      </div>
+<klar-async-state
+  [loading]="store.loading()"
+  [error]="store.error()"
+  [empty]="store.isEmpty()"
+  errorMessage="Fehler beim Laden der Buchungen."
+  emptyMessage="Noch keine Buchungen für diesen Monat"
+  emptyCtaLabel="Buchung anlegen"
+  (retry)="store.reload()"
+  (cta)="openCreate()"
+>
+  <ng-template klarLoading>
+    <div class="p-(--s-6) flex flex-col gap-(--s-4)">
+      <klar-skeleton height="120px" />
+      <klar-skeleton height="320px" />
     </div>
+  </ng-template>
 
-    <klar-skeleton-rows [count]="6" class="px-5 pt-3" />
-  }
+  <div class="p-(--s-6) pb-16 flex flex-col gap-(--s-5)">
 
-  <!-- Error -->
-  @else if (store.error()) {
-    <klar-error-bar message="Fehler beim Laden der Buchungen." (retry)="store.reload()" />
-  }
-
-  <!-- Empty -->
-  @else if (store.isEmpty()) {
-    <klar-toolbar label="Übersicht" />
-    <klar-summary-strip [incomeCents]="0" [expenseCents]="0" [balanceCents]="0" />
-
-    <klar-empty-state message="Noch keine Buchungen für diesen Monat" ctaLabel="Buchung anlegen" (ctaClick)="openCreate()" />
-  }
-
-  <!-- Data -->
-  @else {
-    <klar-toolbar label="Übersicht" />
-
+    <!-- Summary strip -->
     <klar-summary-strip
       [incomeCents]="store.totalIncomeCents()"
       [expenseCents]="store.totalExpenseCents()"
       [balanceCents]="store.nettoCents()" />
 
-    <!-- Grouped transaction list -->
-    <div class="flex-1 overflow-y-auto pb-16">
-      <klar-list>
-        @for (group of groups(); track group.categoryId ?? 'none') {
-          <klar-list-group
-            [label]="group.categoryName"
-            [headerDotColor]="group.categoryColor"
-            [headerValue]="group.totalCents | klarMoney"
-            [headerValueClass]="group.totalCents | klarMoneyClass"
-            [collapsible]="true"
-            [collapsed]="isCollapsed(groupKey(group))"
-            (headerAction)="toggleGroup(groupKey(group))">
-            @for (tx of group.items; track tx.id) {
-              <klar-list-row [navigable]="true" (rowClick)="openEdit(tx)">
-                <app-brand-icon
-                  [name]="primaryLabel(tx)"
-                  [size]="22"
-                  [icon]="tx.icon"
-                  [color]="tx.color"
-                  [fallbackIcon]="group.categoryIcon"
-                  [fallbackColor]="group.categoryColor"
-                  class="shrink-0"
-                />
-                <div class="flex-1 min-w-0">
-                  <p class="text-[13px] font-medium truncate" [class.opacity-60]="tx.isPlanned">
-                    {{ primaryLabel(tx) }}
-                  </p>
-                  <p class="text-[11px] text-(--text-muted) mt-0.5 truncate">
-                    {{ formatSublabel(tx) }}
-                  </p>
-                </div>
-                <span class="font-mono tabular-nums text-[13px] shrink-0"
-                      [ngClass]="tx.amountCents | klarMoneyClass">
-                  {{ tx.amountCents | klarMoney }}
-                </span>
-              </klar-list-row>
-            }
-          </klar-list-group>
-        }
-      </klar-list>
+    <!-- Section head + filter segments -->
+    <div class="flex items-center justify-between flex-wrap gap-(--s-3)">
+      <span class="eyebrow">Buchungen</span>
+      <div class="segmented" role="tablist" aria-label="Filter">
+        <button type="button" role="tab"
+                [attr.aria-selected]="filter() === 'alle'"
+                [class.active]="filter() === 'alle'"
+                (click)="setFilter('alle')">
+          Alle <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().alle }}</span>
+        </button>
+        <button type="button" role="tab"
+                [attr.aria-selected]="filter() === 'rec'"
+                [class.active]="filter() === 'rec'"
+                (click)="setFilter('rec')">
+          Wiederkehrend <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().rec }}</span>
+        </button>
+        <button type="button" role="tab"
+                [attr.aria-selected]="filter() === 'manual'"
+                [class.active]="filter() === 'manual'"
+                (click)="setFilter('manual')">
+          Manuell <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().manual }}</span>
+        </button>
+        <button type="button" role="tab"
+                [attr.aria-selected]="filter() === 'income'"
+                [class.active]="filter() === 'income'"
+                (click)="setFilter('income')">
+          Eingänge <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().income }}</span>
+        </button>
+      </div>
     </div>
-  }
 
-</div>
+    <!-- Single card with .row instances -->
+    @if (filtered().length === 0) {
+      <div class="card px-5 py-6 text-center text-(--fg-2) text-[12px]">
+        Keine Buchungen für diesen Filter.
+      </div>
+    } @else {
+      <div class="card">
+        @for (tx of filtered(); track tx.id) {
+          <div class="row"
+               [style.border-left-color]="categoryColor(tx)"
+               role="button" tabindex="0"
+               (click)="openEdit(tx)" (keydown.enter)="openEdit(tx)">
+            <span class="row-ico-slot" [style.color]="categoryColor(tx)">
+              <klar-icon [name]="rowIcon(tx)" [size]="16" />
+            </span>
+            <div class="lhs">
+              <span class="name flex items-center gap-2">
+                <span class="truncate">{{ primaryLabel(tx) }}</span>
+                @if (tx.recurringTransactionId) {
+                  <span class="chip outline" style="height:18px;font-size:10px;">
+                    <klar-icon name="wiederkehrend" [size]="10" /> wiederkehrend
+                  </span>
+                }
+              </span>
+              <span class="meta">
+                <span class="mono">{{ formatDayMeta(tx) }}</span>
+              </span>
+            </div>
+            <span class="amt mono"
+                  [class.pos]="tx.amountCents > 0"
+                  [class.neg]="tx.amountCents < 0">
+              {{ tx.amountCents > 0 ? '+ ' : '' }}{{ tx.amountCents | klarMoney }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+</klar-async-state>
