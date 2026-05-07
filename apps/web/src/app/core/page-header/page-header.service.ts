@@ -30,6 +30,8 @@ export interface PageHeaderConfig {
   onScopeChange?: (id: string) => void;
   /** Called when the user picks a different user-switch tab. */
   onUserSwitchChange?: (id: string) => void;
+  /** Optional text-only chip rendered in the header actions row (e.g. user email). */
+  rhsChip?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +53,7 @@ export class PageHeaderService {
   readonly onUserSwitchChange = signal<((id: string) => void) | null>(null);
   readonly stats          = signal<PageStat[]>([]);
   readonly chipLabel      = signal<string | null>(null);
+  readonly rhsChip        = signal<string | null>(null);
 
   set(config: PageHeaderConfig): void {
     this.title.set(config.title);
@@ -70,5 +73,6 @@ export class PageHeaderService {
     this.onUserSwitchChange.set(config.onUserSwitchChange ?? null);
     this.stats.set([]);
     this.chipLabel.set(null);
+    this.rhsChip.set(config.rhsChip ?? null);
   }
 }
