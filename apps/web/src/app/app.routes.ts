@@ -158,6 +158,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'mehr',
+        loadComponent: () =>
+          import('./pages/mehr/mehr.component').then(
+            m => m.MehrPageComponent,
+          ),
+      },
+      {
         path: 'health',
         loadComponent: () =>
           import('./pages/health/health.component').then(
