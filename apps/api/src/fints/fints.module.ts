@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ImportPipelineModule } from '../import-pipeline/import-pipeline.module';
 import { FintsCryptoService } from './crypto/fints-crypto.service';
 import { BankRegistryRepository } from './banks/bank-registry.repository';
 import { BankRegistryService } from './banks/bank-registry.service';
@@ -8,6 +9,8 @@ import { BlzRefreshScheduler } from './banks/blz-refresh.scheduler';
 import { FintsConnectionRepository } from './connection/fints-connection.repository';
 import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
 import { FintsClientService } from './client/fints-client.service';
+import { FintsSyncRunRepository } from './sync/fints-sync-run.repository';
+import { FintsSyncService } from './sync/fints-sync.service';
 
 /**
  * FinTS module (Phases 14a.3 + 14a.4 + 14a.7-partial).
@@ -27,7 +30,7 @@ import { FintsClientService } from './client/fints-client.service';
  *   14a.8 — lockout UI integration (frontend-side)
  */
 @Module({
-  imports: [PrismaModule, NotificationsModule],
+  imports: [PrismaModule, NotificationsModule, ImportPipelineModule],
   providers: [
     FintsCryptoService,
     BankRegistryRepository,
@@ -36,12 +39,16 @@ import { FintsClientService } from './client/fints-client.service';
     FintsConnectionRepository,
     ReauthWatcherScheduler,
     FintsClientService,
+    FintsSyncRunRepository,
+    FintsSyncService,
   ],
   exports: [
     FintsCryptoService,
     BankRegistryService,
     FintsConnectionRepository,
     FintsClientService,
+    FintsSyncService,
+    FintsSyncRunRepository,
   ],
 })
 export class FintsModule {}

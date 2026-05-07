@@ -36,6 +36,7 @@ import { McpModule } from './mcp/mcp.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
+import { ImportPipelineModule } from './import-pipeline/import-pipeline.module';
 import { FintsModule } from './fints/fints.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
@@ -128,6 +129,7 @@ const REDACT_PATHS = [
     NotificationsModule,
     ContractsModule,
     ConnectedAppsModule,
+    ImportPipelineModule,
     FintsModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'

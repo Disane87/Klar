@@ -1,19 +1,23 @@
 import { Module } from '@nestjs/common';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ImportPipelineRepository } from './import-pipeline.repository';
+import { ImportPipelineService } from './import-pipeline.service';
 
 /**
- * FinTS Foundation (Phase 14a.2):
- * Shared booking-detection helpers (duplicate detection, fixed-cost matching,
- * recurring/category suggestions, counterparty/row hashing) used by the
- * existing CSV import and the upcoming FinTS sync runner.
+ * FinTS Foundation (Phase 14a.7-final).
  *
- * The classes are pure (no Nest DI) and re-exported from the module's
- * top-level index files. The FinTS module imports them directly when it
- * lands in phase 14a.3+; csv-import already does.
+ * Shared booking-detection helpers (duplicate, fixed-cost, recurring
+ * suggester, category suggester, counterparty/row hashing) plus the
+ * batch-ingest entry point used by the FinTS sync runner.
  *
- * The full pipeline orchestration service (single ingest() entry that
- * dedupes + persists Transactions) lives behind this module too once the
- * FinTS sync runner needs it. For now this module is a structural marker
- * with no providers, so it doesn't affect the application module graph.
+ * The CSV import keeps using its own repository for the interactive
+ * analyse/confirm flow; only the final write happens in either place
+ * — both paths share the same dedup hash so a row imported via FinTS
+ * blocks the same row arriving via CSV later (and vice versa).
  */
-@Module({})
+@Module({
+  imports: [PrismaModule],
+  providers: [ImportPipelineRepository, ImportPipelineService],
+  exports: [ImportPipelineService],
+})
 export class ImportPipelineModule {}

@@ -1,19 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
+import type {
   FinTSClient,
-  FinTSConfig,
-  type AccountBalanceResponse,
-  type StatementResponse,
-  type SynchronizeResponse,
-  type BankAccount,
+  AccountBalanceResponse,
+  StatementResponse,
+  SynchronizeResponse,
+  BankAccount,
 } from 'lib-fints';
 import type { FintsSessionState } from './fints-session-state';
+import { loadLibFints } from './lib-fints-loader';
+
+/**
+ * lib-fints ships ESM-only (`"type": "module"` + import-only `exports`),
+ * so a static `import { FinTSClient } from 'lib-fints'` cannot resolve at
+ * runtime under our CommonJS build. TypeScript with `module: commonjs`
+ * also rewrites a direct `await import('lib-fints')` into a
+ * `Promise.resolve().then(() => require('lib-fints'))` — which then
+ * fails at runtime with ERR_PACKAGE_PATH_NOT_EXPORTED.
+ *
+ * We therefore put the dynamic import in a sibling plain-JS module
+ * (`lib-fints-loader.js`) that tsc does not compile. Node executes the
+ * native `import()` there and returns the resolved ESM module.
+ *
+ * Types are imported with `import type`, so they're stripped at compile
+ * time and never trigger a runtime require.
+ */
+type LibFintsModule = typeof import('lib-fints');
 
 /** lib-fints does not re-export TanMethod from its index — derive from the method. */
 type SelectedTanMethod = ReturnType<FinTSClient['selectTanMethod']>;
 
 /**
- * Thin wrapper around lib-fints (Phase 14a.5).
+ * Thin wrapper around lib-fints (Phase 14a.5 + ESM-loader fix).
  *
  * Responsibilities kept inside this service:
  *   - construct FinTSConfig from a bank's connection metadata + decrypted
@@ -24,10 +41,8 @@ type SelectedTanMethod = ReturnType<FinTSClient['selectTanMethod']>;
  *   - extract the {@link BankingInformation} after every call so the
  *     caller can re-encrypt and persist the freshest session state
  *
- * No request-context, no Prisma, no schedulers — that's the sync runner's
- * job in 14a.7-final.
- *
- * Booking-shape mapping lives in {@link FintsBookingMapper}, not here.
+ * Because lib-fints is ESM-only, the buildClient() entry is async — the
+ * loader resolves on first use and is cached.
  */
 @Injectable()
 export class FintsClientService {
@@ -38,21 +53,31 @@ export class FintsClientService {
     process.env['FINTS_PRODUCT_VERSION'] ?? '0.1';
 
   private readonly logger = new Logger(FintsClientService.name);
+  private libPromise: Promise<LibFintsModule> | null = null;
+
+  /** Loads lib-fints once, lazily, and caches the module. */
+  private lib(): Promise<LibFintsModule> {
+    if (!this.libPromise) {
+      this.libPromise = loadLibFints();
+    }
+    return this.libPromise;
+  }
 
   /**
    * Builds a freshly-configured FinTSClient. The caller picks the right
    * factory by checking whether {@link FintsSessionState.bankingInformation}
    * is present.
    */
-  buildClient(args: {
+  async buildClient(args: {
     bankUrl: string;
     blz: string;
     loginName: string;
     state: FintsSessionState;
-  }): FinTSClient {
+  }): Promise<FinTSClient> {
     const { bankUrl, blz, loginName, state } = args;
+    const lib = await this.lib();
     const config = state.bankingInformation
-      ? FinTSConfig.fromBankingInformation(
+      ? lib.FinTSConfig.fromBankingInformation(
           FintsClientService.PRODUCT_ID,
           FintsClientService.PRODUCT_VERSION,
           state.bankingInformation,
@@ -62,7 +87,7 @@ export class FintsClientService {
           state.tanMediaName,
           state.customerId,
         )
-      : FinTSConfig.forFirstTimeUse(
+      : lib.FinTSConfig.forFirstTimeUse(
           FintsClientService.PRODUCT_ID,
           FintsClientService.PRODUCT_VERSION,
           bankUrl,
@@ -71,7 +96,7 @@ export class FintsClientService {
           state.pin,
           state.customerId,
         );
-    return new FinTSClient(config);
+    return new lib.FinTSClient(config);
   }
 
   /** Returns the available TAN methods after a fresh first-time-use sync. */

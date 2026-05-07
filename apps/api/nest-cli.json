@@ -4,6 +4,9 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": ["mail/templates/**/*.hbs"]
+    "assets": [
+      "mail/templates/**/*.hbs",
+      "fints/client/lib-fints-loader.js"
+    ]
   }
 }
