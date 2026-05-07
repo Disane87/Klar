@@ -7,6 +7,7 @@ import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.componen
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
+import { KlarAuthBrandPaneComponent } from '../../shared/ui/klar-auth-brand-pane.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthStore } from '../../core/auth/auth.store';
 import { OidcService } from '../../core/auth/oidc.service';
@@ -21,6 +22,7 @@ import { OidcService } from '../../core/auth/oidc.service';
     KlarIconComponent,
     KlarButtonComponent,
     KlarInputComponent,
+    KlarAuthBrandPaneComponent,
   ],
   templateUrl: './login.component.html',
 })

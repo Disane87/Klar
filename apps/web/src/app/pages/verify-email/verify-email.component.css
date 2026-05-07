@@ -1,12 +1,3 @@
-.verify-page {
-  min-height: 100dvh;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
 .verify-card {
   width: 100%;
   max-width: 420px;

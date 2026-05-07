@@ -1,52 +1,9 @@
-<div class="grid grid-cols-2 min-h-[100dvh] bg-[var(--bg)] max-lg:grid-cols-1 pt-(--safe-top)">
-  <!-- Left: brand pane -->
-  <div class="border-r border-[var(--border)] px-[60px] pb-10 pt-[60px] flex flex-col justify-between bg-[var(--surface)] max-lg:hidden">
-    <div>
-      <klar-wordmark [size]="28" />
-    </div>
+<div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] min-h-dvh bg-(--bg) pt-(--safe-top)">
+  <klar-auth-brand-pane />
 
-    <div>
-      <div class="mb-[18px] text-[var(--label)] text-[var(--text-muted)] tracking-wider">EIN HAUSHALT — KEINE WOLKE</div>
-      <div class="text-[var(--display)] font-medium leading-[1.05] tracking-[-0.025em] mt-[6px]">
-        Privatfinanzen,<br/>
-        <span class="italic font-normal font-serif text-[var(--color-surplus)]">klar genug</span>
-        {{ ' ' }}für<br/>zwei Erwachsene.
-      </div>
-      <div class="mt-[22px] text-[var(--body-sm)] text-[var(--text-2)] max-w-[360px] leading-[1.55]">
-        Selbstgehostet auf deinem NAS oder Mini-PC. Keine Telemetrie, keine Bank-API,
-        kein Algorithmus, der für dich denkt.
-      </div>
-    </div>
-
-    <div class="flex gap-[18px] text-[var(--label)] text-[var(--text-muted)]">
-      <span class="inline-flex items-center gap-[6px]">
-        <klar-icon name="shield" [size]="12" />
-        ARGON2ID
-      </span>
-      <span class="inline-flex items-center gap-[6px]">
-        <klar-icon name="lock" [size]="12" />
-        100% LOKAL
-      </span>
-      <span class="inline-flex items-center gap-[6px]">
-        <klar-icon name="key" [size]="12" />
-        RS256 JWT
-      </span>
-    </div>
-
-    <!-- Status bar -->
-    <div class="flex items-center justify-between pt-4 border-t border-[var(--border)] mt-4 text-[10px] text-[var(--text-muted)] tracking-widest">
-      <span class="flex items-center gap-[6px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-income)]"></span>
-        haushalt.lan · online · <span class="font-mono">{{ statusTime() }}</span>
-      </span>
-      <span class="font-mono">v1.4.2</span>
-    </div>
-  </div>
-
-  <!-- Right: form pane -->
-  <div class="px-20 py-[60px] flex flex-col justify-center max-lg:px-6 max-lg:py-10">
-    <div class="hidden max-lg:flex max-lg:justify-center max-lg:mb-8">
-      <klar-wordmark [size]="48" />
+  <main class="flex-1 flex items-center justify-center p-(--s-6) lg:p-(--s-12) relative">
+    <div class="lg:hidden flex justify-center mb-8 absolute top-(--s-6) left-1/2 -translate-x-1/2">
+      <klar-wordmark [size]="40" />
     </div>
     <div class="max-w-[360px] w-full mx-auto">
       <div class="mb-1.5 text-[var(--label)] text-[var(--text-muted)] tracking-wider">SESSION · NEU</div>
@@ -59,7 +16,7 @@
       }
 
       @if (fromInvite() && !totpRequired()) {
-        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--label-2)] text-[var(--text-2)]">
+        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-(--border) bg-(--surface) text-[var(--label-2)] text-[var(--text-2)]">
           <div class="flex items-start gap-2">
             <klar-icon name="info" [size]="14" class="shrink-0 mt-0.5 text-[var(--color-accent)]" />
             <span>
@@ -72,7 +29,7 @@
       }
 
       @if (serverError()) {
-        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
+        <div class="flex flex-col gap-1.5 p-3 mb-3.5 rounded-md border border-(--color-expense) bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
           <klar-icon name="alert-triangle" [size]="14" class="shrink-0" />
           <span>{{ serverError() }}</span>
           @if (showResend()) {
@@ -86,7 +43,7 @@
       @if (totpRequired()) {
         <form class="flex flex-col gap-3.5" (submit)="$event.preventDefault(); verifyTotp()">
           @if (totpError()) {
-            <div class="flex items-center gap-2 p-3 rounded-md border border-[var(--color-expense)] bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
+            <div class="flex items-center gap-2 p-3 rounded-md border border-(--color-expense) bg-[color-mix(in_srgb,var(--color-expense)_10%,transparent)] text-[var(--label-2)] text-[var(--color-expense)]">
               <klar-icon name="alert-triangle" [size]="14" />
               <span>{{ totpError() }}</span>
             </div>
@@ -134,7 +91,7 @@
 
         <div class="flex items-center gap-2 mt-1" (click)="toggleRememberMe()" tabindex="0"
              (keydown.space)="$event.preventDefault(); toggleRememberMe()">
-          <div class="w-3.5 h-3.5 border border-[var(--border)] rounded bg-[var(--surface)] flex items-center justify-center shrink-0"
+          <div class="w-3.5 h-3.5 border border-(--border) rounded bg-(--surface) flex items-center justify-center shrink-0"
                [class.bg-[var(--color-accent)]]="rememberMe()"
                [class.border-[var(--color-accent)]]="rememberMe()">
             @if (rememberMe()) {
@@ -150,9 +107,9 @@
 
         @if (oidc.enabled()) {
           <div class="flex items-center gap-3 text-[var(--label)] text-[var(--text-muted)] text-center">
-            <span class="h-px flex-1 bg-[var(--border)]"></span>
+            <span class="h-px flex-1 bg-(--border)"></span>
             <span>oder</span>
-            <span class="h-px flex-1 bg-[var(--border)]"></span>
+            <span class="h-px flex-1 bg-(--border)"></span>
           </div>
 
           <klar-button tone="outline" size="md" class="w-full" icon="shield"
@@ -168,5 +125,5 @@
         <a routerLink="/register" class="text-[var(--color-accent)] no-underline hover:underline">Registrieren ↗</a>
       </div>
     </div>
-  </div>
+  </main>
 </div>

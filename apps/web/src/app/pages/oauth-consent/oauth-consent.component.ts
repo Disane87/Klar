@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
+import { KlarAuthBrandPaneComponent } from '../../shared/ui/klar-auth-brand-pane.component';
 import { AuthStore } from '../../core/auth/auth.store';
 import {
   OAuthConsentService,
@@ -24,7 +25,12 @@ const REQUIRED_PARAMS: (keyof AuthorizeRequestParams)[] = [
 @Component({
   selector: 'app-oauth-consent',
   standalone: true,
-  imports: [KlarButtonComponent, KlarIconComponent, KlarWordmarkComponent],
+  imports: [
+    KlarButtonComponent,
+    KlarIconComponent,
+    KlarWordmarkComponent,
+    KlarAuthBrandPaneComponent,
+  ],
   templateUrl: './oauth-consent.component.html',
 })
 export class OAuthConsentComponent {

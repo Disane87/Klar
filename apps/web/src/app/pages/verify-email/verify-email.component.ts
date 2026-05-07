@@ -3,12 +3,20 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
+import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
+import { KlarAuthBrandPaneComponent } from '../../shared/ui/klar-auth-brand-pane.component';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-verify-email',
   standalone: true,
-  imports: [RouterLink, KlarIconComponent, KlarButtonComponent],
+  imports: [
+    RouterLink,
+    KlarIconComponent,
+    KlarButtonComponent,
+    KlarWordmarkComponent,
+    KlarAuthBrandPaneComponent,
+  ],
   templateUrl: './verify-email.component.html',
   styleUrl: './verify-email.component.css',
 })

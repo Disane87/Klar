@@ -4,6 +4,7 @@ import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.componen
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarAuthBrandPaneComponent } from '../../shared/ui/klar-auth-brand-pane.component';
 import { AuthStore } from '../../core/auth/auth.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { HouseholdService } from '../../core/household/household.service';
@@ -14,57 +15,69 @@ export const PENDING_INVITE_KEY = 'pendingInviteToken';
 @Component({
   selector: 'app-join',
   standalone: true,
-  imports: [RouterLink, KlarWordmarkComponent, KlarButtonComponent, HlmSpinnerComponent, KlarIconComponent],
+  imports: [
+    RouterLink,
+    KlarWordmarkComponent,
+    KlarButtonComponent,
+    HlmSpinnerComponent,
+    KlarIconComponent,
+    KlarAuthBrandPaneComponent,
+  ],
   template: `
-    <div class="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 py-12 pt-[calc(3rem+var(--safe-top))]">
-      <div class="w-full max-w-sm flex flex-col items-center gap-8">
-        <klar-wordmark />
+    <div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] min-h-dvh bg-(--bg) pt-(--safe-top)">
+      <klar-auth-brand-pane />
 
-        @if (loading()) {
-          <div class="flex flex-col items-center gap-4">
-            <hlm-spinner />
-            <p class="text-sm text-muted-foreground">Einladung wird geprüft…</p>
-          </div>
-        } @else if (error()) {
-          <div class="w-full rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center">
-            <klar-icon name="alert-circle" [size]="40" class="text-destructive mx-auto mb-3 block" />
-            <p class="text-sm font-medium text-foreground">Einladung nicht verfügbar</p>
-            <p class="text-xs text-muted-foreground mt-1">{{ error() }}</p>
-            <klar-button tone="outline" class="mt-4 w-full" routerLink="/login">Zur Anmeldung</klar-button>
-          </div>
-        } @else if (joined()) {
-          <div class="w-full rounded-xl border border-success/40 bg-success/10 p-6 text-center">
-            <klar-icon name="check-circle" [size]="40" class="text-success mx-auto mb-3 block" />
-            <p class="text-sm font-medium text-foreground">Haushalt beigetreten!</p>
-            <p class="text-xs text-muted-foreground mt-1">Du bist jetzt Mitglied von <strong>{{ householdName() }}</strong></p>
-            <klar-button tone="primary" class="mt-4 w-full" (click)="goToApp()">Zur App</klar-button>
-          </div>
-        } @else {
-          <div class="w-full rounded-xl border border-border bg-card p-6 text-center">
-            <klar-icon name="home" [size]="40" class="text-primary mx-auto mb-3 block" />
-            <p class="text-base font-semibold text-foreground">Einladung zu <strong>{{ householdName() }}</strong></p>
-            @if (expiresAt()) {
-              <p class="text-xs text-muted-foreground mt-1">Gültig bis {{ formatDate(expiresAt()!) }}</p>
-            }
+      <main class="flex-1 flex items-center justify-center p-(--s-6) lg:p-(--s-12) relative">
+        <div class="lg:hidden flex justify-center mb-8 absolute top-(--s-6) left-1/2 -translate-x-1/2">
+          <klar-wordmark [size]="40" />
+        </div>
+        <div class="w-full max-w-sm flex flex-col items-center gap-8">
+          @if (loading()) {
+            <div class="flex flex-col items-center gap-4">
+              <hlm-spinner />
+              <p class="text-sm text-muted-foreground">Einladung wird geprüft…</p>
+            </div>
+          } @else if (error()) {
+            <div class="w-full rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center">
+              <klar-icon name="alert-circle" [size]="40" class="text-destructive mx-auto mb-3 block" />
+              <p class="text-sm font-medium text-foreground">Einladung nicht verfügbar</p>
+              <p class="text-xs text-muted-foreground mt-1">{{ error() }}</p>
+              <klar-button tone="outline" class="mt-4 w-full" routerLink="/login">Zur Anmeldung</klar-button>
+            </div>
+          } @else if (joined()) {
+            <div class="w-full rounded-xl border border-success/40 bg-success/10 p-6 text-center">
+              <klar-icon name="check-circle" [size]="40" class="text-success mx-auto mb-3 block" />
+              <p class="text-sm font-medium text-foreground">Haushalt beigetreten!</p>
+              <p class="text-xs text-muted-foreground mt-1">Du bist jetzt Mitglied von <strong>{{ householdName() }}</strong></p>
+              <klar-button tone="primary" class="mt-4 w-full" (click)="goToApp()">Zur App</klar-button>
+            </div>
+          } @else {
+            <div class="w-full rounded-xl border border-border bg-card p-6 text-center">
+              <klar-icon name="home" [size]="40" class="text-primary mx-auto mb-3 block" />
+              <p class="text-base font-semibold text-foreground">Einladung zu <strong>{{ householdName() }}</strong></p>
+              @if (expiresAt()) {
+                <p class="text-xs text-muted-foreground mt-1">Gültig bis {{ formatDate(expiresAt()!) }}</p>
+              }
 
-            @if (isLoggedIn()) {
-              <klar-button tone="primary" class="mt-6 w-full" [loading]="joining()" (click)="join()">
-                Haushalt beitreten
-              </klar-button>
-            } @else {
-              <p class="text-sm text-muted-foreground mt-4">Melde dich an oder registriere dich, um beizutreten.</p>
-              <div class="flex flex-col gap-2 mt-4">
-                <klar-button tone="primary" class="w-full" [routerLink]="['/register']" [queryParams]="{ invite: token() }">
-                  Registrieren &amp; beitreten
+              @if (isLoggedIn()) {
+                <klar-button tone="primary" class="mt-6 w-full" [loading]="joining()" (click)="join()">
+                  Haushalt beitreten
                 </klar-button>
-                <klar-button tone="outline" class="w-full" [routerLink]="['/login']" [queryParams]="{ invite: token() }">
-                  Anmelden &amp; beitreten
-                </klar-button>
-              </div>
-            }
-          </div>
-        }
-      </div>
+              } @else {
+                <p class="text-sm text-muted-foreground mt-4">Melde dich an oder registriere dich, um beizutreten.</p>
+                <div class="flex flex-col gap-2 mt-4">
+                  <klar-button tone="primary" class="w-full" [routerLink]="['/register']" [queryParams]="{ invite: token() }">
+                    Registrieren &amp; beitreten
+                  </klar-button>
+                  <klar-button tone="outline" class="w-full" [routerLink]="['/login']" [queryParams]="{ invite: token() }">
+                    Anmelden &amp; beitreten
+                  </klar-button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </main>
     </div>
   `,
 })

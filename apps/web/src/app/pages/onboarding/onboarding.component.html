@@ -1,86 +1,89 @@
-<div class="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-8 bg-background pt-[calc(2rem+var(--safe-top))]">
-  <div class="w-full max-w-sm space-y-8">
-    <div class="flex justify-center">
-      <klar-wordmark class="h-8" />
+<div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] min-h-dvh bg-(--bg) pt-(--safe-top)">
+  <klar-auth-brand-pane />
+
+  <main class="flex-1 flex items-center justify-center p-(--s-6) lg:p-(--s-12) relative">
+    <div class="lg:hidden flex justify-center mb-8 absolute top-(--s-6) left-1/2 -translate-x-1/2">
+      <klar-wordmark [size]="40" />
     </div>
+    <div class="w-full max-w-sm space-y-8">
+      @if (mode() === 'choose') {
+        <div class="space-y-4">
+          <div class="text-center space-y-1">
+            <h1 class="text-xl font-semibold text-foreground">Willkommen bei Klar</h1>
+            <p class="text-sm text-muted-foreground">Erstelle einen Haushalt oder tritt einem bestehenden bei.</p>
+          </div>
 
-    @if (mode() === 'choose') {
-      <div class="space-y-4">
-        <div class="text-center space-y-1">
-          <h1 class="text-xl font-semibold text-foreground">Willkommen bei Klar</h1>
-          <p class="text-sm text-muted-foreground">Erstelle einen Haushalt oder tritt einem bestehenden bei.</p>
+          <div class="space-y-3">
+            <klar-action-tile
+              title="Haushalt beitreten"
+              subtitle="Einladungscode eingeben"
+              icon="haushalt"
+              (action)="setMode('join')"
+            />
+            <klar-action-tile
+              title="Neuen Haushalt erstellen"
+              subtitle="Starte deinen eigenen Haushalt"
+              icon="plus"
+              (action)="setMode('create')"
+            />
+          </div>
+
+          <klar-button tone="link" size="sm" class="w-full justify-center" (click)="logout()">
+            Abmelden
+          </klar-button>
         </div>
+      }
 
-        <div class="space-y-3">
-          <klar-action-tile
-            title="Haushalt beitreten"
-            subtitle="Einladungscode eingeben"
-            icon="haushalt"
-            (action)="setMode('join')"
+      @if (mode() === 'join') {
+        <form (ngSubmit)="joinHousehold()" class="space-y-5">
+          <div class="space-y-1">
+            <h1 class="text-xl font-semibold text-foreground">Haushalt beitreten</h1>
+            <p class="text-sm text-muted-foreground">Gib den Einladungscode ein, den du erhalten hast.</p>
+          </div>
+
+          <klar-input
+            label="Einladungscode"
+            placeholder="XXXX-XXXX"
+            [ngModel]="inviteCode()"
+            (ngModelChange)="inviteCode.set($event)"
+            [error]="submitted() && codeError() ? codeError()! : ''"
+            autocomplete="off"
           />
-          <klar-action-tile
-            title="Neuen Haushalt erstellen"
-            subtitle="Starte deinen eigenen Haushalt"
-            icon="plus"
-            (action)="setMode('create')"
-          />
-        </div>
 
-        <klar-button tone="link" size="sm" class="w-full justify-center" (click)="logout()">
-          Abmelden
-        </klar-button>
-      </div>
-    }
+          @if (error()) {
+            <p class="text-xs text-danger">{{ error() }}</p>
+          }
 
-    @if (mode() === 'join') {
-      <form (ngSubmit)="joinHousehold()" class="space-y-5">
-        <div class="space-y-1">
-          <h1 class="text-xl font-semibold text-foreground">Haushalt beitreten</h1>
-          <p class="text-sm text-muted-foreground">Gib den Einladungscode ein, den du erhalten hast.</p>
-        </div>
+          <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
+            Beitreten
+          </klar-button>
 
-        <klar-input
-          label="Einladungscode"
-          placeholder="XXXX-XXXX"
-          [ngModel]="inviteCode()"
-          (ngModelChange)="inviteCode.set($event)"
-          [error]="submitted() && codeError() ? codeError()! : ''"
-          autocomplete="off"
-        />
+          <klar-button tone="link" class="w-full" (click)="setMode('choose')">
+            ← Zurück
+          </klar-button>
+        </form>
+      }
 
-        @if (error()) {
-          <p class="text-xs text-danger">{{ error() }}</p>
-        }
+      @if (mode() === 'create') {
+        <form (ngSubmit)="createHousehold()" class="space-y-5">
+          <div class="space-y-1">
+            <h1 class="text-xl font-semibold text-foreground">Neuen Haushalt erstellen</h1>
+            <p class="text-sm text-muted-foreground">Dein Haushalt wurde beim Registrieren angelegt.</p>
+          </div>
 
-        <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
-          Beitreten
-        </klar-button>
+          @if (error()) {
+            <p class="text-xs text-danger">{{ error() }}</p>
+          }
 
-        <klar-button tone="link" class="w-full" (click)="setMode('choose')">
-          ← Zurück
-        </klar-button>
-      </form>
-    }
+          <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
+            Weiter
+          </klar-button>
 
-    @if (mode() === 'create') {
-      <form (ngSubmit)="createHousehold()" class="space-y-5">
-        <div class="space-y-1">
-          <h1 class="text-xl font-semibold text-foreground">Neuen Haushalt erstellen</h1>
-          <p class="text-sm text-muted-foreground">Dein Haushalt wurde beim Registrieren angelegt.</p>
-        </div>
-
-        @if (error()) {
-          <p class="text-xs text-danger">{{ error() }}</p>
-        }
-
-        <klar-button tone="primary" size="md" type="submit" class="w-full" [loading]="loading()">
-          Weiter
-        </klar-button>
-
-        <klar-button tone="link" class="w-full" (click)="setMode('choose')">
-          ← Zurück
-        </klar-button>
-      </form>
-    }
-  </div>
+          <klar-button tone="link" class="w-full" (click)="setMode('choose')">
+            ← Zurück
+          </klar-button>
+        </form>
+      }
+    </div>
+  </main>
 </div>

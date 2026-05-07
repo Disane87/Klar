@@ -4,37 +4,43 @@ import { OidcService } from '../../core/auth/oidc.service';
 import { AuthStore } from '../../core/auth/auth.store';
 import { KlarWordmarkComponent } from '../../shared/brand/klar-wordmark.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarAuthBrandPaneComponent } from '../../shared/ui/klar-auth-brand-pane.component';
 
 @Component({
   selector: 'app-auth-callback',
   standalone: true,
-  imports: [KlarWordmarkComponent, KlarIconComponent],
+  imports: [KlarWordmarkComponent, KlarIconComponent, KlarAuthBrandPaneComponent],
   template: `
-    <div class="callback-page">
-      <klar-wordmark [size]="24" />
-      @if (errorMsg()) {
-        <div class="callback-error">
-          <klar-icon name="alert-triangle" [size]="18" />
-          <span>{{ errorMsg() }}</span>
-          <a href="/login" class="callback-retry">Zurück zur Anmeldung</a>
+    <div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] min-h-dvh bg-(--bg) pt-(--safe-top)">
+      <klar-auth-brand-pane />
+
+      <main class="flex-1 flex items-center justify-center p-(--s-6) lg:p-(--s-12) relative">
+        <div class="lg:hidden flex justify-center mb-8 absolute top-(--s-6) left-1/2 -translate-x-1/2">
+          <klar-wordmark [size]="40" />
         </div>
-      } @else {
-        <div class="callback-loading">
-          <div class="spinner"></div>
-          <span>Anmeldung wird abgeschlossen …</span>
+        <div class="callback-card">
+          @if (errorMsg()) {
+            <div class="callback-error">
+              <klar-icon name="alert-triangle" [size]="18" />
+              <span>{{ errorMsg() }}</span>
+              <a href="/login" class="callback-retry">Zurück zur Anmeldung</a>
+            </div>
+          } @else {
+            <div class="callback-loading">
+              <div class="spinner"></div>
+              <span>Anmeldung wird abgeschlossen …</span>
+            </div>
+          }
         </div>
-      }
+      </main>
     </div>
   `,
   styles: [`
-    .callback-page {
-      min-height: 100dvh;
+    .callback-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       gap: 32px;
-      background: var(--bg);
     }
     .callback-loading {
       display: flex;

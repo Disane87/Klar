@@ -1,14 +1,10 @@
-<div class="min-h-[100dvh] bg-background flex flex-col">
-  <header class="border-b border-border">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <klar-wordmark [size]="28" />
-      @if (userEmail()) {
-        <span class="text-xs text-muted-foreground">{{ userEmail() }}</span>
-      }
-    </div>
-  </header>
+<div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] min-h-dvh bg-(--bg) pt-(--safe-top)">
+  <klar-auth-brand-pane />
 
-  <main class="flex-1 flex items-start justify-center px-4 py-8">
+  <main class="flex-1 flex items-center justify-center p-(--s-6) lg:p-(--s-12) relative">
+    <div class="lg:hidden flex justify-center mb-8 absolute top-(--s-6) left-1/2 -translate-x-1/2">
+      <klar-wordmark [size]="40" />
+    </div>
     <div class="w-full max-w-md">
       @if (loading()) {
         <div class="flex justify-center py-16">
