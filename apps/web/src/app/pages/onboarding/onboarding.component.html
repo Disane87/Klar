@@ -12,39 +12,23 @@
         </div>
 
         <div class="space-y-3">
-          <button
-            (click)="setMode('join')"
-            class="w-full flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 active:bg-muted transition-colors min-h-[56px] text-left"
-          >
-            <div class="size-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <klar-icon name="haushalt" class="size-5 text-primary" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-foreground">Haushalt beitreten</p>
-              <p class="text-xs text-muted-foreground">Einladungscode eingeben</p>
-            </div>
-          </button>
-
-          <button
-            (click)="setMode('create')"
-            class="w-full flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 active:bg-muted transition-colors min-h-[56px] text-left"
-          >
-            <div class="size-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <klar-icon name="plus" class="size-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-foreground">Neuen Haushalt erstellen</p>
-              <p class="text-xs text-muted-foreground">Starte deinen eigenen Haushalt</p>
-            </div>
-          </button>
+          <klar-action-tile
+            title="Haushalt beitreten"
+            subtitle="Einladungscode eingeben"
+            icon="haushalt"
+            (action)="setMode('join')"
+          />
+          <klar-action-tile
+            title="Neuen Haushalt erstellen"
+            subtitle="Starte deinen eigenen Haushalt"
+            icon="plus"
+            (action)="setMode('create')"
+          />
         </div>
 
-        <button
-          (click)="logout()"
-          class="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2 min-h-[44px]"
-        >
+        <klar-button tone="link" size="sm" class="w-full justify-center" (click)="logout()">
           Abmelden
-        </button>
+        </klar-button>
       </div>
     }
 
