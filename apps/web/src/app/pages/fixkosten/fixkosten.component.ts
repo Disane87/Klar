@@ -480,6 +480,30 @@ grouped.set(key, {
     }
   }
 
+  /** German short-form frequency label for the meta line of an income row. */
+  formatFreqShort(item: FixedCostItem): string {
+    switch (item.frequency) {
+      case 'WEEKLY':      return 'wöchentl.';
+      case 'QUARTERLY':   return 'quart.';
+      case 'HALF_YEARLY': return 'halbjährl.';
+      case 'YEARLY':      return 'jährl.';
+      case 'CUSTOM_DAYS': return 'individ.';
+      default:            return 'monatl.';
+    }
+  }
+
+  /**
+   * Returns the splits for a row that should render as `.row.sub` lines
+   * under the parent (e.g. Festgehalt Netto → Brutto + Provision Brutto).
+   * Once the TransactionSplit model lands the splits are pulled from there;
+   * for now this is an empty array unless the item carries an inlined
+   * splits payload.
+   */
+  itemSplits(item: FixedCostItem): Array<{ id: string; label: string; amountCents: number }> {
+    const anyItem = item as unknown as { splits?: Array<{ id: string; label: string; amountCents: number }> };
+    return anyItem.splits ?? [];
+  }
+
   freqLabel(freq: RecurringFrequency): string {
     switch (freq) {
       case 'WEEKLY':      return 'Wöchentlich';

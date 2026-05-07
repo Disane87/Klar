@@ -38,64 +38,7 @@
 
   <div class="page">
 
-    <!-- Toolbar row: planspiel switch + member filter + selection + PDF -->
-    <div class="toolbar-row">
-      <span class="eyebrow">Übersicht</span>
-
-      <div class="toolbar-actions">
-        <label class="flex items-center gap-1.5 cursor-pointer select-none">
-          <span class="text-[10px] text-(--fg-2)">Planspiel</span>
-          <hlm-switch
-            [checked]="planspielActive()"
-            (checkedChange)="togglePlanspiel()"
-            ariaLabel="Planspiel ein/aus"
-          />
-        </label>
-
-        <div class="flex items-center gap-1">
-          <button
-            type="button"
-            class="member-btn"
-            [class.active]="memberFilter() === null"
-            title="Alle"
-            (click)="memberFilter.set(null)">
-            <iconify-icon icon="lucide:users" width="14" height="14" />
-          </button>
-          @for (opt of memberOptions(); track opt.userId) {
-            <button
-              type="button"
-              class="member-btn"
-              [title]="opt.displayName"
-              [class.active]="memberFilter() === opt.userId"
-              (click)="memberFilter.set(memberFilter() === opt.userId ? null : opt.userId)">
-              <klar-avatar
-                [avatarUrl]="opt.avatarUrl"
-                [seed]="opt.displayName"
-                [noBorder]="true"
-                [size]="22" />
-            </button>
-          }
-        </div>
-
-        @if (!planspielActive()) {
-          <button
-            type="button"
-            class="toolbar-action"
-            [class.active]="selectionMode()"
-            (click)="toggleSelectionMode()">
-            <klar-icon [name]="selectionMode() ? 'x' : 'check-square'" [size]="12" />
-            {{ selectionMode() ? 'Abbruch' : 'Auswählen' }}
-          </button>
-        }
-
-        <button type="button" class="toolbar-action" (click)="exportPdf()">
-          <klar-icon name="download" [size]="12" />
-          PDF
-        </button>
-      </div>
-    </div>
-
-    <!-- Summary strip — 3 cells with Fraunces hero figures -->
+    <!-- Summary strip — 3 cells with Fraunces hero figures (bundle PageFixkosten) -->
     <div class="summary-strip">
       <div class="summary-cell">
         <span class="label">Einnahmen · fix</span>
@@ -129,105 +72,98 @@
     <!-- 2-col grid: lists left, side panel right -->
     <div class="grid-2">
 
-      <!-- LEFT — Einnahmen + Ausgaben sections + total/surplus footer -->
+      <!-- LEFT — Einnahmen + Ausgaben (bundle PageFixkosten 1:1) -->
       <div>
-        <!-- EINNAHMEN section header (bundle PageFixkosten Z. 151–153) -->
+        <!-- EINNAHMEN section -->
         @if (incomeGroups().length > 0) {
-          <div class="section-head" style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div class="section-head">
             <span>Einnahmen</span>
             <span class="mono text-(--success)">+ {{ incomeTotalCents() | klarMoney }}</span>
           </div>
-          <klar-list>
+          <div class="card mb-(--s-6)">
             @for (group of incomeGroups(); track group.categoryId) {
-              <ng-container
-                [ngTemplateOutlet]="groupTpl"
-                [ngTemplateOutletContext]="{ $implicit: group }"
-              />
+              @for (item of group.items; track item.id) {
+                <div class="row" [style.--cat-color]="group.categoryColor"
+                     style="border-left-color: var(--cat-color);"
+                     role="button" tabindex="0"
+                     (click)="openEdit(item)" (keydown.enter)="openEdit(item)">
+                  <span class="row-ico-slot" [style.color]="group.categoryColor">
+                    <klar-icon [name]="item.icon || group.categoryIcon || 'plus'" [size]="16" />
+                  </span>
+                  <div class="lhs">
+                    <span class="name">{{ item.name }}</span>
+                    <span class="meta">
+                      <span class="mono">{{ formatFreqShort(item) }}</span>
+                      @if (item.dayOfMonth) {
+                        <span aria-hidden="true">·</span>
+                        <span class="mono">
+                          {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : formatDay(item.dayOfMonth) }}
+                        </span>
+                      }
+                      @if (item.createdBy) { <span aria-hidden="true">·</span> {{ item.createdBy }} }
+                    </span>
+                  </div>
+                  <span class="amt mono pos">{{ item.amountCents > 0 ? '+ ' : '' }}{{ item.amountCents | klarMoney }}</span>
+                </div>
+                @for (split of itemSplits(item); track split.id) {
+                  <div class="row sub">
+                    <div class="lhs">
+                      <span class="name">davon {{ split.label }}</span>
+                    </div>
+                    <span class="amt mono">{{ split.amountCents | klarMoney }}</span>
+                  </div>
+                }
+              }
             }
-          </klar-list>
+            <div class="row subtotal">
+              <div class="lhs"><span class="name">Gesamt Einnahmen</span></div>
+              <span class="amt mono pos">{{ incomeTotalCents() | klarMoney }}</span>
+            </div>
+          </div>
         }
 
-        <!-- AUSGABEN section header (bundle PageFixkosten Z. 191–193) -->
+        <!-- AUSGABEN section: one card per category -->
         @if (expenseGroups().length > 0) {
-          <div class="section-head" style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div class="section-head">
             <span>Ausgaben</span>
             <span class="mono text-(--fg-2)">− {{ expenseTotalCents() * -1 | klarMoney }}</span>
           </div>
-          <klar-list>
-            @for (group of expenseGroups(); track group.categoryId) {
-              <ng-container
-                [ngTemplateOutlet]="groupTpl"
-                [ngTemplateOutletContext]="{ $implicit: group }"
-              />
-            }
-          </klar-list>
-        }
-
-        <!-- Shared group renderer template — DRY across Einnahmen + Ausgaben -->
-        <ng-template #groupTpl let-group>
-          <klar-list-group
-            [label]="group.categoryName"
-            [headerDotColor]="group.categoryColor"
-            [headerValue]="group.totalCents | klarMoney"
-            [headerValueClass]="group.totalCents | klarMoneyClass"
-            [collapsible]="true"
-            [collapsed]="isCollapsed(group.categoryId)"
-            (headerAction)="toggleGroup(group.categoryId)">
-            @if (selectionMode() && !planspielActive()) {
-              <div class="flex items-center px-6 py-2 border-b border-(--line)/40 bg-(--bg-2)/30 cursor-pointer"
-                   (click)="$event.stopPropagation(); toggleGroupSelection(group)">
-                <hlm-checkbox
-                  [checked]="groupSelectionState(group) === 'all'"
-                  [indeterminate]="groupSelectionState(group) === 'partial'"
-                  class="cursor-pointer" />
-                <span class="ml-3 text-[11px] text-(--fg-2) select-none">
-                  Gruppe auswählen ({{ group.items.length }})
-                </span>
-              </div>
-            }
-            @for (item of group.items; track item.id) {
-                <klar-list-row [navigable]="true" (rowClick)="openEdit(item)">
-                  @if (selectionMode() && !planspielActive()) {
-                    <hlm-checkbox
-                      [checked]="isSelected(item.id)"
-                      class="shrink-0 pointer-events-none" />
-                  }
-                  <app-brand-icon
-                    [name]="item.name"
-                    [size]="22"
-                    [color]="item.color"
-                    [icon]="item.icon"
-                    [fallbackIcon]="group.categoryIcon"
-                    [fallbackColor]="group.categoryColor"
-                    class="shrink-0"
-                  />
-                  <div class="flex-1 min-w-0">
-                    <p class="text-[14px] font-medium text-(--fg) truncate">{{ item.name }}</p>
-                    <p class="text-[11px] text-(--fg-2) mt-0.5 truncate">
+          @for (group of expenseGroups(); track group.categoryId) {
+            <div class="card mb-(--s-3)" [style.--cat-color]="group.categoryColor">
+              <header class="card-header">
+                <span class="h-eyebrow">{{ group.categoryName }}</span>
+                <span class="h-count">{{ group.items.length }} Pos.</span>
+              </header>
+              @for (item of group.items; track item.id) {
+                <div class="row"
+                     style="border-left-color: var(--cat-color);"
+                     role="button" tabindex="0"
+                     (click)="openEdit(item)" (keydown.enter)="openEdit(item)">
+                  <span class="row-ico-slot" [style.color]="group.categoryColor">
+                    <klar-icon [name]="item.icon || group.categoryIcon || 'plus'" [size]="16" />
+                  </span>
+                  <div class="lhs">
+                    <span class="name">{{ item.name }}</span>
+                    <span class="meta">
                       @if (item.dayOfMonth) {
-                        <span class="font-mono tabular-nums">
+                        <span class="mono">
                           {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : formatDay(item.dayOfMonth) }}
                         </span>
-                        <span class="mx-1">·</span>
+                        <span aria-hidden="true">·</span>
                       }
-                      {{ formatItemSublabel(item) }}
-                    </p>
-                  </div>
-                  <div class="shrink-0 flex flex-col items-end leading-tight">
-                    <span class="font-mono tabular-nums text-[14px]"
-                          [ngClass]="item.amountCents | klarMoneyClass">
-                      {{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}
+                      <span>{{ formatItemSublabel(item) }}</span>
                     </span>
-                    @if (item.frequency !== 'MONTHLY' && item.frequency !== 'CUSTOM_DAYS') {
-                      <span class="font-mono tabular-nums text-[10px] text-(--fg-2) mt-0.5">
-                        ≈ {{ item.monthlyEquivalentCents | klarMoney }} / Monat
-                      </span>
-                    }
                   </div>
-                </klar-list-row>
+                  <span class="amt mono">{{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}</span>
+                </div>
               }
-          </klar-list-group>
-        </ng-template>
+              <div class="row subtotal">
+                <div class="lhs"><span class="name">Zwischensumme</span></div>
+                <span class="amt mono">{{ group.totalCents | klarMoney }}</span>
+              </div>
+            </div>
+          }
+        }
 
         <!-- Total + Surplus footer card -->
         <div class="total-card">
