@@ -9,30 +9,26 @@
 <!-- Scrollable content below calendar -->
 <div class="flex flex-col flex-1 min-h-0 overflow-y-auto pb-16">
 
-  <!-- Loading -->
-  @if (store.loading()) {
-    <div class="grid grid-cols-4 border-t border-(--border) divide-x divide-(--border) shrink-0">
-      @for (_ of [1,2,3,4]; track $index) {
-        <div class="flex flex-col items-center py-2.5 gap-1">
-          <div class="h-2 w-16 bg-(--surface-2) rounded animate-pulse"></div>
-          <div class="h-2.75 w-20 bg-(--surface-2) rounded animate-pulse mt-0.5"></div>
-        </div>
-      }
-    </div>
-  }
-
-  <!-- Error -->
-  @else if (store.error()) {
-    <klar-error-bar message="Fehler beim Laden der Übersicht." (retry)="store.reload()" />
-  }
-
-  <!-- Empty -->
-  @else if (!store.cashflow()) {
-    <klar-empty-state message="Noch keine Daten für diesen Monat" ctaLabel="Buchung hinzufügen" (ctaClick)="openCreate()" />
-  }
-
-  <!-- Data -->
-  @else {
+  <klar-async-state
+    [loading]="store.loading()"
+    [error]="store.error()"
+    [empty]="!store.cashflow()"
+    errorMessage="Fehler beim Laden der Übersicht."
+    emptyMessage="Noch keine Daten für diesen Monat"
+    emptyCtaLabel="Buchung hinzufügen"
+    (retry)="store.reload()"
+    (cta)="openCreate()"
+  >
+    <ng-template klarLoading>
+      <div class="grid grid-cols-4 border-t border-(--border) divide-x divide-(--border) shrink-0">
+        @for (_ of [1,2,3,4]; track $index) {
+          <div class="flex flex-col items-center py-2.5 gap-1">
+            <div class="h-2 w-16 bg-(--surface-2) rounded animate-pulse"></div>
+            <div class="h-2.75 w-20 bg-(--surface-2) rounded animate-pulse mt-0.5"></div>
+          </div>
+        }
+      </div>
+    </ng-template>
 
     <!-- Mobile Hero Surplus — unchanged -->
     <div class="mobile-hero">
@@ -126,7 +122,7 @@
 
     </div>
 
-  }
+  </klar-async-state>
 
 </div>
 

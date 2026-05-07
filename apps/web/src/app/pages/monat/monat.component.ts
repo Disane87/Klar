@@ -3,8 +3,7 @@ import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
-import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component';
-import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
+import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { HlmCalendarComponent, type CalendarEvent, type CalendarEventMap } from '../../shared/ui/hlm/hlm-calendar.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
@@ -18,8 +17,8 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
     NgClass,
     KlarMoneyPipe,
     KlarMoneyClassPipe,
-    KlarErrorBarComponent,
-    KlarEmptyStateComponent,
+    KlarAsyncStateComponent,
+    KlarLoadingTplDirective,
     HlmCalendarComponent,
   ],
   templateUrl: './monat.component.html',

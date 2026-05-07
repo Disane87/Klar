@@ -1,47 +1,40 @@
-<!-- Loading skeleton -->
-@if (store.loading()) {
-<div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-16">
-  <!-- Summary skeleton -->
-  <div class="grid grid-cols-3 gap-3 mb-4">
-    <klar-skeleton height="76px" />
-    <klar-skeleton height="76px" />
-    <klar-skeleton height="76px" />
-  </div>
-  <!-- Groups skeleton -->
-  @for (_ of [1,2,3]; track $index) {
-  <div class="mb-3 rounded-md border border-(--border) overflow-hidden">
-    <div class="flex items-center h-10 px-4 gap-3 border-b border-(--border)">
-      <klar-skeleton height="10px" width="100px" />
-      <div class="flex-1"></div>
-      <klar-skeleton height="14px" width="70px" />
-    </div>
-    <div class="p-2">
-      @for (__ of [1,2,3]; track $index) {
-      <div class="flex items-center h-9 px-3 gap-3">
-        <klar-skeleton height="14px" width="45%" />
-        <div class="flex-1"></div>
-        <klar-skeleton height="14px" width="60px" />
+<klar-async-state
+  [loading]="store.loading()"
+  [error]="store.error()"
+  [empty]="!store.fixedCosts() || store.fixedCosts()!.groups.length === 0"
+  errorMessage="Fehler beim Laden der Fixkosten."
+  emptyMessage="Keine Fixkosten für diesen Monat"
+  emptyCtaLabel="Zur Buchungsverwaltung"
+  (retry)="store.reload()"
+  (cta)="openCreate()"
+>
+  <ng-template klarLoading>
+    <div class="flex flex-col p-5 pt-3 gap-3 overflow-y-auto pb-16">
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <klar-skeleton height="76px" />
+        <klar-skeleton height="76px" />
+        <klar-skeleton height="76px" />
       </div>
+      @for (_ of [1,2,3]; track $index) {
+        <div class="mb-3 rounded-md border border-(--border) overflow-hidden">
+          <div class="flex items-center h-10 px-4 gap-3 border-b border-(--border)">
+            <klar-skeleton height="10px" width="100px" />
+            <div class="flex-1"></div>
+            <klar-skeleton height="14px" width="70px" />
+          </div>
+          <div class="p-2">
+            @for (__ of [1,2,3]; track $index) {
+              <div class="flex items-center h-9 px-3 gap-3">
+                <klar-skeleton height="14px" width="45%" />
+                <div class="flex-1"></div>
+                <klar-skeleton height="14px" width="60px" />
+              </div>
+            }
+          </div>
+        </div>
       }
     </div>
-  </div>
-  }
-</div>
-}
-
-<!-- Error -->
-@else if (store.error()) {
-<klar-error-bar message="Fehler beim Laden der Fixkosten." (retry)="store.reload()" />
-}
-
-<!-- Empty -->
-@else if (!store.fixedCosts() || store.fixedCosts()!.groups.length === 0) {
-<klar-empty-state message="Keine Fixkosten für diesen Monat" ctaLabel="Zur Buchungsverwaltung"
-  (ctaClick)="openCreate()" />
-}
-
-<!-- Ledger -->
-@else {
+  </ng-template>
 
 <!-- Scrollable area -->
 <div class="flex-1 overflow-y-auto pb-16">
@@ -224,4 +217,4 @@
   </klar-fab>
 }
 
-}
+</klar-async-state>
