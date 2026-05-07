@@ -130,6 +130,10 @@ export class HaushaltPageComponent implements OnInit {
     });
   }
 
+  // TODO(haushalt-2): klar-select searchable+addable upgrade pending —
+  // bundle PageHaushalt's Categories-Manager uses KSelect with type-ahead
+  // search and inline "Neue Kategorie anlegen" creation. Until klar-select
+  // grows that capability, the Categories tile grid + create dialog stay.
   openCreateCategoryDialog(): void {
     this.dialogService.open({
       title: 'Kategorie anlegen',

@@ -47,7 +47,7 @@
                           [label]="item.household.name"
                           [sublabel]="item.role"
                           [badge]="store.activeId() === item.household.id ? 'Aktiv' : undefined"
-                          badgeClass="bg-(--color-accent)/15 text-(--color-accent)"
+                          badgeClass="success"
                           [navigable]="true"
                           (itemClick)="store.setActiveHousehold(item.household.id)" />
         }
@@ -62,9 +62,7 @@
                         [label]="member.displayName"
                         [sublabel]="member.email"
                         [badge]="member.role"
-                        [badgeClass]="member.role === 'OWNER'
-                          ? 'font-mono uppercase tracking-[0.1em] text-[9px] bg-(--success)/15 text-(--success)'
-                          : 'font-mono uppercase tracking-[0.1em] text-[9px] bg-(--surface-2) text-(--text-muted)'"
+                        [badgeClass]="member.role === 'OWNER' ? 'success mono' : 'mono'"
                         [trailingActionIcon]="canManage() && member.userId !== authUserId() ? 'close' : undefined"
                         [trailingActionDanger]="true"
                         (trailingActionClick)="removeMember(member.userId)" />
@@ -74,9 +72,7 @@
                         [label]="invite.email!"
                         [sublabel]="inviteSubLabel(invite)"
                         [badge]="inviteStatus(invite) === 'abgelaufen' ? 'Abgelaufen' : 'Eingeladen'"
-                        [badgeClass]="inviteStatus(invite) === 'abgelaufen'
-                          ? 'bg-(--surface-2) text-(--text-muted) font-mono uppercase tracking-[0.08em] text-[9px]'
-                          : 'bg-(--color-income)/15 text-(--color-income) font-mono uppercase tracking-[0.08em] text-[9px]'"
+                        [badgeClass]="inviteStatus(invite) === 'abgelaufen' ? 'mono' : 'success mono'"
                         [trailingActionIcon]="canManage() ? 'trash' : undefined"
                         [trailingActionDanger]="true"
                         (trailingActionClick)="deleteInvite(invite.id)" />
@@ -205,7 +201,7 @@
                           [label]="key.name"
                           [sublabel]="formatApiKeySublabel(key)"
                           [badge]="key.isRevoked ? 'Widerrufen' : undefined"
-                          badgeClass="bg-(--surface-2) text-(--text-muted) font-mono uppercase tracking-[0.08em] text-[9px]"
+                          badgeClass="warn mono"
                           [disabled]="key.isRevoked"
                           [trailingActionIcon]="key.isRevoked ? 'trash' : 'lock'"
                           [trailingActionDanger]="key.isRevoked"
@@ -214,26 +210,26 @@
       }
     </klar-list-group>
 
-    <!-- ── GEFAHRENZONE ──────────────────────────────────── -->
-    <klar-list-group label="Gefahrenzone" [danger]="true">
-      <div class="px-6 py-4">
-        <div class="border-l-2 border-(--color-expense)/40 bg-(--color-expense)/4 px-4 py-3 rounded-r-[3px]">
+    <!-- ── GEFAHRENZONE — bundle .danger-zone modifier ─────── -->
+    <section class="danger-zone">
+      <klar-list-group label="Gefahrenzone" [danger]="true">
+        <div class="px-(--s-5) py-(--s-4)">
           @if (canManage() && isSoleOwner()) {
-            <p class="text-[12px] font-semibold text-(--color-expense) mb-1">Haushalt löschen</p>
-            <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+            <p class="text-[12px] font-semibold text-(--danger) mb-1">Haushalt löschen</p>
+            <p class="text-[12px] text-(--fg-2) leading-relaxed mb-3">
               Löscht diesen Haushalt unwiderruflich. Du bist der einzige Owner — alle Daten gehen verloren.
             </p>
             <klar-button size="sm" tone="danger" [loading]="deletingHousehold()" (click)="deleteHousehold()">
               Haushalt löschen …
             </klar-button>
           } @else {
-            <p class="text-[12px] font-semibold text-(--color-expense) mb-1">Haushalt verlassen</p>
+            <p class="text-[12px] font-semibold text-(--danger) mb-1">Haushalt verlassen</p>
             @if (canManage()) {
-              <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+              <p class="text-[12px] text-(--fg-2) leading-relaxed mb-3">
                 Du verlässt diesen Haushalt. Andere Mitglieder bleiben erhalten. Du kannst jederzeit über einen Einladungscode wieder beitreten.
               </p>
             } @else {
-              <p class="text-[12px] text-(--text-muted) leading-relaxed mb-3">
+              <p class="text-[12px] text-(--fg-2) leading-relaxed mb-3">
                 Du verlässt diesen Haushalt und verlierst den Zugriff auf alle gemeinsamen Daten.
               </p>
             }
@@ -242,8 +238,8 @@
             </klar-button>
           }
         </div>
-      </div>
-    </klar-list-group>
+      </klar-list-group>
+    </section>
 
     </klar-list>
 
