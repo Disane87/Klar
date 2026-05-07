@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
+import { KlarProgressRingComponent } from '../../shared/ui/klar-progress-ring.component';
 import { ProjekteStore } from '../../core/overview/projekte.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
@@ -15,7 +16,7 @@ import type { ProjectOverviewItem } from '../../core/overview/overview.service';
   selector: 'app-projekte',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, KlarSkeletonComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective],
+  imports: [NgClass, KlarSkeletonComponent, KlarProgressRingComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective],
   templateUrl: './projekte.component.html',
   styleUrl: './projekte.component.css',
 })
@@ -27,7 +28,7 @@ export class ProjektePageComponent {
   constructor() {
     inject(PageHeaderService).set({
       title:         'Projekte',
-      subtitle:      'ZIELE & SONDERPROJEKTE',
+      subtitle:      'Haushalt · alle aktiv',
       showPlanspiel: false,
       showAdd:       true,
       addLabel:      'Projekt',

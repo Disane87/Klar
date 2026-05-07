@@ -84,12 +84,18 @@
             }
           </div>
 
-          <!-- meter (uses design `.meter` style, tinted by project color) -->
           @if (item.totalBudgetCents !== null) {
-            <div class="meter"
-                 [class.over]="progressPercent(item) > 95"
-                 [class.warn]="progressPercent(item) > 80 && progressPercent(item) <= 95">
-              <i [style.width.%]="progressPercent(item)" [style.background]="item.color"></i>
+            <div class="flex items-center justify-between gap-(--s-3) mt-(--s-2)">
+              <klar-progress-ring
+                [value]="progressPercent(item) / 100"
+                [tone]="item.color"
+                [size]="36"
+                [showValue]="true"
+                [ariaLabel]="item.name + ' Fortschritt'"
+              />
+              <span class="text-[11px] mono text-(--fg-2)">
+                {{ progressPercent(item) }}&nbsp;%
+              </span>
             </div>
           }
 
