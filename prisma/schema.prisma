@@ -281,6 +281,7 @@ model Category {
   household             Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+  transactionSplits     TransactionSplit[]
   budgets               Budget[]
   importLearnings       ImportLearning[]
 
@@ -407,6 +408,7 @@ model Transaction {
   project              Project?              @relation(fields: [projectId], references: [id])
   recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
   csvImport            CsvImport?            @relation(fields: [sourceImportId], references: [id])
+  splits               TransactionSplit[]
 
   @@unique([householdId, externalRef])
   @@index([householdId, date])
@@ -418,6 +420,32 @@ model Transaction {
   @@index([sourceImportId])
   @@index([createdByUserId])
   @@index([recurringTransactionId])
+}
+
+// ─────────────────────────────────────────────
+// TRANSACTION SPLITS
+// One booking can be internally split (e.g. salary = base + bonus) so the
+// list still renders one row but the breakdown shows under it. Splits are
+// always cascade-deleted with the parent and never carry their own
+// category/visibility — they inherit from the parent transaction.
+// ─────────────────────────────────────────────
+model TransactionSplit {
+  id            String  @id @default(cuid())
+  transactionId String
+  /** Display label for the split (e.g. "Festgehalt Brutto"). */
+  label         String
+  /** Signed cents — same sign convention as Transaction.amountCents. */
+  amountCents   Int
+  /** Optional sort order within the parent (lower comes first). */
+  sortOrder     Int     @default(0)
+  /** Optional override category — null = inherit parent.category. */
+  categoryId    String?
+  note          String?
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  category    Category?   @relation(fields: [categoryId], references: [id])
+
+  @@index([transactionId])
 }
 
 // ─────────────────────────────────────────────

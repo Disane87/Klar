@@ -10,10 +10,21 @@ import type { RequestContext } from '../common/types/request-context.type';
 import {
   TransactionsRepository,
   type FindAllOpts,
+  type TransactionWithSplits,
   type UpdateTransactionData,
 } from './transactions.repository';
 
 export { Visibility };
+
+export interface TransactionSplitInput {
+  /** Existing split id when editing — omitted/null on create. */
+  id?: string | null;
+  label: string;
+  amountCents: number;
+  sortOrder?: number;
+  categoryId?: string | null;
+  note?: string | null;
+}
 
 export interface CreateTransactionInput {
   amountCents: number;
@@ -27,6 +38,8 @@ export interface CreateTransactionInput {
   recurringTransactionId?: string | null;
   color?: string | null;
   icon?: string | null;
+  /** Optional internal split breakdown — sum must equal amountCents. */
+  splits?: TransactionSplitInput[];
 }
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
@@ -47,7 +60,7 @@ function parsePlainDate(iso: string): Date {
 export class TransactionsService {
   constructor(private readonly repo: TransactionsRepository) {}
 
-  list(ctx: RequestContext, opts: ListOpts = {}): Promise<Transaction[]> {
+  list(ctx: RequestContext, opts: ListOpts = {}): Promise<TransactionWithSplits[]> {
     const repoOpts: FindAllOpts = {
       ...opts,
       userId: ctx.userId,
@@ -55,12 +68,13 @@ export class TransactionsService {
     return this.repo.findAll(ctx.householdId, repoOpts);
   }
 
-  async create(ctx: RequestContext, input: CreateTransactionInput): Promise<Transaction> {
+  async create(ctx: RequestContext, input: CreateTransactionInput): Promise<TransactionWithSplits> {
     if (!Number.isInteger(input.amountCents)) {
       throw new BadRequestException('amountCents muss eine Ganzzahl sein');
     }
+    this.validateSplitsSum(input.splits, input.amountCents);
 
-    return this.repo.create({
+    const created = await this.repo.create({
       householdId: ctx.householdId,
       createdByUserId: ctx.userId,
       amountCents: input.amountCents,
@@ -75,13 +89,37 @@ export class TransactionsService {
       color: input.color ?? null,
       icon: input.icon ?? null,
     });
+    if (input.splits && input.splits.length > 0) {
+      await this.repo.replaceSplits(created.id, input.splits);
+      const reloaded = await this.repo.findById(created.id, ctx.householdId);
+      if (reloaded) return reloaded;
+    }
+    return created;
+  }
+
+  /**
+   * Hard rule: when splits are present, they must sum exactly to the
+   * parent transaction's signed amountCents — that's the whole point of
+   * splits being a breakdown rather than additive lines.
+   */
+  private validateSplitsSum(
+    splits: { amountCents: number }[] | undefined,
+    parentCents: number,
+  ): void {
+    if (!splits || splits.length === 0) return;
+    const sum = splits.reduce((s, x) => s + x.amountCents, 0);
+    if (sum !== parentCents) {
+      throw new BadRequestException(
+        `Splits müssen exakt ${parentCents} cents summieren (aktuell ${sum})`,
+      );
+    }
   }
 
   async update(
     ctx: RequestContext,
     id: string,
     input: UpdateTransactionInput,
-  ): Promise<Transaction> {
+  ): Promise<TransactionWithSplits> {
     const existing = await this.findAndAuthorize(ctx, id);
 
     if (input.amountCents !== undefined && !Number.isInteger(input.amountCents)) {
@@ -116,7 +154,17 @@ export class TransactionsService {
       }
     }
 
-    return this.repo.update(existing.id, data);
+    const newAmount = input.amountCents ?? existing.amountCents;
+    if (input.splits !== undefined) {
+      this.validateSplitsSum(input.splits, newAmount);
+    }
+    const updated = await this.repo.update(existing.id, data);
+    if (input.splits !== undefined) {
+      await this.repo.replaceSplits(updated.id, input.splits);
+      const reloaded = await this.repo.findById(updated.id, ctx.householdId);
+      if (reloaded) return reloaded;
+    }
+    return updated;
   }
 
   async remove(ctx: RequestContext, id: string): Promise<void> {
@@ -159,7 +207,8 @@ export class TransactionsService {
       .map(tx => tx.id);
   }
 
-  toResponse(tx: Transaction) {
+  toResponse(tx: Transaction | TransactionWithSplits) {
+    const splits = (tx as TransactionWithSplits).splits ?? [];
     return {
       id: tx.id,
       householdId: tx.householdId,
@@ -174,12 +223,20 @@ export class TransactionsService {
       counterparty: tx.counterparty,
       visibility: tx.visibility,
       recurringTransactionId: tx.recurringTransactionId,
+      splits: splits.map(s => ({
+        id: s.id,
+        label: s.label,
+        amountCents: s.amountCents,
+        sortOrder: s.sortOrder,
+        categoryId: s.categoryId,
+        note: s.note,
+      })),
       createdAt: tx.createdAt.toISOString(),
       updatedAt: tx.updatedAt.toISOString(),
     };
   }
 
-  private async findAndAuthorize(ctx: RequestContext, id: string): Promise<Transaction> {
+  private async findAndAuthorize(ctx: RequestContext, id: string): Promise<TransactionWithSplits> {
     const tx = await this.repo.findById(id, ctx.householdId);
     if (!tx) throw new NotFoundException(`Transaktion ${id} nicht gefunden`);
 

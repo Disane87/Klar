@@ -2,13 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { Visibility } from '@prisma/client';
 import { TransactionsService } from './transactions.service';
-import type { TransactionsRepository } from './transactions.repository';
-import type { Transaction } from '@prisma/client';
+import type { TransactionsRepository, TransactionWithSplits } from './transactions.repository';
 import type { RequestContext } from '../common/types/request-context.type';
 
 const ctx: RequestContext = { userId: 'u1', householdId: 'hh1', source: 'web' };
 
-const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
+const makeTx = (overrides: Partial<TransactionWithSplits> = {}): TransactionWithSplits => ({
   id: 'tx-1',
   householdId: 'hh1',
   createdByUserId: 'u1',
@@ -29,6 +28,7 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
   icon: null,
   createdAt: new Date('2026-04-01'),
   updatedAt: new Date('2026-04-01'),
+  splits: [],
   ...overrides,
 });
 
