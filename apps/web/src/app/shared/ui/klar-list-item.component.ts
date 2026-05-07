@@ -16,18 +16,17 @@ import { KlarAvatarComponent } from './klar-avatar.component';
               [class.opacity-40]="disabled()"
               [class.pointer-events-none]="disabled()"
               (click)="itemClick.emit()">
-        <ng-container *ngTemplateOutlet="row" />
-        <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--fg-3)" />
+        <ng-container *ngTemplateOutlet="row; context: { showChevron: true }" />
       </button>
     } @else {
       <div class="setting-row"
            [class.danger]="danger()"
            [class.opacity-40]="disabled()">
-        <ng-container *ngTemplateOutlet="row" />
+        <ng-container *ngTemplateOutlet="row; context: { showChevron: false }" />
       </div>
     }
 
-    <ng-template #row>
+    <ng-template #row let-showChevron="showChevron">
       <!-- Slot: arbitrary leading content (e.g. checkbox), rendered before auto-leading -->
       <ng-content select="[klarLeading]" />
 
@@ -86,6 +85,9 @@ import { KlarAvatarComponent } from './klar-avatar.component';
               {{ trailingActionLabel() }}
             }
           </button>
+        }
+        @if (showChevron) {
+          <klar-icon name="chevron-right" [size]="14" class="shrink-0 text-(--fg-3)" />
         }
       </div>
     </ng-template>
