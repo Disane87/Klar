@@ -31,7 +31,7 @@
 | **📱 PWA — Mobile-First** | Installable on iOS/Android, dark mode, safe area support |
 | **🤖 Home Assistant / n8n** | Hook up homelab automations via API keys |
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
-| **🛠️ Admin Panel** | Audit log, MCP tool-call audit, sent emails, household overview — all virtualized + searchable + filterable |
+| **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB-Size / Warnungen / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / E-Mails / Haushalte tabs preserved below |
 | **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
 | **📜 Verträge (Contracts) — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
 | **📅 Kalender** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
@@ -178,7 +178,18 @@ Full documentation including curl smoke test and configuration: **[docs/mcp.md](
 
 ### 🛠️ Admin Panel
 
-Available to users with `appRole = ADMIN` (the first registered user, or anyone elevated via the role-change flow). Routed at `/app/admin`. All four tabs use a virtualized `klar-virtual-list` so they remain responsive even with millions of rows; every list is **searchable + filterable**, paginated with a stable `(createdAt DESC, id DESC)` cursor, and resolves user / household IDs to names + avatars + emails before display.
+Available to users with `appRole = ADMIN` (the first registered user, or anyone elevated via the role-change flow). Routed at `/app/admin`. The page opens with a self-host hero (instance hostname + overall status chip), a 4-up metric grid (Uptime · 30 d, DB-Size, Warnungen · 24 h, Aktive Sessions), and three telemetry cards — Services, Performance, Jobs — that poll `/admin/health/*` and `/admin/jobs` every 30 s. Below those, all four tabs use a virtualized `klar-virtual-list` so they remain responsive even with millions of rows; every list is **searchable + filterable**, paginated with a stable `(createdAt DESC, id DESC)` cursor, and resolves user / household IDs to names + avatars + emails before display.
+
+**Telemetry endpoints** (admin-only, throttled 30/min):
+
+| Endpoint | Returns |
+|---|---|
+| `GET /admin/health/status` | uptime %, Postgres DB size, warning count (last 24 h), active refresh-token sessions |
+| `GET /admin/health/services` | per-service state (Web-App, API, Postgres 16, MCP Bridge, Mail-Queue) + 30-bar uptime histogram |
+| `GET /admin/health/performance` | CPU, RAM, Disk, DB-Query-Ø, Mail-Lag, MCP-Latency rows with progress bar percentage and `ok`/`warn` state |
+| `GET /admin/jobs` | scheduled background jobs (cron expression, last/next run, state) |
+
+Each endpoint sits behind `JwtAuthGuard + AppAdminGuard`; non-admin requests return 403, anonymous requests 401. Postgres health is probed via `SELECT 1`, MCP via the most recent `mcp.*` audit-log row in the last hour, mail-queue via the last five `EmailLog` entries.
 
 | Tab | Purpose | Filters |
 |---|---|---|
