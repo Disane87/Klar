@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
@@ -11,7 +10,7 @@ import { AuthStore } from '../../core/auth/auth.store';
 @Component({
   selector: 'app-delete-account-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, HlmInputDirective, HlmLabelDirective, KlarDialogFooterComponent],
+  imports: [FormsModule, HlmInputDirective, HlmLabelDirective, KlarDialogFooterComponent],
   templateUrl: './delete-account-dialog.component.html',
 })
 export class DeleteAccountDialogComponent {

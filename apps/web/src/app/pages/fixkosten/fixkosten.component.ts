@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
@@ -36,6 +36,8 @@ import type { RecurringFrequency } from '@klar/shared';
   imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarMoneyPipe, KlarMoneyClassPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, BrandIconComponent, KlarListComponent, KlarListGroupComponent, KlarListRowComponent, KlarSummaryStripComponent, KlarToolbarComponent, KlarAvatarComponent, KlarFabComponent, HlmCheckboxComponent, HlmButtonDirective, HlmSwitchComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
+  // <iconify-icon> is a web component, not an Angular directive.
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class FixkostenPageComponent {
   protected store         = inject(OverviewStore);
