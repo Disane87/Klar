@@ -20,7 +20,6 @@ import { HlmInputDirective } from './hlm/hlm-input.directive';
     <input
       hlmInput
       type="date"
-      class="min-h-11"
       [attr.id]="inputId() ?? null"
       [disabled]="disabled()"
       [value]="iso()"

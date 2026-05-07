@@ -99,8 +99,8 @@ export class KlarSelectComponent<TValue extends string = string> {
   protected readonly _triggerCls = computed(() =>
     hlm(
       'inline-flex items-center justify-between gap-2 w-full',
-      'h-9 rounded border border-input bg-background px-3 text-[1rem] text-foreground',
-      'focus-visible:outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+      'h-9 rounded border border-(--border) bg-(--surface) px-3 text-base text-(--text)',
+      'focus-visible:outline-none focus-visible:border-(--accent)/60 focus-visible:ring-1 focus-visible:ring-(--accent)/40',
       'disabled:cursor-not-allowed disabled:opacity-50',
       'transition-colors cursor-pointer',
       this.userClass(),

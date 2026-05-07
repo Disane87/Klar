@@ -10,12 +10,12 @@ export class HlmInputDirective {
   userClass = input('', { alias: 'class' });
 
   _cls = computed(() => hlm(
-    'flex w-full rounded border border-input bg-background px-3',
-    'placeholder:text-muted-foreground',
-    'focus-visible:outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+    'flex w-full rounded border border-(--border) bg-(--surface) px-3',
+    'placeholder:text-(--text-muted)',
+    'focus-visible:outline-none focus-visible:border-(--accent)/60 focus-visible:ring-1 focus-visible:ring-(--accent)/40',
     'disabled:cursor-not-allowed disabled:opacity-50',
     'transition-colors',
-    'text-[1rem]',
+    'text-base',
     'h-9',
     this.userClass()
   ));
