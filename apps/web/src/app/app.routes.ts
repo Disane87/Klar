@@ -172,6 +172,12 @@ export const routes: Routes = [
             m => m.AdminPageComponent,
           ),
       },
+      {
+        path: 'spec',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./pages/spec/spec.component').then(m => m.SpecPageComponent),
+      },
     ],
   },
   {

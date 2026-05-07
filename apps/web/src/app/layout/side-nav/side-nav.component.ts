@@ -32,7 +32,8 @@ const SYS_ITEMS: NavItem[] = [
   { id: 'health',   label: 'System',        icon: 'pulse',    route: '/app/health',   tone: 'var(--cat-wohnen)' },
 ];
 
-const ADMIN_ITEM: NavItem = { id: 'admin', label: 'Admin', icon: 'shield', route: '/app/admin', tone: 'var(--cat-mobil)' };
+const ADMIN_ITEM:    NavItem = { id: 'admin', label: 'Admin',         icon: 'shield',       route: '/app/admin', tone: 'var(--cat-mobil)' };
+const SPEC_ITEM:     NavItem = { id: 'spec',  label: 'Komponenten',   icon: 'wiederkehrend', route: '/app/spec',  tone: 'var(--cat-wohnen)' };
 
 @Component({
   selector: 'klar-side-nav',
@@ -46,6 +47,6 @@ export class SideNavComponent {
   private auth = inject(AuthStore);
   protected mainItems = MAIN_ITEMS;
   protected sysItems = computed<NavItem[]>(() =>
-    this.auth.user()?.appRole === 'ADMIN' ? [...SYS_ITEMS, ADMIN_ITEM] : SYS_ITEMS,
+    this.auth.user()?.appRole === 'ADMIN' ? [...SYS_ITEMS, ADMIN_ITEM, SPEC_ITEM] : SYS_ITEMS,
   );
 }
