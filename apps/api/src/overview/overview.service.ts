@@ -12,6 +12,13 @@ import type { RequestContext } from '../common/types/request-context.type';
 
 // ─── Response types ───────────────────────────────────────────────────────────
 
+export interface FixedCostsSplitResponse {
+  id: string;
+  label: string;
+  amountCents: number;
+  sortOrder: number;
+}
+
 export interface FixedCostsItemResponse {
   id: string;
   categoryId: string;
@@ -25,6 +32,8 @@ export interface FixedCostsItemResponse {
   createdById: string | null;
   color: string | null;
   icon: string | null;
+  /** Optional internal breakdown (e.g. Festgehalt Netto → Brutto + Provision Brutto). */
+  splits: FixedCostsSplitResponse[];
 }
 
 export interface FixedCostsGroupResponse {
@@ -121,10 +130,14 @@ export class OverviewService {
     const ym = month ?? currentYearMonth();
     const { firstDay, lastDay } = parseMonth(ym);
 
-    // Load all active recurring transactions with category and creator
+    // Load all active recurring transactions with category, creator and splits
     const rts = await this.prisma.recurringTransaction.findMany({
       where: { householdId: ctx.householdId, isActive: true },
-      include: { category: true, createdBy: { select: { id: true, displayName: true } } },
+      include: {
+        category: true,
+        createdBy: { select: { id: true, displayName: true } },
+        splits: { orderBy: { sortOrder: 'asc' } },
+      },
       orderBy: [{ createdAt: 'asc' }],
     });
 
@@ -136,7 +149,7 @@ export class OverviewService {
     // Group by categoryId
     const grouped = new Map<
       string,
-      { category: Category; items: (RecurringTransaction & { category: Category; createdBy: { id: string; displayName: string } | null })[] }
+      { category: Category; items: (RecurringTransaction & { category: Category; createdBy: { id: string; displayName: string } | null; splits: { id: string; label: string; amountCents: number; sortOrder: number }[] })[] }
     >();
 
     for (const rt of visible) {
@@ -167,6 +180,12 @@ export class OverviewService {
         createdById: rt.createdByUserId ?? null,
         color: rt.color ?? null,
         icon: rt.icon ?? null,
+        splits: (rt.splits ?? []).map(s => ({
+          id: s.id,
+          label: s.label,
+          amountCents: s.amountCents,
+          sortOrder: s.sortOrder,
+        })),
       }));
 
       const totalCents = responseItems.reduce(

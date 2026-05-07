@@ -5,6 +5,13 @@ import type { RecurringFrequency } from '@klar/shared';
 
 // ─── Response shapes ──────────────────────────────────────────────────────────
 
+export interface FixedCostSplit {
+  id: string;
+  label: string;
+  amountCents: number;
+  sortOrder: number;
+}
+
 export interface FixedCostItem {
   id: string;
   categoryId: string;
@@ -18,6 +25,7 @@ export interface FixedCostItem {
   createdById: string | null;
   color: string | null;
   icon: string | null;
+  splits?: FixedCostSplit[];
 }
 
 export interface FixedCostGroup {

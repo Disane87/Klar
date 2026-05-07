@@ -503,13 +503,11 @@ grouped.set(key, {
   /**
    * Returns the splits for a row that should render as `.row.sub` lines
    * under the parent (e.g. Festgehalt Netto → Brutto + Provision Brutto).
-   * Once the TransactionSplit model lands the splits are pulled from there;
-   * for now this is an empty array unless the item carries an inlined
-   * splits payload.
+   * Wired to FixedCostItem.splits which is populated by the overview API
+   * from RecurringTransactionSplit rows.
    */
   itemSplits(item: FixedCostItem): Array<{ id: string; label: string; amountCents: number }> {
-    const anyItem = item as unknown as { splits?: Array<{ id: string; label: string; amountCents: number }> };
-    return anyItem.splits ?? [];
+    return item.splits ?? [];
   }
 
   freqLabel(freq: RecurringFrequency): string {

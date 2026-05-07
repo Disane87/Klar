@@ -278,12 +278,13 @@ model Category {
   isDefault   Boolean      @default(false) // vom System angelegt beim Haushalt-Setup
   createdAt   DateTime     @default(now())
 
-  household             Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  recurringTransactions RecurringTransaction[]
-  transactions          Transaction[]
-  transactionSplits     TransactionSplit[]
-  budgets               Budget[]
-  importLearnings       ImportLearning[]
+  household                  Household                  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recurringTransactions      RecurringTransaction[]
+  transactions               Transaction[]
+  transactionSplits          TransactionSplit[]
+  recurringTransactionSplits RecurringTransactionSplit[]
+  budgets                    Budget[]
+  importLearnings            ImportLearning[]
 
   @@index([householdId])
   @@index([householdId, type])
@@ -358,12 +359,34 @@ model RecurringTransaction {
   createdBy    User?         @relation(fields: [createdByUserId], references: [id])
   // Referenz auf ggf. daraus erstellte manuelle Transaktionen (z.B. wenn User Ist-Wert nachträgt)
   transactions Transaction[]
+  splits       RecurringTransactionSplit[]
 
   @@index([householdId])
   @@index([householdId, isActive])
   @@index([householdId, categoryId])
   @@index([householdId, projectId])
   @@index([createdByUserId])
+}
+
+// ─────────────────────────────────────────────
+// RECURRING SPLITS — Template-level breakdown
+// (e.g. "Festgehalt Netto" → "davon Festgehalt Brutto" +
+// "davon Ø Provision Brutto") so the Fixkosten overview surfaces
+// the same sub-rows as the bundle PageFixkosten.
+// ─────────────────────────────────────────────
+model RecurringTransactionSplit {
+  id                     String  @id @default(cuid())
+  recurringTransactionId String
+  label                  String
+  amountCents            Int
+  sortOrder              Int     @default(0)
+  categoryId             String?
+  note                   String?
+
+  recurringTransaction RecurringTransaction @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
+  category             Category?            @relation(fields: [categoryId], references: [id])
+
+  @@index([recurringTransactionId])
 }
 
 // ─────────────────────────────────────────────
