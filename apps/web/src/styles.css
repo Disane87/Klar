@@ -576,6 +576,24 @@ html.mode-mobile-preview body > * {
   backdrop-filter: blur(8px);
   background: oklch(from var(--bg) l c h / 0.85);
 }
+
+/* Bottom-nav active indicator — 2 px amber strip across the top edge of
+   the active tab (matches bundle styles.css Z. 431–434). Scoped to the
+   fixed mobile bottom-nav via the .md\:hidden + fixed bottom-0 combo
+   which only the shell's bottom-nav has. */
+nav.fixed.bottom-0 .active {
+  position: relative;
+}
+nav.fixed.bottom-0 .active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+}
 /* Centered popovers preserve their translateX(-50%) — apply this variant
    when the popover is anchored to the horizontal center. */
 @keyframes klar-pop-center {
