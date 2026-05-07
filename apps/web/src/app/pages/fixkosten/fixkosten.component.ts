@@ -146,7 +146,7 @@ export class FixkostenPageComponent {
     this.dialogService.open({
       title:     'Fixkosten erstellen',
       component: RecurringCreateDialogComponent,
-      width:     'sm',
+      width:     'md',
     });
   }
 
@@ -253,14 +253,14 @@ export class FixkostenPageComponent {
         title:     'Eintrag bearbeiten (Planspiel)',
         component: RecurringEditDialogComponent,
         inputs:    { item, planspielMode: true },
-        width:     'sm',
+        width:     'md',
       });
     } else {
       this.dialogService.open({
         title:     'Eintrag bearbeiten',
         component: RecurringEditDialogComponent,
         inputs:    { item, planspielMode: false },
-        width:     'sm',
+        width:     'md',
       });
     }
   }

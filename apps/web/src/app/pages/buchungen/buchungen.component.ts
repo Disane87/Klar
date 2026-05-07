@@ -121,7 +121,7 @@ export class BuchungenPageComponent {
       title:     'Buchung anlegen',
       component: TransactionDialogComponent,
       inputs:    { tx: null },
-      width:     'sm',
+      width:     'md',
     });
   }
 
@@ -130,7 +130,7 @@ export class BuchungenPageComponent {
       title:     'Buchung bearbeiten',
       component: TransactionDialogComponent,
       inputs:    { tx },
-      width:     'sm',
+      width:     'md',
     });
   }
 

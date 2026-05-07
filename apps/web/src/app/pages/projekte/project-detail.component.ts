@@ -198,7 +198,7 @@ export class ProjectDetailPageComponent {
       title:     planned ? 'Geplante Buchung anlegen' : 'Buchung anlegen',
       component: TransactionDialogComponent,
       inputs:    { tx: null, presetProjectId: p.id, presetPlanned: planned },
-      width:     'sm',
+      width:     'md',
     });
   }
 
@@ -207,7 +207,7 @@ export class ProjectDetailPageComponent {
       title:     tx.isPlanned ? 'Geplante Buchung bearbeiten' : 'Buchung bearbeiten',
       component: TransactionDialogComponent,
       inputs:    { tx },
-      width:     'sm',
+      width:     'md',
     });
   }
 
