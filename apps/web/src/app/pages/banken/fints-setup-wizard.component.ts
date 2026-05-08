@@ -3,14 +3,16 @@ import {
   Component,
   computed,
   inject,
+  OnInit,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { HouseholdStore } from '../../core/household/household.store';
 import { FintsStore } from '../../core/fints/fints.store';
 import {
   FintsService,
-  type FintsBankLookupResult,
+  type FintsBankLookupRecord,
   type FintsCreateConnectionResponse,
   type FintsDiscoveredAccount,
   type FintsSyncRunWithChallenge,
@@ -18,10 +20,24 @@ import {
 } from '../../core/fints/fints.service';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
+import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 
 type WizardStep = 'bank' | 'credentials' | 'tan' | 'accounts' | 'done' | 'failed';
+
+interface StepDef {
+  id: WizardStep;
+  label: string;
+  index: number;
+}
+
+const STEPS: readonly StepDef[] = [
+  { id: 'bank',        label: 'Bank',    index: 1 },
+  { id: 'credentials', label: 'Login',   index: 2 },
+  { id: 'tan',         label: 'TAN',     index: 3 },
+  { id: 'accounts',    label: 'Konten',  index: 4 },
+];
 
 interface AccountSelection {
   ref: string;
@@ -50,51 +66,85 @@ interface AccountSelection {
   selector: 'klar-fints-setup-wizard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, KlarInputComponent, KlarButtonComponent, KlarIconComponent],
+  imports: [
+    FormsModule,
+    KlarInputComponent,
+    KlarButtonComponent,
+    KlarComboboxComponent,
+    KlarIconComponent,
+  ],
   template: `
-    <div class="flex flex-col gap-(--s-5)">
-      <!-- Stepper -->
-      <ol class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-(--fg-3)">
-        <li [class.text-]="step() === 'bank'"
-            [style.color]="stepColor('bank')">1 Bank</li>
-        <li class="text-(--fg-3)">·</li>
-        <li [style.color]="stepColor('credentials')">2 Login</li>
-        <li class="text-(--fg-3)">·</li>
-        <li [style.color]="stepColor('tan')">3 TAN</li>
-        <li class="text-(--fg-3)">·</li>
-        <li [style.color]="stepColor('accounts')">4 Konten</li>
+    <div class="flex flex-col gap-4">
+      <!-- Stepper: numbered circles connected by progress lines. The
+           current step lights up in the accent tone, finished steps go
+           emerald with a check mark. -->
+      <ol class="flex items-center justify-between gap-1 px-1">
+        @for (s of steps; track s.id; let last = $last) {
+          <li class="flex items-center gap-1 flex-1" [class.flex-none]="last">
+            <div class="flex flex-col items-center gap-1 shrink-0">
+              <span
+                class="grid place-items-center size-7 rounded-full border text-[11px] mono font-medium transition-colors"
+                [class.bg-success]="isStepDone(s.id)"
+                [class.text-success-foreground]="isStepDone(s.id)"
+                [class.border-success]="isStepDone(s.id)"
+                [class.bg-accent]="isStepActive(s.id)"
+                [class.text-accent-foreground]="isStepActive(s.id)"
+                [class.border-accent]="isStepActive(s.id)"
+                [class.bg-transparent]="isStepPending(s.id)"
+                [class.text-muted-foreground]="isStepPending(s.id)"
+                [class.border-border]="isStepPending(s.id)"
+              >
+                @if (isStepDone(s.id)) {
+                  <klar-icon name="check" [size]="12" />
+                } @else {
+                  {{ s.index }}
+                }
+              </span>
+              <span
+                class="text-[10px] uppercase tracking-widest"
+                [class.text-foreground]="isStepActive(s.id)"
+                [class.text-success]="isStepDone(s.id)"
+                [class.text-muted-foreground]="isStepPending(s.id)"
+              >{{ s.label }}</span>
+            </div>
+            @if (!last) {
+              <span
+                class="flex-1 h-px transition-colors"
+                [class.bg-success]="isStepDone(s.id)"
+                [class.bg-border]="!isStepDone(s.id)"
+              ></span>
+            }
+          </li>
+        }
       </ol>
+
+      <hr class="border-(--line-soft)" />
 
       @if (step() === 'bank') {
         <section class="flex flex-col gap-3">
           <p class="text-[13px] text-(--fg-2)">
-            Tippe deine Bankleitzahl ein. Klar findet die FinTS-Endpunkt-Adresse automatisch.
+            Suche deine Bank — per Name oder Bankleitzahl. Klar findet die
+            FinTS-Endpunkt-Adresse automatisch.
           </p>
-          <klar-input
-            label="BLZ"
-            type="text"
-            placeholder="z. B. 37050198"
-            iconName="search"
-            [ngModel]="blz()"
-            (ngModelChange)="onBlzChange($event)"
-            hint="8 Ziffern · Sparkasse, VR-Banken, Direktbanken werden unterstützt"
-          />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] uppercase tracking-widest text-(--fg-2)">Bank</label>
+            <klar-combobox
+              [items]="banks()"
+              [value]="blz() || null"
+              (valueChange)="onBankPicked($event)"
+              [idOf]="bankId"
+              [displayWith]="bankLabel"
+              [loading]="banksLoading()"
+              placeholder="Bank suchen oder BLZ eintippen…"
+              searchPlaceholder="Name oder BLZ…"
+              ariaLabel="Bank wählen"
+            />
+            <span class="text-[11px] text-(--fg-3)">
+              Falls deine Bank nicht in der Liste ist, kannst du URL und Name manuell ergänzen.
+            </span>
+          </div>
           @if (lookupError()) {
             <div class="text-[12px] text-(--danger)">{{ lookupError() }}</div>
-          }
-          @if (lookupResult()?.found) {
-            <div class="rounded-md border border-(--line-soft) bg-(--bg-2) px-4 py-3 flex flex-col gap-1">
-              <div class="text-[14px] font-medium">{{ resolvedName() }}</div>
-              @if (resolvedCity()) {
-                <div class="text-[11px] text-(--fg-2)">{{ resolvedCity() }}</div>
-              }
-              @if (!resolvedFintsCapable()) {
-                <div class="text-[12px] text-(--accent) mt-1">
-                  Diese Bank meldet keinen FinTS-PIN/TAN-Zugang. Du kannst die URL gleich manuell
-                  eintragen.
-                </div>
-              }
-            </div>
           }
           <klar-input
             label="FinTS-Server (URL)"
@@ -103,16 +153,15 @@ interface AccountSelection {
             iconName="link"
             [ngModel]="serverUrl()"
             (ngModelChange)="serverUrl.set($event)"
-            hint="Wird vom Lookup vorausgefüllt — nur ändern, wenn deine Bank in der Liste fehlt."
           />
           <klar-input
             label="Anzeigename"
             type="text"
-            placeholder="Bankname"
+            placeholder="z. B. Sparkasse Köln"
             [ngModel]="bankName()"
             (ngModelChange)="bankName.set($event)"
           />
-          <div class="flex justify-end gap-2 pt-2">
+          <div class="flex justify-end gap-2 pt-1">
             <klar-button tone="ghost" (click)="cancel()">Abbrechen</klar-button>
             <klar-button
               tone="primary"
@@ -275,21 +324,27 @@ interface AccountSelection {
     </div>
   `,
 })
-export class FintsSetupWizardComponent {
+export class FintsSetupWizardComponent implements OnInit {
   protected readonly store = inject(FintsStore);
   private readonly fintsService = inject(FintsService);
   private readonly householdStore = inject(HouseholdStore);
   private readonly dialog = inject(KlarDialogService);
 
+  protected readonly steps = STEPS;
   protected readonly step = signal<WizardStep>('bank');
 
   // Step 1: bank
   protected readonly blz = signal('');
   protected readonly bankName = signal('');
   protected readonly serverUrl = signal('');
-  protected readonly lookupResult = signal<FintsBankLookupResult | null>(null);
   protected readonly lookupError = signal<string | null>(null);
-  private lookupTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly banks = signal<FintsBankLookupRecord[]>([]);
+  protected readonly banksLoading = signal(false);
+
+  /** Combobox accessors — kept as arrow props so Angular can pass them by reference. */
+  protected readonly bankId = (b: FintsBankLookupRecord) => b.blz;
+  protected readonly bankLabel = (b: FintsBankLookupRecord) =>
+    `${b.blz} · ${b.name}${b.city ? ` · ${b.city}` : ''}`;
 
   // Step 2: credentials
   protected readonly loginName = signal('');
@@ -316,6 +371,26 @@ export class FintsSetupWizardComponent {
     () => /^[0-9]{8}$/.test(this.blz()) && this.bankName().trim().length > 0 && this.serverUrl().trim().length > 0,
   );
 
+  // ── Stepper status ──────────────────────────────────────────────────────────
+
+  private readonly stepOrder = STEPS.map(s => s.id);
+  private readonly currentIndex = computed(() => this.stepOrder.indexOf(this.step()));
+
+  protected isStepActive(id: WizardStep): boolean {
+    return this.step() === id;
+  }
+  protected isStepDone(id: WizardStep): boolean {
+    const idx = this.stepOrder.indexOf(id);
+    if (this.step() === 'done' || this.step() === 'failed') {
+      // Failed branch — keep all 4 outlined; only success marks them green.
+      return this.step() === 'done';
+    }
+    return idx >= 0 && idx < this.currentIndex();
+  }
+  protected isStepPending(id: WizardStep): boolean {
+    return !this.isStepActive(id) && !this.isStepDone(id);
+  }
+
   protected readonly canSubmitCredentials = computed(
     () => this.loginName().trim().length > 0 && this.pin().length > 0,
   );
@@ -324,21 +399,6 @@ export class FintsSetupWizardComponent {
     () => this.accountSelections().some(a => a.selected),
   );
 
-  protected readonly resolvedName = computed(() => {
-    const r = this.lookupResult();
-    return r?.found ? r.record.name : '';
-  });
-
-  protected readonly resolvedCity = computed(() => {
-    const r = this.lookupResult();
-    return r?.found ? r.record.city ?? '' : '';
-  });
-
-  protected readonly resolvedFintsCapable = computed(() => {
-    const r = this.lookupResult();
-    return r?.found ? r.fintsCapable : false;
-  });
-
   protected readonly tanImageSrc = computed(() => {
     const c = this.tanChallenge();
     if (!c?.mediaBase64) return '';
@@ -346,32 +406,38 @@ export class FintsSetupWizardComponent {
     return `data:${mime};base64,${c.mediaBase64}`;
   });
 
-  protected stepColor(s: WizardStep): string {
-    return this.step() === s ? 'var(--accent)' : 'var(--fg-3)';
+  ngOnInit(): void {
+    void this.loadBanks();
   }
 
-  protected onBlzChange(value: string): void {
-    this.blz.set(value);
-    this.lookupError.set(null);
-    if (this.lookupTimer) clearTimeout(this.lookupTimer);
-    if (!/^[0-9]{8}$/.test(value)) return;
-    this.lookupTimer = setTimeout(() => this.runLookup(value), 250);
-  }
-
-  private async runLookup(blz: string): Promise<void> {
+  private async loadBanks(): Promise<void> {
     const householdId = this.householdStore.activeId();
     if (!householdId) return;
+    this.banksLoading.set(true);
     try {
-      const result = await new Promise<FintsBankLookupResult>((resolve, reject) =>
-        this.fintsService.lookupBank(householdId, blz).subscribe({ next: resolve, error: reject }),
-      );
-      this.lookupResult.set(result);
-      if (result.found) {
-        this.bankName.set(result.record.name);
-        this.serverUrl.set(result.record.pinTanUrl ?? '');
-      }
+      const list = await firstValueFrom(this.fintsService.listBanks(householdId));
+      this.banks.set(list);
     } catch {
-      this.lookupError.set('Bank-Lookup fehlgeschlagen — du kannst die URL manuell eintragen.');
+      this.lookupError.set('Bankliste konnte nicht geladen werden — du kannst BLZ und URL manuell eintragen.');
+    } finally {
+      this.banksLoading.set(false);
+    }
+  }
+
+  /** Combobox-Auswahl: BLZ als id → Name + URL aus dem Record vorausfüllen. */
+  protected onBankPicked(blz: string | null): void {
+    this.lookupError.set(null);
+    if (!blz) {
+      this.blz.set('');
+      this.bankName.set('');
+      this.serverUrl.set('');
+      return;
+    }
+    this.blz.set(blz);
+    const record = this.banks().find(b => b.blz === blz);
+    if (record) {
+      this.bankName.set(record.name);
+      this.serverUrl.set(record.pinTanUrl ?? '');
     }
   }
 

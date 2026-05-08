@@ -127,6 +127,12 @@ export class FintsService {
     );
   }
 
+  listBanks(householdId: string): Observable<FintsBankLookupRecord[]> {
+    return this.http.get<FintsBankLookupRecord[]>(
+      `${this.baseUrl(householdId)}/banks`,
+    );
+  }
+
   list(householdId: string): Observable<FintsConnectionResponse[]> {
     return this.http.get<FintsConnectionResponse[]>(`${this.baseUrl(householdId)}/connections`);
   }

@@ -68,6 +68,11 @@ export class FintsService {
     return this.registry.lookup(blz);
   }
 
+  /** Full searchable bank list for the setup wizard's combobox. */
+  listBanks() {
+    return this.registry.listFintsCapable();
+  }
+
   async list(ctx: RequestContext): Promise<FintsConnection[]> {
     return this.prisma.fintsConnection.findMany({
       where: { householdId: ctx.householdId },

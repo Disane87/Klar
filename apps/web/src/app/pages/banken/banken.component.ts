@@ -237,7 +237,9 @@ export class BankenPageComponent implements OnInit {
       title: 'Bank verbinden',
       component: FintsSetupWizardComponent,
       width: 'lg',
-      height: 'tall',
+      // Default height='auto' — dialog grows with content. The wizard
+      // body itself caps inner-scroll, so a long account list won't
+      // blow the viewport.
       disableBackdropClose: true,
     });
   }

@@ -76,6 +76,18 @@ export class BankRegistryService implements OnModuleInit {
   }
 
   /**
+   * Returns the full list of FinTS-capable banks for the setup wizard's
+   * searchable combobox. Excludes registry entries without a PIN/TAN URL
+   * since they can't be set up automatically anyway. Sorted alphabetically
+   * by name.
+   */
+  listFintsCapable(): BankRecord[] {
+    return Array.from(this.cache.values())
+      .filter(r => !!r.pinTanUrl)
+      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  }
+
+  /**
    * Returns the resolution result for a BLZ. Three cases:
    *   - found + fintsCapable: ready to plug into the FinTS setup wizard
    *   - found + !fintsCapable: bank is known but doesn't ship a PIN/TAN URL;

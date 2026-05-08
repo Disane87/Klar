@@ -51,6 +51,11 @@ export class FintsController {
     return this.service.lookupBank(blz);
   }
 
+  @Get('banks')
+  listBanks() {
+    return this.service.listBanks();
+  }
+
   @Get('connections')
   async listConnections(@ReqContext() ctx: RequestContext) {
     const items = await this.service.list(ctx);
