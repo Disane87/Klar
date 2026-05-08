@@ -16,6 +16,7 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
 import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
@@ -47,43 +48,27 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
     KlarBadgeComponent,
     KlarMetricTileComponent,
     KlarEmptyStateComponent,
+    KlarHeroComponent,
     KlarIconComponent,
   ],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16">
-      <!-- Hero strip -->
-      <section
-        class="rounded-lg border border-(--line) bg-(--bg-1) px-5 py-5 flex flex-col md:flex-row gap-(--s-6) items-stretch"
-        style="box-shadow: var(--shadow-1);"
+      <klar-hero
+        eyebrow="FinTS-Bankzugriff"
+        [title]="heroTitle()"
+        sub="Verbinde dein Online-Banking, damit Buchungen automatisch ankommen — ohne CSV-Export. Klar speichert deinen PIN nur verschlüsselt und nie auf einem fremden Server."
       >
-        <div class="flex-1 min-w-0 flex flex-col gap-2">
-          <span class="eyebrow inline-flex items-center gap-2">
-            <klar-icon name="wallet" [size]="11" /> FinTS-Bankzugriff
-          </span>
-          <span
-            class="text-[20px] font-medium leading-tight"
-            style="font-family: var(--font-display); letter-spacing: -0.02em;"
-          >
-            {{ heroTitle() }}
-          </span>
-          <p class="text-[13px] text-(--fg-2) max-w-prose">
-            Verbinde dein Online-Banking, damit Buchungen automatisch ankommen — ohne CSV-Export.
-            Klar speichert deinen PIN nur verschlüsselt und nie auf einem fremden Server.
-          </p>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
+        <klar-icon heroEyebrowIcon name="wallet" [size]="11" />
+        <div heroActions class="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
           <klar-metric-tile label="Aktive Verbindungen" [value]="activeCount() + ''" />
-          <klar-metric-tile
-            label="Letzter Sync"
-            [value]="lastSyncLabel()"
-          />
+          <klar-metric-tile label="Letzter Sync" [value]="lastSyncLabel()" />
           <klar-metric-tile
             label="Aufmerksamkeit"
             [value]="reauthCount() + ''"
             [accent]="reauthCount() > 0"
           />
         </div>
-      </section>
+      </klar-hero>
 
       @if (store.hasReauthRequired()) {
         <section

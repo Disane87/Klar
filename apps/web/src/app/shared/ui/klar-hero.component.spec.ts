@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, Component, signal } from '@angular/core';
-import { KlarHeroComponent, type KlarHeroVariant } from './klar-hero.component';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { KlarHeroComponent } from './klar-hero.component';
 
 @Component({
   standalone: true,
   imports: [KlarHeroComponent],
   template: `
     <klar-hero
-      [variant]="variant()"
       [eyebrow]="eyebrow()"
       [title]="title()"
       [sub]="sub()"
@@ -17,7 +17,6 @@ import { KlarHeroComponent, type KlarHeroVariant } from './klar-hero.component';
   `,
 })
 class HostComponent {
-  variant = signal<KlarHeroVariant>('admin');
   eyebrow = signal<string | null>('Klar Self-Host');
   title   = signal<string>('Alles läuft');
   sub     = signal<string | null>('Postgres 16, OIDC, Backup auf S3.');
@@ -28,7 +27,7 @@ describe('KlarHeroComponent', () => {
     TestBed.configureTestingModule({
       imports: [HostComponent],
       providers: [provideZonelessChangeDetection()],
-    }).compileComponents()
+    }).compileComponents(),
   );
 
   it('renders eyebrow, title and sub from inputs', () => {
@@ -48,43 +47,27 @@ describe('KlarHeroComponent', () => {
     expect(action?.textContent).toContain('Backup');
   });
 
-  it('renders the gradient + glow decor for admin and vert variants only', () => {
+  it('omits the eyebrow row when input is null', () => {
     const fixture = TestBed.createComponent(HostComponent);
-    const setVariant = (v: KlarHeroVariant) => {
-      fixture.componentInstance.variant.set(v);
-      fixture.detectChanges();
-    };
-    const decorCount = () =>
-      fixture.nativeElement.querySelectorAll('[aria-hidden="true"]').length;
-
-    setVariant('admin');
-    expect(decorCount()).toBe(2);
-
-    setVariant('vert');
-    expect(decorCount()).toBe(2);
-
-    setVariant('haushalt');
-    expect(decorCount()).toBe(0);
-
-    setVariant('profile');
-    expect(decorCount()).toBe(0);
+    fixture.componentInstance.eyebrow.set(null);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).not.toContain('Klar Self-Host');
   });
 
-  it('applies the bundle-spec title size per variant', () => {
+  it('always renders the gradient + glow decor (single canonical look)', () => {
     const fixture = TestBed.createComponent(HostComponent);
-    const titleEl = (): HTMLElement =>
-      fixture.nativeElement.querySelector('div[style*="font-display"]');
-
-    fixture.componentInstance.variant.set('admin');
     fixture.detectChanges();
-    expect(titleEl().className).toContain('text-[26px]');
+    const decor = fixture.nativeElement.querySelectorAll('span[aria-hidden="true"]');
+    expect(decor.length).toBe(2);
+  });
 
-    fixture.componentInstance.variant.set('haushalt');
+  it('renders the title in the canonical text-[26px] size', () => {
+    const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
-    expect(titleEl().className).toContain('text-[32px]');
-
-    fixture.componentInstance.variant.set('vert');
-    fixture.detectChanges();
-    expect(titleEl().className).toContain('text-[22px]');
+    const titleEl: HTMLElement = fixture.nativeElement.querySelector(
+      'div[style*="font-display"]',
+    );
+    expect(titleEl.className).toContain('text-[26px]');
   });
 });

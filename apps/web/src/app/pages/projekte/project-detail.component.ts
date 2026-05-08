@@ -17,6 +17,7 @@ import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.compon
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
 import type { Transaction } from '../../core/transactions/transactions.store';
@@ -32,6 +33,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
     KlarIconComponent,
     KlarMoneyPipe,
     KlarMetricTileComponent,
+    KlarHeroComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
@@ -167,6 +169,11 @@ export class ProjectDetailPageComponent {
       case 'ARCHIVED':  return 'Archiviert';
       default:          return status;
     }
+  }
+
+  /** Hero eyebrow combines "Projekt" with the status (e.g. "Projekt · Aktiv"). */
+  heroEyebrow(p: { status: string }): string {
+    return `Projekt · ${this.statusLabel(p.status)}`;
   }
 
   formatDate(dateStr: string): string {

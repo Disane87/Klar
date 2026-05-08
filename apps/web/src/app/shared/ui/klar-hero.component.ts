@@ -1,14 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-export type KlarHeroVariant = 'admin' | 'haushalt' | 'vert' | 'profile';
-
-const TITLE_SIZE: Record<KlarHeroVariant, string> = {
-  admin:    'text-[26px]',
-  haushalt: 'text-[32px]',
-  vert:     'text-[22px]',
-  profile:  'text-[22px]',
-};
-
+/**
+ * Canonical hero strip for `/app/*` pages.
+ *
+ * One look across the whole app — anchored on the admin-page hero design
+ * (gradient decor, larger Fraunces title, accent eyebrow). Per CLAUDE.md
+ * "Heroes always use `<klar-hero>`" — no inline rounded-lg/border/p-5
+ * sections that recreate this layout.
+ *
+ * Slots:
+ * - `[heroEyebrowIcon]` — optional icon next to the eyebrow text
+ * - `[heroBody]`        — extra body content under the subtitle
+ * - `[heroActions]`     — right-aligned cluster (buttons, metric-tile
+ *                         grid, status chips). Wraps below the title on
+ *                         narrow viewports.
+ */
 @Component({
   selector: 'klar-hero',
   standalone: true,
@@ -17,17 +23,16 @@ const TITLE_SIZE: Record<KlarHeroVariant, string> = {
     class:
       'relative grid gap-(--s-5) p-(--s-5) items-center overflow-hidden ' +
       'border border-(--line-soft) rounded-(--r-8) bg-(--bg-1) ' +
-      'grid-cols-[1fr_auto]',
+      'grid-cols-1 md:grid-cols-[1fr_auto]',
   },
   template: `
-    @if (decor()) {
-      <span aria-hidden="true"
-            class="absolute inset-0 pointer-events-none
-                   bg-[linear-gradient(135deg,oklch(from_var(--accent)_l_c_h/0.10),transparent_60%)]"></span>
-      <span aria-hidden="true"
-            class="absolute inset-0 pointer-events-none
-                   bg-[radial-gradient(60%_100%_at_100%_0%,oklch(from_var(--accent)_l_c_h/0.18),transparent_60%)]"></span>
-    }
+    <span aria-hidden="true"
+          class="absolute inset-0 pointer-events-none
+                 bg-[linear-gradient(135deg,oklch(from_var(--accent)_l_c_h/0.10),transparent_60%)]"></span>
+    <span aria-hidden="true"
+          class="absolute inset-0 pointer-events-none
+                 bg-[radial-gradient(60%_100%_at_100%_0%,oklch(from_var(--accent)_l_c_h/0.18),transparent_60%)]"></span>
+
     <div class="relative z-1 min-w-0">
       @if (eyebrow()) {
         <div class="text-[10px] uppercase tracking-[0.18em] text-(--accent) font-medium flex items-center gap-1.5">
@@ -35,7 +40,7 @@ const TITLE_SIZE: Record<KlarHeroVariant, string> = {
           <span>{{ eyebrow() }}</span>
         </div>
       }
-      <div [class]="titleClass()"
+      <div class="text-[26px] font-medium text-(--fg)"
            style="font-family: var(--font-display); letter-spacing: -0.02em; line-height: 1.1; margin-top: 4px;">
         {{ title() }}
       </div>
@@ -46,23 +51,13 @@ const TITLE_SIZE: Record<KlarHeroVariant, string> = {
       }
       <ng-content select="[heroBody]" />
     </div>
-    <div class="relative z-1 flex gap-2 items-center">
+    <div class="relative z-1 flex flex-wrap gap-2 items-center md:justify-end">
       <ng-content select="[heroActions]" />
     </div>
   `,
 })
 export class KlarHeroComponent {
-  readonly variant = input<KlarHeroVariant>('admin');
   readonly eyebrow = input<string | null>(null);
   readonly title   = input.required<string>();
   readonly sub     = input<string | null>(null);
-
-  protected readonly decor = computed(() => {
-    const v = this.variant();
-    return v === 'admin' || v === 'vert';
-  });
-
-  protected readonly titleClass = computed(() =>
-    `${TITLE_SIZE[this.variant()]} font-medium text-(--fg)`,
-  );
 }

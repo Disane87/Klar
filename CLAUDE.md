@@ -142,6 +142,22 @@ Niemals nackte `<input>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials imme
 - Dark Mode von Anfang an mit `dark:` — niemals nachrüsten
 - Jede Page unter `/app/*` braucht Page-Header (Titel + Actions) — nie nacktes `<h1>` im Content
 
+### Hero-Pattern — `<klar-hero>` Pflicht (app-weit, ohne Ausnahme)
+
+Jeder Hero im App-Bereich `/app/*` ist `<klar-hero>` aus `apps/web/src/app/shared/ui/klar-hero.component.ts`. Eine kanonische Optik (admin-style: Eyebrow in Accent-Farbe, 26px-Fraunces-Title, Sub-Text, Gradient-Decor, Action-Cluster rechts), keine page-spezifischen Hero-Styles, keine Inline-Nachbauten.
+
+Slots:
+- `[heroEyebrowIcon]` — kleines Icon links neben der Eyebrow-Zeile
+- `[heroBody]` — zusätzlicher Body unter dem Subtitle
+- `[heroActions]` — rechts platziertes Cluster: Buttons, Metric-Tile-Grids, Status-Chips, Money-Stats. Auf Mobile bricht es unter den Title.
+
+Wenn eine Page eine andere Visual-Sprache wirklich braucht (z. B. Money-Headline, Project-Color-Theme), wird das als Feature in `klar-hero` ergänzt (zusätzliche Inputs, CSS-Var-Override) — niemals als Page-lokales Hero-Layout. Das Design-System hat **eine** Hero-Definition, alles andere driftet auseinander.
+
+Verboten:
+- Inline `<section class="rounded-lg border border-(--line) bg-(--bg-1) px-5 py-5 …">` mit eigener Eyebrow-+-Title-Struktur
+- Page-spezifische `.hero { … }` CSS-Klassen für Layout/Decor des Hero-Elements
+- Title-Override per `style="font-family: var(--font-display); font-size: …px"` auf Page-Level
+
 ---
 
 ## Mobile-First & PWA

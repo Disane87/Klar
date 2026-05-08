@@ -14,6 +14,7 @@ import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.compon
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 
 interface VertraegeTab {
@@ -39,30 +40,17 @@ const TABS: VertraegeTab[] = [
     KlarMoneyPipe,
     KlarIconComponent,
     KlarButtonComponent,
+    KlarHeroComponent,
   ],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16">
-      <!-- Hero strip -->
-      <section
-        class="rounded-lg border border-(--line) bg-(--bg-1) px-5 py-5 flex flex-col md:flex-row gap-(--s-6) items-stretch"
-        style="box-shadow: var(--shadow-1);"
+      <klar-hero
+        eyebrow="Auto-Erkennung aktiv"
+        [title]="vertraegeHeroTitle()"
+        sub="Klar erkennt wiederkehrende Buchungen anhand von Betrag, Empfänger und Zyklus. Beim Bestätigen werden alle vergangenen Treffer rückwirkend mit dem Vertrag verknüpft."
       >
-        <div class="flex-1 min-w-0 flex flex-col gap-2">
-          <span class="eyebrow inline-flex items-center gap-2">
-            <klar-icon name="planspiel" [size]="11" /> Auto-Erkennung aktiv
-          </span>
-          <span
-            class="text-[20px] font-medium leading-tight"
-            style="font-family: var(--font-display); letter-spacing: -0.02em;"
-          >
-            {{ activeCount() }} erkannte Verträge · {{ candidateCount() }} Vorschläge zur Bestätigung
-          </span>
-          <p class="text-[13px] text-(--fg-2) max-w-prose">
-            Klar erkennt wiederkehrende Buchungen anhand von Betrag, Empfänger und Zyklus.
-            Beim Bestätigen werden alle vergangenen Treffer rückwirkend mit dem Vertrag verknüpft.
-          </p>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
+        <klar-icon heroEyebrowIcon name="planspiel" [size]="11" />
+        <div heroActions class="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
           <klar-metric-tile
             label="Monatslast fix"
             [value]="(totalMonthlyCents() | klarMoney) ?? '—'"
@@ -77,7 +65,7 @@ const TABS: VertraegeTab[] = [
             [accent]="!!nextActionLabel()"
           />
         </div>
-      </section>
+      </klar-hero>
 
       <!-- Renewal / price-change alerts -->
       @if (alerts().length > 0) {
@@ -271,6 +259,10 @@ export class VertraegeComponent implements OnInit {
 
   protected readonly activeCount = computed(() => this.store.active().length);
   protected readonly candidateCount = computed(() => this.store.candidates().length);
+
+  protected readonly vertraegeHeroTitle = computed(() =>
+    `${this.activeCount()} erkannte Verträge · ${this.candidateCount()} Vorschläge zur Bestätigung`,
+  );
 
   protected readonly totalMonthlyCents = computed(() =>
     this.store.active()

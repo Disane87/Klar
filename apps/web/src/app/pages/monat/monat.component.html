@@ -17,23 +17,25 @@
 
   <div class="p-(--s-6) pb-16 flex flex-col gap-(--s-6)">
 
-    <!-- Hero: Überschuss / Defizit (Fraunces) — bundle PageMonth equivalent -->
-    <div class="card flex flex-col gap-1 px-5 py-5">
-      <span class="eyebrow">
-        {{ surplusPositive() ? 'Überschuss' : 'Defizit' }}
-        @if (isCurrentMonth()) { · {{ statusDate() }} }
-      </span>
-      <span
-        class="text-[40px] leading-none mono"
-        style="font-family: var(--font-display); letter-spacing: -0.02em;"
-        [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass"
-      >{{ store.cashflow()!.surplusCents | klarMoney }}</span>
-      <div class="flex gap-(--s-4) mt-2 text-[12px] mono">
-        <span class="text-(--success)">+ {{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
-        <span class="text-(--fg-3)">→</span>
-        <span class="text-(--danger)">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
+    <klar-hero
+      [eyebrow]="heroEyebrow()"
+      [title]="surplusPositive() ? 'Im Plus' : 'Im Minus'"
+      [sub]="surplusPositive()
+        ? 'Mehr Einnahmen als Ausgaben in diesem Monat — die Bilanz zeigt was übrig bleibt.'
+        : 'Mehr Ausgaben als Einnahmen in diesem Monat — die Bilanz zeigt die Lücke.'"
+    >
+      <div heroActions class="flex flex-col items-end gap-1">
+        <span
+          class="text-[32px] leading-none mono"
+          [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass"
+        >{{ store.cashflow()!.surplusCents | klarMoney }}</span>
+        <div class="flex gap-(--s-3) text-[12px] mono">
+          <span class="text-(--success)">+ {{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
+          <span class="text-(--fg-3)">→</span>
+          <span class="text-(--danger)">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
+        </div>
       </div>
-    </div>
+    </klar-hero>
 
     <!-- Soll vs. Ist (per category) — budget meter -->
     @if (budgetStore.rows().length > 0) {

@@ -35,69 +35,70 @@
 
   @else if (project(); as p) {
 
-    <!-- ─── Hero ─────────────────────────────────────────────────── -->
-    <header class="hero" [style.--project-color]="p.color">
-      <div class="hero-top">
-        <div class="hero-name-wrap">
-          <span class="hero-color-bar" aria-hidden="true"></span>
-          <h1 class="hero-name">{{ p.name }}</h1>
-        </div>
-        <span class="status-chip"
-              [class.chip-active]="p.status === 'ACTIVE'"
-              [class.chip-completed]="p.status === 'COMPLETED'"
-              [class.chip-archived]="p.status === 'ARCHIVED'">
-          {{ statusLabel(p.status) }}
-        </span>
-      </div>
-
-      @if (p.description) {
-        <p class="hero-desc">{{ p.description }}</p>
-      }
-
-      @if (formatRange()) {
-        <p class="hero-range">{{ formatRange() }}</p>
-      }
-
-      @if (stats(); as s) {
-        @if (s.totalBudgetCents !== null) {
-          <div class="progress-wrap">
-            <div class="meter" role="progressbar"
-                 [attr.aria-valuenow]="progressPercent()"
-                 aria-valuemin="0" aria-valuemax="100">
-              <i class="meter-planned" [style.width.%]="plannedProgressPercent()"></i>
-              <i class="meter-realized" [style.width.%]="progressPercent()"
-                 [style.background]="p.color"></i>
-            </div>
-            <span class="progress-label">
-              {{ progressPercent() }}&nbsp;% realisiert
-              @if (plannedProgressPercent() > progressPercent()) {
-                · {{ plannedProgressPercent() }}&nbsp;% inkl. geplant
+    <div class="px-(--s-6) pt-(--s-5)">
+      <klar-hero
+        [eyebrow]="heroEyebrow(p)"
+        [title]="p.name"
+        [sub]="p.description ?? null"
+      >
+        @if (formatRange() || (stats() && stats()!.totalBudgetCents !== null)) {
+          <div heroBody class="mt-3 flex flex-col gap-2">
+            @if (formatRange()) {
+              <p class="text-[12px] text-(--fg-2) mono">{{ formatRange() }}</p>
+            }
+            @if (stats(); as s) {
+              @if (s.totalBudgetCents !== null) {
+                <div>
+                  <div
+                    class="relative h-1 rounded-full overflow-hidden bg-(--line-soft)"
+                    role="progressbar"
+                    [attr.aria-label]="'Projektfortschritt: ' + progressPercent() + ' Prozent realisiert'"
+                    [attr.aria-valuenow]="progressPercent()"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <i
+                      class="absolute inset-y-0 left-0 rounded-full bg-(--line)"
+                      [style.width.%]="plannedProgressPercent()"
+                    ></i>
+                    <i
+                      class="absolute inset-y-0 left-0 rounded-full"
+                      [style.width.%]="progressPercent()"
+                      [style.background]="p.color"
+                    ></i>
+                  </div>
+                  <span class="block text-[11px] text-(--fg-2) mono mt-1">
+                    {{ progressPercent() }}&nbsp;% realisiert
+                    @if (plannedProgressPercent() > progressPercent()) {
+                      · {{ plannedProgressPercent() }}&nbsp;% inkl. geplant
+                    }
+                    · von {{ s.totalBudgetCents | klarMoney }}
+                  </span>
+                </div>
               }
-              · von {{ s.totalBudgetCents | klarMoney }}
-            </span>
+            }
           </div>
         }
-      }
-    </header>
 
-    <!-- ─── 3-up klar-metric-tile hero strip (Budget / Ausgegeben / Bilanz) ─ -->
-    @if (stats(); as s) {
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-(--s-3) px-(--s-6) pt-(--s-5)">
-        <klar-metric-tile
-          label="Budget"
-          [value]="(s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—') ?? '—'"
-        />
-        <klar-metric-tile
-          label="Ausgegeben"
-          [value]="(s.spentCents | klarMoney) ?? '—'"
-        />
-        <klar-metric-tile
-          label="Bilanz"
-          [value]="(s.balanceCents | klarMoney) ?? '—'"
-          [accent]="s.balanceCents >= 0"
-        />
-      </div>
-    }
+        @if (stats(); as s) {
+          <div heroActions class="grid grid-cols-3 gap-(--s-3)">
+            <klar-metric-tile
+              label="Budget"
+              [value]="(s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—') ?? '—'"
+            />
+            <klar-metric-tile
+              label="Ausgegeben"
+              [value]="(s.spentCents | klarMoney) ?? '—'"
+            />
+            <klar-metric-tile
+              label="Bilanz"
+              [value]="(s.balanceCents | klarMoney) ?? '—'"
+              [accent]="s.balanceCents >= 0"
+            />
+          </div>
+        }
+      </klar-hero>
+    </div>
 
     <!-- ─── Buchungen — single .card + .row pattern ─────────────── -->
     <div class="px-(--s-6) pb-(--s-5)">

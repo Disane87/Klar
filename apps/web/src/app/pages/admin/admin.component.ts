@@ -50,7 +50,6 @@ const JOB_ICONS: Record<string, string> = {
 
       <!-- Hero -->
       <klar-hero
-        variant="admin"
         [eyebrow]="'Klar Self-Host · ' + instanceHost()"
         [title]="heroTitle()"
         [sub]="heroDescription()"

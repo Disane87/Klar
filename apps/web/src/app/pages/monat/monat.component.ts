@@ -5,6 +5,7 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { BudgetVsActualsStore } from '../../core/overview/budgets-vs-actuals.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -22,6 +23,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
     KlarAsyncStateComponent,
     KlarLoadingTplDirective,
     KlarSkeletonComponent,
+    KlarHeroComponent,
   ],
   templateUrl: './monat.component.html',
   styleUrl: './monat.component.css',
@@ -107,5 +109,11 @@ export class MonatPageComponent {
     const [year, month] = this.store.currentMonth().split('-');
     const now = new Date();
     return now.getFullYear() === Number(year) && now.getMonth() + 1 === Number(month);
+  });
+
+  /** Hero eyebrow built from the surplus state plus an optional date stamp. */
+  protected readonly heroEyebrow = computed(() => {
+    const base = this.surplusPositive() ? 'Überschuss' : 'Defizit';
+    return this.isCurrentMonth() ? `${base} · ${this.statusDate()}` : base;
   });
 }
