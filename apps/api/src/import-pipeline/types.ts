@@ -47,6 +47,12 @@ export interface RawBooking {
   bankTxId?: string;
   /** FinTS GVC / SWIFT code. */
   bookingType?: string;
+  /**
+   * Phase 14b — set when source='fints' so detection can group standing
+   * orders without re-parsing GVC codes. Derived via
+   * @klar/shared#detectTransactionKind in the FinTS sync runner.
+   */
+  transactionKind?: import('@prisma/client').TransactionKind;
   source: 'csv' | 'fints';
   /** FintsSyncRun.id or CsvImport.id. */
   sourceRunId: string;

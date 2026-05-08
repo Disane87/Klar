@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TransactionKind } from '@prisma/client';
 import { ImportPipelineService } from './import-pipeline.service';
 import type { ImportPipelineRepository } from './import-pipeline.repository';
 import type { RawBooking } from './types';
@@ -109,6 +110,59 @@ describe('ImportPipelineService.ingest', () => {
     vi.mocked(repo.findFallbackCategory).mockResolvedValue(null);
     await expect(service.ingest([makeBooking()], ctxFinTS)).rejects.toThrow(
       /no usable income\/expense category/,
+    );
+  });
+
+  it('persists transactionKind from RawBooking on the inserted Transaction', async () => {
+    const { service, repo } = buildService();
+
+    await service.ingest(
+      [
+        makeBooking({
+          bookingDate: '2026-05-01',
+          amountCents: -12550,
+          purposeRaw: 'Dauerauftrag Miete',
+          counterpartyName: 'Vermieter',
+          source: 'fints',
+          sourceRunId: 'run-1',
+          bookingType: '158',
+          transactionKind: TransactionKind.STANDING_ORDER,
+        }),
+      ],
+      ctxFinTS,
+    );
+
+    expect(repo.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ transactionKind: TransactionKind.STANDING_ORDER }),
+    );
+  });
+
+  it('passes null transactionKind for csv rows without transactionKind set', async () => {
+    const { service, repo } = buildService();
+
+    await service.ingest(
+      [
+        makeBooking({
+          bookingDate: '2026-05-01',
+          amountCents: 200,
+          purposeRaw: 'note',
+          source: 'csv',
+          sourceRunId: 'csv-1',
+          bankTxId: 'csv-tx-1',
+          transactionKind: undefined,
+        }),
+      ],
+      {
+        householdId: 'hh1',
+        accountId: 'acc-fints',
+        triggeredByUserId: 'u1',
+        source: 'csv',
+        sourceImportId: 'csv-1',
+      },
+    );
+
+    expect(repo.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ transactionKind: null }),
     );
   });
 

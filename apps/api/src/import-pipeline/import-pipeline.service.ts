@@ -114,6 +114,7 @@ export class ImportPipelineService {
         sourceImportId: ctx.sourceImportId ?? null,
         fintsSyncRunId: ctx.fintsSyncRunId ?? null,
         bankFieldsLockedAt: ctx.source === 'fints' ? new Date() : null,
+        transactionKind: booking.transactionKind ?? null,
       });
       imported++;
     }

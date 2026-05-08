@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, Transaction, TxSource } from '@prisma/client';
+import type { Prisma, Transaction, TransactionKind, TxSource } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateIngestedTransactionData {
@@ -25,6 +25,8 @@ export interface CreateIngestedTransactionData {
   fintsSyncRunId?: string | null;
   /** Set to "now" when source='fints' so the UI locks bank-fields. */
   bankFieldsLockedAt?: Date | null;
+  /** Detected transaction kind (e.g. STANDING_ORDER); null when unknown. */
+  transactionKind: TransactionKind | null;
 }
 
 @Injectable()
