@@ -51,7 +51,9 @@ export class KlarLoadingTplDirective {
 @Component({
   selector: 'klar-async-state',
   standalone: true,
-  host: { class: 'flex flex-col flex-1 min-h-0' },
+  // Desktop: fills the inner-scroll content panel (flex-1 + min-h-0).
+  // Mobile: lays out naturally so the document can scroll past it.
+  host: { class: 'flex flex-col md:flex-1 md:min-h-0' },
   imports: [
     NgTemplateOutlet,
     KlarEmptyStateComponent,
