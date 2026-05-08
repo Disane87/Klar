@@ -19,11 +19,15 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   selector: 'klar-hero',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // App-wide rule: heroes are desktop-only. Mobile pages get the
+  // <klar-mobile-header> from the shell instead. The hidden class on the host
+  // takes the entire <klar-hero> element out of the layout (no margin gap left
+  // behind by `gap-(--s-5)` on the parent flex column).
   host: {
     class:
-      'relative grid gap-(--s-5) p-(--s-5) items-center overflow-hidden ' +
+      'hidden md:grid relative gap-(--s-5) p-(--s-5) items-center overflow-hidden ' +
       'border border-(--line-soft) rounded-(--r-8) bg-(--bg-1) ' +
-      'grid-cols-1 md:grid-cols-[1fr_auto]',
+      'md:grid-cols-[1fr_auto]',
   },
   template: `
     <span aria-hidden="true"
