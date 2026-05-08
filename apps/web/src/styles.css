@@ -250,9 +250,19 @@
 /* ============================================================
    Base styles
    ============================================================ */
+/* Mobile (< 768px): document scrolls naturally so the bottom-nav stays
+   reachable while pages grow taller than the viewport.
+   Desktop (≥ 768px): app-shell takes the viewport and pages get an inner
+   scroll container (sidebar + topbar stay fixed). */
 html, body {
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
+}
+
+@media (min-width: 768px) {
+  html, body {
+    height: 100dvh;
+    overflow: hidden;
+  }
 }
 
 html {
