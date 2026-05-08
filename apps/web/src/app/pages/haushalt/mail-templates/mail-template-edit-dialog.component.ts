@@ -12,6 +12,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HlmInputDirective } from '../../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../../shared/ui/hlm/hlm-label.directive';
+import { HlmTabsImports } from '../../../shared/ui/hlm/hlm-tabs';
 import { KlarSelectComponent, type KlarSelectOption } from '../../../shared/ui/klar-select.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
 import { KlarDialogFooterComponent } from '../../../shared/ui/klar-dialog-footer.component';
@@ -77,6 +78,7 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
     FormsModule,
     HlmInputDirective,
     HlmLabelDirective,
+    HlmTabsImports,
     KlarSelectComponent,
     KlarDialogFooterComponent,
     KlarCodeEditorComponent,
@@ -84,10 +86,10 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
   host: { class: 'flex flex-col h-full' },
   template: `
     <!-- Top fields -->
-    <div class="flex flex-col gap-3 pb-4 border-b border-(--border) flex-shrink-0">
-      <div class="grid grid-cols-2 gap-3">
+    <div class="flex flex-col gap-3 pb-4 border-b border-(--border) shrink-0">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Typ</label>
+          <label hlmLabel>Typ</label>
           <klar-select
             [options]="templateTypeOpts"
             [(ngModel)]="formTemplateType"
@@ -96,26 +98,30 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Name</label>
+          <label hlmLabel>Name</label>
           <input hlmInput [(ngModel)]="formName" placeholder="Meine Einladung" />
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label hlmLabel class="text-[11px] uppercase tracking-widest text-(--text-muted)">Betreff</label>
-        <input hlmInput [(ngModel)]="formSubject"
-               [placeholder]="defaultSubject()" />
+        <label hlmLabel>Betreff</label>
+        <input hlmInput [(ngModel)]="formSubject" [placeholder]="defaultSubject()" />
       </div>
     </div>
 
-    <!-- Main area: editor + right panel -->
-    <div class="flex flex-1 gap-3 min-h-0 pt-4">
+    <!-- Tabs: Editor / Vorschau / Platzhalter -->
+    <div hlmTabs="editor" class="flex flex-col flex-1 min-h-0 pt-4 gap-3">
+      <div hlmTabsList
+           class="inline-flex h-9 items-center justify-start rounded-md bg-(--surface-2) p-1 text-(--text-muted) self-start">
+        <button hlmTabsTrigger="editor"   class="text-[12px]">Editor</button>
+        <button hlmTabsTrigger="preview"  class="text-[12px]">Vorschau</button>
+        <button hlmTabsTrigger="placeholders" class="text-[12px]">
+          Platzhalter <span class="ml-1 opacity-60">{{ placeholders().length }}</span>
+        </button>
+      </div>
 
-      <!-- Left: code editor -->
-      <div class="flex flex-col flex-[3] min-h-0 gap-1.5">
-        <span class="text-[11px] uppercase tracking-widest text-(--text-muted) flex-shrink-0">
-          HTML-Inhalt (Handlebars)
-        </span>
+      <!-- Editor tab -->
+      <div hlmTabsContent="editor" class="flex-1 min-h-0 flex flex-col">
         <div class="flex-1 min-h-0 rounded border border-(--border) overflow-hidden">
           <klar-code-editor
             #editor
@@ -125,74 +131,49 @@ function fillPlaceholders(text: string, placeholders: Placeholder[]): string {
         </div>
       </div>
 
-      <!-- Right: placeholders + preview -->
-      <div class="flex flex-col flex-[2] min-h-0 gap-3">
-
-        <!-- Placeholder section -->
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] uppercase tracking-widest text-(--text-muted)">
-              Platzhalter
-            </span>
-            <span class="text-[11px] text-(--text-muted)">
-              Klicken zum Einfügen
-            </span>
+      <!-- Preview tab -->
+      <div hlmTabsContent="preview" class="flex-1 min-h-0 flex flex-col gap-2">
+        @if (previewSubject()) {
+          <div class="flex flex-col gap-0.5 shrink-0">
+            <span class="text-[10px] text-(--text-muted) uppercase tracking-wider">Betreff (Testdaten)</span>
+            <div class="px-2.5 py-1.5 rounded bg-(--surface-2) border border-(--border)
+                        text-[12px] text-(--text) font-medium truncate">
+              {{ previewSubject() }}
+            </div>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            @for (p of placeholders(); track p.key) {
-              <button
-                type="button"
-                (click)="insertPlaceholder(p.key)"
-                class="inline-flex items-center px-2 py-1 rounded text-xs font-mono
-                       bg-(--surface-2) border border-(--border) text-(--text-muted)
-                       hover:border-(--accent) hover:text-(--accent) transition-colors cursor-pointer">
-                {{ '{{' + p.key + '}}' }}
-              </button>
-            }
-          </div>
-          <div class="grid grid-cols-1 gap-0.5 mt-1">
-            @for (p of placeholders(); track p.key) {
-              <div class="flex items-baseline gap-2 text-xs">
-                <code class="font-mono text-(--text-muted) w-32 shrink-0 truncate">{{ '{{' + p.key + '}}' }}</code>
-                <span class="text-(--text-muted) opacity-60 truncate">{{ p.label }}</span>
-              </div>
-            }
+        }
+        <div class="flex-1 min-h-0 rounded border border-(--border) bg-white overflow-auto">
+          <div class="text-[12px] text-black p-3 [&_a]:text-blue-600 [&_h1]:text-xl
+                      [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold
+                      [&_p]:my-2 [&_a]:underline preview-body"
+               [innerHTML]="safePreviewHtml()">
           </div>
         </div>
+      </div>
 
-        <!-- Divider -->
-        <div class="border-t border-(--border) flex-shrink-0"></div>
-
-        <!-- Preview section -->
-        <div class="flex flex-col gap-2 flex-1 min-h-0">
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] uppercase tracking-widest text-(--text-muted)">Vorschau</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-(--surface-2) border border-(--border) text-(--text-muted)">
-              Testdaten
-            </span>
-          </div>
-
-          <!-- Subject preview -->
-          @if (previewSubject()) {
-            <div class="flex flex-col gap-0.5 flex-shrink-0">
-              <span class="text-[10px] text-(--text-muted) uppercase tracking-wider">Betreff</span>
-              <div class="px-2.5 py-1.5 rounded bg-(--surface-2) border border-(--border)
-                          text-[12px] text-(--text) font-medium truncate">
-                {{ previewSubject() }}
-              </div>
+      <!-- Placeholders tab -->
+      <div hlmTabsContent="placeholders" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
+        <p class="text-[12px] text-(--text-muted)">Auf einen Chip klicken, um den Platzhalter an der Cursor-Position einzufügen.</p>
+        <div class="flex flex-wrap gap-1.5">
+          @for (p of placeholders(); track p.key) {
+            <button type="button"
+                    (click)="insertPlaceholder(p.key)"
+                    class="inline-flex items-center px-2 py-1 rounded text-xs font-mono
+                           bg-(--surface-2) border border-(--border) text-(--text-muted)
+                           hover:border-(--accent) hover:text-(--accent) transition-colors cursor-pointer">
+              {{ '{{' + p.key + '}}' }}
+            </button>
+          }
+        </div>
+        <div class="grid grid-cols-1 gap-1 pt-2 border-t border-(--border)">
+          @for (p of placeholders(); track p.key) {
+            <div class="flex items-baseline gap-3 text-xs">
+              <code class="font-mono text-(--text) w-40 shrink-0 truncate">{{ '{{' + p.key + '}}' }}</code>
+              <span class="text-(--text-muted) truncate">{{ p.label }}</span>
+              <span class="text-(--text-muted)/60 truncate ml-auto">{{ p.example }}</span>
             </div>
           }
-
-          <!-- Body preview in iframe-like container -->
-          <div class="flex-1 min-h-0 rounded border border-(--border) bg-white overflow-auto">
-            <div class="text-[12px] text-black p-3 [&_a]:text-blue-600 [&_h1]:text-xl
-                        [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold
-                        [&_p]:my-2 [&_a]:underline preview-body"
-                 [innerHTML]="safePreviewHtml()">
-            </div>
-          </div>
         </div>
-
       </div>
     </div>
 

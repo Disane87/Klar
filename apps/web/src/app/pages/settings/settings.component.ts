@@ -3,8 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { HlmToggleGroupDirective } from '../../shared/ui/hlm/hlm-toggle-group.directive';
-import { HlmToggleGroupItemDirective } from '../../shared/ui/hlm/hlm-toggle-group-item.directive';
+import { KlarToggleGroupComponent } from '../../shared/ui/klar-toggle-group.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarAvatarComponent } from '../../shared/ui/klar-avatar.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
@@ -40,8 +39,7 @@ import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/
     KlarListGroupComponent,
     KlarListItemComponent,
     KlarAvatarComponent,
-    HlmToggleGroupDirective,
-    HlmToggleGroupItemDirective,
+    KlarToggleGroupComponent,
     KlarIconComponent,
   ],
   templateUrl: './settings.component.html',
@@ -164,8 +162,8 @@ export class SettingsPageComponent {
     }
   }
 
-  setTheme(theme: Theme): void {
-    this.themeService.set(theme);
+  setTheme(theme: Theme | ''): void {
+    if (theme) this.themeService.set(theme);
   }
 
   openChangePassword(): void {

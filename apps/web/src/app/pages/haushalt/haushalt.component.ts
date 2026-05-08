@@ -4,6 +4,7 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { HlmCheckboxComponent } from '../../shared/ui/hlm/hlm-checkbox.component';
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { HouseholdStore } from '../../core/household/household.store';
 import { AuthStore } from '../../core/auth/auth.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -16,6 +17,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { MailTemplatesComponent } from './mail-templates/mail-templates.component';
 import { InviteDialogComponent } from './invite-dialog.component';
 import { CategoryEditDialogComponent } from './category-edit-dialog.component';
+import { HouseholdRenameDialogComponent } from './household-rename-dialog.component';
 import { KlarListComponent, KlarListGroupComponent, KlarListItemComponent } from '../../shared/ui/klar-list.component';
 import type { Category } from '@klar/shared';
 
@@ -29,6 +31,7 @@ import type { Category } from '@klar/shared';
     HlmCheckboxComponent,
     KlarInputComponent,
     KlarIconComponent,
+    KlarHeroComponent,
     MailTemplatesComponent,
     KlarListComponent,
     KlarListGroupComponent,
@@ -53,9 +56,6 @@ export class HaushaltPageComponent implements OnInit {
     this.store.invites().filter(i => !i.usedAt && !!i.email)
   );
 
-  readonly editingName = signal(false);
-  readonly newName = signal('');
-  readonly savingName = signal(false);
   readonly leavingHousehold = signal(false);
   readonly deletingHousehold = signal(false);
 
@@ -65,6 +65,17 @@ export class HaushaltPageComponent implements OnInit {
     const members = this.store.members();
     const owners = members.filter(m => m.role === 'OWNER');
     return owners.length === 1;
+  });
+
+  readonly heroEyebrow = computed(() => {
+    const hid = this.store.activeId();
+    return hid ? `Haushalt · ${hid.slice(0, 8)}` : 'Haushalt';
+  });
+
+  readonly heroSub = computed(() => {
+    const count = this.store.members().length;
+    const role  = this.store.activeRole() === 'OWNER' ? 'Eigner' : 'Mitglied';
+    return `${count} Mitglied${count === 1 ? '' : 'er'} · ${role}`;
   });
 
   private pageHeader = inject(PageHeaderService);
@@ -98,28 +109,12 @@ export class HaushaltPageComponent implements OnInit {
     });
   }
 
-  startEditName(): void {
-    this.newName.set(this.store.activeName());
-    this.editingName.set(true);
-  }
-
-  cancelEditName(): void {
-    this.editingName.set(false);
-  }
-
-  async saveName(): Promise<void> {
-    const name = this.newName().trim();
-    if (!name) return;
-    this.savingName.set(true);
-    try {
-      await this.store.rename(name);
-      this.editingName.set(false);
-      this.toast.success('Name gespeichert');
-    } catch {
-      this.toast.error('Name konnte nicht gespeichert werden');
-    } finally {
-      this.savingName.set(false);
-    }
+  openRenameDialog(): void {
+    this.dialogService.open({
+      title: 'Haushalt umbenennen',
+      component: HouseholdRenameDialogComponent,
+      width: 'sm',
+    });
   }
 
   openInviteDialog(): void {

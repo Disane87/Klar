@@ -7,11 +7,13 @@
       {{ cfg.title }}
     </span>
     <button
-      class="ml-auto inline-flex items-center justify-center min-w-11 min-h-11 w-11 h-11 rounded-sm
+      class="ml-auto inline-flex items-center justify-center w-8 h-8 rounded
              text-(--text-muted) bg-transparent border-0 cursor-pointer
-             hover:text-(--text) hover:bg-(--text)/5 transition-colors"
+             hover:text-(--text) hover:bg-(--text)/5 transition-colors
+             outline-none focus-visible:ring-1 focus-visible:ring-(--accent)/40"
       type="button"
       title="Schließen"
+      aria-label="Schließen"
       (click)="close()"
     >
       <klar-icon name="x" [size]="14" />

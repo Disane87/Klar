@@ -64,6 +64,7 @@ export class FintsStore {
 
   readonly creating = signal(false);
   readonly syncing = signal<string | null>(null); // connectionId being synced
+  readonly syncingAll = signal(false);
   readonly deleting = signal<string | null>(null);
 
   /**
@@ -118,6 +119,44 @@ export class FintsStore {
     } finally {
       this.syncing.set(null);
     }
+  }
+
+  /**
+   * Sequentially syncs every eligible connection. Skips REAUTH_REQUIRED
+   * (user must re-auth via wizard first) and DISABLED. Stops at the first
+   * TAN challenge — the user has to confirm/enter TAN before subsequent
+   * connections can be triggered, and chaining a second sync over a
+   * pending TAN dialog would race the cached FinTSClient.
+   */
+  async triggerSyncAll(): Promise<{ synced: number; tanRequired: boolean }> {
+    if (this.syncingAll()) return { synced: 0, tanRequired: false };
+    const list = this.connections() ?? [];
+    const eligible = list.filter(
+      c => c.status !== 'REAUTH_REQUIRED' && c.status !== 'DISABLED',
+    );
+    this.syncingAll.set(true);
+    let synced = 0;
+    let tanRequired = false;
+    try {
+      for (const c of eligible) {
+        try {
+          const result = await this.triggerSync(c.id);
+          synced++;
+          if (result.tanChallenge) {
+            tanRequired = true;
+            break;
+          }
+        } catch {
+          // Single-connection failure must not block the bulk loop —
+          // continue with the next bank. Per-connection error toast is
+          // surfaced by the HTTP interceptor.
+          continue;
+        }
+      }
+    } finally {
+      this.syncingAll.set(false);
+    }
+    return { synced, tanRequired };
   }
 
   async submitTan(syncRunId: string, tan: string): Promise<FintsSyncRunWithChallenge> {

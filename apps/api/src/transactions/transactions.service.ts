@@ -54,6 +54,7 @@ export type UpdateTransactionInput = Partial<CreateTransactionInput>;
 export interface ListOpts {
   categoryId?: string;
   projectId?: string;
+  accountId?: string;
   month?: string; // 'YYYY-MM'
   isPlanned?: boolean;
 }

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthStore } from '../auth/auth.store';
 
 // ── Type contracts mirror apps/api/src/fints/fints.service.ts ──────────────
 
@@ -22,6 +23,17 @@ export type FintsSyncStatus =
 
 export type FintsSyncTrigger = 'CRON' | 'MANUAL' | 'SETUP';
 
+export interface FintsAttachedAccount {
+  id: string;
+  name: string;
+  type: string;
+  iban: string | null;
+  bic: string | null;
+  fintsAccountRef: string | null;
+  lastKnownBalanceCents: number | null;
+  lastBalanceAt: string | null;
+}
+
 export interface FintsConnectionResponse {
   id: string;
   ownerId: string;
@@ -36,6 +48,8 @@ export interface FintsConnectionResponse {
   lastSyncStatus: FintsSyncStatus | null;
   createdAt: string;
   updatedAt: string;
+  /** Linked Klar Account rows (FinTS sub-accounts user picked). */
+  accounts: FintsAttachedAccount[];
 }
 
 export interface FintsSyncRunResponse {
@@ -114,9 +128,21 @@ export interface FintsAttachAccountInput {
   visibility?: 'SHARED' | 'PRIVATE';
 }
 
+/** Mirrors apps/api/src/fints/realtime/fints-realtime.service.ts. */
+export type FintsRunEventType = 'tan-required' | 'ok' | 'failed' | 'progress';
+export interface FintsRunEvent {
+  type: FintsRunEventType;
+  syncRunId: string;
+  data:
+    | { syncRun: FintsSyncRunResponse; tanChallenge?: FintsTanChallenge }
+    | { syncRun: FintsSyncRunResponse }
+    | unknown;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FintsService {
   private http = inject(HttpClient);
+  private authStore = inject(AuthStore);
 
   private baseUrl(householdId: string): string {
     return `/api/v1/households/${householdId}/fints`;
@@ -193,5 +219,69 @@ export class FintsService {
 
   delete(householdId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(householdId)}/connections/${id}`);
+  }
+
+  /**
+   * Subscribes to the SSE stream for a sync run. Used by the setup wizard
+   * to auto-progress past the decoupled / pushTAN step the moment the bank
+   * confirms — no "Fertig" click needed. We can't use the native
+   * EventSource API because it cannot send the Authorization header that
+   * our JwtAuthGuard requires; we fall back to fetch + ReadableStream and
+   * parse `data:` frames manually. Unsubscribing aborts the underlying
+   * fetch, which closes the server-side stream cleanly.
+   */
+  streamSyncRunEvents(householdId: string, syncRunId: string): Observable<FintsRunEvent> {
+    return new Observable<FintsRunEvent>(subscriber => {
+      const controller = new AbortController();
+      const url = `${this.baseUrl(householdId)}/sync-runs/${syncRunId}/events`;
+      const token = this.authStore.accessToken();
+      const run = async (): Promise<void> => {
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Accept: 'text/event-stream',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          signal: controller.signal,
+          credentials: 'include',
+        });
+        if (!res.ok || !res.body) {
+          throw new Error(`SSE handshake failed (${res.status})`);
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          // SSE frame separator is a blank line (\n\n). Process every
+          // complete frame we have, leave the partial tail in the buffer.
+          let sep: number;
+          while ((sep = buffer.indexOf('\n\n')) !== -1) {
+            const frame = buffer.slice(0, sep);
+            buffer = buffer.slice(sep + 2);
+            const dataLine = frame.split('\n').find(l => l.startsWith('data:'));
+            if (!dataLine) continue;
+            try {
+              const parsed = JSON.parse(dataLine.slice(5).trim()) as FintsRunEvent;
+              subscriber.next(parsed);
+            } catch {
+              // Malformed frame — ignore, keep streaming.
+            }
+          }
+        }
+      };
+      run()
+        .then(() => subscriber.complete())
+        .catch(err => {
+          if (controller.signal.aborted) {
+            subscriber.complete();
+          } else {
+            subscriber.error(err);
+          }
+        });
+      return () => controller.abort();
+    });
   }
 }

@@ -53,7 +53,18 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
       "Bash(npm view *)",
       "Bash(npm search *)",
-      "Bash(pnpm --filter web build)"
+      "Bash(pnpm --filter web build)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(Get-ChildItem -Path \"c:/tmp/design-pearl/klar/project/\" -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "Bash(pnpm test *)",
+      "Bash(pnpm --filter @klar/web exec tsc --noEmit)",
+      "Skill(remember)",
+      "Skill(remember:*)",
+      "Bash(pnpm --filter @klar/web exec tsc --noEmit -p tsconfig.json)",
+      "Bash(pnpm --filter @klar/web exec tsc --noEmit -p apps/web/tsconfig.app.json)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",

@@ -15,10 +15,11 @@ import { AdminEmailsTabComponent } from './tabs/emails-tab.component';
 import { AdminHouseholdsTabComponent } from './tabs/households-tab.component';
 import { AdminMcpTabComponent } from './tabs/mcp-tab.component';
 
-type Tab = 'audit' | 'mcp' | 'emails' | 'households';
+type Tab = 'system' | 'audit' | 'mcp' | 'emails' | 'households';
 type Tone = 'ok' | 'warn' | '';
 
 const TABS: ReadonlyArray<{ id: Tab; label: string }> = [
+  { id: 'system',     label: 'Systemstatus' },
   { id: 'audit',      label: 'Audit-Log' },
   { id: 'mcp',        label: 'MCP Calls' },
   { id: 'emails',     label: 'E-Mails' },
@@ -34,6 +35,7 @@ const JOB_ICONS: Record<string, string> = {
 @Component({
   selector: 'klar-admin-page',
   standalone: true,
+  host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
   imports: [
     HlmInputDirective,
     KlarButtonComponent,
@@ -46,10 +48,31 @@ const JOB_ICONS: Record<string, string> = {
     AdminMcpTabComponent,
   ],
   template: `
-    <div class="flex flex-col gap-(--s-5) p-(--s-6) max-w-350 mx-auto pb-(--s-8)">
+    <div class="flex flex-col flex-1 min-h-0 max-w-350 w-full mx-auto">
+
+      <!-- Tabs row -->
+      <nav class="flex items-end gap-(--s-5) px-(--s-6) pt-(--s-5) border-b border-(--line-soft) text-[13px]">
+        @for (t of TABS; track t.id) {
+          <button type="button"
+                  (click)="setTab(t.id)"
+                  class="pb-2 -mb-px border-b-2 transition-colors"
+                  [class.border-(--accent)]="tab() === t.id"
+                  [class.border-transparent]="tab() !== t.id"
+                  [class.text-(--fg)]="tab() === t.id"
+                  [class.text-(--fg-2)]="tab() !== t.id"
+                  [class.font-medium]="tab() === t.id">
+            {{ t.label }}
+          </button>
+        }
+      </nav>
+
+      @switch (tab()) {
+        @case ('system') {
+          <div class="flex flex-col gap-(--s-5) p-(--s-6) pb-(--s-8) overflow-y-auto flex-1 min-h-0">
 
       <!-- Hero -->
       <klar-hero
+        class="shrink-0"
         [eyebrow]="'Klar Self-Host · ' + instanceHost()"
         [title]="heroTitle()"
         [sub]="heroDescription()"
@@ -61,7 +84,7 @@ const JOB_ICONS: Record<string, string> = {
       </klar-hero>
 
       <!-- Status grid -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-(--s-3)">
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-(--s-3) shrink-0">
         <klar-stat-tile
           icon="pulse"
           label="Uptime · 30 T"
@@ -91,7 +114,7 @@ const JOB_ICONS: Record<string, string> = {
       </section>
 
       <!-- Side-by-side: Dienste + Performance -->
-      <section class="admin-grid-2">
+      <section class="admin-grid-2 shrink-0">
         <div class="admin-card">
           <div class="admin-card-head">
             <klar-icon name="pulse" [size]="13" />
@@ -145,7 +168,7 @@ const JOB_ICONS: Record<string, string> = {
       </section>
 
       <!-- Side-by-side: Geplante Jobs + (Sparkline + Live-Log) -->
-      <section class="admin-grid-2">
+      <section class="admin-grid-2 shrink-0">
         <div class="admin-card">
           <div class="admin-card-head">
             <klar-icon name="refresh" [size]="13" />
@@ -219,52 +242,65 @@ const JOB_ICONS: Record<string, string> = {
         </div>
       </section>
 
-      <!-- Tabs row -->
-      <nav class="flex items-end gap-(--s-5) border-b border-(--line-soft) text-[13px]">
-        @for (t of TABS; track t.id) {
-          <button type="button"
-                  (click)="setTab(t.id)"
-                  class="pb-2 -mb-px border-b-2 transition-colors"
-                  [class.border-(--accent)]="tab() === t.id"
-                  [class.border-transparent]="tab() !== t.id"
-                  [class.text-(--fg)]="tab() === t.id"
-                  [class.text-(--fg-2)]="tab() !== t.id"
-                  [class.font-medium]="tab() === t.id">
-            {{ t.label }}
-          </button>
+          </div>
         }
-      </nav>
-
-      <div class="flex items-center gap-(--s-2)">
-        <div class="relative flex-1 max-w-90">
-          <klar-icon name="search" [size]="14"
-                     class="absolute top-1/2 left-2 -translate-y-1/2 text-(--fg-2) pointer-events-none" />
-          <input hlmInput type="search" placeholder="Suchen — Akteur, Methode, IP …"
-                 class="pl-8 w-full"
-                 [value]="search()" (input)="search.set($any($event.target).value)" />
-        </div>
-        <klar-button tone="ghost" size="sm" icon="filter">Filter</klar-button>
-        <span class="ml-auto text-[12px] text-(--fg-2) mono">
-          {{ totalCountText() }} · virtualisiert
-        </span>
-      </div>
-
-      <div class="flex-1 min-h-0">
-        @switch (tab()) {
-          @case ('audit') {
-            <klar-admin-audit-tab (totalChange)="auditCount.set(format($event))" />
-          }
-          @case ('mcp') {
-            <klar-admin-mcp-tab (totalChange)="mcpCount.set(format($event))" />
-          }
-          @case ('emails') {
-            <klar-admin-emails-tab (totalChange)="emailCount.set(format($event))" />
-          }
-          @case ('households') {
-            <klar-admin-households-tab (totalChange)="householdCount.set(format($event))" />
-          }
+        @case ('audit') {
+          <div class="flex flex-col gap-(--s-3) p-(--s-6) flex-1 min-h-0">
+            <div class="flex items-center gap-(--s-2)">
+              <div class="relative flex-1 max-w-90">
+                <klar-icon name="search" [size]="14"
+                           class="absolute top-1/2 left-2 -translate-y-1/2 text-(--fg-2) pointer-events-none" />
+                <input hlmInput type="search" placeholder="Suchen — Akteur, Methode, IP …"
+                       class="pl-8 w-full"
+                       [value]="search()" (input)="search.set($any($event.target).value)" />
+              </div>
+              <klar-button tone="ghost" size="sm" icon="filter">Filter</klar-button>
+              <span class="ml-auto text-[12px] text-(--fg-2) mono">
+                {{ totalCountText() }} · virtualisiert
+              </span>
+            </div>
+            <div class="flex-1 min-h-0">
+              <klar-admin-audit-tab (totalChange)="auditCount.set(format($event))" />
+            </div>
+          </div>
         }
-      </div>
+        @case ('mcp') {
+          <div class="flex flex-col gap-(--s-3) p-(--s-6) flex-1 min-h-0">
+            <div class="flex items-center gap-(--s-2)">
+              <span class="ml-auto text-[12px] text-(--fg-2) mono">
+                {{ totalCountText() }} · virtualisiert
+              </span>
+            </div>
+            <div class="flex-1 min-h-0">
+              <klar-admin-mcp-tab (totalChange)="mcpCount.set(format($event))" />
+            </div>
+          </div>
+        }
+        @case ('emails') {
+          <div class="flex flex-col gap-(--s-3) p-(--s-6) flex-1 min-h-0">
+            <div class="flex items-center gap-(--s-2)">
+              <span class="ml-auto text-[12px] text-(--fg-2) mono">
+                {{ totalCountText() }} · virtualisiert
+              </span>
+            </div>
+            <div class="flex-1 min-h-0">
+              <klar-admin-emails-tab (totalChange)="emailCount.set(format($event))" />
+            </div>
+          </div>
+        }
+        @case ('households') {
+          <div class="flex flex-col gap-(--s-3) p-(--s-6) flex-1 min-h-0">
+            <div class="flex items-center gap-(--s-2)">
+              <span class="ml-auto text-[12px] text-(--fg-2) mono">
+                {{ totalCountText() }} · virtualisiert
+              </span>
+            </div>
+            <div class="flex-1 min-h-0">
+              <klar-admin-households-tab (totalChange)="householdCount.set(format($event))" />
+            </div>
+          </div>
+        }
+      }
     </div>
   `,
 })
@@ -273,7 +309,7 @@ export class AdminPageComponent implements OnInit {
   private healthStore = inject(AdminHealthStore);
 
   protected readonly TABS = TABS;
-  protected readonly tab = signal<Tab>('audit');
+  protected readonly tab = signal<Tab>('system');
   protected readonly search = signal<string>('');
 
   // Tab totals — surfaced from each tab via (totalChange).
@@ -380,6 +416,7 @@ export class AdminPageComponent implements OnInit {
 
   protected readonly totalCountText = computed<string>(() => {
     switch (this.tab()) {
+      case 'system':     return '';
       case 'audit':      return this.auditCount() + ' Einträge';
       case 'mcp':        return this.mcpCount() + ' Calls';
       case 'emails':     return this.emailCount() + ' E-Mails';

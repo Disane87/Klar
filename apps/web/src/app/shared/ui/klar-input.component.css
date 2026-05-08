@@ -7,16 +7,23 @@
 .field {
   display: flex;
   align-items: center;
-  height: 36px;
+  height: 2rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius, 4px);
   padding: 0 10px;
-  transition: border-color 120ms;
+  transition: border-color 120ms, box-shadow 120ms;
 }
 
 .field:focus-within {
-  border-color: var(--color-ring);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+.field :focus,
+.field :focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .field.has-error {

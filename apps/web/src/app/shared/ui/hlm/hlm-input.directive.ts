@@ -16,7 +16,7 @@ export class HlmInputDirective {
     'disabled:cursor-not-allowed disabled:opacity-50',
     'transition-colors',
     'text-base',
-    'h-9',
+    'h-8',
     this.userClass()
   ));
 }

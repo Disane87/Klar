@@ -71,7 +71,13 @@ const BASE =
       @if (loading()) {
         <hlm-spinner [size]="iconSize()" />
       } @else if (icon()) {
-        <klar-icon [name]="icon()!" [size]="iconSize()" />
+        @if (iconSpin()) {
+          <span class="inline-flex animate-spin text-(--accent)">
+            <klar-icon [name]="icon()!" [size]="iconSize()" />
+          </span>
+        } @else {
+          <klar-icon [name]="icon()!" [size]="iconSize()" />
+        }
       }
       <ng-content />
       @if (!loading() && iconRight()) {
@@ -86,6 +92,12 @@ export class KlarButtonComponent {
   type        = input<KlarButtonType>('button');
   disabled    = input(false);
   loading     = input(false);
+  /**
+   * When true, the leading icon spins (accent-coloured) instead of being
+   * static. Used for in-flight refresh actions where we want the actual
+   * refresh icon to rotate rather than swap to a generic spinner.
+   */
+  iconSpin    = input(false);
   icon        = input<string | null>(null);
   iconRight   = input<string | null>(null);
   routerLink  = input<string | unknown[] | null>(null);

@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import type { Category, CategoryType } from '@klar/shared';
@@ -6,9 +6,12 @@ import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
-import { KlarInputComponent } from '../../shared/ui/klar-input.component';
-import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
+import { KlarDialogFooterComponent } from '../../shared/ui/klar-dialog-footer.component';
+import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
+import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
+import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 
 const TYPE_LABELS: Record<CategoryType, string> = {
@@ -29,28 +32,29 @@ const TYPE_OPTIONS: CategoryType[] = [
   'SAVINGS',
 ];
 
-const PRESET_COLORS = [
-  '#22c55e', '#4ade80', '#0ea5e9', '#60a5fa', '#a78bfa',
-  '#f472b6', '#fb923c', '#fbbf24', '#f87171', '#94a3b8',
-  '#34d399', '#facc15',
-];
-
 @Component({
   selector: 'app-category-edit-dialog',
   standalone: true,
-  imports: [FormsModule, KlarButtonComponent, KlarInputComponent, KlarDialogFooterComponent, HlmLabelDirective, KlarSelectComponent],
+  imports: [
+    FormsModule,
+    KlarButtonComponent,
+    HlmInputDirective,
+    HlmLabelDirective,
+    KlarSelectComponent,
+    KlarDialogFooterComponent,
+    KlarDialogCalloutComponent,
+    KlarColorPickerComponent,
+    KlarIconPickerComponent,
+  ],
   template: `
-    <div class="flex flex-col gap-5">
+    <div class="flex flex-col gap-4">
       <!-- Name -->
       <div class="flex flex-col gap-1.5">
         <label hlmLabel for="cat-name">Name</label>
-        <klar-input
-          id="cat-name"
-          type="text"
-          placeholder="z.B. Lebensmittel"
-          [ngModel]="name()"
-          (ngModelChange)="name.set($event)"
-        />
+        <input id="cat-name" hlmInput type="text"
+               placeholder="z.B. Lebensmittel"
+               [value]="name()"
+               (input)="name.set($any($event.target).value)" />
       </div>
 
       <!-- Type — beim Edit nicht änderbar -->
@@ -63,53 +67,32 @@ const PRESET_COLORS = [
           (valueChange)="type.set($any($event))"
           ariaLabel="Kategorie-Typ"
         />
-        @if (isEdit()) {
-          <span class="text-xs text-muted-foreground">Typ kann nach Anlegen nicht mehr geändert werden.</span>
-        }
       </div>
 
-      <!-- Farbe -->
-      <div class="flex flex-col gap-1.5">
-        <label hlmLabel>Farbe</label>
-        <div class="flex flex-wrap gap-2">
-          @for (c of presetColors; track c) {
-            <button
-              type="button"
-              class="size-9 rounded-full border-2 transition-transform hover:scale-110 min-h-[44px] min-w-[44px]"
-              [style.background]="c"
-              [style.border-color]="color() === c ? 'var(--color-primary)' : 'transparent'"
-              (click)="color.set(c)"
-              [attr.aria-label]="c"
-            ></button>
-          }
-        </div>
-        <div class="flex items-center gap-2">
-          <input
-            type="color"
-            class="size-9 rounded border border-input bg-transparent cursor-pointer"
-            [value]="color()"
-            (input)="color.set($any($event.target).value)"
-          />
-          <span class="text-xs text-muted-foreground font-mono">{{ color() }}</span>
-        </div>
-      </div>
+      @if (isEdit()) {
+        <klar-dialog-callout tone="info" icon="info">
+          Der Typ kann nach dem Anlegen nicht mehr geändert werden.
+        </klar-dialog-callout>
+      }
 
-      <!-- Icon (optional) -->
-      <div class="flex flex-col gap-1.5">
-        <label hlmLabel for="cat-icon">Icon (optional)</label>
-        <klar-input
-          id="cat-icon"
-          type="text"
-          placeholder="z.B. shopping-cart"
-          [ngModel]="icon()"
-          (ngModelChange)="icon.set($event)"
-        />
-        <span class="text-xs text-muted-foreground">Lucide- oder iconify-Name</span>
+      <!-- Aussehen — color + icon group -->
+      <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>
+
+        <div class="flex flex-col gap-1.5">
+          <label hlmLabel>Farbe</label>
+          <klar-color-picker [value]="color()" (valueChange)="color.set($event)" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label hlmLabel>Icon</label>
+          <klar-icon-picker [value]="icon()" (valueChange)="icon.set($event)" />
+        </div>
       </div>
 
       <klar-dialog-footer
         [confirmLabel]="isEdit() ? 'Speichern' : 'Anlegen'"
-        [confirmDisabled]="!name().trim() || !color()"
+        [confirmDisabled]="!isValid()"
         [confirmLoading]="saving()"
         [autoCloseOnCancel]="false"
         (cancel)="onCancel()"
@@ -142,13 +125,13 @@ export class CategoryEditDialogComponent implements OnInit {
 
   readonly name = signal('');
   readonly type = signal<CategoryType>('VARIABLE_EXPENSE');
-  readonly color = signal('#94a3b8');
-  readonly icon = signal('');
+  readonly color = signal<string | null>('#22c55e');
+  readonly icon = signal<string | null>(null);
   readonly saving = signal(false);
   readonly deleting = signal(false);
 
-  readonly presetColors = PRESET_COLORS;
-  readonly isEdit = () => this.category() !== null;
+  readonly isEdit = computed(() => this.category() !== null);
+  readonly isValid = computed(() => !!this.name().trim() && !!this.color());
 
   ngOnInit(): void {
     const c = this.category();
@@ -156,37 +139,34 @@ export class CategoryEditDialogComponent implements OnInit {
       this.name.set(c.name);
       this.type.set(c.type);
       this.color.set(c.color);
-      this.icon.set(c.icon ?? '');
+      this.icon.set(c.icon ?? null);
       return;
     }
     const pre = this.prefillName();
     if (pre) this.name.set(pre);
   }
 
-  protected typeLabel(t: CategoryType): string {
-    return TYPE_LABELS[t] ?? t;
-  }
-
   async onSave(): Promise<void> {
     if (this.saving() || this.deleting()) return;
     const name = this.name().trim();
-    if (!name || !this.color()) return;
+    const color = this.color();
+    if (!name || !color) return;
     this.saving.set(true);
     try {
       const c = this.category();
       if (c) {
         await this.store.update(c.id, {
           name,
-          color: this.color(),
-          icon: this.icon().trim() || null,
+          color,
+          icon: this.icon() || null,
         });
         this.toast.success('Kategorie aktualisiert');
       } else {
         const created = await this.store.create({
           name,
           type: this.type(),
-          color: this.color(),
-          icon: this.icon().trim() || null,
+          color,
+          icon: this.icon() || null,
         });
         this.toast.success('Kategorie angelegt');
         this.onCreated()?.(created);

@@ -8,10 +8,12 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Sse,
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import type { Observable } from 'rxjs';
 import type { RequestContext } from '../common/types/request-context.type';
 import { ReqContext } from '../common/decorators/req-context.decorator';
 import { HouseholdMemberGuard } from '../households/guards/household-member.guard';
@@ -99,6 +101,23 @@ export class FintsController {
       syncRun: this.service.toSyncRunResponse(result.syncRun),
       tanChallenge: result.tanChallenge ?? null,
     };
+  }
+
+  /**
+   * Server-Sent Events stream for one sync run. The setup wizard opens this
+   * after a decoupled / pushTAN challenge so it can auto-advance to step 4
+   * the moment the bank confirms — without the user clicking "Fertig".
+   * Authorised via JwtAuthGuard + HouseholdMemberGuard (mounted on the
+   * controller); ownership of the underlying FintsConnection is enforced
+   * inside the service. EventSource cannot send Authorization headers, so
+   * the web client uses fetch+ReadableStream to consume this endpoint.
+   */
+  @Sse('sync-runs/:id/events')
+  async syncRunEvents(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: string,
+  ): Promise<Observable<MessageEvent>> {
+    return this.service.streamSyncRunEvents(ctx, id);
   }
 
   @Post('sync-runs/:id/tan')

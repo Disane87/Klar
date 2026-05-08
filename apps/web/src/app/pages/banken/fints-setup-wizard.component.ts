@@ -2,12 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { HouseholdStore } from '../../core/household/household.store';
 import { FintsStore } from '../../core/fints/fints.store';
 import {
@@ -15,6 +16,8 @@ import {
   type FintsBankLookupRecord,
   type FintsCreateConnectionResponse,
   type FintsDiscoveredAccount,
+  type FintsRunEvent,
+  type FintsSyncRunResponse,
   type FintsSyncRunWithChallenge,
   type FintsTanChallenge,
 } from '../../core/fints/fints.service';
@@ -220,9 +223,9 @@ interface AccountSelection {
         <section class="flex flex-col gap-3">
           @if (isPushTan()) {
             <!-- Decoupled / pushTAN: bank pushes a notification to the
-                 user's banking app. No code-input here, just a spinner +
-                 hint until the bank confirms (manual click triggers the
-                 polling call, since we don't auto-poll yet). -->
+                 user's banking app. The backend auto-polls the bank every
+                 2s for up to 2min and the wizard receives an SSE event the
+                 moment confirmation arrives — no manual click needed. -->
             <div class="flex items-center gap-3 rounded-md border border-(--line-soft) bg-(--bg-2) px-4 py-4">
               <hlm-spinner class="size-5 shrink-0 text-(--accent)" />
               <div class="flex-1 min-w-0 flex flex-col gap-1">
@@ -230,8 +233,9 @@ interface AccountSelection {
                   {{ tanChallenge()?.prompt ?? 'Anmeldung in der Banking-App bestätigen' }}
                 </span>
                 <span class="text-[12px] text-(--fg-2)">
-                  Öffne deine Banking-App und bestätige die Anmeldung. Klicke
-                  anschließend auf „Fertig", damit Klar die Konten abruft.
+                  Öffne deine Banking-App und bestätige die Anmeldung. Klar
+                  übernimmt automatisch, sobald die Bank die Bestätigung sieht
+                  (max. 2 Minuten).
                 </span>
               </div>
             </div>
@@ -263,19 +267,15 @@ interface AccountSelection {
           }
           <div class="flex justify-between gap-2 pt-2">
             <klar-button tone="ghost" (click)="cancel()">Abbrechen</klar-button>
-            <klar-button
-              tone="primary"
-              [disabled]="store.tanSubmitting() || (!isPushTan() && tan().length === 0)"
-              (click)="submitTan()"
-            >
-              @if (store.tanSubmitting()) {
-                Prüfe …
-              } @else if (isPushTan()) {
-                Fertig
-              } @else {
-                Bestätigen
-              }
-            </klar-button>
+            @if (!isPushTan()) {
+              <klar-button
+                tone="primary"
+                [disabled]="store.tanSubmitting() || tan().length === 0"
+                (click)="submitTan()"
+              >
+                {{ store.tanSubmitting() ? 'Prüfe …' : 'Bestätigen' }}
+              </klar-button>
+            }
           </div>
         </section>
       }
@@ -365,6 +365,10 @@ export class FintsSetupWizardComponent implements OnInit {
   private readonly fintsService = inject(FintsService);
   private readonly householdStore = inject(HouseholdStore);
   private readonly dialog = inject(KlarDialogService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Active SSE subscription for decoupled / pushTAN auto-progress. */
+  private eventStreamSub: Subscription | null = null;
 
   protected readonly steps = STEPS;
   protected readonly step = signal<WizardStep>('bank');
@@ -511,6 +515,7 @@ export class FintsSetupWizardComponent implements OnInit {
       if (result.tanChallenge) {
         this.tanChallenge.set(result.tanChallenge);
         this.step.set('tan');
+        this.maybeStartEventStream(result.tanChallenge);
       } else if (result.syncRun.status === 'OK') {
         await this.proceedToAccounts();
       } else {
@@ -561,6 +566,7 @@ export class FintsSetupWizardComponent implements OnInit {
       }
       if (result.tanChallenge) {
         this.tanChallenge.set(result.tanChallenge);
+        this.maybeStartEventStream(result.tanChallenge);
         return; // bank chained another TAN
       }
       this.tanChallenge.set(null);
@@ -643,6 +649,7 @@ export class FintsSetupWizardComponent implements OnInit {
   }
 
   protected retry(): void {
+    this.stopEventStream();
     this.step.set('bank');
     this.failureMessage.set(null);
     this.createError.set(null);
@@ -655,7 +662,67 @@ export class FintsSetupWizardComponent implements OnInit {
   }
 
   protected dismiss(): void {
+    this.stopEventStream();
     this.dialog.close();
     this.store.dismissTanFlow();
+  }
+
+  /**
+   * Opens the SSE stream for the active sync run when the bank uses a
+   * decoupled / pushTAN method, so the wizard auto-advances the moment the
+   * bank confirms — without the user clicking "Fertig". Non-decoupled
+   * methods still use the manual TAN-submit form, no stream needed.
+   */
+  private maybeStartEventStream(challenge: FintsTanChallenge): void {
+    if (!challenge.isDecoupled) return;
+    const householdId = this.householdStore.activeId();
+    if (!householdId || !this.syncRunId) return;
+    this.stopEventStream();
+    const sub = this.fintsService
+      .streamSyncRunEvents(householdId, this.syncRunId)
+      .subscribe({
+        next: ev => this.handleStreamEvent(ev),
+        // Fall back to manual mode on stream errors — the user can still
+        // retry from the failure screen, and the backend keeps polling
+        // independently of whether the SSE is alive.
+        error: () => this.stopEventStream(),
+      });
+    this.eventStreamSub = sub;
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private stopEventStream(): void {
+    this.eventStreamSub?.unsubscribe();
+    this.eventStreamSub = null;
+  }
+
+  private handleStreamEvent(event: FintsRunEvent): void {
+    const payload = event.data as
+      | { syncRun?: FintsSyncRunResponse; tanChallenge?: FintsTanChallenge }
+      | undefined;
+    if (event.type === 'ok') {
+      this.tanChallenge.set(null);
+      this.stopEventStream();
+      void this.proceedToAccounts();
+      return;
+    }
+    if (event.type === 'failed') {
+      this.tanChallenge.set(null);
+      this.stopEventStream();
+      this.failureMessage.set(
+        payload?.syncRun?.errorMessage ??
+          'Bank hat die Bestätigung abgelehnt. Bitte erneut starten.',
+      );
+      this.step.set('failed');
+      return;
+    }
+    if (event.type === 'tan-required' && payload?.tanChallenge) {
+      // Bank chained a follow-up challenge. If it's no longer decoupled
+      // (rare), drop into the manual-TAN form by stopping the stream.
+      this.tanChallenge.set(payload.tanChallenge);
+      if (!payload.tanChallenge.isDecoupled) {
+        this.stopEventStream();
+      }
+    }
   }
 }

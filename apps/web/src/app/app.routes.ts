@@ -158,6 +158,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'banken/:connectionId/:accountId',
+        loadComponent: () =>
+          import('./pages/banken/banken-account-detail.component').then(
+            m => m.BankenAccountDetailComponent,
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./pages/settings/settings.component').then(

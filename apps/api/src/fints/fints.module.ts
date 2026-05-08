@@ -10,6 +10,7 @@ import { BlzRefreshScheduler } from './banks/blz-refresh.scheduler';
 import { FintsConnectionRepository } from './connection/fints-connection.repository';
 import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
 import { FintsClientService } from './client/fints-client.service';
+import { FintsRealtimeService } from './realtime/fints-realtime.service';
 import { FintsSyncRunRepository } from './sync/fints-sync-run.repository';
 import { FintsSyncService } from './sync/fints-sync.service';
 import { FintsService } from './fints.service';
@@ -42,6 +43,7 @@ import { FintsController } from './fints.controller';
     FintsConnectionRepository,
     ReauthWatcherScheduler,
     FintsClientService,
+    FintsRealtimeService,
     FintsSyncRunRepository,
     FintsSyncService,
     FintsService,

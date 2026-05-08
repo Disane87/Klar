@@ -41,6 +41,7 @@ export interface UpdateTransactionData {
 export interface FindAllOpts {
   categoryId?: string;
   projectId?: string;
+  accountId?: string;
   month?: string; // 'YYYY-MM'
   userId?: string;
   isPlanned?: boolean;
@@ -80,6 +81,7 @@ export class TransactionsRepository {
         householdId,
         ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
         ...(opts.projectId ? { projectId: opts.projectId } : {}),
+        ...(opts.accountId ? { accountId: opts.accountId } : {}),
         ...(opts.month ? { date: dateFilter } : {}),
         ...(opts.isPlanned !== undefined ? { isPlanned: opts.isPlanned } : {}),
         ...visibilityFilter,

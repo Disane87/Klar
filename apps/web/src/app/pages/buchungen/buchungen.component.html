@@ -15,7 +15,7 @@
     </div>
   </ng-template>
 
-  <div class="p-(--s-6) pb-16 flex flex-col gap-(--s-5)">
+  <div class="p-(--s-6) pb-(--s-3) flex flex-col gap-(--s-5) flex-1 min-h-0">
 
     <!-- Summary strip -->
     <klar-summary-strip
@@ -60,7 +60,7 @@
         Keine Buchungen für diesen Filter.
       </div>
     } @else {
-      <div class="card">
+      <div class="card flex-1 min-h-0 overflow-y-auto pb-16">
         @for (tx of filtered(); track tx.id) {
           <div class="row"
                [style.border-left-color]="categoryColor(tx)"

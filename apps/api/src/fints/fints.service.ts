@@ -6,12 +6,18 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { FintsConnection, FintsSyncRun, Account } from '@prisma/client';
+
+/** A connection enriched with the Klar Account rows linked via fintsConnectionId. */
+export type ConnectionWithAccounts = FintsConnection & { accounts: Account[] };
+import type { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import type { RequestContext } from '../common/types/request-context.type';
 import { PrismaService } from '../prisma/prisma.service';
 import { FintsConnectionRepository } from './connection/fints-connection.repository';
 import { FintsSyncRunRepository } from './sync/fints-sync-run.repository';
 import { FintsSyncService, type TanChallenge } from './sync/fints-sync.service';
 import { FintsCryptoService } from './crypto/fints-crypto.service';
+import { FintsRealtimeService, type FintsRunEvent } from './realtime/fints-realtime.service';
 import { BankRegistryService } from './banks/bank-registry.service';
 import type { FintsSessionState } from './client/fints-session-state';
 
@@ -51,8 +57,13 @@ export interface PickAccountsInput {
  */
 @Injectable()
 export class FintsService {
-  /** Sync rate-limit per connection — protects banks from us. */
-  private static readonly SYNC_COOLDOWN_MS = 5 * 60 * 1000;
+  /**
+   * Sync rate-limit per connection — guards against accidental double-clicks
+   * and runaway loops. Banks rate-limit at the seconds level, not minutes,
+   * so 30s is plenty. We further skip the cooldown when the previous run
+   * ended in FAILED so the user can immediately retry after a hiccup.
+   */
+  private static readonly SYNC_COOLDOWN_MS = 30 * 1000;
 
   constructor(
     private readonly connections: FintsConnectionRepository,
@@ -61,7 +72,32 @@ export class FintsService {
     private readonly crypto: FintsCryptoService,
     private readonly registry: BankRegistryService,
     private readonly prisma: PrismaService,
+    private readonly realtime: FintsRealtimeService,
   ) {}
+
+  /**
+   * Authorises and returns the SSE event stream for a sync run. The wizard
+   * subscribes after `POST /connections` returns a decoupled tanChallenge
+   * and gets `ok` / `failed` pushed as soon as the bank confirms the push
+   * notification — no manual "Fertig" click required.
+   */
+  async streamSyncRunEvents(
+    ctx: RequestContext,
+    syncRunId: string,
+  ): Promise<Observable<MessageEvent>> {
+    const run = await this.syncRuns.findById(syncRunId);
+    if (!run) throw new NotFoundException(`Sync run ${syncRunId} not found`);
+    const connection = await this.connections.findById(run.connectionId);
+    if (!connection || connection.householdId !== ctx.householdId) {
+      throw new NotFoundException(`Sync run ${syncRunId} not found`);
+    }
+    if (connection.ownerId !== ctx.userId) {
+      throw new ForbiddenException('Only the connection owner can subscribe to sync events');
+    }
+    return this.realtime.stream(syncRunId).pipe(
+      map((event: FintsRunEvent) => ({ data: event } as MessageEvent)),
+    );
+  }
 
   /** Public BLZ lookup for the setup wizard. */
   lookupBank(blz: string) {
@@ -73,11 +109,115 @@ export class FintsService {
     return this.registry.listFintsCapable();
   }
 
-  async list(ctx: RequestContext): Promise<FintsConnection[]> {
-    return this.prisma.fintsConnection.findMany({
+  async list(ctx: RequestContext): Promise<ConnectionWithAccounts[]> {
+    const items = await this.prisma.fintsConnection.findMany({
       where: { householdId: ctx.householdId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        accounts: {
+          where: { archivedAt: null },
+          orderBy: { name: 'asc' },
+        },
+      },
     });
+
+    // Fall-back saldo: when HKSAL hasn't reported a real balance yet,
+    // compute one from the running sum of imported bookings so the bank
+    // list and account rows show *something* meaningful instead of "—".
+    // We only override `lastKnownBalanceCents` for accounts where it's
+    // currently null — never replace an authoritative HKSAL value.
+    const accountIdsNeedingFallback = items
+      .flatMap(c => c.accounts)
+      .filter(a => a.lastKnownBalanceCents === null || a.lastKnownBalanceCents === undefined)
+      .map(a => a.id);
+    if (accountIdsNeedingFallback.length > 0) {
+      const sums = await this.prisma.transaction.groupBy({
+        by: ['accountId'],
+        where: {
+          householdId: ctx.householdId,
+          accountId: { in: accountIdsNeedingFallback },
+        },
+        _sum: { amountCents: true },
+      });
+      const sumByAccount = new Map<string, number>(
+        sums.map(s => [s.accountId, s._sum.amountCents ?? 0]),
+      );
+      for (const c of items) {
+        for (const a of c.accounts) {
+          if (a.lastKnownBalanceCents !== null && a.lastKnownBalanceCents !== undefined) {
+            continue;
+          }
+          const sum = sumByAccount.get(a.id);
+          if (sum !== undefined) {
+            // Mutating the in-memory Account row only — DB stays untouched
+            // so HKSAL can later overwrite without conflict resolution.
+            a.lastKnownBalanceCents = sum;
+          }
+        }
+      }
+    }
+
+    // Dedupe heal: a previously buggy wizard path could attach two Account
+    // rows for the same fintsAccountRef. Collapse them — keep the oldest
+    // (createdAt asc), re-point transactions to it, archive the rest.
+    // Runs once per dupe; subsequent list() calls are a no-op.
+    for (const c of items) {
+      const refGroups = new Map<string, typeof c.accounts>();
+      for (const a of c.accounts) {
+        if (!a.fintsAccountRef) continue;
+        const arr = refGroups.get(a.fintsAccountRef) ?? [];
+        arr.push(a);
+        refGroups.set(a.fintsAccountRef, arr);
+      }
+      for (const [, group] of refGroups) {
+        if (group.length <= 1) continue;
+        group.sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime());
+        const [keep, ...dupes] = group;
+        const dupeIds = dupes.map(d => d.id);
+        await this.prisma.transaction.updateMany({
+          where: { accountId: { in: dupeIds } },
+          data: { accountId: keep.id },
+        });
+        await this.prisma.account.updateMany({
+          where: { id: { in: dupeIds } },
+          data: {
+            archivedAt: new Date(),
+            fintsConnectionId: null,
+            fintsAccountRef: null,
+          },
+        });
+        // Refresh the in-memory snapshot so the response immediately
+        // reflects the dedup result.
+        c.accounts = c.accounts.filter(a => !dupeIds.includes(a.id));
+      }
+    }
+
+    // Defensive auto-heal: any connection stuck in TAN_REQUIRED that
+    // already has linked Klar accounts must have completed SCA — the
+    // bank's UPD couldn't have produced sub-accounts otherwise. Without
+    // this, the bank list shows a red "TAN ERFORDERLICH" banner forever
+    // until the user triggers a manual sync (which would re-prompt for
+    // a TAN they don't owe).
+    const result: ConnectionWithAccounts[] = [];
+    for (const c of items) {
+      if (c.status === 'TAN_REQUIRED' && c.accounts.length > 0) {
+        const now = new Date();
+        const scaWindow = 89;
+        const updated = await this.prisma.fintsConnection.update({
+          where: { id: c.id },
+          data: {
+            status: 'ACTIVE',
+            lastScaAt: c.lastScaAt ?? now,
+            scaExpiresAt:
+              c.scaExpiresAt ?? new Date(now.getTime() + scaWindow * 86_400_000),
+          },
+        });
+        result.push({ ...updated, accounts: c.accounts });
+      } else {
+        result.push(c);
+      }
+    }
+    return result;
   }
 
   async findOne(ctx: RequestContext, id: string): Promise<FintsConnection> {
@@ -165,10 +305,13 @@ export class FintsService {
       throw new ConflictException({ code: 'REAUTH_REQUIRED', message: 'TAN-Re-Auth nötig' });
     }
     const lastRun = await this.syncRuns.findMostRecent(id);
-    if (lastRun && Date.now() - lastRun.startedAt.getTime() < FintsService.SYNC_COOLDOWN_MS) {
+    const recent = lastRun && Date.now() - lastRun.startedAt.getTime() < FintsService.SYNC_COOLDOWN_MS;
+    // Failed runs don't count toward the cooldown — the user typically
+    // wants to retry immediately after fixing whatever broke (PIN, network).
+    if (recent && lastRun.status !== 'FAILED') {
       throw new ConflictException({
         code: 'SYNC_RATE_LIMIT',
-        message: 'Letzter Sync ist weniger als 5 Minuten her',
+        message: 'Bitte ein paar Sekunden warten — der letzte Sync läuft noch oder ist gerade durch.',
       });
     }
     return this.sync.start(id, { triggeredBy: 'MANUAL', triggeredById: ctx.userId });
@@ -224,8 +367,29 @@ export class FintsService {
     if (!Array.isArray(input.accounts) || input.accounts.length === 0) {
       throw new BadRequestException('At least one account must be selected');
     }
+    // Idempotency guard: re-running pickAccounts (wizard retried, double
+    // submission, race) must not create duplicate Account rows for the
+    // same FinTS sub-account. We look up what's already there for this
+    // connection and skip refs the user already picked.
+    const existing = await this.prisma.account.findMany({
+      where: {
+        fintsConnectionId: connection.id,
+        archivedAt: null,
+      },
+    });
+    const alreadyLinked = new Set(
+      existing
+        .map(a => a.fintsAccountRef)
+        .filter((r): r is string => !!r),
+    );
+
     const created: Account[] = [];
     for (const a of input.accounts) {
+      if (alreadyLinked.has(a.fintsAccountRef)) {
+        const reused = existing.find(e => e.fintsAccountRef === a.fintsAccountRef);
+        if (reused) created.push(reused);
+        continue;
+      }
       const acc = await this.prisma.account.create({
         data: {
           householdId: ctx.householdId,
@@ -242,6 +406,25 @@ export class FintsService {
       });
       created.push(acc);
     }
+
+    // Heal any connection that came out of the wizard still flagged
+    // TAN_REQUIRED — by the time accounts can be picked, SCA is provably
+    // through (UPD with bankAccounts came back). The connection-list
+    // banner would otherwise stay red until the next manual sync.
+    if (connection.status === 'TAN_REQUIRED' || connection.status === 'SETUP') {
+      const now = new Date();
+      const scaWindow = 89;
+      await this.prisma.fintsConnection.update({
+        where: { id: connection.id },
+        data: {
+          status: 'ACTIVE',
+          lastScaAt: connection.lastScaAt ?? now,
+          scaExpiresAt:
+            connection.scaExpiresAt ?? new Date(now.getTime() + scaWindow * 86_400_000),
+        },
+      });
+    }
+
     return created;
   }
 
@@ -263,7 +446,19 @@ export class FintsService {
     await this.prisma.fintsConnection.delete({ where: { id } });
   }
 
-  toResponse(c: FintsConnection) {
+  toResponse(c: FintsConnection | ConnectionWithAccounts) {
+    const accounts = 'accounts' in c && Array.isArray(c.accounts)
+      ? c.accounts.map(a => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          iban: a.iban,
+          bic: a.bic,
+          fintsAccountRef: a.fintsAccountRef,
+          lastKnownBalanceCents: a.lastKnownBalanceCents,
+          lastBalanceAt: a.lastBalanceAt?.toISOString() ?? null,
+        }))
+      : [];
     return {
       id: c.id,
       ownerId: c.ownerId,
@@ -278,6 +473,7 @@ export class FintsService {
       lastSyncStatus: c.lastSyncStatus,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
+      accounts,
     };
   }
 

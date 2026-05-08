@@ -13,7 +13,7 @@ export class HlmToggleGroupItemDirective {
 
   readonly _cls = computed(() =>
     hlm(
-      'inline-flex flex-1 items-center justify-center rounded-lg px-3 min-h-[44px] text-sm font-medium transition-all duration-150',
+      'inline-flex flex-1 items-center justify-center rounded-lg px-3 min-h-9 text-sm font-medium transition-all duration-150',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       'disabled:pointer-events-none disabled:opacity-50',
       'text-muted-foreground',

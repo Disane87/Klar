@@ -1,41 +1,28 @@
 <div class="flex flex-col overflow-y-auto pb-16 animate-[klar-enter_160ms_ease-out_both]">
   <div class="flex flex-col gap-(--s-5) p-(--s-6) pb-16">
 
-    <!-- ── HERO INFO CARD — bundle .profile-card ───────────── -->
-    <section class="card profile-card flex flex-col gap-(--s-3)">
-      <div class="flex items-baseline justify-between gap-(--s-3) flex-wrap">
-        @if (editingName()) {
-          <div class="flex flex-wrap gap-2 items-center w-full">
-            <klar-input class="flex-1 min-w-50" [ngModel]="newName()" (ngModelChange)="newName.set($event)" placeholder="Haushaltsname" />
-            <klar-button size="sm" tone="primary" [loading]="savingName()" (click)="saveName()">Speichern</klar-button>
-            <klar-button size="sm" tone="link" (click)="cancelEditName()">Abbruch</klar-button>
-          </div>
-        } @else {
-          <h1 class="text-[24px] m-0 truncate"
-              style="font-family: var(--font-display); letter-spacing: -0.02em; font-weight: 500;">
-            {{ store.activeName() }}
-          </h1>
-          @if (store.activeId(); as hid) {
-            <span class="chip outline mono">{{ hid.slice(0, 8) }}</span>
-          }
+    <klar-hero
+      [eyebrow]="heroEyebrow()"
+      [title]="store.activeName()"
+      [sub]="heroSub()"
+    >
+      <ng-container heroEyebrowIcon>
+        <klar-icon name="house" [size]="12" />
+      </ng-container>
+
+      <ng-container heroActions>
+        @if (canManage()) {
+          <klar-button tone="ghost" size="sm" icon="pencil" (click)="openRenameDialog()">Umbenennen</klar-button>
         }
-      </div>
-      @if (!editingName()) {
-        <p class="text-[13px] text-(--fg-2) m-0">
-          {{ store.members().length }} Mitglied(er) · {{ store.activeRole() === 'OWNER' ? 'Eigner' : 'Mitglied' }}
-        </p>
-        <div class="flex gap-(--s-2) mt-(--s-2) flex-wrap">
-          @if (canManage()) {
-            <button type="button" class="btn ghost" (click)="startEditName()">Umbenennen</button>
-          }
-          @if (canManage() && isSoleOwner()) {
-            <button type="button" class="btn ghost danger" [disabled]="deletingHousehold()" (click)="deleteHousehold()">Auflösen</button>
-          } @else {
-            <button type="button" class="btn ghost danger" [disabled]="leavingHousehold()" (click)="leaveHousehold()">Verlassen</button>
-          }
-        </div>
-      }
-    </section>
+        @if (canManage() && isSoleOwner()) {
+          <klar-button tone="danger" size="sm" icon="trash"
+                       [loading]="deletingHousehold()" (click)="deleteHousehold()">Auflösen</klar-button>
+        } @else {
+          <klar-button tone="danger" size="sm" icon="log-out"
+                       [loading]="leavingHousehold()" (click)="leaveHousehold()">Verlassen</klar-button>
+        }
+      </ng-container>
+    </klar-hero>
 
     <klar-list>
 

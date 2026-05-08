@@ -8,6 +8,7 @@ import { FintsClientService } from '../client/fints-client.service';
 import { FintsCryptoService } from '../crypto/fints-crypto.service';
 import { FintsConnectionRepository } from '../connection/fints-connection.repository';
 import { FintsBookingMapper } from '../mapper/fints-booking.mapper';
+import { FintsRealtimeService } from '../realtime/fints-realtime.service';
 import { FintsSyncRunRepository } from './fints-sync-run.repository';
 import type { FintsSessionState } from '../client/fints-session-state';
 
@@ -72,7 +73,24 @@ export class FintsSyncService {
     private readonly pipeline: ImportPipelineService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly realtime: FintsRealtimeService,
   ) {}
+
+  /**
+   * Tracks the last `tanReference` we emitted on SSE per syncRun so the
+   * decoupled auto-poll loop doesn't broadcast a duplicate "tan-required"
+   * event on every 2-second status request — only when the bank actually
+   * chains a fresh challenge.
+   */
+  private readonly lastEmittedTanRef = new Map<string, string>();
+
+  /**
+   * In-flight decoupled-poll guard. Prevents the wizard's parallel "Fertig"
+   * click from spawning a second concurrent poller for the same run.
+   */
+  private readonly decoupledPolls = new Set<string>();
+  private static readonly DECOUPLED_POLL_INTERVAL_MS = 2_000;
+  private static readonly DECOUPLED_POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
   /**
    * Starts a new sync run for the given connection. Returns immediately
@@ -356,8 +374,12 @@ export class FintsSyncService {
       where: { fintsConnectionId: connection.id, archivedAt: null },
     });
     if (linkedAccounts.length === 0) {
-      // Setup case: the wizard hasn't picked accounts yet. Status SETUP
-      // stays; nothing to ingest. Mark run OK so the wizard can proceed.
+      // Setup case: the wizard hasn't picked accounts yet. Mark run OK so
+      // the wizard can render the account picker. Bank-side SCA is fully
+      // through at this point, so flip the connection from TAN_REQUIRED
+      // straight to ACTIVE — but DO NOT set lastSyncAt; the first real
+      // ingest after pickAccounts must use the 90-day default window, not
+      // the 2-day overlap heuristic from computeFromDate().
       syncRun = await this.syncRuns.update(syncRun.id, {
         status: 'OK',
         finishedAt: new Date(),
@@ -365,12 +387,23 @@ export class FintsSyncService {
         bookingsImported: 0,
         bookingsSkipped: 0,
       });
+      await this.markConnectionScaCompleted(connection.id);
+      this.realtime.emit(syncRun.id, 'ok', { syncRun });
+      this.lastEmittedTanRef.delete(syncRun.id);
       return { syncRun };
     }
 
     let totalFetched = 0;
     let totalImported = 0;
     let totalSkipped = 0;
+
+    this.logger.log(
+      `Ingest phase for connection ${connection.id}: ` +
+        `fromDate=${fromDate.toISOString().slice(0, 10)}, ` +
+        `toDate=${toDate.toISOString().slice(0, 10)}, ` +
+        `lastSyncAt=${connection.lastSyncAt?.toISOString() ?? 'null'}, ` +
+        `linkedAccounts=${linkedAccounts.length}`,
+    );
 
     for (const account of linkedAccounts) {
       const accountNumber = account.fintsAccountRef;
@@ -382,6 +415,28 @@ export class FintsSyncService {
       if (stmts.requiresTan) {
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, stmts);
       }
+      const stmtCount = stmts.statements?.length ?? 0;
+      // Inspect what the bank actually returned: which booking-date range is
+      // covered, how many entries per statement. Lets us tell apart bank-side
+      // truncation from a too-narrow request window.
+      const bookingDates: string[] = [];
+      let totalEntries = 0;
+      for (const s of stmts.statements ?? []) {
+        const entries = (s as { entries?: unknown[] }).entries ?? [];
+        totalEntries += entries.length;
+        for (const e of entries as Array<{ valueDate?: Date; bookingDate?: Date }>) {
+          const d = e.bookingDate ?? e.valueDate;
+          if (d) bookingDates.push(d.toISOString().slice(0, 10));
+        }
+      }
+      bookingDates.sort();
+      const earliest = bookingDates[0] ?? '∅';
+      const latest = bookingDates[bookingDates.length - 1] ?? '∅';
+      this.logger.log(
+        `Account ${accountNumber}: bank returned ${stmtCount} statement(s) ` +
+          `with ${totalEntries} entries (booking-date range ${earliest} … ${latest})`,
+      );
+
       const rawBookings = FintsBookingMapper.toRawBookings(stmts.statements, {
         iban: account.iban ?? accountNumber,
         syncRunId: syncRun.id,
@@ -394,6 +449,9 @@ export class FintsSyncService {
         source: 'fints',
         fintsSyncRunId: syncRun.id,
       });
+      this.logger.log(
+        `Account ${accountNumber}: imported=${ingest.imported}, skipped=${ingest.skipped}`,
+      );
       totalImported += ingest.imported;
       totalSkipped += ingest.skipped;
     }
@@ -409,6 +467,8 @@ export class FintsSyncService {
       bookingsSkipped: totalSkipped,
       tanChallenge: null,
     });
+    this.realtime.emit(finalRun.id, 'ok', { syncRun: finalRun });
+    this.lastEmittedTanRef.delete(finalRun.id);
     return { syncRun: finalRun };
   }
 
@@ -441,7 +501,85 @@ export class FintsSyncService {
       status: 'TAN_REQUIRED',
       tanChallenge: challenge as unknown as Prisma.InputJsonValue,
     });
+
+    // Emit on SSE only when the challenge actually changed: lib-fints
+    // returns the SAME tanReference for every "still pending" status reply
+    // (return code 3956), and we'd otherwise spam the wizard with redundant
+    // tan-required events every 2 seconds.
+    const previousRef = this.lastEmittedTanRef.get(syncRun.id);
+    if (previousRef !== challenge.tanReference) {
+      this.lastEmittedTanRef.set(syncRun.id, challenge.tanReference);
+      this.realtime.emit(syncRun.id, 'tan-required', {
+        syncRun: updated,
+        tanChallenge: challenge,
+      });
+    }
+
+    // Decoupled / pushTAN: kick off a background poll that calls
+    // synchronizeWithTan(empty) every 2s for up to 2min, so the wizard
+    // auto-progresses as soon as the user confirms in the banking app.
+    if (challenge.isDecoupled) {
+      void this.startDecoupledPoll(syncRun.id);
+    }
+
     return { syncRun: updated, tanChallenge: challenge };
+  }
+
+  /**
+   * Background loop for decoupled (pushTAN) confirmation. Calls
+   * {@link submitTan} with an empty TAN every 2 seconds; lib-fints' library
+   * translates that into the bank's HKTAN status request. The bank replies
+   *   - 3956 ("still pending") → another `requiresTan` with the same
+   *     reference; we keep polling
+   *   - success → run advances to ingest, emits 'ok'
+   *   - any 9xxx → run advances to FAILED, emits 'failed'
+   * On timeout we mark the run FAILED so the wizard can show a meaningful
+   * message instead of dangling on the "Bestätigung in deiner App" hint.
+   */
+  private async startDecoupledPoll(syncRunId: string): Promise<void> {
+    if (this.decoupledPolls.has(syncRunId)) return;
+    this.decoupledPolls.add(syncRunId);
+    const deadline = Date.now() + FintsSyncService.DECOUPLED_POLL_TIMEOUT_MS;
+    try {
+      while (Date.now() < deadline) {
+        await new Promise(resolve =>
+          setTimeout(resolve, FintsSyncService.DECOUPLED_POLL_INTERVAL_MS),
+        );
+        const fresh = await this.syncRuns.findById(syncRunId);
+        if (!fresh) return;
+        if (fresh.status !== 'TAN_REQUIRED') return; // terminal or aborted
+        const challenge = fresh.tanChallenge as { isDecoupled?: boolean } | null;
+        if (!challenge?.isDecoupled) return; // chained to non-decoupled — user must enter TAN
+        try {
+          const result = await this.submitTan(syncRunId, '');
+          // submitTan emits its own events. If still TAN_REQUIRED with a
+          // decoupled challenge, the next iteration continues polling.
+          if (result.syncRun.status !== 'TAN_REQUIRED') return;
+          if (result.tanChallenge && !result.tanChallenge.isDecoupled) return;
+        } catch (err) {
+          this.logger.warn(
+            `Decoupled auto-poll for sync run ${syncRunId} aborted: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+          return;
+        }
+      }
+      // Hit the timeout without bank confirmation.
+      const stillPending = await this.syncRuns.findById(syncRunId);
+      if (stillPending?.status === 'TAN_REQUIRED') {
+        this.client.forget(stillPending.connectionId);
+        await this.failRun(
+          stillPending,
+          new Error(
+            'Bestätigung in der Banking-App nicht innerhalb von 2 Minuten erfolgt. ' +
+              'Bitte den Setup-Wizard erneut starten.',
+          ),
+        );
+      }
+    } finally {
+      this.decoupledPolls.delete(syncRunId);
+    }
   }
 
   private async persistSessionState(
@@ -477,6 +615,26 @@ export class FintsSyncService {
     });
   }
 
+  /**
+   * Setup-only counterpart of {@link markConnectionSynced}: SCA succeeded
+   * but no Klar accounts are linked yet, so no bookings were fetched. We
+   * still want the connection out of TAN_REQUIRED (so the bank list stops
+   * showing the red banner) — but lastSyncAt must remain null so the next
+   * ingest gets the full 90-day backfill instead of a 2-day overlap.
+   */
+  private async markConnectionScaCompleted(connectionId: string): Promise<void> {
+    const now = new Date();
+    const scaWindow = this.config.get<number>('fints.scaWindowDays') ?? 89;
+    await this.prisma.fintsConnection.update({
+      where: { id: connectionId },
+      data: {
+        status: 'ACTIVE',
+        lastScaAt: now,
+        scaExpiresAt: new Date(now.getTime() + scaWindow * 86_400_000),
+      },
+    });
+  }
+
   private async failRun(syncRun: FintsSyncRun, err: unknown): Promise<SyncRunResult> {
     const message = err instanceof Error ? err.message : String(err);
     this.logger.warn(`Sync run ${syncRun.id} failed: ${message}`);
@@ -486,6 +644,8 @@ export class FintsSyncService {
       errorCode: err instanceof Error ? err.name : 'UnknownError',
       errorMessage: message.slice(0, 1000),
     });
+    this.realtime.emit(finalRun.id, 'failed', { syncRun: finalRun });
+    this.lastEmittedTanRef.delete(finalRun.id);
 
     // Orphan cleanup: when the very first sync of a brand-new connection
     // fails (status still SETUP), nuke the FintsConnection so the user
