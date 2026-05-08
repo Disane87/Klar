@@ -20,6 +20,7 @@
 | **📊 Fixed Costs Dashboard** | Grouped by category, color-coded, net surplus calculation |
 | **🔁 Recurring Transactions** | Monthly, quarterly, yearly, or custom intervals — computed on-the-fly (no data bloat!) |
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
+| **🏦 FinTS Bank Sync** | Read-only PIN/TAN sync of bookings + balances, AES-256-GCM-encrypted credentials, 4-step setup wizard, 90-day SCA reauth watcher, daily cron + manual trigger |
 | **📒 Buchungen** | Flat transactions list with filter tabs (Alle / Wiederkehrend / Manuell / Eingänge), category-tone per row, recurring chip on auto-generated bookings, summary strip with monthly income / expense / surplus |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
 | **📈 Soll vs. Ist (Monat)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Soll / Ist amounts, signed delta and threshold-based tone (ok / warn / over) |
@@ -34,14 +35,14 @@
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
 | **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB-Size / Warnungen / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / E-Mails / Haushalte tabs preserved below |
 | **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
-| **📜 Verträge (Contracts) — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
+| **📜 Contracts — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
 | **📅 Kalender** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
 | **📈 Statistik** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
 | **🪪 Sessions Verwaltung** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
 | **⚙️ Einstellungen** | Hero profile card with avatar / display name / email (verified chip) / member-since / role; SettingGroups for Security (2FA, Passkeys, OIDC), Sessions, Darstellung (theme via segmented), Verknüpfte Konten, Daten (Export/Import), Danger Zone; bottom .app-info strip (Version / Build / Server / Sprache) |
 | **🏠 Haushalt** | Hero info card with name (Fraunces) + ID chip + role + Auflösen/Verlassen action; SettingGroups for Members (role-chip OWNER/MEMBER tone-mapped to success/default), Mail-Templates (klar-list rows), Kategorien (manage tile-grid), API-Keys (one-time-reveal + revoke), Danger-Zone (delete) |
 | **🧷 Splits** | A booking can be intern split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
-| **✏️ Bulk-Aktionen** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
+| **✏️ Bulk action** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
 | **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETISCH chip for Planspiel projections |
 | **🔧 Komponenten-Spec** | Admin-only `/app/spec` page rendering every primitive (buttons × tones × solid/soft × sizes, chips, inputs, cards, setting rows, metric tiles, progress rings, confidence bars, hypo-chips, animations, type scale) |
 | **📑 CRUD-Demo** | Admin-only `/app/crud` page with 8 dialog patterns (Anlegen / Detail / Bearbeiten / Löschen / Verschieben / Massenaktion / Pausieren / Verwerfen-Schutz) |
@@ -100,6 +101,46 @@ Marco uploads his monthly Sparkasse CSV (CAMT v2, semicolon-separated, Windows-1
 
 > [!NOTE]
 > Phase 1 supports **Sparkasse CAMT v2** only. Generic column mapping, additional banks, and multi-account support are planned for later phases.
+
+---
+
+### 🏦 FinTS Bank Sync (read-only)
+
+For banks that ship a FinTS PIN/TAN endpoint, Klar can pull bookings + balances **server-side**, daily, without manual CSV exports.
+
+**Setup wizard at `/app/banken`:**
+
+1. **Bank** — type the 8-digit BLZ; Klar resolves bank name + FinTS server URL from the bundled BLZ registry (auto-refreshed daily from `hbci4j/hbci4java`).
+2. **Login** — VR-Kennung / Anmeldename + PIN. The PIN is AES-256-GCM-encrypted with a server-side master key (`FINTS_MASTER_KEY`) and never logged.
+3. **TAN** — covers pushTAN, decoupled approval, mobile-TAN, photoTAN, chipTAN-QR. Empty input is the decoupled / pushTAN path; the bank's own banking app issues the prompt.
+4. **Konten** — pick which sub-accounts (Giro, Tagesgeld, Kreditkarte) to attach as Klar `Account` rows. Subsequent syncs walk only the picked ones.
+
+**Sync model:**
+
+- **Initial sync** with the user-configurable date window, defaulting to 90 days back.
+- **Daily cron** at 03:00 with a 2-day overlap window to catch backdated postings — the dedup hash makes overlap safe.
+- **Manual trigger** ("Jetzt synchronisieren") — rate-limited to 1× / 5 min per connection.
+- **Reauth watcher** at 08:00: 7-day pre-warning notification, plus an `ACTIVE → REAUTH_REQUIRED` flip the moment the 89-day SCA window expires.
+
+**Lockout policy:**
+
+Bookings imported via FinTS carry `bankFieldsLockedAt` and `source='fints'`. The transaction edit dialog renders bank-side fields (amount, date, description) read-only and hides the Delete button. The backend rejects mutations of those fields with a `BadRequestException` as a defense-in-depth safety net. Classification fields (category, project, visibility, color, icon, recurring link) stay fully editable so the user's labelling work doesn't get overwritten on the next sync.
+
+**Encryption:**
+
+- AES-256-GCM with `connectionId` as AAD — a cipher cannot be swapped between connections.
+- Master key (`FINTS_MASTER_KEY`, 32-byte hex via `openssl rand -hex 32`) lives only in `FintsCryptoService`; Pino redaction blocks it from logs.
+- Plaintext PIN exists only inside the encrypt/decrypt boundary and is zeroed in the request handler immediately after sealing.
+- Connection deletion overwrites the cipher columns with random bytes before the row delete so a backup-restore cannot resurrect the PIN.
+
+**Privacy & ownership:**
+
+- A FinTS connection belongs to the user who set it up. Other household members can see status (active / reauth-required / etc.) but cannot edit credentials, submit TANs, or delete the connection.
+- The resulting `Account` is household-shared by default; the wizard's per-account `Privat`-toggle scopes it to the owner.
+
+**Backup note (operations):**
+
+The `FINTS_MASTER_KEY` is required to decrypt persisted credentials. Back it up **separately** from the database — without it, all stored connections become unrecoverable and users will need to re-enter PINs.
 
 ---
 
@@ -409,6 +450,16 @@ All configuration is via environment variables. Copy `.env.example` to `.env` an
 | `REGISTRATION_ENABLED` | `true` | Allow new user registration |
 | `APP_URL` | `http://localhost:3000` | Used in e-mails and OIDC callbacks |
 | `FRONTEND_URL` | `http://localhost:4200` | CORS origin |
+
+### FinTS
+
+| Variable | Default | Description |
+|---|---|---|
+| `FINTS_MASTER_KEY` | _empty_ | 32-byte hex (`openssl rand -hex 32`) for AES-256-GCM credential sealing. Boot warns when missing; FinTS encrypt/decrypt then throws on first use. **Back up separately from the DB** — without it, all stored bank connections are unrecoverable. |
+| `FINTS_SCA_WINDOW_DAYS` | `89` | PSD2 reauth window. The watcher pre-warns 7 days before this expires. |
+| `FINTS_BLZ_SOURCES` | `https://raw.githubusercontent.com/hbci4j/hbci4java/master/src/main/resources/blz.properties` | Comma-separated list of upstream URLs for the BLZ → FinTS-server-URL registry. The first source that returns a payload with ≥1000 records wins. |
+| `FINTS_PRODUCT_ID` | `klar-dev` | ZKA product registration ID; replace with the real ID when registered. |
+| `FINTS_PRODUCT_VERSION` | `0.1` | ZKA product version. |
 
 ### Mail
 
