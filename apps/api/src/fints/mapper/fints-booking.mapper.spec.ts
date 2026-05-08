@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { TransactionKind } from '@prisma/client';
 import type { Statement, Transaction as FintsTx } from 'lib-fints';
 import { FintsBookingMapper } from './fints-booking.mapper';
 
@@ -117,5 +118,64 @@ describe('FintsBookingMapper', () => {
       ctx,
     );
     expect(out2[0].amountCents).toBe(-2000);
+  });
+});
+
+// Helper factory for transactionKind tests — minimal FinTS transaction shape.
+function ftx(over: Partial<FintsTx> = {}): FintsTx {
+  return {
+    amount: -125.5,
+    entryDate: new Date('2026-05-01T00:00:00Z'),
+    valueDate: new Date('2026-05-01T00:00:00Z'),
+    purpose: 'Miete',
+    remoteName: 'Vermieter',
+    remoteAccountNumber: 'DE0000',
+    remoteBankId: 'BIC',
+    transactionCode: '158',
+    transactionType: undefined,
+    bookingText: 'Dauerauftrag',
+    e2eReference: 'e2e1',
+    customerReference: 'k1',
+    mandateReference: undefined,
+    additionalInformation: undefined,
+    ...over,
+  } as FintsTx;
+}
+
+describe('FintsBookingMapper.transactionKind', () => {
+  it('flags GVC 158 as STANDING_ORDER', () => {
+    const out = FintsBookingMapper.toRawBooking(ftx({ transactionCode: '158' }), 'EUR', ctx);
+    expect(out.transactionKind).toBe(TransactionKind.STANDING_ORDER);
+  });
+
+  it('flags GVC 005 as DIRECT_DEBIT', () => {
+    const out = FintsBookingMapper.toRawBooking(ftx({ transactionCode: '005' }), 'EUR', ctx);
+    expect(out.transactionKind).toBe(TransactionKind.DIRECT_DEBIT);
+  });
+
+  it('falls back to OTHER when no rule matches', () => {
+    const out = FintsBookingMapper.toRawBooking(
+      ftx({
+        transactionCode: '999',
+        bookingText: 'Sonstige',
+        purpose: 'foo',
+        e2eReference: undefined,
+        customerReference: undefined,
+        mandateReference: undefined,
+        additionalInformation: undefined,
+      }),
+      'EUR',
+      ctx,
+    );
+    expect(out.transactionKind).toBe(TransactionKind.OTHER);
+  });
+
+  it('uses bookingText fallback to detect "Dauerauftrag"', () => {
+    const out = FintsBookingMapper.toRawBooking(
+      ftx({ transactionCode: undefined, bookingText: 'Dauerauftrag', purpose: 'Miete' }),
+      'EUR',
+      ctx,
+    );
+    expect(out.transactionKind).toBe(TransactionKind.STANDING_ORDER);
   });
 });

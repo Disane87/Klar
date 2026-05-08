@@ -1,4 +1,6 @@
 import type { Statement, Transaction as FintsTransaction } from 'lib-fints';
+import { TransactionKind } from '@prisma/client';
+import { detectTransactionKind } from '@klar/shared';
 import type { RawBooking } from '../../import-pipeline/types';
 
 /**
@@ -55,6 +57,10 @@ export class FintsBookingMapper {
       counterpartyBic: emptyToUndef(tx.remoteBankId),
       bankTxId,
       bookingType: emptyToUndef(tx.transactionCode || tx.transactionType),
+      transactionKind: detectTransactionKind({
+        bookingType: tx.transactionCode || tx.transactionType,
+        purposeRaw: this.buildPurpose(tx),
+      }) as TransactionKind,
       source: 'fints',
       sourceRunId: ctx.syncRunId,
     };
