@@ -460,11 +460,28 @@ export class FintsSetupWizardComponent implements OnInit {
       this.pin.set(''); // wipe local copy
       this.connectionId = result.connection.id;
       this.syncRunId = result.syncRun.id;
+      if (result.syncRun.status === 'FAILED') {
+        // Backend already gave up — show the bank's own error so the
+        // user knows what to fix (PIN, login, URL).
+        this.failureMessage.set(
+          result.syncRun.errorMessage ??
+            'Bank-Antwort war leer. Bitte PIN, Anmeldename und FinTS-URL prüfen.',
+        );
+        this.step.set('failed');
+        return;
+      }
       if (result.tanChallenge) {
         this.tanChallenge.set(result.tanChallenge);
         this.step.set('tan');
-      } else {
+      } else if (result.syncRun.status === 'OK') {
         await this.proceedToAccounts();
+      } else {
+        // Unexpected status — show generic failure rather than silently
+        // landing on an empty account list.
+        this.failureMessage.set(
+          `Unerwarteter Sync-Status (${result.syncRun.status}). Bitte erneut versuchen.`,
+        );
+        this.step.set('failed');
       }
     } catch (err) {
       this.createError.set(this.extractErrorMessage(err, 'Verbindung fehlgeschlagen.'));

@@ -108,18 +108,24 @@ export class FintsSyncService {
         state,
       });
 
-      // FinTS PIN/TAN setup is a two-pass dialogue:
-      //   1. synchronize() — fetches BPD + availableTanMethods (no TAN yet)
-      //   2. selectTanMethod() — picks one before any TAN-bearing call
-      //   3. synchronize() — now requires the TAN that returns the UPD
-      //                      (account list, account-allowed-transactions)
-      //   4. synchronizeWithTan() — completes, UPD populated
+      // FinTS PIN/TAN setup is a two-pass dialogue (lib-fints/dialog.js
+      // line 127-129: HKTAN is only attached when config.selectedTanMethod
+      // is set, so the first synchronize() never demands TAN — it can only
+      // discover BPD + availableTanMethods anonymously. The second pass,
+      // after selectTanMethod(), is the one that triggers SCA and brings
+      // back UPD with the account list).
       //
-      // For first-time setup we auto-select the bank's first advertised
-      // method (typical default = pushTAN). The user can switch later
-      // by deleting and recreating the connection — for v1 the choice
-      // stays implicit so the wizard has just one TAN step.
+      //   1. synchronize() — fetches BPD + availableTanMethods (no TAN)
+      //   2. selectTanMethod() — picks one before any TAN-bearing call
+      //   3. synchronize() — now requires TAN that returns UPD
+      //   4. synchronizeWithTan() — completes, UPD populated
       const firstSync = await this.client.synchronize(fintsClient);
+      this.logger.debug(
+        `Pass 1 (BPD): bankInfoUpdated=${firstSync.bankingInformationUpdated}, ` +
+          `requiresTan=${firstSync.requiresTan}, ` +
+          `availableTanMethods=${fintsClient.config.availableTanMethods?.length ?? 0}, ` +
+          `bankAnswers=[${(firstSync.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
+      );
       if (firstSync.requiresTan) {
         // Some banks ask for TAN already on the BPD pass — surface immediately.
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, firstSync);
@@ -127,7 +133,25 @@ export class FintsSyncService {
 
       const tanMethodIdToUse =
         state.tanMethodId ?? this.pickDefaultTanMethod(fintsClient);
-      if (tanMethodIdToUse !== null && state.tanMethodId !== tanMethodIdToUse) {
+      if (tanMethodIdToUse === null) {
+        // No TAN method advertised — likely a credentials problem (bank
+        // rejected anonymous BPD discovery) or a bank misconfiguration.
+        // Surface a real error rather than silently landing on an empty
+        // account list.
+        const bankErrors = (firstSync.bankAnswers ?? [])
+          .filter(a => a.code >= 9000)
+          .map(a => `${a.code} ${a.text}`)
+          .join(' | ');
+        return this.failRun(
+          syncRun,
+          new Error(
+            bankErrors
+              ? `Bank lieferte keine TAN-Verfahren — Antwort: ${bankErrors}. Häufig: PIN oder Anmeldename falsch, oder Bank-URL passt nicht zur BLZ.`
+              : 'Bank lieferte keine TAN-Verfahren zurück. Bitte PIN, Anmeldename und FinTS-URL prüfen.',
+          ),
+        );
+      }
+      if (state.tanMethodId !== tanMethodIdToUse) {
         this.client.selectTanMethod(fintsClient, tanMethodIdToUse);
         state.tanMethodId = tanMethodIdToUse;
       }
@@ -137,11 +161,37 @@ export class FintsSyncService {
 
       // Pass 2: this call typically demands the TAN that unlocks UPD.
       const secondSync = await this.client.synchronize(fintsClient);
+      this.logger.debug(
+        `Pass 2 (UPD): bankInfoUpdated=${secondSync.bankingInformationUpdated}, ` +
+          `requiresTan=${secondSync.requiresTan}, ` +
+          `tanReference=${secondSync.tanReference ?? '∅'}, ` +
+          `bankAccounts=${fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0}, ` +
+          `bankAnswers=[${(secondSync.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
+      );
       if (secondSync.requiresTan) {
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, secondSync);
       }
 
-      // Bank didn't ask for TAN at all (rare). Persist again and continue.
+      // No TAN demand AND no UPD = something silent went wrong. Don't
+      // pretend success — surface to the user with bank's own answer.
+      const accountsAfterPass2 =
+        fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0;
+      if (accountsAfterPass2 === 0) {
+        const bankErrors = (secondSync.bankAnswers ?? [])
+          .filter(a => a.code >= 9000)
+          .map(a => `${a.code} ${a.text}`)
+          .join(' | ');
+        return this.failRun(
+          syncRun,
+          new Error(
+            bankErrors
+              ? `Bank lieferte keine Konten zurück — Antwort: ${bankErrors}.`
+              : 'Bank lieferte keine Konten zurück und keine TAN-Anforderung. Bitte mit anderem TAN-Verfahren erneut versuchen oder Bank-Support kontaktieren.',
+          ),
+        );
+      }
+
+      // Persist updated session state and continue ingest.
       await this.persistSessionState(connection, fintsClient, state);
       return this.runIngestPhase(syncRun, connection, fintsClient, state, fromDate, toDate);
     } catch (err) {
