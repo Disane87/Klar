@@ -22,31 +22,31 @@
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
 | **🏦 FinTS Bank Sync** | Read-only PIN/TAN sync of bookings + balances, AES-256-GCM-encrypted credentials, 4-step setup wizard, 90-day SCA reauth watcher, daily cron + manual trigger |
 | **📌 Standing Orders (Daueraufträge)** | Auto-detected from FinTS bookings (MT940 GVC `158/159/164/166`, CAMT `STDO`, German free-text fallback) plus manually-created entries; bank-locked fields, frequency inference, dedicated `/app/daueraufträge` page |
-| **📒 Buchungen** | Unified transactions table shared by `/app/buchungen` (cashflow lens, monthly scope) and `/app/banken/:c/:a` (per-account historical lens). Search · account · source · amount filters; quick-chip shortcuts (Wiederkehrend / Eingänge / FinTS / Manuell); per-month sticky group headers with signed monthly sum |
+| **📒 Transactions** | Unified transactions table shared by `/app/buchungen` (cashflow lens, monthly scope) and `/app/banken/:c/:a` (per-account historical lens). Search · account · source · amount filters; quick-chip shortcuts (Recurring / Income / FinTS / Manual); per-month sticky group headers with signed monthly sum |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
-| **📈 Soll vs. Ist (Monat)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Soll / Ist amounts, signed delta and threshold-based tone (ok / warn / over) |
-| **🎯 Projekte** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Ausgegeben / Bilanz metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
+| **📈 Plan vs. Actual (Month)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Plan / Actual amounts, signed delta and threshold-based tone (ok / warn / over) |
+| **🎯 Projects** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Spent / Balance metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
 | **🤖 MCP Server (OAuth 2.1)** | Claude Desktop / Cursor / Codex read, create, update & delete with per-scope user consent |
 | **🔐 Authentication** | Local (email/password), OIDC (PocketID + any OIDC provider), API Keys |
-| **🔐 Authentication UX** | Two-pane bundle layout: brand pane left (Fraunces 'klar genug' hero + ARGON2ID/100% LOKAL/RS256 chips) hidden on mobile, form pane right; applied to login / register / verify-email / oauth-consent / onboarding / join / auth-callback |
+| **🔐 Authentication UX** | Two-pane bundle layout: brand pane left (Fraunces 'klar genug' hero + ARGON2ID / 100% LOCAL / RS256 chips) hidden on mobile, form pane right; applied to login / register / verify-email / oauth-consent / onboarding / join / auth-callback |
 | **📱 PWA — Mobile-First** | Installable on iOS/Android, dark mode, safe area support |
 | **🤖 Home Assistant / n8n** | Hook up homelab automations via API keys |
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
-| **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB-Size / Warnungen / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / E-Mails / Haushalte tabs preserved below |
+| **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB Size / Warnings / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / Emails / Households tabs preserved below |
 | **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
 | **📜 Contracts — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
-| **📅 Kalender** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
-| **📈 Statistik** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
-| **🪪 Sessions Verwaltung** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
-| **⚙️ Einstellungen** | Hero profile card with avatar / display name / email (verified chip) / member-since / role; SettingGroups for Security (2FA, Passkeys, OIDC), Sessions, Darstellung (theme via segmented), Verknüpfte Konten, Daten (Export/Import), Danger Zone; bottom .app-info strip (Version / Build / Server / Sprache) |
-| **🏠 Haushalt** | Hero info card with name (Fraunces) + ID chip + role + Auflösen/Verlassen action; SettingGroups for Members (role-chip OWNER/MEMBER tone-mapped to success/default), Mail-Templates (klar-list rows), Kategorien (manage tile-grid), API-Keys (one-time-reveal + revoke), Danger-Zone (delete) |
-| **🧷 Splits** | A booking can be intern split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
+| **📅 Calendar** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
+| **📈 Statistics** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
+| **🪪 Session Management** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
+| **⚙️ Settings** | Hero profile card with avatar / display name / email (verified chip) / member-since / role; SettingGroups for Security (2FA, Passkeys, OIDC), Sessions, Appearance (theme via segmented), Connected Accounts, Data (Export/Import), Danger Zone; bottom .app-info strip (Version / Build / Server / Language) |
+| **🏠 Household** | Hero info card with name (Fraunces) + ID chip + role + Dissolve/Leave action; SettingGroups for Members (role-chip OWNER/MEMBER tone-mapped to success/default), Mail Templates (klar-list rows), Categories (manage tile-grid), API Keys (one-time-reveal + revoke), Danger Zone (delete) |
+| **🧷 Splits** | A booking can be internally split into multiple parts (e.g. salary = base + bonus) without changing how it appears as a single row in lists |
 | **✏️ Bulk action** | Multi-select transactions to bulk-move (re-categorize), bulk-delete, or bulk-pause recurring templates from one floating action bar |
-| **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETISCH chip for Planspiel projections |
-| **🔧 Komponenten-Spec** | Admin-only `/app/spec` page rendering every primitive (buttons × tones × solid/soft × sizes, chips, inputs, cards, setting rows, metric tiles, progress rings, confidence bars, hypo-chips, animations, type scale) |
-| **📑 CRUD-Demo** | Admin-only `/app/crud` page with 8 dialog patterns (Anlegen / Detail / Bearbeiten / Löschen / Verschieben / Massenaktion / Pausieren / Verwerfen-Schutz) |
+| **🎨 Editorial-Technical Design** | Warm OKLCH palette (hue 35), amber accent, Fraunces (display) + Inter (body) + JetBrains Mono (data), 8 earthy category tones (sage / slate / ochre / clay / moss / mineral / plum / mocha) with 2 px left-border rails on grouped lists, italic + HYPOTHETICAL chip for scenario projections |
+| **🔧 Component Spec** | Admin-only `/app/spec` page rendering every primitive (buttons × tones × solid/soft × sizes, chips, inputs, cards, setting rows, metric tiles, progress rings, confidence bars, hypo-chips, animations, type scale) |
+| **📑 CRUD Demo** | Admin-only `/app/crud` page with 8 dialog patterns (Create / Detail / Edit / Delete / Move / Bulk Action / Pause / Discard Protection) |
 
 > [!NOTE]
 > 🔢 **Everything in cents.** All amounts stored as signed integers (`amountCents`). Positive = income, negative = expense. No floating point, no rounding surprises.
@@ -114,13 +114,13 @@ For banks that ship a FinTS PIN/TAN endpoint, Klar can pull bookings + balances 
 1. **Bank** — type the 8-digit BLZ; Klar resolves bank name + FinTS server URL from the bundled BLZ registry (auto-refreshed daily from `hbci4j/hbci4java`).
 2. **Login** — VR-Kennung / Anmeldename + PIN. The PIN is AES-256-GCM-encrypted with a server-side master key (`FINTS_MASTER_KEY`) and never logged.
 3. **TAN** — covers pushTAN, decoupled approval, mobile-TAN, photoTAN, chipTAN-QR. Empty input is the decoupled / pushTAN path; the bank's own banking app issues the prompt.
-4. **Konten** — pick which sub-accounts (Giro, Tagesgeld, Kreditkarte) to attach as Klar `Account` rows. Subsequent syncs walk only the picked ones.
+4. **Accounts** — pick which sub-accounts (checking, savings, credit card) to attach as Klar `Account` rows. Subsequent syncs walk only the picked ones.
 
 **Sync model:**
 
 - **Initial sync** with the user-configurable date window, defaulting to 90 days back.
 - **Daily cron** at 03:00 with a 2-day overlap window to catch backdated postings — the dedup hash makes overlap safe.
-- **Manual trigger** ("Jetzt synchronisieren") — rate-limited to 1× / 5 min per connection.
+- **Manual trigger** ("Sync now") — rate-limited to 1× / 5 min per connection.
 - **Reauth watcher** at 08:00: 7-day pre-warning notification, plus an `ACTIVE → REAUTH_REQUIRED` flip the moment the 89-day SCA window expires.
 
 **Lockout policy:**
@@ -137,7 +137,7 @@ Bookings imported via FinTS carry `bankFieldsLockedAt` and `source='fints'`. The
 **Privacy & ownership:**
 
 - A FinTS connection belongs to the user who set it up. Other household members can see status (active / reauth-required / etc.) but cannot edit credentials, submit TANs, or delete the connection.
-- The resulting `Account` is household-shared by default; the wizard's per-account `Privat`-toggle scopes it to the owner.
+- The resulting `Account` is household-shared by default; the wizard's per-account `Private` toggle scopes it to the owner.
 
 **Backup note (operations):**
 
@@ -145,9 +145,9 @@ The `FINTS_MASTER_KEY` is required to decrypt persisted credentials. Back it up 
 
 ---
 
-### 📌 Standing Orders (Daueraufträge)
+### 📌 Standing Orders
 
-The Daueraufträge page (`/app/daueraufträge`) lists recurring bank
+The Standing Orders page (`/app/daueraufträge`) lists recurring bank
 payment instructions for a household. Two record sources live in the
 same `StandingOrder` table:
 
@@ -161,13 +161,13 @@ same `StandingOrder` table:
   MONTHLY / QUARTERLY / HALF_YEARLY / YEARLY / CUSTOM tolerance windows),
   and idempotently upserts a record per group via
   `@@unique(householdId, accountId, groupKey)`.
-- **`MANUAL`** — user-created entries via the page's "+ Manueller Eintrag"
+- **`MANUAL`** — user-created entries via the page's "+ Manual Entry"
   dialog, for standing orders the bank does not surface (private-party
   payments, cash standing orders). Manual records prefix their groupKey
   with `manual:` plus a timestamp suffix to never collide with bank-derived
   upserts.
 
-**Bank ist Source of Truth:** for `FINTS_DERIVED` records, the bank fields
+**Bank is the source of truth:** for `FINTS_DERIVED` records, the bank fields
 (`counterpartyName`, `counterpartyIban`, `amountCents`, `frequency`,
 `nextExpectedAt`) are locked — only `categoryId`, `note`, and `isActive`
 remain user-editable. The API rejects bank-field updates with
@@ -182,7 +182,7 @@ standing-order rows — those live encrypted on `FintsConnection` only.
 
 ---
 
-### 📒 Buchungen — Unified table
+### 📒 Transactions — Unified table
 
 The transactions table (`<klar-transactions-table>`) is shared by `/app/buchungen`
 (month-scoped cashflow lens) and `/app/banken/:c/:a` (historical per-account lens).
@@ -283,7 +283,7 @@ Full documentation including curl smoke test and configuration: **[docs/mcp.md](
 
 ### 🛠️ Admin Panel
 
-Available to users with `appRole = ADMIN` (the first registered user, or anyone elevated via the role-change flow). Routed at `/app/admin`. The page opens with a self-host hero (instance hostname + overall status chip), a 4-up metric grid (Uptime · 30 d, DB-Size, Warnungen · 24 h, Aktive Sessions), and three telemetry cards — Services, Performance, Jobs — that poll `/admin/health/*` and `/admin/jobs` every 30 s. Below those, all four tabs use a virtualized `klar-virtual-list` so they remain responsive even with millions of rows; every list is **searchable + filterable**, paginated with a stable `(createdAt DESC, id DESC)` cursor, and resolves user / household IDs to names + avatars + emails before display.
+Available to users with `appRole = ADMIN` (the first registered user, or anyone elevated via the role-change flow). Routed at `/app/admin`. The page opens with a self-host hero (instance hostname + overall status chip), a 4-up metric grid (Uptime · 30 d, DB Size, Warnings · 24 h, Active Sessions), and three telemetry cards — Services, Performance, Jobs — that poll `/admin/health/*` and `/admin/jobs` every 30 s. Below those, all four tabs use a virtualized `klar-virtual-list` so they remain responsive even with millions of rows; every list is **searchable + filterable**, paginated with a stable `(createdAt DESC, id DESC)` cursor, and resolves user / household IDs to names + avatars + emails before display.
 
 **Telemetry endpoints** (admin-only, throttled 30/min):
 
@@ -300,8 +300,8 @@ Each endpoint sits behind `JwtAuthGuard + AppAdminGuard`; non-admin requests ret
 |---|---|---|
 | **Audit Log** | Every system event (`user.login`, `oidc.link`, `apikey.used`, `mcp.tool.*`, `mcp.session.start`, …) | free-text on action · action prefix · user-ID · household-ID |
 | **MCP** | Per-tool-call audit for the MCP server — one row per tool invocation | free-text · tool name · client-ID · OK/Fail · user · household |
-| **E-Mails** | All sent emails (success + failed) | free-text on `to`/`subject` · status (SENT/FAILED) · template |
-| **Haushalte** | Households + members with avatars and roles | free-text on name / member email |
+| **Emails** | All sent emails (success + failed) | free-text on `to`/`subject` · status (SENT/FAILED) · template |
+| **Households** | Households + members with avatars and roles | free-text on name / member email |
 
 **MCP audit details** — for every MCP tool invocation Klar records:
 
@@ -352,31 +352,31 @@ The following user-facing modules ship with the editorial-technical refresh and 
 
 ### 🔔 Notifications
 
-In-app notification feed (`Notification` model + `NotificationKind` enum: `CONTRACT_RENEWAL`, `CONTRACT_PRICE_CHANGE`, `RECURRING_DUE`, `IMPORT_READY`, `BUDGET_THRESHOLD`, `MEMBER_INVITE`, `SYSTEM`). The bell in the page header lights up with an amber glow when there are unread items; the popover (animated via `klar-pop`) groups by date, marks read on click, and supports bulk "Alle gelesen" plus per-item delete. The store polls every 60 seconds; mutations always reload to reconcile against the authoritative server state.
+In-app notification feed (`Notification` model + `NotificationKind` enum: `CONTRACT_RENEWAL`, `CONTRACT_PRICE_CHANGE`, `RECURRING_DUE`, `IMPORT_READY`, `BUDGET_THRESHOLD`, `MEMBER_INVITE`, `SYSTEM`). The bell in the page header lights up with an amber glow when there are unread items; the popover (animated via `klar-pop`) groups by date, marks read on click, and supports bulk "Mark all read" plus per-item delete. The store polls every 60 seconds; mutations always reload to reconcile against the authoritative server state.
 
 **Privacy:** notifications are scoped to the household and optionally to a single user (`userId IS NULL` = household-wide). Only the household's members can read them.
 
-### 📜 Verträge — Auto-Detection
+### 📜 Contracts — Auto-Detection
 
 `Contract` model (cycle: `MONTHLY` / `QUARTERLY` / `YEARLY` / `CUSTOM`, status: `CANDIDATE` / `DETECTED` / `CONFIRMED` / `CANCELLED`). The detection service in `packages/shared/contracts/detect.ts` groups recurring transactions by merchant + amount tolerance ± 5 % and emits a confidence score per candidate. `POST /h/:hid/contracts/recompute` re-runs detection on demand (e.g. after a CSV import).
 
-The page `/app/vertraege` shows the hero strip (count of active + candidates, monthly fix sum, annualized estimate, next action), renewal/price-change alerts, tabs (Aktiv / Vorschläge / Beendet), per-row `klar-confidence-bar` and `cat-bar` accent, and a sliding detail drawer with hero amount in Fraunces, metric tiles for next renewal / cancel-by / status / cycle, and one-click Confirm / Cancel / Delete.
+The page `/app/vertraege` shows the hero strip (count of active + candidates, monthly fix sum, annualized estimate, next action), renewal/price-change alerts, tabs (Active / Suggestions / Ended), per-row `klar-confidence-bar` and `cat-bar` accent, and a sliding detail drawer with hero amount in Fraunces, metric tiles for next renewal / cancel-by / status / cycle, and one-click Confirm / Cancel / Delete.
 
-### 📅 Kalender
+### 📅 Calendar
 
 `/app/kalender` renders a Monday-based 7-column month grid bound to the existing `TransactionsStore`. Each cell shows up to 3 distinct category-colored dots, the day's signed total in mono, and (for the current day) an `--accent` outline. Clicking a day opens a drawer with the day's bookings rendered with `cat-bar` rails in the per-transaction category color. Recurring entries continue to be expanded on the fly — nothing is persisted just for the calendar view.
 
-### 📈 Soll vs. Ist (Cashflow Monat)
+### 📈 Plan vs. Actual (Cashflow Month)
 
-The Cashflow page (`/app/monat`) renders a per-category **Soll vs. Ist** card directly under the surplus hero, computed by a new aggregation endpoint `GET /api/v1/households/:hid/overview/budgets-vs-actuals?month=YYYY-MM`. Soll is taken from the stored `Budget` rows (positive cents) and signed at read-time according to the category type (expense → negative, income → positive). Ist is the sum of every realized transaction in the requested month plus every active recurring transaction expanded to its monthly equivalent (via the shared `toMonthlyEquivalent` helper) — PRIVATE entries owned by other users are filtered out before aggregation, so privacy guarantees match the rest of the overview surface.
+The Cashflow page (`/app/monat`) renders a per-category **Plan vs. Actual** card directly under the surplus hero, computed by a new aggregation endpoint `GET /api/v1/households/:hid/overview/budgets-vs-actuals?month=YYYY-MM`. Plan is taken from the stored `Budget` rows (positive cents) and signed at read-time according to the category type (expense → negative, income → positive). Actual is the sum of every realized transaction in the requested month plus every active recurring transaction expanded to its monthly equivalent (via the shared `toMonthlyEquivalent` helper) — PRIVATE entries owned by other users are filtered out before aggregation, so privacy guarantees match the rest of the overview surface.
 
-The pure shaping function lives in `@klar/shared` (`budgetsVsActuals` in `packages/shared/src/budgets/budgets-vs-actuals.ts`) and emits one row per budgeted category with a clamped meter ratio (`pct = min(1.2, |ist| / |soll|)`) and a tone state (`ok` ≤ 90 %, `warn` 90-100 %, `over` > 100 %). The web UI uses that ratio to fill a thin meter tinted in the category color, prints both Soll and Ist mono with `tabular-nums`, and shows the signed delta in `text-(--success)` / `text-(--warn)` / `text-(--danger)` depending on the state.
+The pure shaping function lives in `@klar/shared` (`budgetsVsActuals` in `packages/shared/src/budgets/budgets-vs-actuals.ts`) and emits one row per budgeted category with a clamped meter ratio (`pct = min(1.2, |actual| / |plan|)`) and a tone state (`ok` ≤ 90 %, `warn` 90-100 %, `over` > 100 %). The web UI uses that ratio to fill a thin meter tinted in the category color, prints both Plan and Actual mono with `tabular-nums`, and shows the signed delta in `text-(--success)` / `text-(--warn)` / `text-(--danger)` depending on the state.
 
-### 📈 Statistik
+### 📈 Statistics
 
-`/app/statistik` derives a KPI strip (Einnahmen / Ausgaben / Überschuss / Sparquote) from `OverviewStore` plus a category-mix card (top-down list with inline 80 px progress bar tinted in the category color) and a top-movers card (top 5 bookings of the current month by absolute amount). A multi-month trend, weekday heatmap, and recurring-spend breakdown will land once the dedicated Statistics-API ships — the page is intentionally kept lean so it always reflects what the existing aggregations can answer.
+`/app/statistik` derives a KPI strip (Income / Expenses / Surplus / Savings Rate) from `OverviewStore` plus a category-mix card (top-down list with inline 80 px progress bar tinted in the category color) and a top-movers card (top 5 bookings of the current month by absolute amount). A multi-month trend, weekday heatmap, and recurring-spend breakdown will land once the dedicated Statistics-API ships — the page is intentionally kept lean so it always reflects what the existing aggregations can answer.
 
-### 🪪 Sessions Verwaltung
+### 🪪 Session Management
 
 `RefreshToken` extended with `userAgent`, `ipHash` (sha256 of the IP + secret — plain IP never leaves the server) and `lastActiveAt` (bumped on every refresh-token rotation). New endpoints `GET /me/sessions` and `DELETE /me/sessions/:id` power the Settings/Security page so users can audit and revoke their own sessions individually. The user only ever sees the IP hash, never the plain address.
 
@@ -392,9 +392,9 @@ A single `Transaction` can carry one or more `TransactionSplit` rows (still casc
 
 `ConnectedApp` model (`provider`, `externalId`, `scopes[]`, `lastUsedAt`) lets the Settings page show a per-user list of OIDC linkages (PocketID / GitHub / Google / claude.ai / …) with edit + unlink. Endpoints scoped to the user (`/me/connected-apps`, behind `JwtAuthGuard`).
 
-### 🏠 Haushalt
+### 🏠 Household
 
-`/app/haushalt` opens with a tight bundle `.profile-card` hero — household name in Fraunces (24 px, -0.02 em tracking), short ID rendered as a `.chip.outline.mono` next to it, member count + role line, and a quick-action row (Umbenennen for owners; Auflösen if you're the sole owner, Verlassen otherwise). The page-header gains a static `WG` rhsChip plus, for owners, a `+ Einladen` action that opens the invite dialog. Below the hero, every section uses the bundle `.setting-group` pattern (eyebrow head + `.setting-card`): Meine Haushalte switcher (when you belong to more than one), Mitglieder with role chips tone-mapped to `.chip.success` (OWNER) / default `.chip` (MEMBER) and trash trailing-action for invite cleanup, Einladungen, Mail-Vorlagen, Kategorien-Manager (tile grid with category-color rail; `klar-select` searchable+addable upgrade is deferred to Haushalt-2), API-Schlüssel with one-time reveal banner + scope checkboxes + warn chip on revoked keys, and finally a `.danger-zone` modifier wrapping the formal delete/leave block.
+`/app/haushalt` opens with a tight bundle `.profile-card` hero — household name in Fraunces (24 px, -0.02 em tracking), short ID rendered as a `.chip.outline.mono` next to it, member count + role line, and a quick-action row (Rename for owners; Dissolve if you're the sole owner, Leave otherwise). The page-header gains a static `HH` rhsChip plus, for owners, a `+ Invite` action that opens the invite dialog. Below the hero, every section uses the bundle `.setting-group` pattern (eyebrow head + `.setting-card`): My Households switcher (when you belong to more than one), Members with role chips tone-mapped to `.chip.success` (OWNER) / default `.chip` (MEMBER) and trash trailing-action for invite cleanup, Invitations, Mail Templates, Category Manager (tile grid with category-color rail; `klar-select` searchable+addable upgrade is deferred to Household-2), API Keys with one-time reveal banner + scope checkboxes + warn chip on revoked keys, and finally a `.danger-zone` modifier wrapping the formal delete/leave block.
 
 ### 🛠️ Mode Toolbar (mockup helper)
 
