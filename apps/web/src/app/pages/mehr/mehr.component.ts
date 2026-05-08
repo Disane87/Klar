@@ -29,6 +29,7 @@ const GROUPS: readonly MehrGroup[] = [
       { id: 'recurring', label: 'Daueraufträge', icon: 'wiederkehrend', route: '/app/buchungen', tone: 'var(--cat-versicher)' },
       { id: 'planspiel', label: 'Planspiel',    icon: 'planspiel',    route: '/app/planspiel', tone: 'var(--cat-abos)' },
       { id: 'tresor',    label: 'Tresor',       icon: 'tresor',       route: '/app/tresor',    tone: 'var(--cat-spar)' },
+      { id: 'banken',    label: 'Banken',       icon: 'wallet',       route: '/app/banken',    tone: 'var(--cat-gesund)' },
       { id: 'import',    label: 'CSV-Import',   icon: 'receipt',      route: '/app/import',    tone: 'var(--cat-gesund)' },
     ],
   },

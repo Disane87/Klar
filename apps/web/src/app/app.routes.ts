@@ -151,6 +151,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'banken',
+        loadComponent: () =>
+          import('./pages/banken/banken.component').then(
+            m => m.BankenPageComponent,
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./pages/settings/settings.component').then(
