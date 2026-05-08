@@ -25,18 +25,19 @@
     </klar-hero>
 
     <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
-      <klar-metric-tile
+      <klar-tile
         label="Einnahmen"
         tone="success"
+        valueClass="text-(--success)"
         [value]="(store.totalIncomeCents() | klarMoney) ?? ''"
       >
         <ng-container slot="sub">
           <klar-icon name="trending-up" [size]="12" />
           {{ incomeCount() }} {{ incomeCount() === 1 ? 'Buchung' : 'Buchungen' }}
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
 
-      <klar-metric-tile
+      <klar-tile
         label="Ausgaben"
         [value]="(store.totalExpenseCents() | klarMoney) ?? ''"
       >
@@ -48,11 +49,12 @@
             keine Einnahmen erfasst
           }
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
 
-      <klar-metric-tile
+      <klar-tile
         [label]="store.nettoCents() >= 0 ? 'Überschuss' : 'Defizit'"
         [tone]="store.nettoCents() >= 0 ? 'success' : 'danger'"
+        [valueClass]="store.nettoCents() >= 0 ? 'text-(--success)' : 'text-(--danger)'"
         [value]="(store.nettoCents() | klarMoney) ?? ''"
       >
         <ng-container slot="sub">
@@ -62,7 +64,7 @@
             ––
           }
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
     </div>
 
     <klar-transactions-table

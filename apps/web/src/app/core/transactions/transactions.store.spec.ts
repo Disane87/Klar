@@ -62,4 +62,18 @@ describe('TransactionsStore', () => {
       expect(store.projectFilter()).toBeNull();
     });
   });
+
+  describe('accountIdFilter', () => {
+    it('setAccountIdFilter updates the accountIdFilter signal', () => {
+      expect(store.accountIdFilter()).toBeNull();
+      store.setAccountIdFilter('acc1');
+      expect(store.accountIdFilter()).toBe('acc1');
+    });
+
+    it('setAccountIdFilter(null) clears the filter', () => {
+      store.setAccountIdFilter('acc1');
+      store.setAccountIdFilter(null);
+      expect(store.accountIdFilter()).toBeNull();
+    });
+  });
 });

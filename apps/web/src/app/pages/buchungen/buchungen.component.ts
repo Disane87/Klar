@@ -6,7 +6,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { TransactionDialogComponent } from './transaction-dialog.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { HouseholdStore } from '../../core/household/household.store';
 import {
@@ -23,7 +23,7 @@ import { KlarTransactionsTableComponent } from '../../shared/transactions/klar-t
     KlarSkeletonComponent,
     KlarHeroComponent,
     KlarIconComponent,
-    KlarMetricTileComponent,
+    KlarTileComponent,
     KlarMoneyPipe,
     KlarAsyncStateComponent,
     KlarLoadingTplDirective,

@@ -34,6 +34,8 @@ export class TransactionDialogComponent {
   presetProjectId = input<string | null>(null);
   /** When true, the new transaction is created as a planned entry (default false). */
   presetPlanned = input<boolean>(false);
+  /** Pre-filled account id for create mode (used when adding from the account detail page). */
+  presetAccountId = input<string | null>(null);
 
   private dialog    = inject(KlarDialogService);
   private household = inject(HouseholdStore);
@@ -60,6 +62,7 @@ export class TransactionDialogComponent {
     { value: 'true',  label: 'Geplant' },
   ];
   readonly projectId   = signal<string | null>(null);
+  readonly accountId   = signal<string | null>(null);
   readonly color       = signal<string | null>(null);
   readonly icon        = signal<string | null>(null);
   readonly saving      = signal(false);
@@ -101,6 +104,7 @@ export class TransactionDialogComponent {
         this.visibility.set(t.visibility);
         this.isPlanned.set(t.isPlanned);
         this.projectId.set(t.projectId ?? null);
+        this.accountId.set(t.accountId ?? null);
         this.color.set(t.color ?? null);
         this.icon.set(t.icon ?? null);
       } else {
@@ -111,6 +115,7 @@ export class TransactionDialogComponent {
         this.visibility.set('SHARED');
         this.isPlanned.set(this.presetPlanned());
         this.projectId.set(this.presetProjectId());
+        this.accountId.set(this.presetAccountId());
         this.color.set(null);
         this.icon.set(null);
       }
@@ -138,6 +143,7 @@ export class TransactionDialogComponent {
       visibility:  this.visibility(),
       isPlanned:   this.isPlanned(),
       projectId:   this.projectId(),
+      accountId:   this.accountId(),
       color:       this.color(),
       icon:        this.icon(),
     };
