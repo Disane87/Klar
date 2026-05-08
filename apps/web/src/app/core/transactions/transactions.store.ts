@@ -25,6 +25,15 @@ export interface Transaction {
   createdAt: string;
   /** FinTS Foundation (14a.8): origin classifier. */
   source?: 'manual' | 'csv' | 'fints';
+  /** Phase 14b: booking-type classifier from FinTS GVC (drives the type chip). */
+  transactionKind?:
+    | 'STANDING_ORDER'
+    | 'DIRECT_DEBIT'
+    | 'TRANSFER'
+    | 'CARD'
+    | 'FEE'
+    | 'OTHER'
+    | null;
   /** Set when the booking came from FinTS — UI must render bank fields read-only. */
   bankFieldsLockedAt?: string | null;
   /** FK to FintsSyncRun (read-only on the FE). */
@@ -39,6 +48,11 @@ export class TransactionsStore {
   readonly currentMonth = signal(currentYearMonth());
   readonly categoryFilter = signal<string | null>(null);
   readonly projectFilter = signal<string | null>(null);
+  /**
+   * When set, the store loads ALL transactions for that account regardless of
+   * month (historical account view). When null, the store stays month-scoped.
+   */
+  readonly accountIdFilter = signal<string | null>(null);
 
   private _resource = resource<
     Transaction[],
@@ -47,6 +61,7 @@ export class TransactionsStore {
       month: string;
       categoryId: string | null;
       projectId: string | null;
+      accountId: string | null;
     }
   >({
     params: () => ({
@@ -54,10 +69,16 @@ export class TransactionsStore {
       month: this.currentMonth(),
       categoryId: this.categoryFilter(),
       projectId: this.projectFilter(),
+      accountId: this.accountIdFilter(),
     }),
     loader: ({ params }) => {
       if (!params.householdId) return Promise.resolve([]);
-      const queryParams: Record<string, string> = { month: params.month };
+      const queryParams: Record<string, string> = {};
+      if (params.accountId) {
+        queryParams['accountId'] = params.accountId;
+      } else {
+        queryParams['month'] = params.month;
+      }
       if (params.categoryId) queryParams['categoryId'] = params.categoryId;
       if (params.projectId) queryParams['projectId'] = params.projectId;
       return firstValueFrom(
@@ -102,6 +123,10 @@ export class TransactionsStore {
   clearFilters(): void {
     this.categoryFilter.set(null);
     this.projectFilter.set(null);
+  }
+
+  setAccountIdFilter(accountId: string | null): void {
+    this.accountIdFilter.set(accountId);
   }
 
   reload(): void {

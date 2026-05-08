@@ -1,16 +1,29 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarIconComponent } from '../icons/klar-icon.component';
-import { KlarBadgeComponent } from '../ui/klar-badge.component';
 import { BrandIconComponent } from '../ui/brand-icon.component';
 import { KlarMoneyPipe } from '../pipes/klar-money.pipe';
 import type { Transaction } from '../../core/transactions/transactions.store';
+
+interface RowTypeChip {
+  label: string;
+  /** Tailwind classes for bg + text. */
+  classes: string;
+}
+
+const FINTS_KIND_CHIP: Partial<Record<NonNullable<Transaction['transactionKind']>, RowTypeChip>> = {
+  STANDING_ORDER: { label: 'Dauerauftrag',     classes: 'bg-(--accent)/15 text-(--accent)' },
+  DIRECT_DEBIT:   { label: 'SEPA-Lastschrift', classes: 'bg-(--color-info)/15 text-(--color-info)' },
+  TRANSFER:       { label: 'Überweisung',      classes: 'bg-(--fg-3)/20 text-(--fg-2)' },
+  CARD:           { label: 'Karte',            classes: 'bg-(--fg-3)/20 text-(--fg-2)' },
+  FEE:            { label: 'Gebühr',           classes: 'bg-(--color-expense)/15 text-(--color-expense)' },
+};
 
 @Component({
   selector: 'klar-transactions-row',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KlarIconComponent, KlarBadgeComponent, BrandIconComponent, KlarMoneyPipe],
+  imports: [KlarIconComponent, BrandIconComponent, KlarMoneyPipe],
   template: `
     <div
       role="button"
@@ -42,8 +55,14 @@ import type { Transaction } from '../../core/transactions/transactions.store';
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        @if (tx().source === 'fints') {
-          <klar-badge tone="zinc">FinTS</klar-badge>
+        @let chip = typeChip();
+        @if (chip) {
+          <span
+            class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium tracking-wide"
+            [class]="chip.classes"
+          >
+            {{ chip.label }}
+          </span>
         }
         <span
           class="text-[13px] mono tabular-nums font-medium"
@@ -82,5 +101,18 @@ export class KlarTransactionsRowComponent {
     if (t.icon) return t.icon;
     if (!t.categoryId) return t.amountCents > 0 ? 'trending' : 'receipt';
     return this.categories.byId(t.categoryId)?.icon ?? 'receipt';
+  });
+
+  readonly typeChip = computed<RowTypeChip | null>(() => {
+    const t = this.tx();
+    if (t.source === 'manual') return { label: 'Manuell', classes: 'bg-(--fg-3)/20 text-(--fg-2)' };
+    if (t.source === 'csv')    return { label: 'CSV',     classes: 'bg-(--fg-3)/20 text-(--fg-2)' };
+    if (t.source === 'fints') {
+      if (t.transactionKind && FINTS_KIND_CHIP[t.transactionKind]) {
+        return FINTS_KIND_CHIP[t.transactionKind] ?? null;
+      }
+      return { label: 'FinTS', classes: 'bg-(--fg-3)/20 text-(--fg-2)' };
+    }
+    return null;
   });
 }

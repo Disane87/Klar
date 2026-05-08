@@ -273,6 +273,9 @@ export class TransactionsService {
       // FinTS Foundation (14a.8): source + lockout marker so the FE can
       // render bank-field-locked indicators on FinTS-imported rows.
       source: tx.source,
+      // Phase 14b: classifier derived from FinTS bookingType. Drives the
+      // type chip on the transactions table (Dauerauftrag / SEPA-Lastschrift / …).
+      transactionKind: tx.transactionKind,
       bankFieldsLockedAt: tx.bankFieldsLockedAt
         ? tx.bankFieldsLockedAt.toISOString()
         : null,
