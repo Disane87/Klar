@@ -46,4 +46,20 @@ describe('deriveFrequency', () => {
       deriveFrequency(['2026-05-01', '2026-03-01', '2026-04-01']),
     ).toBe('MONTHLY');
   });
+
+  it('returns WEEKLY at exact lower boundary (6 days)', () => {
+    expect(deriveFrequency(['2026-05-01', '2026-05-07'])).toBe('WEEKLY');
+  });
+
+  it('returns WEEKLY at exact upper boundary (8 days)', () => {
+    expect(deriveFrequency(['2026-05-01', '2026-05-09'])).toBe('WEEKLY');
+  });
+
+  it('returns CUSTOM just outside WEEKLY upper boundary (9 days)', () => {
+    expect(deriveFrequency(['2026-05-01', '2026-05-10'])).toBe('CUSTOM');
+  });
+
+  it('returns MONTHLY at exact lower boundary (27 days)', () => {
+    expect(deriveFrequency(['2026-05-01', '2026-05-28'])).toBe('MONTHLY');
+  });
 });
