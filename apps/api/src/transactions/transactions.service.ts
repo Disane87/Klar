@@ -141,6 +141,23 @@ export class TransactionsService {
       throw new BadRequestException('amountCents muss eine Ganzzahl sein');
     }
 
+    // FinTS Foundation (14a.8): bank-field lockout. When a transaction
+    // came from a FinTS sync (bankFieldsLockedAt set), changes to fields
+    // sourced from the bank are rejected. User-side classification
+    // (category, project, visibility, color, icon, recurring link)
+    // remains editable so the lessons learned by the user stay in sync
+    // with the upstream bank data.
+    if (existing.bankFieldsLockedAt) {
+      const locked = ['amountCents', 'date', 'description'] as const;
+      for (const f of locked) {
+        if (input[f] !== undefined) {
+          throw new BadRequestException(
+            `Feld "${f}" ist gesperrt — Buchung stammt aus FinTS-Sync`,
+          );
+        }
+      }
+    }
+
     const data: UpdateTransactionData = {};
     if (input.amountCents !== undefined) data.amountCents = input.amountCents;
     if (input.categoryId !== undefined) data.categoryId = input.categoryId;
@@ -184,6 +201,11 @@ export class TransactionsService {
 
   async remove(ctx: RequestContext, id: string): Promise<void> {
     const existing = await this.findAndAuthorize(ctx, id);
+    if (existing.bankFieldsLockedAt) {
+      throw new BadRequestException(
+        'Buchung stammt aus FinTS-Sync und kann nicht gelöscht werden — beim nächsten Sync wird sie wieder importiert.',
+      );
+    }
     await this.repo.delete(existing.id);
   }
 
@@ -206,7 +228,15 @@ export class TransactionsService {
   async bulkDelete(ctx: RequestContext, ids: string[]): Promise<{ count: number }> {
     if (!Array.isArray(ids) || ids.length === 0) return { count: 0 };
     const allowedIds = await this.collectAuthorizedIds(ctx, ids);
-    return this.repo.bulkDelete(allowedIds, ctx.householdId);
+    // FinTS Foundation (14a.8): silently skip bank-locked rows. Bulk delete
+    // is a list-level action, so rejecting the entire batch over a single
+    // FinTS row would surprise the user; partial-delete + count signals
+    // what actually happened.
+    const rows = await this.repo.findManyByIds(allowedIds, ctx.householdId);
+    const deletable = rows
+      .filter(r => r.bankFieldsLockedAt === null)
+      .map(r => r.id);
+    return this.repo.bulkDelete(deletable, ctx.householdId);
   }
 
   /**
@@ -227,6 +257,7 @@ export class TransactionsService {
     return {
       id: tx.id,
       householdId: tx.householdId,
+      accountId: tx.accountId,
       createdByUserId: tx.createdByUserId,
       amountCents: tx.amountCents,
       plannedAmountCents: tx.plannedAmountCents,
@@ -238,6 +269,13 @@ export class TransactionsService {
       counterparty: tx.counterparty,
       visibility: tx.visibility,
       recurringTransactionId: tx.recurringTransactionId,
+      // FinTS Foundation (14a.8): source + lockout marker so the FE can
+      // render bank-field-locked indicators on FinTS-imported rows.
+      source: tx.source,
+      bankFieldsLockedAt: tx.bankFieldsLockedAt
+        ? tx.bankFieldsLockedAt.toISOString()
+        : null,
+      fintsSyncRunId: tx.fintsSyncRunId,
       splits: splits.map(s => ({
         id: s.id,
         label: s.label,

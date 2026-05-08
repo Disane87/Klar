@@ -1,10 +1,20 @@
 <div class="flex flex-col gap-4">
 
+  @if (bankFieldsLocked()) {
+    <klar-dialog-callout tone="accent">
+      <span lead>Aus FinTS-Sync</span>
+      Betrag, Datum und Beschreibung stammen direkt von deiner Bank und sind schreibgeschützt.
+      Kategorie, Projekt, Sichtbarkeit, Icon und Farbe kannst du weiterhin anpassen.
+    </klar-dialog-callout>
+  }
+
   <div class="flex flex-col gap-1.5">
     <label hlmLabel for="td-desc">Beschreibung</label>
     <input id="td-desc" hlmInput type="text"
            placeholder="z.B. Supermarkt Rewe"
            [value]="description()"
+           [readOnly]="bankFieldsLocked()"
+           [disabled]="bankFieldsLocked()"
            (input)="description.set($any($event.target).value)" />
   </div>
 
@@ -17,12 +27,17 @@
         [inputId]="'td-amount'"
         placeholder="-50,00"
         [(amountCents)]="amountCents"
+        [disabled]="bankFieldsLocked()"
       />
     </div>
 
     <div class="flex flex-col gap-1.5">
       <label hlmLabel for="td-date">Datum</label>
-      <klar-date-input [inputId]="'td-date'" [(value)]="date" />
+      <klar-date-input
+        [inputId]="'td-date'"
+        [(value)]="date"
+        [disabled]="bankFieldsLocked()"
+      />
     </div>
   </div>
 
@@ -114,7 +129,7 @@
     (cancel)="cancel()"
     (confirm)="save()"
   >
-    @if (isEditMode()) {
+    @if (isEditMode() && !bankFieldsLocked()) {
       <klar-button start tone="danger" size="sm" [loading]="saving()" (click)="remove()">
         Löschen
       </klar-button>

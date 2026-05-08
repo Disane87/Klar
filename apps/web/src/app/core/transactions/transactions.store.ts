@@ -7,6 +7,8 @@ import { HouseholdStore } from '../household/household.store';
 export interface Transaction {
   id: string;
   householdId: string;
+  /** FinTS Foundation (14a.8): Account this booking belongs to. */
+  accountId?: string;
   categoryId: string | null;
   projectId: string | null;
   recurringTransactionId: string | null;
@@ -21,6 +23,12 @@ export interface Transaction {
   color: string | null;
   icon: string | null;
   createdAt: string;
+  /** FinTS Foundation (14a.8): origin classifier. */
+  source?: 'manual' | 'csv' | 'fints';
+  /** Set when the booking came from FinTS — UI must render bank fields read-only. */
+  bankFieldsLockedAt?: string | null;
+  /** FK to FintsSyncRun (read-only on the FE). */
+  fintsSyncRunId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

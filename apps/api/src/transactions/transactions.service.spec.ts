@@ -28,6 +28,7 @@ const makeTx = (overrides: Partial<TransactionWithSplits> = {}): TransactionWith
   sourceImportId: null,
   source: 'manual',
   bankFieldsLockedAt: null,
+  fintsSyncRunId: null,
   color: null,
   icon: null,
   createdAt: new Date('2026-04-01'),
@@ -151,6 +152,40 @@ describe('TransactionsService', () => {
       );
     });
 
+    it('rejects amount/date/description updates on bank-locked transactions', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeTx({ bankFieldsLockedAt: new Date('2026-05-07'), source: 'fints' }),
+      );
+      await expect(
+        service.update(ctx, 'tx-1', { amountCents: -1234 }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(ctx, 'tx-1', { date: '2026-04-20' }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(ctx, 'tx-1', { description: 'edited' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows category/project/visibility/icon/color updates on bank-locked transactions', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeTx({ bankFieldsLockedAt: new Date('2026-05-07'), source: 'fints' }),
+      );
+      vi.mocked(repo.update).mockResolvedValue(
+        makeTx({ categoryId: 'cat-2', icon: 'shield', color: '#22c55e' }),
+      );
+      await service.update(ctx, 'tx-1', {
+        categoryId: 'cat-2',
+        icon: 'shield',
+        color: '#22c55e',
+        projectId: 'p-1',
+        visibility: Visibility.PRIVATE,
+      });
+      expect(repo.update).toHaveBeenCalled();
+    });
+
     it('updates and returns the transaction', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeTx());
@@ -181,6 +216,15 @@ describe('TransactionsService', () => {
       vi.mocked(repo.delete).mockResolvedValue(makeTx());
       await service.remove(ctx, 'tx-1');
       expect(repo.delete).toHaveBeenCalledWith('tx-1');
+    });
+
+    it('refuses to delete bank-locked transactions', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeTx({ bankFieldsLockedAt: new Date('2026-05-07'), source: 'fints' }),
+      );
+      await expect(service.remove(ctx, 'tx-1')).rejects.toThrow(BadRequestException);
+      expect(repo.delete).not.toHaveBeenCalled();
     });
   });
 

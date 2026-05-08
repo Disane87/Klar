@@ -67,6 +67,14 @@ export class TransactionDialogComponent {
 
   readonly isEditMode = computed(() => this.tx() !== null);
 
+  /**
+   * FinTS Foundation (14a.8): when this transaction was imported via a
+   * FinTS sync, bank-side fields (amount, date, description, counterparty)
+   * are read-only. The matching backend rules in TransactionsService.update
+   * + remove reject mutation attempts as a safety net.
+   */
+  readonly bankFieldsLocked = computed(() => !!this.tx()?.bankFieldsLockedAt);
+
   /** When editing a planned tx and the user toggles to realized, we show the
    *  archived plan + abweichung hint. */
   readonly realizingNow = computed(() => {
