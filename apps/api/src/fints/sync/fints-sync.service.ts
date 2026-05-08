@@ -11,6 +11,7 @@ import { FintsBookingMapper } from '../mapper/fints-booking.mapper';
 import { FintsRealtimeService } from '../realtime/fints-realtime.service';
 import { FintsSyncRunRepository } from './fints-sync-run.repository';
 import type { FintsSessionState } from '../client/fints-session-state';
+import { StandingOrdersDetection } from '../../standing-orders/standing-orders.detection';
 
 export interface StartSyncOptions {
   triggeredBy: FintsSyncTrigger;
@@ -74,6 +75,7 @@ export class FintsSyncService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly realtime: FintsRealtimeService,
+    private readonly standingOrders: StandingOrdersDetection,
   ) {}
 
   /**
@@ -454,6 +456,17 @@ export class FintsSyncService {
       );
       totalImported += ingest.imported;
       totalSkipped += ingest.skipped;
+
+      try {
+        await this.standingOrders.runForAccount({
+          householdId: account.householdId,
+          accountId: account.id,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Standing-order detection failed for account ${account.id}: ${(err as Error).message}`,
+        );
+      }
     }
 
     await this.persistSessionState(connection, fintsClient, state);

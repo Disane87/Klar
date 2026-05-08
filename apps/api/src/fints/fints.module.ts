@@ -3,6 +3,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { HouseholdsModule } from '../households/households.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ImportPipelineModule } from '../import-pipeline/import-pipeline.module';
+import { StandingOrdersModule } from '../standing-orders/standing-orders.module';
 import { FintsCryptoService } from './crypto/fints-crypto.service';
 import { BankRegistryRepository } from './banks/bank-registry.repository';
 import { BankRegistryService } from './banks/bank-registry.service';
@@ -34,7 +35,7 @@ import { FintsController } from './fints.controller';
  *   14a.8 — lockout UI integration (frontend-side)
  */
 @Module({
-  imports: [PrismaModule, HouseholdsModule, NotificationsModule, ImportPipelineModule],
+  imports: [PrismaModule, HouseholdsModule, NotificationsModule, ImportPipelineModule, StandingOrdersModule],
   providers: [
     FintsCryptoService,
     BankRegistryRepository,
