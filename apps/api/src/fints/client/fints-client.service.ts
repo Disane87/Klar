@@ -44,6 +44,11 @@ type SelectedTanMethod = ReturnType<FinTSClient['selectTanMethod']>;
  * Because lib-fints is ESM-only, the buildClient() entry is async — the
  * loader resolves on first use and is cached.
  */
+interface CachedClient {
+  client: FinTSClient;
+  expiresAt: number;
+}
+
 @Injectable()
 export class FintsClientService {
   /** Klar's product registration data. ZKA-issued IDs go in env when we apply. */
@@ -52,8 +57,15 @@ export class FintsClientService {
   private static readonly PRODUCT_VERSION =
     process.env['FINTS_PRODUCT_VERSION'] ?? '0.1';
 
+  /** TAN reflection window: how long we keep the FinTSClient alive after a
+   *  synchronize() that returned requiresTan. lib-fints' continuation
+   *  (`synchronizeWithTan`) needs `currentDialog` from the same client
+   *  instance — a fresh client throws "no customer dialog was started". */
+  private static readonly CLIENT_CACHE_TTL_MS = 10 * 60 * 1000;
+
   private readonly logger = new Logger(FintsClientService.name);
   private libPromise: Promise<LibFintsModule> | null = null;
+  private readonly cache = new Map<string, CachedClient>();
 
   /** Loads lib-fints once, lazily, and caches the module. */
   private lib(): Promise<LibFintsModule> {
@@ -61,6 +73,42 @@ export class FintsClientService {
       this.libPromise = loadLibFints();
     }
     return this.libPromise;
+  }
+
+  /**
+   * Stash a FinTSClient instance for in-flight TAN-continuation.
+   * synchronizeWithTan / *WithTan calls require the same instance because
+   * lib-fints stores the dialog state in client.currentDialog.
+   */
+  rememberForTan(connectionId: string, client: FinTSClient): void {
+    this.cleanupExpired();
+    this.cache.set(connectionId, {
+      client,
+      expiresAt: Date.now() + FintsClientService.CLIENT_CACHE_TTL_MS,
+    });
+  }
+
+  /** Returns a cached client when still alive, otherwise null. */
+  getCached(connectionId: string): FinTSClient | null {
+    const entry = this.cache.get(connectionId);
+    if (!entry) return null;
+    if (entry.expiresAt < Date.now()) {
+      this.cache.delete(connectionId);
+      return null;
+    }
+    return entry.client;
+  }
+
+  /** Drops the cached client — call on terminal state (OK / FAILED). */
+  forget(connectionId: string): void {
+    this.cache.delete(connectionId);
+  }
+
+  private cleanupExpired(): void {
+    const now = Date.now();
+    for (const [id, entry] of this.cache.entries()) {
+      if (entry.expiresAt < now) this.cache.delete(id);
+    }
   }
 
   /**
@@ -107,6 +155,16 @@ export class FintsClientService {
   /** Forwards the optional TAN-media selection (chipTAN with multiple readers). */
   selectTanMedia(client: FinTSClient, tanMediaName: string): void {
     client.selectTanMedia(tanMediaName);
+  }
+
+  /**
+   * Whether the bank's currently-selected TAN method is decoupled
+   * (pushTAN/banking-app push notification — no code-input required).
+   * The wizard needs this so it can render a spinner instead of the
+   * 6-digit input field.
+   */
+  isSelectedMethodDecoupled(client: FinTSClient): boolean {
+    return client.config.selectedTanMethod?.isDecoupled ?? false;
   }
 
   /**

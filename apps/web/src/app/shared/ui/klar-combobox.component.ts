@@ -28,7 +28,7 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
         [disabled]="disabled()"
         [attr.aria-label]="ariaLabel()"
         (click)="updateTriggerWidth()"
-        class="flex h-9 w-full items-center justify-between gap-2 rounded border border-(--border) bg-(--surface) px-3 text-base text-(--text) scheme-dark transition-colors hover:bg-(--surface-2) disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-1 focus:ring-(--accent)/40"
+        class="flex h-9 w-full items-center justify-between gap-2 rounded border border-(--border) bg-(--surface) px-3 text-base text-(--text) scheme-dark transition-colors hover:bg-(--surface-2) disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:border-(--color-ring) data-[state=open]:border-(--color-ring)"
       >
         <span class="truncate" [class.text-(--text-muted)]="!selectedItem()">
           {{ selectedItem() ? displayWith()(selectedItem()!) : placeholder() }}

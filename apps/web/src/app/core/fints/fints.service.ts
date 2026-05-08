@@ -58,6 +58,8 @@ export interface FintsTanChallenge {
   mediaName?: string;
   mediaBase64?: string;
   mediaMimeType?: string;
+  /** Bank uses a decoupled / pushTAN method — no code-input expected. */
+  isDecoupled: boolean;
 }
 
 export interface FintsSyncRunWithChallenge {

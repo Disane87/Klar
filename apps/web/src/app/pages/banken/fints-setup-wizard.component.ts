@@ -22,6 +22,7 @@ import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
+import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 
@@ -73,6 +74,7 @@ interface AccountSelection {
     KlarButtonComponent,
     KlarComboboxComponent,
     KlarDialogCalloutComponent,
+    HlmSpinnerComponent,
     KlarIconComponent,
   ],
   template: `
@@ -216,26 +218,44 @@ interface AccountSelection {
 
       @if (step() === 'tan') {
         <section class="flex flex-col gap-3">
-          <p class="text-[13px] text-(--fg-2)">
-            {{ tanChallenge()?.prompt ?? 'Bestätige die Anmeldung mit einer TAN.' }}
-          </p>
-          @if (tanChallenge()?.mediaBase64) {
-            <img
-              class="rounded-md border border-(--line-soft) self-start"
-              [src]="tanImageSrc()"
-              alt="TAN challenge"
-              style="max-width: 240px;"
+          @if (isPushTan()) {
+            <!-- Decoupled / pushTAN: bank pushes a notification to the
+                 user's banking app. No code-input here, just a spinner +
+                 hint until the bank confirms (manual click triggers the
+                 polling call, since we don't auto-poll yet). -->
+            <div class="flex items-center gap-3 rounded-md border border-(--line-soft) bg-(--bg-2) px-4 py-4">
+              <hlm-spinner class="size-5 shrink-0 text-(--accent)" />
+              <div class="flex-1 min-w-0 flex flex-col gap-1">
+                <span class="text-[13px] font-medium">
+                  {{ tanChallenge()?.prompt ?? 'Anmeldung in der Banking-App bestätigen' }}
+                </span>
+                <span class="text-[12px] text-(--fg-2)">
+                  Öffne deine Banking-App und bestätige die Anmeldung. Klicke
+                  anschließend auf „Fertig", damit Klar die Konten abruft.
+                </span>
+              </div>
+            </div>
+          } @else {
+            <p class="text-[13px] text-(--fg-2)">
+              {{ tanChallenge()?.prompt ?? 'Bestätige die Anmeldung mit einer TAN.' }}
+            </p>
+            @if (tanChallenge()?.mediaBase64) {
+              <img
+                class="rounded-md border border-(--line-soft) self-start"
+                [src]="tanImageSrc()"
+                alt="TAN challenge"
+                style="max-width: 240px;"
+              />
+            }
+            <klar-input
+              label="TAN"
+              type="text"
+              placeholder="6-stellige TAN"
+              iconName="shield-check"
+              [ngModel]="tan()"
+              (ngModelChange)="tan.set($event)"
             />
           }
-          <klar-input
-            label="TAN"
-            type="text"
-            placeholder="6-stellige TAN oder leer für Push-Bestätigung"
-            iconName="shield-check"
-            [ngModel]="tan()"
-            (ngModelChange)="tan.set($event)"
-            hint="Push-/Decoupled-Verfahren: Eingabe leer lassen und in der Banking-App bestätigen."
-          />
           @if (tanError()) {
             <klar-dialog-callout tone="danger" icon="x">
               {{ tanError() }}
@@ -245,10 +265,16 @@ interface AccountSelection {
             <klar-button tone="ghost" (click)="cancel()">Abbrechen</klar-button>
             <klar-button
               tone="primary"
-              [disabled]="store.tanSubmitting()"
+              [disabled]="store.tanSubmitting() || (!isPushTan() && tan().length === 0)"
               (click)="submitTan()"
             >
-              {{ store.tanSubmitting() ? 'Sende …' : 'Bestätigen' }}
+              @if (store.tanSubmitting()) {
+                Prüfe …
+              } @else if (isPushTan()) {
+                Fertig
+              } @else {
+                Bestätigen
+              }
             </klar-button>
           </div>
         </section>
@@ -408,6 +434,8 @@ export class FintsSetupWizardComponent implements OnInit {
   protected readonly canAttach = computed(
     () => this.accountSelections().some(a => a.selected),
   );
+
+  protected readonly isPushTan = computed(() => this.tanChallenge()?.isDecoupled === true);
 
   protected readonly tanImageSrc = computed(() => {
     const c = this.tanChallenge();

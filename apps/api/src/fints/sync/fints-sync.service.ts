@@ -31,6 +31,12 @@ export interface TanChallenge {
   /** When the bank ships a chipTAN/photoTAN image, base64-encoded for the modal. */
   mediaBase64?: string;
   mediaMimeType?: string;
+  /**
+   * True when the bank's selected TAN method is decoupled (pushTAN /
+   * banking-app push notification). The wizard hides the TAN-code input
+   * and shows a "confirm in your banking app" hint instead.
+   */
+  isDecoupled: boolean;
 }
 
 /**
@@ -259,24 +265,45 @@ export class FintsSyncService {
       throw new BadRequestException('Sync run has no TAN reference — challenge already consumed');
     }
 
+    // Critical: lib-fints' synchronizeWithTan requires the SAME client
+    // instance that returned requiresTan, because the in-flight Dialog
+    // (dialogId, lastMessageNumber, …) lives on client.currentDialog and
+    // can't be serialised. Building a fresh client here would throw
+    // 'no customer dialog was started' inside lib-fints.
+    const fintsClient = this.client.getCached(connection.id);
+    if (!fintsClient) {
+      // Cache expired (10 min) or process restarted between requests.
+      // The user has to retry from scratch.
+      return this.failRun(
+        syncRun,
+        new Error(
+          'TAN-Bestätigungsfenster abgelaufen (Server-Neustart oder >10 Min seit Setup). ' +
+            'Bitte den Setup-Wizard erneut starten.',
+        ),
+      );
+    }
+
     try {
       const state = this.crypto.decrypt<FintsSessionState>(syncRun.connectionId, {
         cipher: Buffer.from(connection.credentialsCipher),
         iv: Buffer.from(connection.credentialsIv),
         tag: Buffer.from(connection.credentialsTag),
       });
-      const fintsClient = await this.client.buildClient({
-        bankUrl: connection.serverUrl,
-        blz: connection.blz,
-        loginName: connection.loginName,
-        state,
-      });
       const resp = await this.client.synchronizeWithTan(fintsClient, tanReference, tan || undefined);
+      this.logger.debug(
+        `submitTan: bankInfoUpdated=${resp.bankingInformationUpdated}, ` +
+          `requiresTan=${resp.requiresTan}, ` +
+          `bankAccounts=${fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0}, ` +
+          `bankAnswers=[${(resp.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
+      );
       if (resp.requiresTan) {
         // Bank chained another TAN — re-persist with new reference.
+        // (rememberForTan is called inside persistTanChallenge.)
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, resp);
       }
 
+      // Terminal success — drop the cached client now that the dialog is closed.
+      this.client.forget(connection.id);
       await this.persistSessionState(connection, fintsClient, state);
       return this.runIngestPhase(
         syncRun,
@@ -287,6 +314,7 @@ export class FintsSyncService {
         syncRun.toDate ?? new Date(),
       );
     } catch (err) {
+      this.client.forget(connection.id);
       return this.failRun(syncRun, err);
     }
   }
@@ -375,11 +403,16 @@ export class FintsSyncService {
         ? Buffer.from(resp.tanPhoto.image).toString('base64')
         : undefined,
       mediaMimeType: resp.tanPhoto?.mimeType,
+      isDecoupled: this.client.isSelectedMethodDecoupled(fintsClient),
     };
     // Best-effort: persist BPD changes that may have happened during the
     // partial dialog so a crash before TAN entry doesn't lose them.
     await this.persistSessionState(connection, fintsClient, state);
     await this.connections.setStatus(connection.id, 'TAN_REQUIRED');
+    // Keep this exact FinTSClient instance for submitTan — lib-fints
+    // stores the in-flight Dialog state on the client and a fresh
+    // instance can't continue with synchronizeWithTan.
+    this.client.rememberForTan(connection.id, fintsClient);
     const updated = await this.syncRuns.update(syncRun.id, {
       status: 'TAN_REQUIRED',
       tanChallenge: challenge as unknown as Prisma.InputJsonValue,
@@ -437,6 +470,9 @@ export class FintsSyncService {
     // FintsSyncRun table.
     const connection = await this.connections.findById(syncRun.connectionId);
     if (connection?.status === 'SETUP') {
+      // Drop any cached client for this connection — its FinTSClient state
+      // is irrelevant once the connection itself is gone.
+      this.client.forget(connection.id);
       try {
         await this.prisma.fintsConnection.delete({ where: { id: connection.id } });
         this.logger.log(
