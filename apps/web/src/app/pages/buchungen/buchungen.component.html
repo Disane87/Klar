@@ -25,70 +25,44 @@
     </klar-hero>
 
     <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
-      <!-- Einnahmen -->
-      <div
-        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
+      <klar-metric-tile
+        label="Einnahmen"
+        tone="success"
+        [value]="(store.totalIncomeCents() | klarMoney) ?? ''"
       >
-        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
-          Einnahmen
-        </span>
-        <span
-          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] text-(--success) truncate"
-        >
-          {{ store.totalIncomeCents() | klarMoney }}
-        </span>
-        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
+        <ng-container slot="sub">
           <klar-icon name="trending-up" [size]="12" />
           {{ incomeCount() }} {{ incomeCount() === 1 ? 'Buchung' : 'Buchungen' }}
-        </span>
-      </div>
+        </ng-container>
+      </klar-metric-tile>
 
-      <!-- Ausgaben -->
-      <div
-        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
+      <klar-metric-tile
+        label="Ausgaben"
+        [value]="(store.totalExpenseCents() | klarMoney) ?? ''"
       >
-        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
-          Ausgaben
-        </span>
-        <span
-          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] text-(--fg) truncate"
-        >
-          {{ store.totalExpenseCents() | klarMoney }}
-        </span>
-        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
+        <ng-container slot="sub">
           <klar-icon name="hash" [size]="12" />
           @if (expenseRatio() !== null) {
             {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen
           } @else {
             keine Einnahmen erfasst
           }
-        </span>
-      </div>
+        </ng-container>
+      </klar-metric-tile>
 
-      <!-- Bilanz (accent) -->
-      <div
-        class="border rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
-        [style.border-color]="bilanzBorderColor()"
-        [style.background]="bilanzBackground()"
+      <klar-metric-tile
+        [label]="store.nettoCents() >= 0 ? 'Überschuss' : 'Defizit'"
+        [tone]="store.nettoCents() >= 0 ? 'success' : 'danger'"
+        [value]="(store.nettoCents() | klarMoney) ?? ''"
       >
-        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
-          {{ store.nettoCents() >= 0 ? 'Überschuss' : 'Defizit' }}
-        </span>
-        <span
-          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] truncate"
-          [class.text-(--success)]="store.nettoCents() >= 0"
-          [class.text-(--danger)]="store.nettoCents() < 0"
-        >
-          {{ store.nettoCents() | klarMoney }}
-        </span>
-        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
+        <ng-container slot="sub">
           @if (surplusRatio() !== null) {
             ≈ {{ surplusRatio() }} % · {{ surplusRating() }}
           } @else {
             ––
           }
-        </span>
-      </div>
+        </ng-container>
+      </klar-metric-tile>
     </div>
 
     <klar-transactions-table
