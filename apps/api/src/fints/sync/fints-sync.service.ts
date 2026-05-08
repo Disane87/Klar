@@ -108,19 +108,57 @@ export class FintsSyncService {
         state,
       });
 
-      const syncResp = await this.client.synchronize(fintsClient);
-      if (syncResp.requiresTan) {
-        return this.persistTanChallenge(syncRun, connection, fintsClient, state, syncResp);
+      // FinTS PIN/TAN setup is a two-pass dialogue:
+      //   1. synchronize() — fetches BPD + availableTanMethods (no TAN yet)
+      //   2. selectTanMethod() — picks one before any TAN-bearing call
+      //   3. synchronize() — now requires the TAN that returns the UPD
+      //                      (account list, account-allowed-transactions)
+      //   4. synchronizeWithTan() — completes, UPD populated
+      //
+      // For first-time setup we auto-select the bank's first advertised
+      // method (typical default = pushTAN). The user can switch later
+      // by deleting and recreating the connection — for v1 the choice
+      // stays implicit so the wizard has just one TAN step.
+      const firstSync = await this.client.synchronize(fintsClient);
+      if (firstSync.requiresTan) {
+        // Some banks ask for TAN already on the BPD pass — surface immediately.
+        return this.persistTanChallenge(syncRun, connection, fintsClient, state, firstSync);
       }
 
-      // Persist updated session state immediately so a crash mid-sync
-      // doesn't lose the BPD/UPD discovery work.
+      const tanMethodIdToUse =
+        state.tanMethodId ?? this.pickDefaultTanMethod(fintsClient);
+      if (tanMethodIdToUse !== null && state.tanMethodId !== tanMethodIdToUse) {
+        this.client.selectTanMethod(fintsClient, tanMethodIdToUse);
+        state.tanMethodId = tanMethodIdToUse;
+      }
+
+      // Persist BPD + chosen method now so a crash before TAN doesn't lose them.
       await this.persistSessionState(connection, fintsClient, state);
 
+      // Pass 2: this call typically demands the TAN that unlocks UPD.
+      const secondSync = await this.client.synchronize(fintsClient);
+      if (secondSync.requiresTan) {
+        return this.persistTanChallenge(syncRun, connection, fintsClient, state, secondSync);
+      }
+
+      // Bank didn't ask for TAN at all (rare). Persist again and continue.
+      await this.persistSessionState(connection, fintsClient, state);
       return this.runIngestPhase(syncRun, connection, fintsClient, state, fromDate, toDate);
     } catch (err) {
       return this.failRun(syncRun, err);
     }
+  }
+
+  /**
+   * Picks the bank's first advertised TAN method. Returns null when the
+   * BPD didn't include any (in which case the bank likely supports a
+   * single-step protocol — extremely rare). lib-fints exposes the list
+   * after the first synchronize().
+   */
+  private pickDefaultTanMethod(client: FinTSClient): number | null {
+    const methods = client.config.availableTanMethods;
+    if (!methods || methods.length === 0) return null;
+    return methods[0].id;
   }
 
   /**

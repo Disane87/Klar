@@ -66,27 +66,40 @@ export class FintsStore {
   readonly syncing = signal<string | null>(null); // connectionId being synced
   readonly deleting = signal<string | null>(null);
 
+  /**
+   * Promise of the in-flight create call, if any. Guards against double-
+   * creation when a click-handler races the disabled-attribute update or
+   * a bug elsewhere triggers a second invocation. Anyone awaiting while a
+   * call is in-flight gets the same response — never a fresh POST.
+   */
+  private inflightCreate: Promise<FintsCreateConnectionResponse> | null = null;
+
   // ── Public mutations ───────────────────────────────────────────────────────
 
   async createConnection(
     request: FintsCreateConnectionRequest,
   ): Promise<FintsCreateConnectionResponse> {
+    if (this.inflightCreate) return this.inflightCreate;
     const householdId = this.householdStore.activeId();
     if (!householdId) throw new Error('No active household');
     this.creating.set(true);
-    try {
-      const result = await firstValueFrom(
-        this.fintsService.create(householdId, request),
-      );
-      // Inject the new connection so the list updates without a reload.
-      const current = this.connections() ?? [];
-      this.listResource.set([result.connection, ...current]);
-      this.activeSyncRunId.set(result.syncRun.id);
-      this.activeTanChallenge.set(result.tanChallenge);
-      return result;
-    } finally {
-      this.creating.set(false);
-    }
+    this.inflightCreate = (async () => {
+      try {
+        const result = await firstValueFrom(
+          this.fintsService.create(householdId, request),
+        );
+        // Inject the new connection so the list updates without a reload.
+        const current = this.connections() ?? [];
+        this.listResource.set([result.connection, ...current]);
+        this.activeSyncRunId.set(result.syncRun.id);
+        this.activeTanChallenge.set(result.tanChallenge);
+        return result;
+      } finally {
+        this.creating.set(false);
+        this.inflightCreate = null;
+      }
+    })();
+    return this.inflightCreate;
   }
 
   async triggerSync(connectionId: string): Promise<FintsSyncRunWithChallenge> {

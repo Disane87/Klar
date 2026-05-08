@@ -358,6 +358,9 @@ model FintsConnection {
   accounts  Account[]
   syncRuns  FintsSyncRun[]
 
+  // One connection per (owner, bank, login) — guards the setup wizard
+  // against creating duplicates when a setup attempt is retried.
+  @@unique([ownerId, blz, loginName])
   @@index([ownerId])
   @@index([householdId])
   @@index([scaExpiresAt])

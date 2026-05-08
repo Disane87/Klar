@@ -467,10 +467,27 @@ export class FintsSetupWizardComponent implements OnInit {
         await this.proceedToAccounts();
       }
     } catch (err) {
-      this.createError.set((err as { error?: { detail?: string } })?.error?.detail ?? 'Verbindung fehlgeschlagen.');
+      this.createError.set(this.extractErrorMessage(err, 'Verbindung fehlgeschlagen.'));
     } finally {
       this.creating.set(false);
     }
+  }
+
+  /**
+   * RFC-7807-ish error extraction. Backend returns either the legacy
+   * { error: { detail } } shape via Nest's GlobalExceptionFilter or our
+   * custom { code, message } payload (e.g. FINTS_CONNECTION_DUPLICATE).
+   */
+  private extractErrorMessage(err: unknown, fallback: string): string {
+    const e = err as { error?: { detail?: string; message?: string } };
+    return (
+      e?.error?.detail ??
+      e?.error?.message ??
+      (typeof err === 'object' && err && 'message' in err
+        ? String((err as { message?: unknown }).message ?? '')
+        : '') ||
+      fallback
+    );
   }
 
   protected async submitTan(): Promise<void> {
@@ -486,7 +503,7 @@ export class FintsSetupWizardComponent implements OnInit {
       this.tanChallenge.set(null);
       await this.proceedToAccounts();
     } catch (err) {
-      this.tanError.set((err as { error?: { detail?: string } })?.error?.detail ?? 'TAN-Bestätigung fehlgeschlagen.');
+      this.tanError.set(this.extractErrorMessage(err, 'TAN-Bestätigung fehlgeschlagen.'));
     }
   }
 
@@ -549,7 +566,7 @@ export class FintsSetupWizardComponent implements OnInit {
       this.store.reload();
       this.step.set('done');
     } catch (err) {
-      this.attachError.set((err as { error?: { detail?: string } })?.error?.detail ?? 'Konnte Konten nicht verknüpfen.');
+      this.attachError.set(this.extractErrorMessage(err, 'Konnte Konten nicht verknüpfen.'));
     } finally {
       this.attaching.set(false);
     }

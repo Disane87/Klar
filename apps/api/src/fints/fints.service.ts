@@ -104,20 +104,34 @@ export class FintsService {
 
     // Two-step create: insert with empty cipher, then update with the
     // sealed credentials once we know the row's id (id-bound AAD).
-    const stub = await this.prisma.fintsConnection.create({
-      data: {
-        ownerId: ctx.userId,
-        householdId: ctx.householdId,
-        bankName: input.bankName,
-        blz: input.blz,
-        serverUrl: input.serverUrl,
-        loginName: input.loginName,
-        credentialsCipher: new Uint8Array(),
-        credentialsIv: new Uint8Array(),
-        credentialsTag: new Uint8Array(),
-        status: 'SETUP',
-      },
-    });
+    // Unique constraint on (ownerId, blz, loginName) catches anything
+    // that slips past the FE inflight-guard.
+    let stub;
+    try {
+      stub = await this.prisma.fintsConnection.create({
+        data: {
+          ownerId: ctx.userId,
+          householdId: ctx.householdId,
+          bankName: input.bankName,
+          blz: input.blz,
+          serverUrl: input.serverUrl,
+          loginName: input.loginName,
+          credentialsCipher: new Uint8Array(),
+          credentialsIv: new Uint8Array(),
+          credentialsTag: new Uint8Array(),
+          status: 'SETUP',
+        },
+      });
+    } catch (err) {
+      if ((err as { code?: string }).code === 'P2002') {
+        throw new ConflictException({
+          code: 'FINTS_CONNECTION_DUPLICATE',
+          message:
+            'Eine Verbindung zu dieser Bank mit demselben Login existiert bereits. Bitte zuerst die bestehende Verbindung löschen.',
+        });
+      }
+      throw err;
+    }
     const sealed = this.crypto.encrypt(stub.id, placeholderState);
     const connection = await this.prisma.fintsConnection.update({
       where: { id: stub.id },
