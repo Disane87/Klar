@@ -14,6 +14,10 @@ describe('detectTransactionKind', () => {
     expect(detectTransactionKind({ bookingType: '164' })).toBe('STANDING_ORDER');
   });
 
+  it('returns STANDING_ORDER for MT940 GVC 166', () => {
+    expect(detectTransactionKind({ bookingType: '166' })).toBe('STANDING_ORDER');
+  });
+
   it('returns STANDING_ORDER for CAMT SubFamily STDO', () => {
     expect(detectTransactionKind({ bookingType: 'STDO' })).toBe('STANDING_ORDER');
   });
@@ -55,7 +59,7 @@ describe('detectTransactionKind', () => {
     expect(detectTransactionKind({})).toBe('OTHER');
   });
 
-  it('does not falsely block "Dauerauftrag" variants in unrelated words', () => {
+  it('matches German compound words containing the "Dauerauftr-" prefix', () => {
     expect(
       detectTransactionKind({ purposeRaw: 'Daueraufträgliche Sonderaktion 2026' }),
     ).toBe('STANDING_ORDER');

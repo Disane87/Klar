@@ -13,6 +13,11 @@ export interface KindInput {
   purposeRaw?: string;
 }
 
+// MT940 GVC codes for standing-order bookings:
+//   158 = Dauerauftragsgutschrift / -lastschrift
+//   159 = Dauerauftrag (Spar/Termineinlage)
+//   164 = Dauerauftrag Eingang
+//   166 = Dauerauftrag durch Kreditinstitut (institution-executed)
 const STANDING_ORDER_GVC = new Set(['158', '159', '164', '166']);
 const DIRECT_DEBIT_GVC = new Set(['005']);
 const TRANSFER_GVC = new Set(['020', '051', '052', '053', '054']);
@@ -35,6 +40,8 @@ export function detectTransactionKind(input: KindInput): TransactionKind {
   if (TRANSFER_GVC.has(code)) return 'TRANSFER';
   if (FEE_GVC.has(code)) return 'FEE';
 
+  // Intentional prefix match — catches 'Dauerauftrag', 'Daueraufträge', and
+  // bank-specific compounds where the umlaut splits the root (e.g. 'Daueraufträglich').
   if (input.purposeRaw && /dauerauftr/i.test(input.purposeRaw)) {
     return 'STANDING_ORDER';
   }
