@@ -10,7 +10,7 @@
 >
   <ng-template klarLoading>
     <div class="page">
-      <div class="summary-strip">
+      <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
         <klar-skeleton height="84px" />
         <klar-skeleton height="84px" />
         <klar-skeleton height="84px" />
@@ -38,35 +38,42 @@
 
   <div class="page">
 
-    <!-- Summary strip — 3 cells with Fraunces hero figures (bundle PageFixkosten) -->
-    <div class="summary-strip">
-      <div class="summary-cell">
-        <span class="label">Einnahmen · fix</span>
-        <span class="value income">{{ incomeTotalCents() | klarMoney }}</span>
-        <span class="delta">
+    <!-- Summary strip — 3 metric tiles (klar-metric-tile) -->
+    <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
+      <klar-metric-tile
+        label="Einnahmen · fix"
+        tone="success"
+        [value]="(incomeTotalCents() | klarMoney) ?? ''"
+      >
+        <ng-container slot="sub">
           <klar-icon name="trending-up" [size]="12" />
           {{ incomeBracket().label }}
           @if (incomeBracket().desc) { <span class="text-(--fg-3)">· {{ incomeBracket().desc }}</span> }
-        </span>
-      </div>
-      <div class="summary-cell">
-        <span class="label">Ausgaben · fix</span>
-        <span class="value expense">{{ expenseTotalCents() | klarMoney }}</span>
-        <span class="delta">
+        </ng-container>
+      </klar-metric-tile>
+
+      <klar-metric-tile
+        label="Ausgaben · fix"
+        [value]="(expenseTotalCents() | klarMoney) ?? ''"
+      >
+        <ng-container slot="sub">
           <klar-icon name="hash" [size]="12" />
           @if (expenseRatio() !== null) { {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen }
           @else { keine Einnahmen erfasst }
-        </span>
-      </div>
-      <div class="summary-cell accent" [class.deficit]="surplusCents() < 0">
-        <span class="label">Monatlicher {{ surplusCents() >= 0 ? 'Überschuss' : 'Defizit' }}</span>
-        <span class="value">{{ surplusCents() | klarMoney }}</span>
-        <span class="delta">
+        </ng-container>
+      </klar-metric-tile>
+
+      <klar-metric-tile
+        [label]="surplusCents() >= 0 ? 'Monatlicher Überschuss' : 'Monatliches Defizit'"
+        [tone]="surplusCents() >= 0 ? 'success' : 'danger'"
+        [value]="(surplusCents() | klarMoney) ?? ''"
+      >
+        <ng-container slot="sub">
           @if (surplusRatio() !== null) {
             ≈ {{ surplusRatio() }} % der Einnahmen · {{ surplusRating() }}
           } @else { –– }
-        </span>
-      </div>
+        </ng-container>
+      </klar-metric-tile>
     </div>
 
     <!-- 2-col grid: lists left, side panel right -->

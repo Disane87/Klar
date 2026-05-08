@@ -32,72 +32,6 @@
   flex-wrap: wrap;
 }
 
-/* ── Summary strip (3 cells) ──────────────────────────────────────── */
-.summary-strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-4);
-}
-
-.summary-cell {
-  background: var(--bg-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-8);
-  padding: var(--s-4) var(--s-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  position: relative;
-  overflow: hidden;
-}
-
-.summary-cell .label {
-  font-size: var(--t-10);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-2);
-  font-weight: 500;
-}
-
-.summary-cell .value {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "tnum";
-  font-size: var(--t-28);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-
-.summary-cell .value.income  { color: var(--success); }
-.summary-cell .value.expense { color: var(--fg); }
-
-.summary-cell .delta {
-  font-size: var(--t-11);
-  font-family: var(--font-mono);
-  color: var(--fg-2);
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.summary-cell.accent {
-  border-color: oklch(from var(--success) l c h / 0.4);
-  background:
-    radial-gradient(120% 80% at 100% 0%, oklch(from var(--success) l c h / 0.10), transparent 60%),
-    var(--bg-1);
-}
-
-.summary-cell.accent.deficit {
-  border-color: oklch(from var(--danger) l c h / 0.4);
-  background:
-    radial-gradient(120% 80% at 100% 0%, oklch(from var(--danger) l c h / 0.10), transparent 60%),
-    var(--bg-1);
-}
-
-.summary-cell.accent .value          { color: var(--success); }
-.summary-cell.accent.deficit .value  { color: var(--danger); }
-
 /* ── 2-col layout (lists + side panel) ────────────────────────────── */
 .grid-2 {
   display: grid;
@@ -325,11 +259,6 @@
 
 @media (max-width: 767px) {
   .page              { padding: var(--s-4); gap: var(--s-4); }
-  .summary-strip     { grid-template-columns: repeat(3, 1fr); gap: var(--s-2); }
-  .summary-cell      { padding: 10px 12px; gap: var(--s-1); }
-  .summary-cell .label { font-size: 9px; }
-  .summary-cell .value { font-size: var(--t-18); }
-  .summary-cell .delta { display: none; }
   .surplus-row       { padding: var(--s-4); }
   .surplus-row .value { font-size: var(--t-32); }
   .toolbar-row       { gap: var(--s-2); }

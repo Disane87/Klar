@@ -21,6 +21,7 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { KlarFabComponent } from '../../shared/ui/klar-fab.component';
 import { HlmButtonDirective } from '../../shared/ui/hlm/hlm-button.directive';
+import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
 import { RecurringCreateDialogComponent } from './recurring-create-dialog.component';
 import { PdfExportDialogComponent, type PdfDialogInputData } from './pdf-export-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
@@ -30,7 +31,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, KlarFabComponent, HlmButtonDirective],
+  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, KlarFabComponent, HlmButtonDirective, KlarMetricTileComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
