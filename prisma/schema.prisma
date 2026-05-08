@@ -133,6 +133,34 @@ enum ContractStatus {
   CANCELLED
 }
 
+// Standing Orders (Daueraufträge) — Phase 14b
+// Bank-side payment instruction, distinct from RecurringTransaction (budget concept).
+// Bank ist Source of Truth für FINTS_DERIVED records — Bank-Felder sind dann gesperrt.
+
+enum TransactionKind {
+  STANDING_ORDER
+  DIRECT_DEBIT
+  TRANSFER
+  CARD
+  FEE
+  OTHER
+}
+
+enum StandingOrderSource {
+  FINTS_DERIVED
+  MANUAL
+}
+
+enum StandingOrderFrequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+  CUSTOM
+  UNKNOWN
+}
+
 // ─────────────────────────────────────────────
 // AUTH & USER
 // ─────────────────────────────────────────────
@@ -263,7 +291,9 @@ model TempToken {
 model Household {
   id        String   @id @default(cuid())
   name      String
-  /** Free-text household note shown in the Fixkosten right-rail Notiz card. */
+  /**
+   * Free-text household note shown in the Fixkosten right-rail Notiz card.
+   */
   note      String?
   createdAt DateTime @default(now())
 
@@ -282,6 +312,7 @@ model Household {
   contracts             Contract[]
   accounts              Account[]
   fintsConnections      FintsConnection[]
+  standingOrders        StandingOrder[]
 }
 
 // FinTS-Foundation (Phase 14a.1):
@@ -293,30 +324,35 @@ model Household {
 // ownerId trägt nur bei type=fints den Besitzer der späteren FintsConnection
 // (Spätere Phase 14a.3 ergänzt fintsConnectionId + fintsAccountRef).
 model Account {
-  id                String       @id @default(cuid())
-  householdId       String
-  ownerId           String?
-  name              String
-  type              AccountType
-  currency          String       @default("EUR")
-  iban              String?
-  bic               String?
-  visibility        Visibility   @default(SHARED)
-  archivedAt        DateTime?
+  id                    String      @id @default(cuid())
+  householdId           String
+  ownerId               String?
+  name                  String
+  type                  AccountType
+  currency              String      @default("EUR")
+  iban                  String?
+  bic                   String?
+  visibility            Visibility  @default(SHARED)
+  archivedAt            DateTime?
   // Phase 14a.3: FinTS-Anbindung
-  fintsConnectionId String?
-  /** lib-fints-Sub-Account-ID (interne Bank-Subaccount-Referenz). */
-  fintsAccountRef   String?
-  /** Letzter HKSAL-Saldo-Stand. */
+  fintsConnectionId     String?
+  /**
+   * lib-fints-Sub-Account-ID (interne Bank-Subaccount-Referenz).
+   */
+  fintsAccountRef       String?
+  /**
+   * Letzter HKSAL-Saldo-Stand.
+   */
   lastKnownBalanceCents Int?
-  lastBalanceAt     DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  lastBalanceAt         DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 
   household       Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
   owner           User?            @relation("AccountOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   fintsConnection FintsConnection? @relation(fields: [fintsConnectionId], references: [id], onDelete: SetNull)
   transactions    Transaction[]
+  standingOrders  StandingOrder[]
 
   @@index([householdId])
   @@index([householdId, type])
@@ -331,22 +367,32 @@ model Account {
 // nur in FintsCryptoService.
 model FintsConnection {
   id                String                @id @default(cuid())
-  /** Owner = User, der die Verbindung eingerichtet hat. */
+  /**
+   * Owner = User, der die Verbindung eingerichtet hat.
+   */
   ownerId           String
-  /** Household für RLS-Konsistenz. */
+  /**
+   * Household für RLS-Konsistenz.
+   */
   householdId       String
   bankName          String
   blz               String
   serverUrl         String
   loginName         String
-  /** AES-256-GCM Cipher des Sitzungs-State-Blobs (PIN + lib-fints-State). */
+  /**
+   * AES-256-GCM Cipher des Sitzungs-State-Blobs (PIN + lib-fints-State).
+   */
   credentialsCipher Bytes
   credentialsIv     Bytes
   credentialsTag    Bytes
   status            FintsConnectionStatus @default(SETUP)
-  /** Zeitpunkt der letzten erfolgreichen TAN-Auth. */
+  /**
+   * Zeitpunkt der letzten erfolgreichen TAN-Auth.
+   */
   lastScaAt         DateTime?
-  /** lastScaAt + 89 Tage (PSD2 SCA, konfigurierbar). */
+  /**
+   * lastScaAt + 89 Tage (PSD2 SCA, konfigurierbar).
+   */
   scaExpiresAt      DateTime?
   lastSyncAt        DateTime?
   lastSyncStatus    FintsSyncStatus?
@@ -374,13 +420,19 @@ model FintsConnection {
 model BlzRegistry {
   id           Int      @id @default(autoincrement())
   fetchedAt    DateTime @default(now())
-  /** ETag/Commit-SHA aus HTTP-Response — für If-None-Match. */
+  /**
+   * ETag/Commit-SHA aus HTTP-Response — für If-None-Match.
+   */
   sourceCommit String?
   sourceUrl    String
   recordCount  Int
-  /** BankRecord[] indexed by BLZ als JSON. */
+  /**
+   * BankRecord[] indexed by BLZ als JSON.
+   */
   banks        Json
-  /** sha256 der Roh-Datei — Änderungs-Detection. */
+  /**
+   * sha256 der Roh-Datei — Änderungs-Detection.
+   */
   contentHash  String
 
   @@index([fetchedAt])
@@ -390,24 +442,28 @@ model BlzRegistry {
 // Pro Sync-Versuch ein Eintrag. Hält TAN-Challenge solange Status=TAN_REQUIRED;
 // nach erfolgreicher TAN-Eingabe wird tanChallenge gelöscht.
 model FintsSyncRun {
-  id               String           @id @default(cuid())
-  connectionId     String
-  status           FintsSyncStatus
-  triggeredBy      FintsSyncTrigger
-  triggeredById    String?
-  startedAt        DateTime         @default(now())
-  finishedAt       DateTime?
-  fromDate         DateTime?
-  toDate           DateTime?
-  bookingsFetched  Int              @default(0)
-  bookingsImported Int              @default(0)
-  bookingsSkipped  Int              @default(0)
-  /** Diff zwischen FinTS-HKSAL-Saldo und Summe lokaler TX. */
+  id                String           @id @default(cuid())
+  connectionId      String
+  status            FintsSyncStatus
+  triggeredBy       FintsSyncTrigger
+  triggeredById     String?
+  startedAt         DateTime         @default(now())
+  finishedAt        DateTime?
+  fromDate          DateTime?
+  toDate            DateTime?
+  bookingsFetched   Int              @default(0)
+  bookingsImported  Int              @default(0)
+  bookingsSkipped   Int              @default(0)
+  /**
+   * Diff zwischen FinTS-HKSAL-Saldo und Summe lokaler TX.
+   */
   balanceDriftCents Int?
-  /** TAN-Challenge-Payload — { method, prompt, mediaBase64? }. Wird nach Verbrauch gelöscht. */
-  tanChallenge     Json?
-  errorCode        String?
-  errorMessage     String?
+  /**
+   * TAN-Challenge-Payload — { method, prompt, mediaBase64? }. Wird nach Verbrauch gelöscht.
+   */
+  tanChallenge      Json?
+  errorCode         String?
+  errorMessage      String?
 
   connection   FintsConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   transactions Transaction[]
@@ -464,13 +520,14 @@ model Category {
   isDefault   Boolean      @default(false) // vom System angelegt beim Haushalt-Setup
   createdAt   DateTime     @default(now())
 
-  household                  Household                  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  household                  Household                   @relation(fields: [householdId], references: [id], onDelete: Cascade)
   recurringTransactions      RecurringTransaction[]
   transactions               Transaction[]
   transactionSplits          TransactionSplit[]
   recurringTransactionSplits RecurringTransactionSplit[]
   budgets                    Budget[]
   importLearnings            ImportLearning[]
+  standingOrders             StandingOrder[]
 
   @@index([householdId])
   @@index([householdId, type])
@@ -539,10 +596,10 @@ model RecurringTransaction {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  category     Category      @relation(fields: [categoryId], references: [id])
-  project      Project?      @relation(fields: [projectId], references: [id])
-  createdBy    User?         @relation(fields: [createdByUserId], references: [id])
+  household    Household                   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category     Category                    @relation(fields: [categoryId], references: [id])
+  project      Project?                    @relation(fields: [projectId], references: [id])
+  createdBy    User?                       @relation(fields: [createdByUserId], references: [id])
   // Referenz auf ggf. daraus erstellte manuelle Transaktionen (z.B. wenn User Ist-Wert nachträgt)
   transactions Transaction[]
   splits       RecurringTransactionSplit[]
@@ -576,6 +633,50 @@ model RecurringTransactionSplit {
 }
 
 // ─────────────────────────────────────────────
+// STANDING ORDERS (Daueraufträge) — Phase 14b
+// Bank-side payment instructions, distinct from RecurringTransaction (budget concept).
+// FINTS_DERIVED records are bank-authoritative; bank fields are then read-only.
+// ─────────────────────────────────────────────
+
+model StandingOrder {
+  id                 String                 @id @default(cuid())
+  householdId        String
+  accountId          String
+  source             StandingOrderSource
+  // Stable group key: lowercased counterparty name + signed amountCents
+  // (e.g. "edeka markt|-12550"). Idempotency anchor for FinTS-derived sync.
+  // For MANUAL records the service prefixes "manual:" + a timestamp suffix
+  // so manual + bank groups never collide.
+  groupKey           String
+  counterpartyName   String?
+  counterpartyIban   String?
+  amountCents        Int
+  currency           String                 @default("EUR")
+  frequency          StandingOrderFrequency
+  // Last booking date observed (FINTS_DERIVED) or user-set (MANUAL).
+  lastSeenAt         DateTime?              @db.Date
+  // Heuristic: lastSeenAt + frequency cadence. NULL when frequency=UNKNOWN/CUSTOM.
+  nextExpectedAt     DateTime?              @db.Date
+  // Optional category mapping the user assigns to make this DA show up in reports.
+  categoryId         String?
+  note               String?
+  isActive           Boolean                @default(true)
+  // When non-null, bank-fields (counterparty, amount, frequency, nextExpectedAt) are read-only.
+  bankFieldsLockedAt DateTime?
+  firstSeenAt        DateTime               @default(now())
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id])
+
+  @@unique([householdId, accountId, groupKey])
+  @@index([householdId, isActive])
+  @@index([accountId])
+}
+
+// ─────────────────────────────────────────────
 // TRANSAKTIONEN (manuelle + ad-hoc Buchungen)
 // ─────────────────────────────────────────────
 // Variable Eingänge (Provision, Boni, Steuerrückerstattung) werden hier
@@ -583,7 +684,7 @@ model RecurringTransactionSplit {
 // amountCents: positiv=Einnahme, negativ=Ausgabe
 
 model Transaction {
-  id                     String     @id @default(cuid())
+  id                     String           @id @default(cuid())
   householdId            String
   createdByUserId        String? // nullable (Account-Delete)
   // positiv = Einnahme (INCOME), negativ = Ausgabe (EXPENSE)
@@ -592,12 +693,12 @@ model Transaction {
   // ursprünglich geplanten Betrag — Differenz zu amountCents = Abweichung.
   plannedAmountCents     Int?
   // true = nur geplant (zählt nicht in realisierte Cashflow-/Projekt-Summen)
-  isPlanned              Boolean    @default(false)
+  isPlanned              Boolean          @default(false)
   categoryId             String
   projectId              String?
-  date                   DateTime   @db.Date
+  date                   DateTime         @db.Date
   description            String?
-  visibility             Visibility @default(SHARED)
+  visibility             Visibility       @default(SHARED)
   // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
   // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
   recurringTransactionId String?
@@ -616,7 +717,10 @@ model Transaction {
   accountId              String
   // source — Herkunft der Buchung. Vorher implizit über sourceImportId
   // (NULL = manuell, gesetzt = CSV); jetzt explizit, weil FinTS hinzukommt.
-  source                 TxSource   @default(manual)
+  source                 TxSource         @default(manual)
+  // Phase 14b — kind classifier derived from FinTS bookingType during ingest.
+  // NULL allowed for legacy / manual / CSV rows; FinTS rows get a value at insert.
+  transactionKind        TransactionKind?
   // bankFieldsLockedAt — wenn gesetzt, gelten Bank-Felder (amount, date,
   // counterparty, externalRef) als read-only (z. B. bei FinTS-Buchungen).
   // User-Klassifikationen (Kategorie, Projekt, Notiz, Icon, Farbe) bleiben
@@ -626,8 +730,8 @@ model Transaction {
   // Spiegelt RecurringTransaction.color/icon — gleicher Edit-Dialog für beide.
   color                  String? // hex, z.B. "#22c55e"
   icon                   String? // iconify key, z.B. "lucide:shopping-cart"
-  createdAt              DateTime   @default(now())
-  updatedAt              DateTime   @updatedAt
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   household            Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
   category             Category              @relation(fields: [categoryId], references: [id])
@@ -651,6 +755,7 @@ model Transaction {
   @@index([accountId])
   @@index([accountId, source])
   @@index([fintsSyncRunId])
+  @@index([householdId, transactionKind])
 }
 
 // ─────────────────────────────────────────────
@@ -663,13 +768,21 @@ model Transaction {
 model TransactionSplit {
   id            String  @id @default(cuid())
   transactionId String
-  /** Display label for the split (e.g. "Festgehalt Brutto"). */
+  /**
+   * Display label for the split (e.g. "Festgehalt Brutto").
+   */
   label         String
-  /** Signed cents — same sign convention as Transaction.amountCents. */
+  /**
+   * Signed cents — same sign convention as Transaction.amountCents.
+   */
   amountCents   Int
-  /** Optional sort order within the parent (lower comes first). */
+  /**
+   * Optional sort order within the parent (lower comes first).
+   */
   sortOrder     Int     @default(0)
-  /** Optional override category — null = inherit parent.category. */
+  /**
+   * Optional override category — null = inherit parent.category.
+   */
   categoryId    String?
   note          String?
 

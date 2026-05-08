@@ -27,6 +27,7 @@ const makeTx = (overrides: Partial<TransactionWithSplits> = {}): TransactionWith
   counterparty: null,
   sourceImportId: null,
   source: 'manual',
+  transactionKind: null,
   bankFieldsLockedAt: null,
   fintsSyncRunId: null,
   color: null,
