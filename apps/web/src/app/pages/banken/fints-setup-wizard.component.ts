@@ -550,12 +550,28 @@ export class FintsSetupWizardComponent implements OnInit {
     try {
       const result: FintsSyncRunWithChallenge = await this.store.submitTan(this.syncRunId, this.tan());
       this.tan.set('');
+      if (result.syncRun.status === 'FAILED') {
+        this.tanChallenge.set(null);
+        this.failureMessage.set(
+          result.syncRun.errorMessage ??
+            'Bank hat die TAN abgewiesen. Bitte erneut starten.',
+        );
+        this.step.set('failed');
+        return;
+      }
       if (result.tanChallenge) {
         this.tanChallenge.set(result.tanChallenge);
         return; // bank chained another TAN
       }
       this.tanChallenge.set(null);
-      await this.proceedToAccounts();
+      if (result.syncRun.status === 'OK') {
+        await this.proceedToAccounts();
+      } else {
+        this.failureMessage.set(
+          `Unerwarteter Sync-Status (${result.syncRun.status}). Bitte erneut versuchen.`,
+        );
+        this.step.set('failed');
+      }
     } catch (err) {
       this.tanError.set(this.extractErrorMessage(err, 'TAN-Bestätigung fehlgeschlagen.'));
     }

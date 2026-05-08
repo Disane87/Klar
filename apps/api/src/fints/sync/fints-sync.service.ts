@@ -126,7 +126,7 @@ export class FintsSyncService {
       //   3. synchronize() — now requires TAN that returns UPD
       //   4. synchronizeWithTan() — completes, UPD populated
       const firstSync = await this.client.synchronize(fintsClient);
-      this.logger.debug(
+      this.logger.log(
         `Pass 1 (BPD): bankInfoUpdated=${firstSync.bankingInformationUpdated}, ` +
           `requiresTan=${firstSync.requiresTan}, ` +
           `availableTanMethods=${fintsClient.config.availableTanMethods?.length ?? 0}, ` +
@@ -158,7 +158,7 @@ export class FintsSyncService {
 
       // Pass 2: this call typically demands the TAN that unlocks UPD.
       const secondSync = await this.client.synchronize(fintsClient);
-      this.logger.debug(
+      this.logger.log(
         `Pass 2 (UPD): bankInfoUpdated=${secondSync.bankingInformationUpdated}, ` +
           `requiresTan=${secondSync.requiresTan}, ` +
           `tanReference=${secondSync.tanReference ?? '∅'}, ` +
@@ -290,16 +290,40 @@ export class FintsSyncService {
         tag: Buffer.from(connection.credentialsTag),
       });
       const resp = await this.client.synchronizeWithTan(fintsClient, tanReference, tan || undefined);
-      this.logger.debug(
+      const accountsAfterTan =
+        fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0;
+      this.logger.log(
         `submitTan: bankInfoUpdated=${resp.bankingInformationUpdated}, ` +
           `requiresTan=${resp.requiresTan}, ` +
-          `bankAccounts=${fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0}, ` +
+          `bankAccounts=${accountsAfterTan}, ` +
           `bankAnswers=[${(resp.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
       );
       if (resp.requiresTan) {
         // Bank chained another TAN — re-persist with new reference.
         // (rememberForTan is called inside persistTanChallenge.)
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, resp);
+      }
+
+      // For first-time setup the response should bring back UPD with the
+      // account list. If it doesn't, FAIL loudly rather than land the
+      // wizard on a misleading "no accounts" screen with the connection
+      // marked OK.
+      const isFirstTimeSetup = connection.lastSyncAt === null;
+      if (isFirstTimeSetup && accountsAfterTan === 0) {
+        this.client.forget(connection.id);
+        const bankErrors = (resp.bankAnswers ?? [])
+          .map(a => `${a.code} ${a.text}`)
+          .join(' | ');
+        return this.failRun(
+          syncRun,
+          new Error(
+            'Bank hat die TAN bestätigt, aber keine Konten zurückgeliefert ' +
+              `(UPD/HIUPD leer). ${bankErrors ? 'Bank-Antwort: ' + bankErrors + '. ' : ''}` +
+              'Häufige Ursache bei Sparkasse: das Online-Banking erlaubt FinTS-Zugriff nicht standardmäßig. ' +
+              'Im Online-Banking unter „Online-Banking → Einstellungen" prüfen, ob HBCI/FinTS aktiviert und der Anmeldename ' +
+              'als FinTS-Login zugelassen ist.',
+          ),
+        );
       }
 
       // Terminal success — drop the cached client now that the dialog is closed.
