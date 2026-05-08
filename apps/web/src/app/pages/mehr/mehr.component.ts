@@ -4,45 +4,17 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { AuthStore } from '../../core/auth/auth.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarSectionHeaderComponent } from '../../shared/ui/klar-section-header.component';
-
-interface MehrItem {
-  readonly id: string;
-  readonly label: string;
-  readonly icon: string;
-  readonly route: string;
-  readonly tone: string;
-  readonly adminOnly?: boolean;
-}
+import { mehrPageItems, type NavItem } from '../../core/navigation/nav-items';
 
 interface MehrGroup {
   readonly label: string;
-  readonly items: readonly MehrItem[];
+  readonly items: readonly NavItem[];
 }
 
-const GROUPS: readonly MehrGroup[] = [
-  {
-    label: 'Haushalt',
-    items: [
-      { id: 'kalender',  label: 'Kalender',     icon: 'calendar',     route: '/app/kalender',  tone: 'var(--cat-mobil)' },
-      { id: 'statistik', label: 'Statistik',    icon: 'trending',     route: '/app/statistik', tone: 'var(--cat-freizeit)' },
-      { id: 'vertraege', label: 'Verträge',     icon: 'shield',       route: '/app/vertraege', tone: 'var(--cat-versicher)' },
-      { id: 'recurring', label: 'Daueraufträge', icon: 'wiederkehrend', route: '/app/buchungen', tone: 'var(--cat-versicher)' },
-      { id: 'planspiel', label: 'Planspiel',    icon: 'planspiel',    route: '/app/planspiel', tone: 'var(--cat-abos)' },
-      { id: 'tresor',    label: 'Tresor',       icon: 'tresor',       route: '/app/tresor',    tone: 'var(--cat-spar)' },
-      { id: 'banken',    label: 'Banken',       icon: 'wallet',       route: '/app/banken',    tone: 'var(--cat-gesund)' },
-      { id: 'import',    label: 'CSV-Import',   icon: 'receipt',      route: '/app/import',    tone: 'var(--cat-gesund)' },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { id: 'haushalt', label: 'Haushalt',      icon: 'haushalt', route: '/app/haushalt', tone: 'var(--cat-essen)' },
-      { id: 'settings', label: 'Einstellungen', icon: 'settings', route: '/app/settings', tone: 'var(--cat-spar)' },
-      { id: 'health',   label: 'System-Status', icon: 'pulse',    route: '/app/health',   tone: 'var(--cat-wohnen)' },
-      { id: 'admin',    label: 'Admin',         icon: 'shield',   route: '/app/admin',    tone: 'var(--cat-mobil)', adminOnly: true },
-    ],
-  },
-];
+const SECTION_LABEL: Record<NavItem['section'], string> = {
+  main:   'Haushalt',
+  system: 'System',
+};
 
 @Component({
   selector: 'klar-mehr-page',
@@ -94,10 +66,11 @@ export class MehrPageComponent implements OnInit {
 
   protected readonly visibleGroups = computed<readonly MehrGroup[]>(() => {
     const isAdmin = this.auth.user()?.appRole === 'ADMIN';
-    return GROUPS.map(group => ({
-      label: group.label,
-      items: group.items.filter(item => !item.adminOnly || isAdmin),
-    })).filter(group => group.items.length > 0);
+    const grouped = mehrPageItems({ isAdmin });
+    return [
+      { label: SECTION_LABEL.main,   items: grouped.main },
+      { label: SECTION_LABEL.system, items: grouped.system },
+    ].filter(group => group.items.length > 0);
   });
 
   ngOnInit(): void {

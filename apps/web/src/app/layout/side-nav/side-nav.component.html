@@ -36,7 +36,7 @@
   <!-- Main group -->
   <div class="px-3 pt-2">
     <div class="px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-(--fg-3) font-medium">Haushalt</div>
-    @for (item of mainItems; track item.id) {
+    @for (item of mainItems(); track item.id) {
       <a
         [routerLink]="item.route"
         routerLinkActive="active"
