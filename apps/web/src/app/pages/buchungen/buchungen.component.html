@@ -15,82 +15,85 @@
     </div>
   </ng-template>
 
-  <div class="p-(--s-6) pb-(--s-3) flex flex-col gap-(--s-5) flex-1 min-h-0">
+  <div class="p-(--s-6) pb-(--s-3) flex flex-col gap-(--s-5) md:flex-1 md:min-h-0">
+    <klar-hero
+      eyebrow="Cashflow"
+      [title]="monthLabel()"
+      [sub]="householdLabel()"
+    >
+      <klar-icon heroEyebrowIcon name="wallet" [size]="11" />
+    </klar-hero>
 
-    <!-- Summary strip -->
-    <klar-summary-strip
-      [incomeCents]="store.totalIncomeCents()"
-      [expenseCents]="store.totalExpenseCents()"
-      [balanceCents]="store.nettoCents()" />
+    <div class="grid grid-cols-3 gap-(--s-4) max-md:grid-cols-1">
+      <!-- Einnahmen -->
+      <div
+        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+      >
+        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+          Einnahmen
+        </span>
+        <span
+          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em] text-(--success)"
+        >
+          {{ store.totalIncomeCents() | klarMoney }}
+        </span>
+        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+          <klar-icon name="trending-up" [size]="12" />
+          {{ incomeCount() }} {{ incomeCount() === 1 ? 'Buchung' : 'Buchungen' }}
+        </span>
+      </div>
 
-    <!-- Section head + filter segments -->
-    <div class="flex items-center justify-between flex-wrap gap-(--s-3)">
-      <span class="eyebrow">Buchungen</span>
-      <div class="segmented" role="tablist" aria-label="Filter">
-        <button type="button" role="tab"
-                [attr.aria-selected]="filter() === 'alle'"
-                [class.active]="filter() === 'alle'"
-                (click)="setFilter('alle')">
-          Alle <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().alle }}</span>
-        </button>
-        <button type="button" role="tab"
-                [attr.aria-selected]="filter() === 'rec'"
-                [class.active]="filter() === 'rec'"
-                (click)="setFilter('rec')">
-          Wiederkehrend <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().rec }}</span>
-        </button>
-        <button type="button" role="tab"
-                [attr.aria-selected]="filter() === 'manual'"
-                [class.active]="filter() === 'manual'"
-                (click)="setFilter('manual')">
-          Manuell <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().manual }}</span>
-        </button>
-        <button type="button" role="tab"
-                [attr.aria-selected]="filter() === 'income'"
-                [class.active]="filter() === 'income'"
-                (click)="setFilter('income')">
-          Eingänge <span class="text-[10px] mono ml-1 text-(--fg-3)">{{ filterCounts().income }}</span>
-        </button>
+      <!-- Ausgaben -->
+      <div
+        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+      >
+        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+          Ausgaben
+        </span>
+        <span
+          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em] text-(--fg)"
+        >
+          {{ store.totalExpenseCents() | klarMoney }}
+        </span>
+        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+          <klar-icon name="hash" [size]="12" />
+          @if (expenseRatio() !== null) {
+            {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen
+          } @else {
+            keine Einnahmen erfasst
+          }
+        </span>
+      </div>
+
+      <!-- Bilanz (accent) -->
+      <div
+        class="border rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+        [style.border-color]="bilanzBorderColor()"
+        [style.background]="bilanzBackground()"
+      >
+        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+          {{ store.nettoCents() >= 0 ? 'Überschuss' : 'Defizit' }}
+        </span>
+        <span
+          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em]"
+          [class.text-(--success)]="store.nettoCents() >= 0"
+          [class.text-(--danger)]="store.nettoCents() < 0"
+        >
+          {{ store.nettoCents() | klarMoney }}
+        </span>
+        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+          @if (surplusRatio() !== null) {
+            ≈ {{ surplusRatio() }} % · {{ surplusRating() }}
+          } @else {
+            ––
+          }
+        </span>
       </div>
     </div>
 
-    <!-- Single card with .row instances -->
-    @if (filtered().length === 0) {
-      <div class="card px-5 py-6 text-center text-(--fg-2) text-[12px]">
-        Keine Buchungen für diesen Filter.
-      </div>
-    } @else {
-      <div class="card flex-1 min-h-0 overflow-y-auto pb-16">
-        @for (tx of filtered(); track tx.id) {
-          <div class="row"
-               [style.border-left-color]="categoryColor(tx)"
-               role="button" tabindex="0"
-               (click)="openEdit(tx)" (keydown.enter)="openEdit(tx)" (keydown.space)="$event.preventDefault(); openEdit(tx)">
-            <span class="row-ico-slot" [style.color]="categoryColor(tx)">
-              <klar-icon [name]="rowIcon(tx)" [size]="16" />
-            </span>
-            <div class="lhs">
-              <span class="name flex items-center gap-2">
-                <span class="truncate">{{ primaryLabel(tx) }}</span>
-                @if (tx.recurringTransactionId) {
-                  <span class="chip outline" style="height:18px;font-size:10px;">
-                    <klar-icon name="wiederkehrend" [size]="10" /> wiederkehrend
-                  </span>
-                }
-              </span>
-              <span class="meta">
-                <span class="mono">{{ formatDayMeta(tx) }}</span>
-              </span>
-            </div>
-            <span class="amt mono"
-                  [class.pos]="tx.amountCents > 0"
-                  [class.neg]="tx.amountCents < 0">
-              {{ tx.amountCents > 0 ? '+ ' : '' }}{{ tx.amountCents | klarMoney }}
-            </span>
-          </div>
-        }
-      </div>
-    }
+    <klar-transactions-table
+      [transactions]="store.sortedItems()"
+      (rowClick)="openEdit($event)"
+    />
   </div>
-
 </klar-async-state>
