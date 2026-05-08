@@ -38,6 +38,7 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
 import { ImportPipelineModule } from './import-pipeline/import-pipeline.module';
 import { FintsModule } from './fints/fints.module';
+import { StandingOrdersModule } from './standing-orders/standing-orders.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 const REDACT_PATHS = [
@@ -131,6 +132,7 @@ const REDACT_PATHS = [
     ConnectedAppsModule,
     ImportPipelineModule,
     FintsModule,
+    StandingOrdersModule,
     HealthModule,
     ...(process.env['NODE_ENV'] === 'production'
       ? [ServeStaticModule.forRoot({
