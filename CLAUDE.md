@@ -130,6 +130,14 @@ Workflow für jedes Control: (1) `spartan.ng` prüfen, (2) `hlm*`-Direktive aus 
 
 Niemals nackte `<input>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials immer `<klar-avatar>`. Bei ≥ 2 ähnlichen UI-Strukturen: in `klar-*`-Komponente kapseln, nicht duplizieren — vor neuem Element prüfen ob existierende `klar-*`-Komponente passt.
 
+### Keine doppelten Komponenten
+
+Bevor eine neue `klar-*`/`app-*`-Komponente angelegt wird, **immer** zuerst `apps/web/src/app/shared/ui/`, `apps/web/src/app/shared/icons/` und domänenspezifische Shared-Ordner durchsuchen (`grep -rln "selector:.*'klar-"`). Findet sich eine bestehende Komponente, die das gewünschte Pattern bereits abdeckt:
+- bei kleinen Lücken: bestehende Komponente um optionale Inputs/Slots erweitern
+- bei zwei ähnlichen Komponenten: zusammenführen, nicht parallel pflegen (siehe Konsolidierung von `klar-metric-tile` + `klar-stat-tile` → `klar-tile`, 2026-05-08)
+
+Eine zweite Komponente nur dann anlegen, wenn die Inputs/Visuals der bestehenden objektiv inkompatibel sind und eine Erweiterung das Public-API verbiegen würde — Begründung im Commit-Message dokumentieren.
+
 **Selects: niemals nativ.** `<select>` ist app-weit verboten — IMMER `<klar-select [options]="opts" [(value)]="x">` (gewrapptes Spartan brn-select). Native `<select>` rendert in Safari/iOS unverändert ohne Dark-Mode und ohne unsere Tastatur-/Fokus-Konventionen. CI-Hygiene-Gate (`scripts/ui-hygiene-check.sh`) blockt jeden neuen `<select>`-Tag.
 
 ### Design-System

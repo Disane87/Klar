@@ -8,7 +8,7 @@ import {
 import { OverviewStore } from '../../core/overview/overview.store';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 
@@ -31,25 +31,26 @@ interface TopMoverRow {
   selector: 'klar-statistik-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KlarMetricTileComponent, KlarMoneyPipe],
+  imports: [KlarTileComponent, KlarMoneyPipe],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16">
       <!-- KPI strip -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <klar-metric-tile
+        <klar-tile
           label="Einnahmen / Monat"
           [value]="(incomeCents() | klarMoney) ?? '—'"
         />
-        <klar-metric-tile
+        <klar-tile
           label="Ausgaben / Monat"
           [value]="(expenseCents() | klarMoney) ?? '—'"
         />
-        <klar-metric-tile
+        <klar-tile
           label="Überschuss"
           [value]="(surplusCents() | klarMoney) ?? '—'"
-          [accent]="surplusCents() > 0"
+          [tone]="surplusCents() > 0 ? 'success' : 'danger'"
+          [valueClass]="surplusCents() > 0 ? 'text-(--success)' : 'text-(--danger)'"
         />
-        <klar-metric-tile
+        <klar-tile
           label="Sparquote"
           [value]="savingsRateLabel()"
         />

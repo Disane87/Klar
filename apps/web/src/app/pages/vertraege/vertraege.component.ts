@@ -10,7 +10,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ContractsStore } from '../../core/contracts/contracts.store';
 import type { ContractDto, ContractStatus } from '../../core/contracts/contracts.service';
 import { KlarConfidenceBarComponent } from '../../shared/ui/klar-confidence-bar.component';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
@@ -36,7 +36,7 @@ const TABS: VertraegeTab[] = [
     DatePipe,
     DecimalPipe,
     KlarConfidenceBarComponent,
-    KlarMetricTileComponent,
+    KlarTileComponent,
     KlarMoneyPipe,
     KlarIconComponent,
     KlarButtonComponent,
@@ -51,18 +51,18 @@ const TABS: VertraegeTab[] = [
       >
         <klar-icon heroEyebrowIcon name="planspiel" [size]="11" />
         <div heroActions class="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
-          <klar-metric-tile
+          <klar-tile
             label="Monatslast fix"
             [value]="(totalMonthlyCents() | klarMoney) ?? '—'"
           />
-          <klar-metric-tile
+          <klar-tile
             label="Jährlich hochgerechnet"
             [value]="(totalAnnualizedCents() | klarMoney) ?? '—'"
           />
-          <klar-metric-tile
+          <klar-tile
             label="Nächste Aktion"
             [value]="nextActionLabel()"
-            [accent]="!!nextActionLabel()"
+            [tone]="nextActionLabel() ? 'success' : 'neutral'"
           />
         </div>
       </klar-hero>
@@ -215,19 +215,19 @@ const TABS: VertraegeTab[] = [
 
             <!-- Metric tiles -->
             <div class="grid grid-cols-2 gap-2">
-              <klar-metric-tile
+              <klar-tile
                 label="Nächste Abbuchung"
                 [value]="(c.nextRenewalAt ? (c.nextRenewalAt | date:'dd.MM.yyyy') : '—') ?? '—'"
               />
-              <klar-metric-tile
+              <klar-tile
                 label="Kündigen bis"
                 [value]="(c.cancelByAt ? (c.cancelByAt | date:'dd.MM.yyyy') : '—') ?? '—'"
               />
-              <klar-metric-tile
+              <klar-tile
                 label="Status"
                 [value]="statusLabel(c.status)"
               />
-              <klar-metric-tile
+              <klar-tile
                 label="Zyklus"
                 [value]="cycleLabel(c.cycle)"
               />

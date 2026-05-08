@@ -82,18 +82,19 @@
 
         @if (stats(); as s) {
           <div heroActions class="grid grid-cols-3 gap-(--s-3)">
-            <klar-metric-tile
+            <klar-tile
               label="Budget"
               [value]="(s.totalBudgetCents !== null ? (s.totalBudgetCents | klarMoney) : '—') ?? '—'"
             />
-            <klar-metric-tile
+            <klar-tile
               label="Ausgegeben"
               [value]="(s.spentCents | klarMoney) ?? '—'"
             />
-            <klar-metric-tile
+            <klar-tile
               label="Bilanz"
               [value]="(s.balanceCents | klarMoney) ?? '—'"
-              [accent]="s.balanceCents >= 0"
+              [tone]="s.balanceCents >= 0 ? 'success' : 'danger'"
+              [valueClass]="s.balanceCents >= 0 ? 'text-(--success)' : 'text-(--danger)'"
             />
           </div>
         }

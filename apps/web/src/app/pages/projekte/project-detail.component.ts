@@ -16,7 +16,7 @@ import { KlarErrorBarComponent } from '../../shared/ui/klar-error-bar.component'
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { ProjectCreateDialogComponent } from './project-create-dialog.component';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
@@ -32,7 +32,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
     KlarEmptyStateComponent,
     KlarIconComponent,
     KlarMoneyPipe,
-    KlarMetricTileComponent,
+    KlarTileComponent,
     KlarHeroComponent,
   ],
   templateUrl: './project-detail.component.html',

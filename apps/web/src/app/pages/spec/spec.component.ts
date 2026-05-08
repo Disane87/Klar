@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarProgressRingComponent } from '../../shared/ui/klar-progress-ring.component';
 import { KlarConfidenceBarComponent } from '../../shared/ui/klar-confidence-bar.component';
 import { KlarHypoChipComponent } from '../../shared/ui/klar-hypo-chip.component';
@@ -18,7 +18,7 @@ import { KlarHypoChipComponent } from '../../shared/ui/klar-hypo-chip.component'
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    KlarMetricTileComponent,
+    KlarTileComponent,
     KlarProgressRingComponent,
     KlarConfidenceBarComponent,
     KlarHypoChipComponent,
@@ -219,7 +219,7 @@ import { KlarHypoChipComponent } from '../../shared/ui/klar-hypo-chip.component'
         <div class="section-head">Metric Tile · Progress Ring · Confidence · Hypo</div>
         <div class="card grid grid-cols-1 md:grid-cols-2 gap-(--s-5) p-(--s-5) items-start">
 
-          <klar-metric-tile label="Überschuss · Mai" value="+1.234,56 €" sub="vs. April" [accent]="true" />
+          <klar-tile label="Überschuss · Mai" value="+1.234,56 €" sub="vs. April" tone="success" valueClass="text-(--success)" />
 
           <div class="flex items-center gap-(--s-4)">
             <klar-progress-ring [value]="0.62" [size]="56" [stroke]="5" [showValue]="true" tone="var(--cat-freizeit)" />

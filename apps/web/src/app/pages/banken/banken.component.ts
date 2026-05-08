@@ -16,7 +16,7 @@ import type {
 } from '../../core/fints/fints.service';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarBadgeComponent } from '../../shared/ui/klar-badge.component';
-import { KlarMetricTileComponent } from '../../shared/ui/klar-metric-tile.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
@@ -48,7 +48,7 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
     DatePipe,
     KlarButtonComponent,
     KlarBadgeComponent,
-    KlarMetricTileComponent,
+    KlarTileComponent,
     KlarEmptyStateComponent,
     KlarHeroComponent,
     KlarIconComponent,
@@ -62,13 +62,13 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
       >
         <klar-icon heroEyebrowIcon name="wallet" [size]="11" />
         <div heroActions class="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
-          <klar-metric-tile label="Aktive Verbindungen" [value]="activeCount() + ''" />
-          <klar-metric-tile label="Saldo gesamt" [value]="totalBalanceLabel()" />
-          <klar-metric-tile label="Letzter Sync" [value]="lastSyncLabel()" />
-          <klar-metric-tile
+          <klar-tile label="Aktive Verbindungen" [value]="activeCount() + ''" />
+          <klar-tile label="Saldo gesamt" [value]="totalBalanceLabel()" />
+          <klar-tile label="Letzter Sync" [value]="lastSyncLabel()" />
+          <klar-tile
             label="Aufmerksamkeit"
             [value]="reauthCount() + ''"
-            [accent]="reauthCount() > 0"
+            [tone]="reauthCount() > 0 ? 'warn' : 'neutral'"
           />
         </div>
       </klar-hero>

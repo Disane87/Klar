@@ -9,14 +9,14 @@ import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
-import { KlarStatTileComponent, type KlarStatTileTone } from '../../shared/ui/klar-stat-tile.component';
+import { KlarTileComponent, type KlarTileTone } from '../../shared/ui/klar-tile.component';
 import { AdminAuditTabComponent } from './tabs/audit-tab.component';
 import { AdminEmailsTabComponent } from './tabs/emails-tab.component';
 import { AdminHouseholdsTabComponent } from './tabs/households-tab.component';
 import { AdminMcpTabComponent } from './tabs/mcp-tab.component';
 
 type Tab = 'system' | 'audit' | 'mcp' | 'emails' | 'households';
-type Tone = 'ok' | 'warn' | '';
+type Tone = 'success' | 'warn' | '';
 
 const TABS: ReadonlyArray<{ id: Tab; label: string }> = [
   { id: 'system',     label: 'Systemstatus' },
@@ -41,7 +41,7 @@ const JOB_ICONS: Record<string, string> = {
     KlarButtonComponent,
     KlarIconComponent,
     KlarHeroComponent,
-    KlarStatTileComponent,
+    KlarTileComponent,
     AdminAuditTabComponent,
     AdminEmailsTabComponent,
     AdminHouseholdsTabComponent,
@@ -85,31 +85,31 @@ const JOB_ICONS: Record<string, string> = {
 
       <!-- Status grid -->
       <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-(--s-3) shrink-0">
-        <klar-stat-tile
+        <klar-tile
           icon="pulse"
           label="Uptime · 30 T"
           [value]="uptimeText()"
-          [delta]="uptimeDelta()"
+          [sub]="uptimeDelta()"
           [tone]="statTone(uptimeTone())"
         />
-        <klar-stat-tile
+        <klar-tile
           icon="key"
           label="Datenbank"
           [value]="dbSizeText()"
-          delta="Postgres total"
+          sub="Postgres total"
         />
-        <klar-stat-tile
+        <klar-tile
           icon="alert"
           label="Warnungen"
           [value]="warningText()"
-          delta="letzte 24 h"
+          sub="letzte 24 h"
           [tone]="statTone(warningTone())"
         />
-        <klar-stat-tile
+        <klar-tile
           icon="haushalt"
           label="Aktive Sessions"
           [value]="sessionsText()"
-          delta="Refresh-Tokens"
+          sub="Refresh-Tokens"
         />
       </section>
 
@@ -389,7 +389,7 @@ export class AdminPageComponent implements OnInit {
   protected readonly uptimeTone = computed<Tone>(() => {
     const v = this.healthStore.status()?.uptimePct;
     if (v === undefined) return '';
-    if (v >= 99.9) return 'ok';
+    if (v >= 99.9) return 'success';
     if (v < 99.5) return 'warn';
     return '';
   });
@@ -529,7 +529,7 @@ export class AdminPageComponent implements OnInit {
     this.tab.set(t);
   }
 
-  protected statTone(t: Tone): KlarStatTileTone {
+  protected statTone(t: Tone): KlarTileTone {
     return t === '' ? 'neutral' : t;
   }
 

@@ -38,11 +38,12 @@
 
   <div class="page">
 
-    <!-- Summary strip — 3 metric tiles (klar-metric-tile) -->
+    <!-- Summary strip — 3 klar-tile cards -->
     <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
-      <klar-metric-tile
+      <klar-tile
         label="Einnahmen · fix"
         tone="success"
+        valueClass="text-(--success)"
         [value]="(incomeTotalCents() | klarMoney) ?? ''"
       >
         <ng-container slot="sub">
@@ -50,9 +51,9 @@
           {{ incomeBracket().label }}
           @if (incomeBracket().desc) { <span class="text-(--fg-3)">· {{ incomeBracket().desc }}</span> }
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
 
-      <klar-metric-tile
+      <klar-tile
         label="Ausgaben · fix"
         [value]="(expenseTotalCents() | klarMoney) ?? ''"
       >
@@ -61,11 +62,12 @@
           @if (expenseRatio() !== null) { {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen }
           @else { keine Einnahmen erfasst }
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
 
-      <klar-metric-tile
+      <klar-tile
         [label]="surplusCents() >= 0 ? 'Monatlicher Überschuss' : 'Monatliches Defizit'"
         [tone]="surplusCents() >= 0 ? 'success' : 'danger'"
+        [valueClass]="surplusCents() >= 0 ? 'text-(--success)' : 'text-(--danger)'"
         [value]="(surplusCents() | klarMoney) ?? ''"
       >
         <ng-container slot="sub">
@@ -73,7 +75,7 @@
             ≈ {{ surplusRatio() }} % der Einnahmen · {{ surplusRating() }}
           } @else { –– }
         </ng-container>
-      </klar-metric-tile>
+      </klar-tile>
     </div>
 
     <!-- 2-col grid: lists left, side panel right -->
