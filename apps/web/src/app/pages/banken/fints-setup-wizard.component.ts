@@ -480,14 +480,13 @@ export class FintsSetupWizardComponent implements OnInit {
    */
   private extractErrorMessage(err: unknown, fallback: string): string {
     const e = err as { error?: { detail?: string; message?: string } };
-    return (
-      e?.error?.detail ??
-      e?.error?.message ??
-      (typeof err === 'object' && err && 'message' in err
-        ? String((err as { message?: unknown }).message ?? '')
-        : '') ||
-      fallback
-    );
+    const detail = e?.error?.detail ?? e?.error?.message;
+    if (detail) return detail;
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+      const msg = (err as { message?: unknown }).message;
+      if (typeof msg === 'string' && msg.length > 0) return msg;
+    }
+    return fallback;
   }
 
   protected async submitTan(): Promise<void> {
