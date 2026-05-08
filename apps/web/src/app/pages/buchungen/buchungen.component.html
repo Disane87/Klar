@@ -24,20 +24,20 @@
       <klar-icon heroEyebrowIcon name="wallet" [size]="11" />
     </klar-hero>
 
-    <div class="grid grid-cols-3 gap-(--s-4) max-md:grid-cols-1">
+    <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
       <!-- Einnahmen -->
       <div
-        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
       >
-        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
           Einnahmen
         </span>
         <span
-          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em] text-(--success)"
+          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] text-(--success) truncate"
         >
           {{ store.totalIncomeCents() | klarMoney }}
         </span>
-        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
           <klar-icon name="trending-up" [size]="12" />
           {{ incomeCount() }} {{ incomeCount() === 1 ? 'Buchung' : 'Buchungen' }}
         </span>
@@ -45,17 +45,17 @@
 
       <!-- Ausgaben -->
       <div
-        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+        class="bg-(--bg-1) border border-(--line) rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
       >
-        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
           Ausgaben
         </span>
         <span
-          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em] text-(--fg)"
+          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] text-(--fg) truncate"
         >
           {{ store.totalExpenseCents() | klarMoney }}
         </span>
-        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
           <klar-icon name="hash" [size]="12" />
           @if (expenseRatio() !== null) {
             {{ expenseRating() }} · {{ expenseRatio() }} % der Einnahmen
@@ -67,21 +67,21 @@
 
       <!-- Bilanz (accent) -->
       <div
-        class="border rounded-(--r-8) px-(--s-5) py-(--s-4) flex flex-col gap-(--s-2) overflow-hidden"
+        class="border rounded-(--r-8) px-3 py-2.5 md:px-(--s-5) md:py-(--s-4) flex flex-col gap-1 md:gap-(--s-2) overflow-hidden"
         [style.border-color]="bilanzBorderColor()"
         [style.background]="bilanzBackground()"
       >
-        <span class="text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium">
+        <span class="text-[9px] md:text-[10px] uppercase tracking-[0.14em] text-(--fg-2) font-medium truncate">
           {{ store.nettoCents() >= 0 ? 'Überschuss' : 'Defizit' }}
         </span>
         <span
-          class="font-(family-name:--font-display) tabular-nums text-[28px] font-normal leading-none tracking-[-0.02em]"
+          class="font-(family-name:--font-display) tabular-nums text-[18px] md:text-[28px] font-normal leading-none tracking-[-0.02em] truncate"
           [class.text-(--success)]="store.nettoCents() >= 0"
           [class.text-(--danger)]="store.nettoCents() < 0"
         >
           {{ store.nettoCents() | klarMoney }}
         </span>
-        <span class="text-[11px] mono text-(--fg-2) flex items-center gap-1.5">
+        <span class="hidden md:flex text-[11px] mono text-(--fg-2) items-center gap-1.5">
           @if (surplusRatio() !== null) {
             ≈ {{ surplusRatio() }} % · {{ surplusRating() }}
           } @else {
