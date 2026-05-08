@@ -142,6 +142,10 @@ Niemals nackte `<input>`, `<button>` ohne `hlm*`-Direktive. Avatar/Initials imme
 - Dark Mode von Anfang an mit `dark:` — niemals nachrüsten
 - Jede Page unter `/app/*` braucht Page-Header (Titel + Actions) — nie nacktes `<h1>` im Content
 
+### Form- und Dialog-Fehler immer als Callout
+
+Inline-Fehlermeldungen in Formularen und Dialogen IMMER als `<klar-dialog-callout tone="danger" icon="x">` rendern — niemals als nackter `<div class="text-[12px] text-(--danger)">…`. Damit bleibt die visuelle Hierarchie konsistent und Marco kann auf einen Blick zwischen Hint, Erfolg, Warnung und Fehler unterscheiden. Verfügbare Tones: `info` (default), `accent`, `warn`, `danger`. Field-level-Validierungs-Hints (per-input) bleiben dagegen klein als `<span class="text-[11px] text-(--danger)">` direkt unter dem Input — nur der Top-of-Form / End-of-Form Submit-Fehler wird zum Callout.
+
 ### Hero-Pattern — `<klar-hero>` Pflicht (app-weit, ohne Ausnahme)
 
 Jeder Hero im App-Bereich `/app/*` ist `<klar-hero>` aus `apps/web/src/app/shared/ui/klar-hero.component.ts`. Eine kanonische Optik (admin-style: Eyebrow in Accent-Farbe, 26px-Fraunces-Title, Sub-Text, Gradient-Decor, Action-Cluster rechts), keine page-spezifischen Hero-Styles, keine Inline-Nachbauten.

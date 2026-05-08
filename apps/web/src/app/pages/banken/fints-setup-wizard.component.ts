@@ -21,6 +21,7 @@ import {
 import { KlarInputComponent } from '../../shared/ui/klar-input.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
+import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 
@@ -71,6 +72,7 @@ interface AccountSelection {
     KlarInputComponent,
     KlarButtonComponent,
     KlarComboboxComponent,
+    KlarDialogCalloutComponent,
     KlarIconComponent,
   ],
   template: `
@@ -144,7 +146,9 @@ interface AccountSelection {
             </span>
           </div>
           @if (lookupError()) {
-            <div class="text-[12px] text-(--danger)">{{ lookupError() }}</div>
+            <klar-dialog-callout tone="danger" icon="x">
+              {{ lookupError() }}
+            </klar-dialog-callout>
           }
           <klar-input
             label="FinTS-Server (URL)"
@@ -193,7 +197,9 @@ interface AccountSelection {
             hint="Bleibt verschlüsselt im Server. Niemals im Log."
           />
           @if (createError()) {
-            <div class="text-[12px] text-(--danger)">{{ createError() }}</div>
+            <klar-dialog-callout tone="danger" icon="x">
+              {{ createError() }}
+            </klar-dialog-callout>
           }
           <div class="flex justify-between gap-2 pt-2">
             <klar-button tone="ghost" (click)="step.set('bank')">Zurück</klar-button>
@@ -231,7 +237,9 @@ interface AccountSelection {
             hint="Push-/Decoupled-Verfahren: Eingabe leer lassen und in der Banking-App bestätigen."
           />
           @if (tanError()) {
-            <div class="text-[12px] text-(--danger)">{{ tanError() }}</div>
+            <klar-dialog-callout tone="danger" icon="x">
+              {{ tanError() }}
+            </klar-dialog-callout>
           }
           <div class="flex justify-between gap-2 pt-2">
             <klar-button tone="ghost" (click)="cancel()">Abbrechen</klar-button>
@@ -282,7 +290,9 @@ interface AccountSelection {
             </ul>
           }
           @if (attachError()) {
-            <div class="text-[12px] text-(--danger)">{{ attachError() }}</div>
+            <klar-dialog-callout tone="danger" icon="x">
+              {{ attachError() }}
+            </klar-dialog-callout>
           }
           <div class="flex justify-end gap-2 pt-2">
             <klar-button

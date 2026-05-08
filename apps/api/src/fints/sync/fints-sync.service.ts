@@ -134,21 +134,12 @@ export class FintsSyncService {
       const tanMethodIdToUse =
         state.tanMethodId ?? this.pickDefaultTanMethod(fintsClient);
       if (tanMethodIdToUse === null) {
-        // No TAN method advertised — likely a credentials problem (bank
-        // rejected anonymous BPD discovery) or a bank misconfiguration.
-        // Surface a real error rather than silently landing on an empty
-        // account list.
-        const bankErrors = (firstSync.bankAnswers ?? [])
-          .filter(a => a.code >= 9000)
-          .map(a => `${a.code} ${a.text}`)
-          .join(' | ');
+        // No TAN method advertised — most banks reject the dialog at this
+        // stage with one of a few well-known codes. We map the most common
+        // ones to actionable hints rather than dumping the raw 9xxx text.
         return this.failRun(
           syncRun,
-          new Error(
-            bankErrors
-              ? `Bank lieferte keine TAN-Verfahren — Antwort: ${bankErrors}. Häufig: PIN oder Anmeldename falsch, oder Bank-URL passt nicht zur BLZ.`
-              : 'Bank lieferte keine TAN-Verfahren zurück. Bitte PIN, Anmeldename und FinTS-URL prüfen.',
-          ),
+          new Error(this.classifyBankRejection(firstSync.bankAnswers ?? [])),
         );
       }
       if (state.tanMethodId !== tanMethodIdToUse) {
@@ -209,6 +200,43 @@ export class FintsSyncService {
     const methods = client.config.availableTanMethods;
     if (!methods || methods.length === 0) return null;
     return methods[0].id;
+  }
+
+  /**
+   * Maps the bank's 9xxx error codes to an actionable German message.
+   * 9078 = "Banking-Programm ist nicht registriert" — the most common
+   * reason FinTS clients fail at first contact: the configured
+   * FINTS_PRODUCT_ID is not in the ZKA-Produktregister. Sparkasse and
+   * the major Volks-/Genobanks reject every dialog opened with an
+   * unregistered ID.
+   */
+  private classifyBankRejection(
+    bankAnswers: ReadonlyArray<{ code: number; text: string }>,
+  ): string {
+    const codes = new Set(bankAnswers.map(a => a.code));
+    const raw = bankAnswers
+      .map(a => `${a.code} ${a.text}`)
+      .join(' | ');
+
+    if (codes.has(9078) || codes.has(3079)) {
+      return (
+        'Die FinTS-Produkt-ID dieser Klar-Instanz ist nicht beim ZKA registriert ' +
+        '(Bank-Antwort 9078). Bitte FINTS_PRODUCT_ID auf eine registrierte ID setzen — ' +
+        'Registrierung kostenlos unter https://www.hbci-zka.de/register/prod_register.htm. ' +
+        'Antworten der Bank im Detail: ' + raw
+      );
+    }
+    if (codes.has(9050) || codes.has(9931) || codes.has(9210)) {
+      return (
+        'Bank hat die Anmeldung abgelehnt — typischerweise PIN, Anmeldename oder Kunden-ID falsch. ' +
+        'Bei Sparkasse/Volksbank prüfen, ob du den Anmeldenamen ODER die VR-Kennung verwenden musst. ' +
+        'Antworten der Bank: ' + raw
+      );
+    }
+    if (raw) {
+      return `Bank hat die Verbindung abgewiesen. Antworten: ${raw}`;
+    }
+    return 'Bank lieferte keine Antwort. Bitte FinTS-URL und BLZ prüfen.';
   }
 
   /**
@@ -401,6 +429,26 @@ export class FintsSyncService {
       errorCode: err instanceof Error ? err.name : 'UnknownError',
       errorMessage: message.slice(0, 1000),
     });
+
+    // Orphan cleanup: when the very first sync of a brand-new connection
+    // fails (status still SETUP), nuke the FintsConnection so the user
+    // can retry from a clean slate without manually deleting via the UI.
+    // Cascade-delete also clears this syncRun + sibling runs from the
+    // FintsSyncRun table.
+    const connection = await this.connections.findById(syncRun.connectionId);
+    if (connection?.status === 'SETUP') {
+      try {
+        await this.prisma.fintsConnection.delete({ where: { id: connection.id } });
+        this.logger.log(
+          `Removed orphan SETUP-state FinTS connection ${connection.id} after failed first sync`,
+        );
+      } catch (cleanupErr) {
+        this.logger.warn(
+          `Failed to clean up orphan connection ${connection.id}: ${cleanupErr}`,
+        );
+      }
+    }
+
     return { syncRun: finalRun };
   }
 
