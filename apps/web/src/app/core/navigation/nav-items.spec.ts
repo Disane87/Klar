@@ -31,10 +31,11 @@ describe('sideNavItems', () => {
     expect(groups.system.find(i => i.id === 'admin')).toBeDefined();
   });
 
-  it('omits mehr-only aliases (e.g. Daueraufträge → /app/buchungen)', () => {
+  it('points the recurring nav entry to the dedicated /app/daueraufträge page', () => {
     const groups = sideNavItems({ isAdmin: true });
-    const all = [...groups.main, ...groups.system];
-    expect(all.find(i => i.id === 'recurring')).toBeUndefined();
+    const recurring = groups.main.find(i => i.id === 'recurring');
+    expect(recurring).toBeDefined();
+    expect(recurring?.route).toBe('/app/daueraufträge');
   });
 
   it('includes the Banken entry under main', () => {
@@ -52,9 +53,10 @@ describe('mehrPageItems', () => {
     }
   });
 
-  it('includes mehr-only aliases', () => {
+  it('includes the Daueraufträge entry pointing at the dedicated page', () => {
     const groups = mehrPageItems({ isAdmin: false });
-    expect(groups.main.find(i => i.id === 'recurring')).toBeDefined();
+    const recurring = groups.main.find(i => i.id === 'recurring');
+    expect(recurring?.route).toBe('/app/daueraufträge');
   });
 
   it('omits admin entries when not admin', () => {
