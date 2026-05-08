@@ -165,6 +165,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'daueraufträge',
+        loadComponent: () =>
+          import('./pages/dauerauftraege/dauerauftraege.component').then(
+            m => m.DauerauftraegeComponent,
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./pages/settings/settings.component').then(
