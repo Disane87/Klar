@@ -21,7 +21,8 @@
 | **🔁 Recurring Transactions** | Monthly, quarterly, yearly, or custom intervals — computed on-the-fly (no data bloat!) |
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
 | **🏦 FinTS Bank Sync** | Read-only PIN/TAN sync of bookings + balances, AES-256-GCM-encrypted credentials, 4-step setup wizard, 90-day SCA reauth watcher, daily cron + manual trigger |
-| **📒 Buchungen** | Flat transactions list with filter tabs (Alle / Wiederkehrend / Manuell / Eingänge), category-tone per row, recurring chip on auto-generated bookings, summary strip with monthly income / expense / surplus |
+| **📌 Standing Orders (Daueraufträge)** | Auto-detected from FinTS bookings (MT940 GVC `158/159/164/166`, CAMT `STDO`, German free-text fallback) plus manually-created entries; bank-locked fields, frequency inference, dedicated `/app/daueraufträge` page |
+| **📒 Buchungen** | Unified transactions table shared by `/app/buchungen` (cashflow lens, monthly scope) and `/app/banken/:c/:a` (per-account historical lens). Search · account · source · amount filters; quick-chip shortcuts (Wiederkehrend / Eingänge / FinTS / Manuell); per-month sticky group headers with signed monthly sum |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
 | **📈 Soll vs. Ist (Monat)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Soll / Ist amounts, signed delta and threshold-based tone (ok / warn / over) |
 | **🎯 Projekte** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Ausgegeben / Bilanz metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
@@ -141,6 +142,66 @@ Bookings imported via FinTS carry `bankFieldsLockedAt` and `source='fints'`. The
 **Backup note (operations):**
 
 The `FINTS_MASTER_KEY` is required to decrypt persisted credentials. Back it up **separately** from the database — without it, all stored connections become unrecoverable and users will need to re-enter PINs.
+
+---
+
+### 📌 Standing Orders (Daueraufträge)
+
+The Daueraufträge page (`/app/daueraufträge`) lists recurring bank
+payment instructions for a household. Two record sources live in the
+same `StandingOrder` table:
+
+- **`FINTS_DERIVED`** — detected automatically at the end of every FinTS
+  sync. The import pipeline classifies each booking with a
+  `transactionKind` based on MT940 GVC (`158/159/164/166`), CAMT
+  `BkTxCd` SubFamily (`STDO`), or a `Dauerauftr-` prefix in the free-text
+  fallback. The detection service then groups all `STANDING_ORDER`-kind
+  transactions by `(lowercased counterparty, signed amountCents)`, infers
+  the cadence from gaps between consecutive booking dates (WEEKLY /
+  MONTHLY / QUARTERLY / HALF_YEARLY / YEARLY / CUSTOM tolerance windows),
+  and idempotently upserts a record per group via
+  `@@unique(householdId, accountId, groupKey)`.
+- **`MANUAL`** — user-created entries via the page's "+ Manueller Eintrag"
+  dialog, for standing orders the bank does not surface (private-party
+  payments, cash standing orders). Manual records prefix their groupKey
+  with `manual:` plus a timestamp suffix to never collide with bank-derived
+  upserts.
+
+**Bank ist Source of Truth:** for `FINTS_DERIVED` records, the bank fields
+(`counterpartyName`, `counterpartyIban`, `amountCents`, `frequency`,
+`nextExpectedAt`) are locked — only `categoryId`, `note`, and `isActive`
+remain user-editable. The API rejects bank-field updates with
+`BadRequestException`, and the dialog renders those inputs disabled with a
+lock affordance. Deletion of FinTS-derived records is rejected too — use
+`isActive: false` instead, otherwise the record returns on the next sync.
+
+**Privacy / security:** the table is household-scoped; cross-household
+access is rejected by `HouseholdMemberGuard` with a `NotFoundException`
+(no information leak). No bank credentials are stored on the
+standing-order rows — those live encrypted on `FintsConnection` only.
+
+---
+
+### 📒 Buchungen — Unified table
+
+The transactions table (`<klar-transactions-table>`) is shared by `/app/buchungen`
+(month-scoped cashflow lens) and `/app/banken/:c/:a` (historical per-account lens).
+Both routes use the same filter bar (search · account · source · amount), quick-chip
+shortcuts, and per-month sticky-header grouping.
+
+- **Cashflow lens** (`/app/buchungen`) — defaults to the current month from the
+  page header scope segment. Add button creates an unscoped transaction.
+- **Account lens** (`/app/banken/:connectionId/:accountId`) — loads all
+  transactions for the account, regardless of month. The account filter is
+  locked (no reset). Add button prefills `accountId`. FinTS-imported rows keep
+  their bank-field lockout (14a.8); manual fields like category and notes are
+  editable everywhere.
+
+Implementation lives at `apps/web/src/app/shared/transactions/`. Pure helpers
+(`transaction-filters.ts`, `transaction-month-grouping.ts`) are unit-tested in
+isolation; the row, quick-chips, filter-bar, and table-container components are
+assembled on top. `TransactionsStore.accountIdFilter` switches the store loader
+from month-scoped to account-historical mode without duplicating HTTP code.
 
 ---
 
