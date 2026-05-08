@@ -12,6 +12,7 @@ const makeOrder = (overrides: Partial<StandingOrder> = {}): StandingOrder => ({
   householdId: 'h-1',
   accountId: 'acc-1',
   source: 'FINTS_DERIVED',
+  transactionKind: 'STANDING_ORDER',
   counterpartyName: 'Vermieter GmbH',
   counterpartyIban: 'DE89370400440532013000',
   amountCents: -80000,
@@ -77,8 +78,12 @@ describe('DauerauftraegeComponent', () => {
     expect(el.textContent).toContain('Noch keine Daueraufträge');
   });
 
-  it('renders rows and "Bank" badge when store has a FINTS_DERIVED item', () => {
-    const order = makeOrder({ source: 'FINTS_DERIVED', counterpartyName: 'Vermieter GmbH' });
+  it('renders rows with the "Dauerauftrag" chip for STANDING_ORDER FinTS items', () => {
+    const order = makeOrder({
+      source: 'FINTS_DERIVED',
+      transactionKind: 'STANDING_ORDER',
+      counterpartyName: 'Vermieter GmbH',
+    });
     const { fixture } = setup({
       items: signal<StandingOrder[] | undefined>([order]),
       isEmpty: signal(false),
@@ -87,7 +92,24 @@ describe('DauerauftraegeComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Vermieter GmbH');
-    expect(el.textContent).toContain('Bank');
+    expect(el.textContent).toContain('Dauerauftrag');
+  });
+
+  it('renders the "SEPA-Lastschrift" chip for DIRECT_DEBIT FinTS items', () => {
+    const order = makeOrder({
+      source: 'FINTS_DERIVED',
+      transactionKind: 'DIRECT_DEBIT',
+      counterpartyName: 'ERGO Krankenversicherung AG',
+    });
+    const { fixture } = setup({
+      items: signal<StandingOrder[] | undefined>([order]),
+      isEmpty: signal(false),
+      isLoading: signal(false),
+    });
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('ERGO Krankenversicherung AG');
+    expect(el.textContent).toContain('SEPA-Lastschrift');
   });
 
   it('renders loading indicator when isLoading is true', () => {
@@ -113,8 +135,8 @@ describe('DauerauftraegeComponent', () => {
     expect(el.textContent).toContain('Inaktiv');
   });
 
-  it('renders "Manuell" badge for MANUAL source orders', () => {
-    const order = makeOrder({ source: 'MANUAL', bankFieldsLockedAt: null });
+  it('renders "Manuell" chip for MANUAL source orders', () => {
+    const order = makeOrder({ source: 'MANUAL', transactionKind: null, bankFieldsLockedAt: null });
     const { fixture } = setup({
       items: signal<StandingOrder[] | undefined>([order]),
       isEmpty: signal(false),

@@ -661,6 +661,10 @@ model StandingOrder {
   categoryId         String?
   note               String?
   isActive           Boolean                @default(true)
+  // Underlying booking type the record was derived from (FINTS_DERIVED only).
+  // STANDING_ORDER = klassischer Bank-Dauerauftrag; DIRECT_DEBIT = SEPA-Folgelastschrift;
+  // NULL for MANUAL records or detection patterns we have not yet surfaced.
+  transactionKind    TransactionKind?
   // When non-null, bank-fields (counterparty, amount, frequency, nextExpectedAt) are read-only.
   bankFieldsLockedAt DateTime?
   firstSeenAt        DateTime               @default(now())

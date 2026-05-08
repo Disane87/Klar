@@ -14,11 +14,24 @@ export type StandingOrderFrequency =
 
 export type StandingOrderSource = 'FINTS_DERIVED' | 'MANUAL';
 
+// Mirrors Prisma's TransactionKind. Only the two values that reach
+// StandingOrder records are surfaced in the UI; the others are accepted
+// in the type for forward compatibility but never expected on a row.
+export type StandingOrderTransactionKind =
+  | 'STANDING_ORDER'
+  | 'DIRECT_DEBIT'
+  | 'TRANSFER'
+  | 'CARD'
+  | 'FEE'
+  | 'OTHER';
+
 export interface StandingOrder {
   id: string;
   householdId: string;
   accountId: string;
   source: StandingOrderSource;
+  /** NULL on MANUAL records; on FINTS_DERIVED rows reflects the source booking kind. */
+  transactionKind: StandingOrderTransactionKind | null;
   counterpartyName: string | null;
   counterpartyIban: string | null;
   amountCents: number;

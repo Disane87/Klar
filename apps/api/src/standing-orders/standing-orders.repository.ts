@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import type {
   StandingOrderFrequency,
   StandingOrderSource,
+  TransactionKind,
 } from '@prisma/client';
 
 export interface ListStandingOrderTxRow {
@@ -10,6 +11,7 @@ export interface ListStandingOrderTxRow {
   amountCents: number;
   counterpartyName: string | null;
   counterpartyIban: string | null;
+  transactionKind: TransactionKind;
 }
 
 export interface UpsertInput {
@@ -17,6 +19,7 @@ export interface UpsertInput {
   accountId: string;
   groupKey: string;
   source: StandingOrderSource;
+  transactionKind: TransactionKind | null;
   counterpartyName: string | null;
   counterpartyIban: string | null;
   amountCents: number;
@@ -37,12 +40,15 @@ export class StandingOrdersRepository {
       where: {
         householdId: ctx.householdId,
         accountId: ctx.accountId,
-        transactionKind: 'STANDING_ORDER',
+        // Detection covers both real Bank-Daueraufträge and SEPA-Folgelastschriften.
+        // The kind survives on the resulting StandingOrder so the UI can chip them apart.
+        transactionKind: { in: ['STANDING_ORDER', 'DIRECT_DEBIT'] },
       },
       select: {
         date: true,
         amountCents: true,
         counterparty: true,
+        transactionKind: true,
       },
       orderBy: { date: 'asc' },
     });
@@ -51,6 +57,9 @@ export class StandingOrdersRepository {
       amountCents: r.amountCents,
       counterpartyName: r.counterparty,
       counterpartyIban: null,
+      // The query filters on { in: [...] } so the field is non-null in practice;
+      // the cast is safe because Prisma's selected union type widens to nullable.
+      transactionKind: r.transactionKind as TransactionKind,
     }));
   }
 
@@ -73,6 +82,7 @@ export class StandingOrdersRepository {
         accountId: input.accountId,
         groupKey: input.groupKey,
         source: input.source,
+        transactionKind: input.transactionKind,
         counterpartyName: input.counterpartyName,
         counterpartyIban: input.counterpartyIban,
         amountCents: input.amountCents,
@@ -83,6 +93,7 @@ export class StandingOrdersRepository {
       },
       update: {
         // Bank is source of truth — overwrite bank fields.
+        transactionKind: input.transactionKind,
         counterpartyName: input.counterpartyName,
         counterpartyIban: input.counterpartyIban,
         amountCents: input.amountCents,

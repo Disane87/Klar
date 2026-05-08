@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { TransactionKind } from '@prisma/client';
 import { deriveFrequency, type DerivedFrequency } from '@klar/shared';
 import { StandingOrdersRepository } from './standing-orders.repository';
 
@@ -12,7 +13,21 @@ interface InboundTx {
   amountCents: number;
   counterpartyName: string | null;
   counterpartyIban: string | null;
+  transactionKind: TransactionKind;
 }
+
+// Minimum group size to surface as a recurring record.
+// Bank-Daueraufträge are explicit user instructions, so 2 occurrences is enough.
+// SEPA direct debits include one-off refunds and merchant tests — require 3 to
+// avoid noise (e.g. Amazon refund + reversal both pointing at same merchant).
+const MIN_OCCURRENCES: Record<TransactionKind, number> = {
+  STANDING_ORDER: 2,
+  DIRECT_DEBIT: 3,
+  TRANSFER: Number.POSITIVE_INFINITY,
+  CARD: Number.POSITIVE_INFINITY,
+  FEE: Number.POSITIVE_INFINITY,
+  OTHER: Number.POSITIVE_INFINITY,
+};
 
 @Injectable()
 export class StandingOrdersDetection {
@@ -37,7 +52,8 @@ export class StandingOrdersDetection {
 
     let upserted = 0;
     for (const [groupKey, { sample, dates }] of groups) {
-      if (dates.length < 2) continue;
+      const minOccur = MIN_OCCURRENCES[sample.transactionKind];
+      if (dates.length < minOccur) continue;
 
       const sorted = [...dates].sort();
       const lastSeenAt = sorted[sorted.length - 1];
@@ -49,6 +65,7 @@ export class StandingOrdersDetection {
         accountId: ctx.accountId,
         groupKey,
         source: 'FINTS_DERIVED',
+        transactionKind: sample.transactionKind,
         counterpartyName: sample.counterpartyName,
         counterpartyIban: sample.counterpartyIban,
         amountCents: sample.amountCents,
@@ -66,9 +83,11 @@ export class StandingOrdersDetection {
   }
 }
 
+// groupKey separates kinds so a Bank-Dauerauftrag and a SEPA-Lastschrift to the
+// same recipient with the same amount produce two records (different chips).
 function makeGroupKey(tx: InboundTx): string {
   const name = (tx.counterpartyName ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
-  return `${name}|${tx.amountCents}`;
+  return `${tx.transactionKind.toLowerCase()}|${name}|${tx.amountCents}`;
 }
 
 function computeNextExpected(

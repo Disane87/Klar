@@ -10,6 +10,7 @@ import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarEmptyStateComponent } from '../../shared/ui/klar-empty-state.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { StandingOrderDialogComponent } from './standing-order-dialog.component';
 import type { StandingOrder } from '../../core/standing-orders/standing-orders.store';
 
@@ -32,6 +33,38 @@ const FREQ_LABELS: Record<string, string> = {
   UNKNOWN:     'Unbekannt',
 };
 
+interface TypeChip {
+  label: string;
+  /** Tailwind classes for bg + text. Kept inline so the template stays declarative. */
+  classes: string;
+}
+
+function chipForOrder(order: StandingOrder): TypeChip {
+  if (order.source === 'MANUAL') {
+    return {
+      label: 'Manuell',
+      classes: 'bg-(--fg-3)/20 text-(--fg-2)',
+    };
+  }
+  switch (order.transactionKind) {
+    case 'STANDING_ORDER':
+      return {
+        label: 'Dauerauftrag',
+        classes: 'bg-(--accent)/15 text-(--accent)',
+      };
+    case 'DIRECT_DEBIT':
+      return {
+        label: 'SEPA-Lastschrift',
+        classes: 'bg-(--color-info)/15 text-(--color-info)',
+      };
+    default:
+      return {
+        label: 'Bank',
+        classes: 'bg-(--fg-3)/20 text-(--fg-2)',
+      };
+  }
+}
+
 @Component({
   selector: 'app-dauerauftraege',
   standalone: true,
@@ -41,6 +74,7 @@ const FREQ_LABELS: Record<string, string> = {
     KlarButtonComponent,
     KlarEmptyStateComponent,
     KlarIconComponent,
+    BrandIconComponent,
   ],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16 min-w-0">
@@ -87,23 +121,27 @@ const FREQ_LABELS: Record<string, string> = {
               role="button"
               [attr.aria-label]="'Dauerauftrag bearbeiten: ' + (order.counterpartyName ?? 'Unbekannt')"
             >
-              <!-- Left: name + badges -->
+              <!-- Brand icon (auto-detected from counterparty name; falls back to a kind-specific lucide icon) -->
+              <span class="shrink-0 w-8 h-8 rounded-md bg-(--bg-2) flex items-center justify-center overflow-hidden">
+                <app-brand-icon
+                  [name]="order.counterpartyName ?? ''"
+                  [size]="18"
+                  [fallbackIcon]="fallbackIconFor(order)"
+                />
+              </span>
+
+              <!-- Left: name + chips -->
               <div class="flex flex-col gap-0.5 min-w-0 flex-1">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-sm font-medium text-(--fg) truncate min-w-0">
                     {{ order.counterpartyName ?? 'Unbekannt' }}
                   </span>
-                  <!-- Source badge -->
-                  @if (order.source === 'FINTS_DERIVED') {
-                    <span class="shrink-0 inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium tracking-wide bg-(--accent)/15 text-(--accent)">
-                      Bank
-                    </span>
-                  } @else {
-                    <span class="shrink-0 inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium tracking-wide bg-(--fg-3)/20 text-(--fg-2)">
-                      Manuell
-                    </span>
-                  }
-                  <!-- Inactive badge -->
+                  <!-- Type chip (Dauerauftrag / SEPA-Lastschrift / Manuell) -->
+                  @let chip = typeChip(order);
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium tracking-wide" [class]="chip.classes">
+                    {{ chip.label }}
+                  </span>
+                  <!-- Inactive chip -->
                   @if (!order.isActive) {
                     <span class="shrink-0 inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium tracking-wide bg-(--color-expense)/15 text-(--color-expense)">
                       Inaktiv
@@ -162,6 +200,18 @@ export class DauerauftraegeComponent {
 
   protected freqLabel(freq: string): string {
     return FREQ_LABELS[freq] ?? freq;
+  }
+
+  protected typeChip(order: StandingOrder): TypeChip {
+    return chipForOrder(order);
+  }
+
+  // When the counterparty name doesn't auto-match a brand-icon, render a
+  // lucide fallback that hints at the booking type.
+  protected fallbackIconFor(order: StandingOrder): string {
+    if (order.source === 'MANUAL') return 'pencil';
+    if (order.transactionKind === 'DIRECT_DEBIT') return 'arrow-down-circle';
+    return 'repeat';
   }
 
   protected formatAmount(cents: number): string {
