@@ -84,7 +84,7 @@ const JOB_ICONS: Record<string, string> = {
       </klar-hero>
 
       <!-- Status grid -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-(--s-3) shrink-0">
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-(--s-3) shrink-0">
         <klar-stat-tile
           icon="pulse"
           label="Uptime · 30 T"

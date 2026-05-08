@@ -71,7 +71,7 @@ describe('KlarStatTileComponent', () => {
   it('uses tabular-nums and the display font for the headline value', () => {
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
-    const valueEl = fixture.nativeElement.querySelector('span.text-\\[24px\\]') as HTMLElement;
+    const valueEl = fixture.nativeElement.querySelector('span.text-\\[16px\\]') as HTMLElement;
     expect(valueEl).not.toBeNull();
     expect(valueEl.className).toContain('[font-variant-numeric:tabular-nums]');
     expect(valueEl.className).toContain('[font-family:var(--font-display)]');

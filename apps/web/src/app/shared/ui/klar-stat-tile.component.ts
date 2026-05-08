@@ -39,13 +39,13 @@ const TONE_LABEL: Record<KlarStatTileTone, string> = {
         <span>{{ label() }}</span>
       </span>
       <span class="
-        font-medium text-[24px] leading-[1.1] tracking-[-0.02em]
-        text-(--fg)
+        font-medium text-[16px] md:text-[24px] leading-[1.1] tracking-[-0.02em]
+        text-(--fg) truncate
         [font-family:var(--font-display)]
         [font-variant-numeric:tabular-nums]
       ">{{ value() }}</span>
       @if (delta()) {
-        <span class="text-[11px] text-(--fg-2) mt-0.5">{{ delta() }}</span>
+        <span class="hidden md:block text-[11px] text-(--fg-2) mt-0.5">{{ delta() }}</span>
       }
       <span aria-hidden="true"
             [class]="decorClass()"></span>
@@ -61,14 +61,14 @@ export class KlarStatTileComponent {
 
   protected readonly tileClass = computed(() => [
     'relative overflow-hidden flex flex-col gap-1',
-    'px-4 py-3.5 rounded-(--r-8) bg-(--bg-1)',
+    'px-3 py-2.5 md:px-4 md:py-3.5 rounded-(--r-8) bg-(--bg-1)',
     'border',
     TONE_BORDER[this.tone()],
   ].join(' '));
 
   protected readonly labelClass = computed(() => [
-    'inline-flex items-center gap-1.5',
-    'text-[10px] uppercase tracking-[0.14em]',
+    'inline-flex items-center gap-1 md:gap-1.5',
+    'text-[9px] md:text-[10px] uppercase tracking-[0.14em]',
     TONE_LABEL[this.tone()],
   ].join(' '));
 

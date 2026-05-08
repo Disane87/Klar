@@ -325,9 +325,11 @@
 
 @media (max-width: 767px) {
   .page              { padding: var(--s-4); gap: var(--s-4); }
-  .summary-strip     { grid-template-columns: 1fr; gap: var(--s-3); }
-  .summary-cell      { padding: var(--s-3) var(--s-4); }
-  .summary-cell .value { font-size: var(--t-24); }
+  .summary-strip     { grid-template-columns: repeat(3, 1fr); gap: var(--s-2); }
+  .summary-cell      { padding: 10px 12px; gap: var(--s-1); }
+  .summary-cell .label { font-size: 9px; }
+  .summary-cell .value { font-size: var(--t-18); }
+  .summary-cell .delta { display: none; }
   .surplus-row       { padding: var(--s-4); }
   .surplus-row .value { font-size: var(--t-32); }
   .toolbar-row       { gap: var(--s-2); }
