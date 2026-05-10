@@ -13,6 +13,12 @@ export interface CreateAccountData {
   visibility?: Visibility;
 }
 
+export interface UpdateAccountData {
+  name?: string;
+  visibility?: Visibility;
+  archivedAt?: Date | null;
+}
+
 @Injectable()
 export class AccountsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,5 +44,20 @@ export class AccountsRepository {
 
   create(data: CreateAccountData): Promise<Account> {
     return this.prisma.account.create({ data });
+  }
+
+  async update(
+    id: string,
+    householdId: string,
+    data: UpdateAccountData,
+  ): Promise<Account | null> {
+    const result = await this.prisma.account.updateMany({
+      where: { id, householdId },
+      data,
+    });
+    if (result.count === 0) {
+      return null;
+    }
+    return this.prisma.account.findUnique({ where: { id } });
   }
 }
