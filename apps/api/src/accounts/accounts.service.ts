@@ -1,6 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Account } from '@prisma/client';
-import { AccountsRepository } from './accounts.repository';
+import { AccountsRepository, type UpdateAccountData } from './accounts.repository';
+import type { RequestContext } from '../common/types/request-context.type';
+
+export interface UpdateAccountInput {
+  name?: string;
+  visibility?: 'SHARED' | 'PRIVATE';
+  archivedAt?: string | null;
+}
 
 @Injectable()
 export class AccountsService {
@@ -33,6 +45,47 @@ export class AccountsService {
       throw new NotFoundException(`Account ${id} nicht gefunden`);
     }
     return account;
+  }
+
+  async update(
+    ctx: RequestContext,
+    id: string,
+    patch: UpdateAccountInput,
+  ): Promise<Account> {
+    const existing = await this.findById(id, ctx.householdId);
+
+    if (existing.type === 'fints' && existing.ownerId !== ctx.userId) {
+      throw new ForbiddenException(
+        'Nur der Inhaber dieses FinTS-Kontos darf es ändern.',
+      );
+    }
+
+    const data: UpdateAccountData = {};
+
+    if (patch.name !== undefined) {
+      const trimmed = patch.name.trim();
+      if (trimmed.length < 1 || trimmed.length > 100) {
+        throw new BadRequestException('name muss 1..100 Zeichen lang sein');
+      }
+      data.name = trimmed;
+    }
+
+    if (patch.visibility !== undefined) {
+      if (patch.visibility !== 'SHARED' && patch.visibility !== 'PRIVATE') {
+        throw new BadRequestException('Ungültige visibility');
+      }
+      data.visibility = patch.visibility;
+    }
+
+    if (patch.archivedAt !== undefined) {
+      data.archivedAt = patch.archivedAt === null ? null : new Date(patch.archivedAt);
+    }
+
+    const updated = await this.repo.update(id, ctx.householdId, data);
+    if (!updated) {
+      throw new NotFoundException(`Account ${id} nicht gefunden`);
+    }
+    return updated;
   }
 
   toResponse(account: Account) {

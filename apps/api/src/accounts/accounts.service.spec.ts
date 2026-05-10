@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Account } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import type { AccountsRepository } from './accounts.repository';
+import type { RequestContext } from '../common/types/request-context.type';
 
 const makeAccount = (overrides: Partial<Account> = {}): Account => ({
   id: 'acc-1',
@@ -30,6 +31,7 @@ function buildService() {
     findById: vi.fn(),
     findDefaultCsvAccount: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
   } as unknown as AccountsRepository;
   const service = new AccountsService(repo);
   return { service, repo };
@@ -81,6 +83,108 @@ describe('AccountsService', () => {
       const result = await service.list('hh1');
       expect(result).toHaveLength(1);
       expect(repo.findAllForHousehold).toHaveBeenCalledWith('hh1');
+    });
+  });
+
+  describe('update', () => {
+    const ctxFor = (userId: string, householdId: string): RequestContext => ({
+      userId,
+      householdId,
+      source: 'web',
+    });
+
+    it('renames a csv_only account for any household member (non-owner)', async () => {
+      const { service, repo } = buildService();
+      const existing = makeAccount({ id: 'acc-1', type: 'csv_only', ownerId: 'owner-x' });
+      vi.mocked(repo.findById).mockResolvedValue(existing);
+      vi.mocked(repo.update).mockResolvedValue({ ...existing, name: 'Neu' });
+      const result = await service.update(ctxFor('user-other', 'hh1'), 'acc-1', { name: 'Neu' });
+      expect(result.name).toBe('Neu');
+      expect(repo.update).toHaveBeenCalledWith('acc-1', 'hh1', { name: 'Neu' });
+    });
+
+    it('rejects FinTS-account edits from non-owner with ForbiddenException', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeAccount({ id: 'acc-1', type: 'fints', ownerId: 'owner-1' }),
+      );
+      const promise = service.update(ctxFor('user-other', 'hh1'), 'acc-1', { name: 'X' });
+      await expect(promise).rejects.toThrow(ForbiddenException);
+      await expect(promise).rejects.toThrow(/Inhaber/);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('allows FinTS owner to flip visibility', async () => {
+      const { service, repo } = buildService();
+      const existing = makeAccount({
+        id: 'acc-1',
+        type: 'fints',
+        ownerId: 'owner-1',
+        visibility: 'SHARED',
+      });
+      vi.mocked(repo.findById).mockResolvedValue(existing);
+      vi.mocked(repo.update).mockResolvedValue({ ...existing, visibility: 'PRIVATE' });
+      const result = await service.update(ctxFor('owner-1', 'hh1'), 'acc-1', {
+        visibility: 'PRIVATE',
+      });
+      expect(result.visibility).toBe('PRIVATE');
+      expect(repo.update).toHaveBeenCalledWith('acc-1', 'hh1', { visibility: 'PRIVATE' });
+    });
+
+    it('throws NotFoundException when account is not found (cross-tenant)', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(null);
+      await expect(
+        service.update(ctxFor('user-1', 'hh-other'), 'acc-1', { name: 'X' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('converts archivedAt ISO string to Date and forwards null', async () => {
+      const { service, repo } = buildService();
+      const existing = makeAccount({ id: 'acc-1', type: 'csv_only' });
+      vi.mocked(repo.findById).mockResolvedValue(existing);
+      vi.mocked(repo.update).mockResolvedValue(existing);
+      const iso = new Date('2026-06-01T12:00:00.000Z').toISOString();
+      await service.update(ctxFor('u1', 'hh1'), 'acc-1', { archivedAt: iso });
+      const firstCall = vi.mocked(repo.update).mock.calls[0]!;
+      expect(firstCall[2].archivedAt).toBeInstanceOf(Date);
+      expect((firstCall[2].archivedAt as Date).toISOString()).toBe(iso);
+
+      vi.mocked(repo.update).mockClear();
+      await service.update(ctxFor('u1', 'hh1'), 'acc-1', { archivedAt: null });
+      expect(vi.mocked(repo.update).mock.calls[0]![2]).toEqual({ archivedAt: null });
+    });
+
+    it('rejects empty or oversized name with BadRequestException', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(makeAccount({ id: 'acc-1', type: 'csv_only' }));
+      await expect(
+        service.update(ctxFor('u1', 'hh1'), 'acc-1', { name: '   ' }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(ctxFor('u1', 'hh1'), 'acc-1', { name: 'a'.repeat(101) }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects invalid visibility with BadRequestException', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(makeAccount({ id: 'acc-1', type: 'csv_only' }));
+      await expect(
+        service.update(ctxFor('u1', 'hh1'), 'acc-1', {
+          visibility: 'BOGUS' as 'SHARED',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when repo.update returns null (race)', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(makeAccount({ id: 'acc-1', type: 'csv_only' }));
+      vi.mocked(repo.update).mockResolvedValue(null);
+      await expect(
+        service.update(ctxFor('u1', 'hh1'), 'acc-1', { name: 'X' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
