@@ -3,6 +3,7 @@ import { CsvImportService } from './csv-import.service';
 import { SparkasseCamtV2Parser } from './parsers/sparkasse-camt-v2.parser';
 import type { CsvImportRepository } from './csv-import.repository';
 import type { AccountsService } from '../accounts/accounts.service';
+import type { FixedCostsService } from '../fixed-costs/fixed-costs.service';
 import type { RequestContext } from '../common/types/request-context.type';
 
 const ctx: RequestContext = { userId: 'user1', householdId: 'hh1', source: 'web' };
@@ -48,15 +49,28 @@ function makeAccounts(): AccountsService {
   } as unknown as AccountsService;
 }
 
+function makeFixedCosts(): FixedCostsService {
+  return {
+    recomputeForHousehold: vi.fn().mockResolvedValue({ created: 0, replaced: 0 }),
+  } as unknown as FixedCostsService;
+}
+
 describe('CsvImportService', () => {
   let repo: CsvImportRepository;
   let accounts: AccountsService;
+  let fixedCosts: FixedCostsService;
   let service: CsvImportService;
 
   beforeEach(() => {
     repo = makeRepo();
     accounts = makeAccounts();
-    service = new CsvImportService(new SparkasseCamtV2Parser(), repo, accounts);
+    fixedCosts = makeFixedCosts();
+    service = new CsvImportService(
+      new SparkasseCamtV2Parser(),
+      repo,
+      accounts,
+      fixedCosts,
+    );
   });
 
   it('analyze returns NEW status for unseen row', async () => {

@@ -20,6 +20,7 @@ import {
 import { RecurringSuggester } from '../import-pipeline/detection/recurring-suggester';
 import { CategorySuggester } from '../import-pipeline/detection/category-suggester';
 import { counterpartyKey } from '../import-pipeline/utils/counterparty-key';
+import { FixedCostsService } from '../fixed-costs/fixed-costs.service';
 
 export type RowStatus = 'NEW' | 'DUPLICATE' | 'FIXED_COST_MATCH' | 'RECURRING_SUGGESTION';
 
@@ -91,6 +92,7 @@ export class CsvImportService {
     private readonly parser: SparkasseCamtV2Parser,
     private readonly repo: CsvImportRepository,
     private readonly accounts: AccountsService,
+    private readonly fixedCosts: FixedCostsService,
   ) {}
 
   async analyze(ctx: RequestContext, fileBase64: string): Promise<AnalyzeResponse> {
@@ -291,6 +293,14 @@ export class CsvImportService {
       skippedFixed,
       createdRecurrings: newRecs,
     });
+
+    // Post-ingest detection: shared with the FinTS sync runner. Refreshes
+    // CANDIDATE FixedCost rows so newly imported transactions surface as
+    // contract suggestions immediately. Idempotent — preserves user-curated
+    // status (CONFIRMED / DETECTED / CANCELLED) and USER_DEFINED rows.
+    if (imported > 0) {
+      await this.fixedCosts.recomputeForHousehold(ctx.householdId);
+    }
 
     return {
       imported,

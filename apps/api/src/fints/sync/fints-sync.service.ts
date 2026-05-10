@@ -12,6 +12,7 @@ import { FintsRealtimeService } from '../realtime/fints-realtime.service';
 import { FintsSyncRunRepository } from './fints-sync-run.repository';
 import type { FintsSessionState } from '../client/fints-session-state';
 import { StandingOrdersDetection } from '../../standing-orders/standing-orders.detection';
+import { FixedCostsService } from '../../fixed-costs/fixed-costs.service';
 
 export interface StartSyncOptions {
   triggeredBy: FintsSyncTrigger;
@@ -76,6 +77,7 @@ export class FintsSyncService {
     private readonly config: ConfigService,
     private readonly realtime: FintsRealtimeService,
     private readonly standingOrders: StandingOrdersDetection,
+    private readonly fixedCosts: FixedCostsService,
   ) {}
 
   /**
@@ -398,6 +400,10 @@ export class FintsSyncService {
     let totalFetched = 0;
     let totalImported = 0;
     let totalSkipped = 0;
+    // Households touched in this run — we run unified FixedCost detection
+    // ONCE per household after all accounts are ingested, since the
+    // algorithm operates on the household-wide transaction set.
+    const touchedHouseholdIds = new Set<string>();
 
     this.logger.log(
       `Ingest phase for connection ${connection.id}: ` +
@@ -456,6 +462,7 @@ export class FintsSyncService {
       );
       totalImported += ingest.imported;
       totalSkipped += ingest.skipped;
+      if (ingest.imported > 0) touchedHouseholdIds.add(account.householdId);
 
       try {
         await this.standingOrders.runForAccount({
@@ -465,6 +472,19 @@ export class FintsSyncService {
       } catch (err) {
         this.logger.warn(
           `Standing-order detection failed for account ${account.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    // Unified FixedCost detection — same algorithm runs after CSV import,
+    // FinTS sync, and the manual /recompute endpoint. Only re-run for
+    // households that actually received new bookings.
+    for (const householdId of touchedHouseholdIds) {
+      try {
+        await this.fixedCosts.recomputeForHousehold(householdId);
+      } catch (err) {
+        this.logger.warn(
+          `Fixed-cost detection failed for household ${householdId}: ${(err as Error).message}`,
         );
       }
     }

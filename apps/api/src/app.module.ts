@@ -34,7 +34,7 @@ import { AdminHealthModule } from './admin/health/admin-health.module';
 import { OAuthModule } from './oauth/oauth.module';
 import { McpModule } from './mcp/mcp.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { ContractsModule } from './contracts/contracts.module';
+import { FixedCostsModule } from './fixed-costs/fixed-costs.module';
 import { ConnectedAppsModule } from './connected-apps/connected-apps.module';
 import { ImportPipelineModule } from './import-pipeline/import-pipeline.module';
 import { FintsModule } from './fints/fints.module';
@@ -128,7 +128,7 @@ const REDACT_PATHS = [
     OAuthModule,
     McpModule,
     NotificationsModule,
-    ContractsModule,
+    FixedCostsModule,
     ConnectedAppsModule,
     ImportPipelineModule,
     FintsModule,

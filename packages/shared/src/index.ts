@@ -2,6 +2,6 @@ export * from './types';
 export * from './calculations';
 export * from './schemas';
 export * from './oauth-scopes';
-export * from './contracts/detect';
+export * from './detection';
 export * from './budgets/budgets-vs-actuals';
 export * from './standing-orders';

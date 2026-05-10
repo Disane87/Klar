@@ -36,7 +36,7 @@
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
 | **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB Size / Warnings / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / Emails / Households tabs preserved below |
 | **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
-| **📜 Contracts — Auto-Detection** | Klar groups recurring bookings by merchant + amount + cycle and surfaces them as contract candidates with a confidence score; drawer shows hero amount, confidence meter, next renewal, cancel-by date; one-click confirm / cancel / delete |
+| **📜 Fixed Costs &amp; Contracts — Unified Detection** | One detection pipeline for CSV imports, FinTS sync, and on-demand recompute groups recurring bookings by merchant + signed amount + token signature into `FixedCost` candidates with a calibrated confidence score (`MONTHLY` / `QUARTERLY` / `HALF_YEARLY` / `YEARLY` / `CUSTOM`). Promote any FixedCost into a `Contract` extension to track cancellation deadline, holder, contract number, and provider. Page tabs: Aktiv / Verträge / Vorschläge / Beendet. Manual create + batch confirm/cancel + drawer detail. |
 | **📅 Calendar** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
 | **📈 Statistics** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
 | **🪪 Session Management** | Settings/Security shows active refresh-token sessions with user-agent, hashed-IP, last-active timestamp; revoke per session or all-but-current |
@@ -356,11 +356,31 @@ In-app notification feed (`Notification` model + `NotificationKind` enum: `CONTR
 
 **Privacy:** notifications are scoped to the household and optionally to a single user (`userId IS NULL` = household-wide). Only the household's members can read them.
 
-### 📜 Contracts — Auto-Detection
+### 📜 Fixed Costs &amp; Contracts — Unified Detection
 
-`Contract` model (cycle: `MONTHLY` / `QUARTERLY` / `YEARLY` / `CUSTOM`, status: `CANDIDATE` / `DETECTED` / `CONFIRMED` / `CANCELLED`). The detection service in `packages/shared/contracts/detect.ts` groups recurring transactions by merchant + amount tolerance ± 5 % and emits a confidence score per candidate. `POST /h/:hid/contracts/recompute` re-runs detection on demand (e.g. after a CSV import).
+**Concept.** Every recurring booking is a `FixedCost` (cycle: `MONTHLY` / `QUARTERLY` / `HALF_YEARLY` / `YEARLY` / `CUSTOM`, status: `CANDIDATE` / `DETECTED` / `CONFIRMED` / `CANCELLED`, source: `AUTO_DETECTED` / `USER_DEFINED`). A `Contract` is a 1:1 extension on top of a FixedCost that adds vertragsspezifische Felder (cancellation deadline, contract holder, contract number, provider, document URL, notes). Every Contract IS a FixedCost; not every FixedCost is a Contract.
 
-The page `/app/vertraege` shows the hero strip (count of active + candidates, monthly fix sum, annualized estimate, next action), renewal/price-change alerts, tabs (Active / Suggestions / Ended), per-row `klar-confidence-bar` and `cat-bar` accent, and a sliding detail drawer with hero amount in Fraunces, metric tiles for next renewal / cancel-by / status / cycle, and one-click Confirm / Cancel / Delete.
+**Detection pipeline.** A single pure algorithm in `packages/shared/src/detection/detect-fixed-costs.ts` is the only source of truth for fixed-cost detection. It runs:
+
+1. After every CSV import confirm step (in `csv-import.service.ts`)
+2. After every successful FinTS sync (in `fints-sync.service.ts`, once per touched household)
+3. On the manual `POST /h/:hid/fixed-costs/recompute` endpoint
+
+The algorithm normalizes each transaction to `(merchantKey, sign, tokens)`, coarse-clusters by `(merchantKey, sign)`, then sub-clusters by **token signature** so distinct services sharing one merchant (Vodafone Internet vs. Vodafone Handy) end up in different buckets while a single variable-amount bill (Strom-Abschlag) stays together. Frequency windows live in `frequency-windows.ts` and are also consumed by standing-order detection (one source of truth across the whole app).
+
+**Confidence formula.**
+
+```
+repetition_score = clamp((n - 1) / 3, 0, 1)
+amount_stability = clamp(1 - relative_amount_stdev, 0, 1)
+confidence       = 0.6 × repetition_score + 0.4 × amount_stability
+```
+
+Three identical bookings at a stable cadence yield ≈ 0.80; four ≈ 0.95. (The previous formula `(n-2)/4` capped 3-occurrence contracts at 0.55, which felt unfairly pessimistic.)
+
+**UX.** The page `/app/vertraege` is now "Erkannte Fixkosten" with four tabs: **Aktiv** (all active FixedCosts), **Verträge** (subset with Contract extension), **Vorschläge** (CANDIDATE rows the user hasn't reviewed), **Beendet**. Per-row checkboxes drive a bulk-action bar (batch confirm / batch cancel). The detail drawer offers Confirm / Cancel / Delete plus **"Als Vertrag markieren"** (promote) and **"Vertrags-Markierung entfernen"** (demote). A `+ Hinzufügen` button opens the manual-create dialog; `Erneut scannen` triggers the same pipeline that runs after imports.
+
+**Privacy &amp; idempotency.** `recomputeForHousehold` only replaces `CANDIDATE` rows with `source = AUTO_DETECTED`. User-curated rows (CONFIRMED / DETECTED / CANCELLED) and all `USER_DEFINED` rows are preserved. Re-running the detection always converges on the same candidate set for the same transaction history.
 
 ### 📅 Calendar
 

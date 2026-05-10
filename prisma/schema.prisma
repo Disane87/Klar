@@ -77,9 +77,10 @@ enum NotificationKind {
   FINTS_BLZ_REGISTRY_STALE
 }
 
-enum ContractCycle {
+enum FixedCostCycle {
   MONTHLY
   QUARTERLY
+  HALF_YEARLY
   YEARLY
   CUSTOM
 }
@@ -126,11 +127,11 @@ enum FintsSyncTrigger {
   SETUP
 }
 
-enum ContractStatus {
-  CANDIDATE
-  DETECTED
-  CONFIRMED
-  CANCELLED
+enum FixedCostStatus {
+  CANDIDATE // auto-detected, awaiting user review
+  DETECTED // user reviewed but not yet confirmed
+  CONFIRMED // user confirmed, counts as active fixed cost
+  CANCELLED // ended (contract terminated, subscription stopped)
 }
 
 // Standing Orders (Daueraufträge) — Phase 14b
@@ -309,7 +310,7 @@ model Household {
   csvImports            CsvImport[]
   importLearnings       ImportLearning[]
   notifications         Notification[]
-  contracts             Contract[]
+  fixedCosts            FixedCost[]
   accounts              Account[]
   fintsConnections      FintsConnection[]
   standingOrders        StandingOrder[]
@@ -1101,31 +1102,68 @@ model Notification {
 }
 
 // ─────────────────────────────────────────────
-// CONTRACTS (Verträge / Subscriptions)
+// FIXED COSTS (auto-detected recurring expenses/income from real bookings)
 // ─────────────────────────────────────────────
-// Detected from CSV-Import + Recurring patterns via packages/shared/contracts/detect.ts
-// confidence ∈ [0,1] aus Heuristik (Anzahl Wiederholungen, Beträge-Stabilität).
-// detectedFromTransactionIds: Audit-Trail welche Transactions zur Erkennung führten.
-model Contract {
-  id                         String         @id @default(cuid())
+// FixedCost is the BASE concept: anything the detection algorithm finds as a
+// recurring booking pattern across CSV+FinTS transactions.
+// Pure detection lives in packages/shared/src/detection/ — same algorithm runs
+// after CSV imports, after FinTS sync, and on the manual /recompute endpoint.
+//
+// Contract (below) is a 1:1 EXTENSION of FixedCost for things the user wants
+// to track as a real contract (with cancellation deadline, holder, contract
+// number, etc.). Every Contract IS a FixedCost; not every FixedCost is a
+// Contract — many are just "I pay this every month" without contract paperwork.
+//
+// confidence ∈ [0,1] from the heuristic (repetition + amount stability).
+// detectedFromTransactionIds: audit trail of which Transactions matched.
+// source: AUTO_DETECTED (algorithm) or USER_DEFINED (user typed it manually).
+model FixedCost {
+  id                         String          @id @default(cuid())
   householdId                String
   name                       String
-  merchant                   String?
+  merchant                   String? // normalized merchant key (auto-detected) or display label
   categoryId                 String?
   amountCents                Int
-  cycle                      ContractCycle
-  nextRenewalAt              DateTime?      @db.Date
-  cancelByAt                 DateTime?      @db.Date
-  confidence                 Float          @default(0)
-  status                     ContractStatus @default(CANDIDATE)
-  detectedFromTransactionIds String[]       @default([])
-  createdAt                  DateTime       @default(now())
-  updatedAt                  DateTime       @updatedAt
+  cycle                      FixedCostCycle
+  nextRenewalAt              DateTime?       @db.Date
+  confidence                 Float           @default(0)
+  status                     FixedCostStatus @default(CANDIDATE)
+  source                     FixedCostSource @default(AUTO_DETECTED)
+  detectedFromTransactionIds String[]        @default([])
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  contract  Contract?
 
   @@index([householdId, status])
   @@index([householdId, nextRenewalAt])
+  @@index([householdId, source])
+}
+
+enum FixedCostSource {
+  AUTO_DETECTED // produced by the detection algorithm
+  USER_DEFINED // user typed it in manually
+}
+
+// 1:1 extension on FixedCost. Created when the user promotes a FixedCost
+// to a real contract (e.g. for cancellation tracking).
+model Contract {
+  id                String    @id @default(cuid())
+  fixedCostId       String    @unique
+  cancelByAt        DateTime? @db.Date
+  contractStartedAt DateTime? @db.Date
+  contractHolder    String?
+  contractNumber    String?
+  providerName      String?
+  documentUrl       String?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  fixedCost FixedCost @relation(fields: [fixedCostId], references: [id], onDelete: Cascade)
+
+  @@index([cancelByAt])
 }
 
 // ─────────────────────────────────────────────
