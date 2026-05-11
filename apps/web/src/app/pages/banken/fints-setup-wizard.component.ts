@@ -14,6 +14,7 @@ import { FintsStore } from '../../core/fints/fints.store';
 import {
   FintsService,
   type FintsBankLookupRecord,
+  type FintsCapabilities,
   type FintsCreateConnectionResponse,
   type FintsDiscoveredAccount,
   type FintsRunEvent,
@@ -29,7 +30,14 @@ import { HlmSpinnerComponent } from '../../shared/ui/hlm/hlm-spinner.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 
-type WizardStep = 'bank' | 'credentials' | 'tan' | 'accounts' | 'done' | 'failed';
+type WizardStep =
+  | 'bank'
+  | 'credentials'
+  | 'tan'
+  | 'accounts'
+  | 'range'
+  | 'done'
+  | 'failed';
 
 interface StepDef {
   id: WizardStep;
@@ -42,6 +50,20 @@ const STEPS: readonly StepDef[] = [
   { id: 'credentials', label: 'Login',   index: 2 },
   { id: 'tan',         label: 'TAN',     index: 3 },
   { id: 'accounts',    label: 'Konten',  index: 4 },
+  { id: 'range',       label: 'Zeitraum', index: 5 },
+];
+
+interface RangePreset {
+  /** Days to look back from today. */
+  days: number;
+  label: string;
+}
+
+const RANGE_PRESETS: readonly RangePreset[] = [
+  { days: 30,  label: '30 Tage' },
+  { days: 90,  label: '90 Tage' },
+  { days: 180, label: '6 Monate' },
+  { days: 365, label: '12 Monate' },
 ];
 
 interface AccountSelection {
@@ -332,6 +354,66 @@ interface AccountSelection {
         </section>
       }
 
+      @if (step() === 'range') {
+        <section class="flex flex-col gap-3">
+          <p class="text-[13px] text-(--fg-2)">
+            Wie weit zurück sollen wir Buchungen abrufen? Du kannst das später jederzeit
+            wiederholen, falls dir der Zeitraum zu kurz war.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            @for (preset of availableRangePresets(); track preset.days) {
+              <button
+                type="button"
+                class="px-3 py-2 rounded-md border text-[13px] min-h-11 transition-colors"
+                [class.border-\\(--accent\\)]="selectedRangeDays() === preset.days"
+                [class.bg-\\(--accent\\)\\/10]="selectedRangeDays() === preset.days"
+                [class.text-\\(--accent\\)]="selectedRangeDays() === preset.days"
+                [class.border-\\(--line\\)]="selectedRangeDays() !== preset.days"
+                [class.text-\\(--fg\\)]="selectedRangeDays() !== preset.days"
+                (click)="setRangeDays(preset.days)"
+              >
+                {{ preset.label }}
+              </button>
+            }
+          </div>
+          @if (capabilities(); as caps) {
+            <p class="text-[11px] text-(--fg-3)">
+              @if (caps.maxLookbackDays !== null) {
+                Bank-Limit: {{ caps.maxLookbackDays }} Tage
+              } @else {
+                Bank meldet kein Limit für den Rückblick.
+              }
+            </p>
+          }
+          @if (rangeWarning(); as w) {
+            <klar-dialog-callout tone="warn" icon="alert-triangle">
+              {{ w }}
+            </klar-dialog-callout>
+          }
+          @if (rangeError(); as e) {
+            <klar-dialog-callout tone="danger" icon="x">
+              {{ e }}
+            </klar-dialog-callout>
+          }
+          <div class="flex justify-between gap-2 pt-2 flex-wrap">
+            <klar-button
+              tone="ghost"
+              [disabled]="rangeSubmitting()"
+              (click)="submitRange(true)"
+            >
+              Überspringen
+            </klar-button>
+            <klar-button
+              tone="primary"
+              [disabled]="rangeSubmitting()"
+              (click)="submitRange(false)"
+            >
+              {{ rangeSubmitting() ? 'Sync läuft …' : 'Buchungen jetzt abrufen' }}
+            </klar-button>
+          </div>
+        </section>
+      }
+
       @if (step() === 'done') {
         <section class="flex flex-col items-center text-center gap-3 py-6">
           <klar-icon name="shield-check" [size]="36" class="text-(--success)" />
@@ -398,12 +480,45 @@ export class FintsSetupWizardComponent implements OnInit {
   protected readonly tanChallenge = signal<FintsTanChallenge | null>(null);
   protected readonly tanError = signal<string | null>(null);
   private syncRunId: string | null = null;
+  /**
+   * Where to land after a successful TAN. The setup-pass TAN advances to
+   * `accounts` (BPD + UPD discovery). The deep-sync TAN raised from the
+   * range step advances to `done` instead — the sync that holds the TAN
+   * is the initial deep-fetch, not a fresh BPD pass.
+   */
+  private tanReturnStep: 'accounts' | 'done' = 'accounts';
 
   // Step 4: accounts
   protected readonly loadingAccounts = signal(false);
   protected readonly accountSelections = signal<AccountSelection[]>([]);
   protected readonly attaching = signal(false);
   protected readonly attachError = signal<string | null>(null);
+
+  // Step 5: range
+  protected readonly rangePresets = RANGE_PRESETS;
+  protected readonly selectedRangeDays = signal<number>(90);
+  protected readonly rangeSubmitting = signal(false);
+  protected readonly rangeError = signal<string | null>(null);
+  protected readonly capabilities = signal<FintsCapabilities | null>(null);
+  /** Visible presets bounded by the bank's advertised `maxLookbackDays`. */
+  protected readonly availableRangePresets = computed<readonly RangePreset[]>(() => {
+    const max = this.capabilities()?.maxLookbackDays;
+    if (!max || max <= 0) return RANGE_PRESETS;
+    return RANGE_PRESETS.filter(p => p.days <= max);
+  });
+  protected readonly rangeWarning = computed<string | null>(() => {
+    const caps = this.capabilities();
+    if (!caps) return null;
+    const max = caps.maxLookbackDays;
+    const selected = this.selectedRangeDays();
+    if (max !== null && selected > max) {
+      return `Deine Bank erlaubt max. ${max} Tage Rückblick — wir kappen automatisch.`;
+    }
+    if (caps.tanRequiredForStatements) {
+      return 'Deine Bank verlangt für den Umsatzabruf eine TAN — bitte gleich bereithalten.';
+    }
+    return null;
+  });
 
   protected readonly failureMessage = signal<string | null>(null);
 
@@ -571,7 +686,13 @@ export class FintsSetupWizardComponent implements OnInit {
       }
       this.tanChallenge.set(null);
       if (result.syncRun.status === 'OK') {
-        await this.proceedToAccounts();
+        if (this.tanReturnStep === 'done') {
+          this.store.reload();
+          this.step.set('done');
+          this.tanReturnStep = 'accounts';
+        } else {
+          await this.proceedToAccounts();
+        }
       } else {
         this.failureMessage.set(
           `Unerwarteter Sync-Status (${result.syncRun.status}). Bitte erneut versuchen.`,
@@ -640,12 +761,80 @@ export class FintsSetupWizardComponent implements OnInit {
           .subscribe({ next: resolve, error: reject }),
       );
       this.store.reload();
-      this.step.set('done');
+      // Fetch capabilities for the range picker. Failure is non-fatal —
+      // the picker falls back to the standard presets without a hard limit.
+      await this.loadCapabilities();
+      this.step.set('range');
     } catch (err) {
       this.attachError.set(this.extractErrorMessage(err, 'Konnte Konten nicht verknüpfen.'));
     } finally {
       this.attaching.set(false);
     }
+  }
+
+  private async loadCapabilities(): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId || !this.connectionId) return;
+    try {
+      const caps = await firstValueFrom(
+        this.fintsService.getCapabilities(householdId, this.connectionId),
+      );
+      this.capabilities.set(caps);
+    } catch {
+      this.capabilities.set(null);
+    }
+  }
+
+  /**
+   * Picks an initial-sync range and triggers the first deep sync with it.
+   * "Skip" lands directly on `done`; any failure surfaces inline on the
+   * range step instead of throwing the user back to `failed`.
+   */
+  protected async submitRange(skip: boolean): Promise<void> {
+    if (skip) {
+      this.step.set('done');
+      return;
+    }
+    const householdId = this.householdStore.activeId();
+    if (!householdId || !this.connectionId) {
+      this.rangeError.set('Sitzung verloren — bitte erneut anmelden.');
+      return;
+    }
+    const days = this.selectedRangeDays();
+    if (!days || days < 1) {
+      this.rangeError.set('Bitte einen Zeitraum auswählen.');
+      return;
+    }
+    this.rangeError.set(null);
+    this.rangeSubmitting.set(true);
+    try {
+      const from = new Date();
+      from.setUTCDate(from.getUTCDate() - days);
+      const fromDate = from.toISOString().slice(0, 10);
+      const res = await firstValueFrom(
+        this.fintsService.triggerSync(householdId, this.connectionId, { fromDate }),
+      );
+      this.syncRunId = res.syncRun.id;
+      if (res.tanChallenge) {
+        this.tanReturnStep = 'done';
+        this.tanChallenge.set(res.tanChallenge);
+        this.step.set('tan');
+        this.maybeStartEventStream(res.tanChallenge);
+        return;
+      }
+      this.store.reload();
+      this.step.set('done');
+    } catch (err) {
+      this.rangeError.set(
+        this.extractErrorMessage(err, 'Initialer Sync fehlgeschlagen. Du kannst es später im Banken-Detail wiederholen.'),
+      );
+    } finally {
+      this.rangeSubmitting.set(false);
+    }
+  }
+
+  protected setRangeDays(days: number): void {
+    this.selectedRangeDays.set(days);
   }
 
   protected retry(): void {
@@ -655,6 +844,8 @@ export class FintsSetupWizardComponent implements OnInit {
     this.createError.set(null);
     this.tanError.set(null);
     this.attachError.set(null);
+    this.rangeError.set(null);
+    this.capabilities.set(null);
   }
 
   protected cancel(): void {
@@ -703,7 +894,13 @@ export class FintsSetupWizardComponent implements OnInit {
     if (event.type === 'ok') {
       this.tanChallenge.set(null);
       this.stopEventStream();
-      void this.proceedToAccounts();
+      if (this.tanReturnStep === 'done') {
+        this.store.reload();
+        this.step.set('done');
+        this.tanReturnStep = 'accounts';
+      } else {
+        void this.proceedToAccounts();
+      }
       return;
     }
     if (event.type === 'failed') {

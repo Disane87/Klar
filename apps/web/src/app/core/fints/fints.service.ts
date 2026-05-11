@@ -135,6 +135,15 @@ export interface FintsAttachAccountInput {
   visibility?: 'SHARED' | 'PRIVATE';
 }
 
+/** Bank-advertised statement-fetch capabilities cached per connection. */
+export interface FintsCapabilities {
+  maxLookbackDays: number | null;
+  supportsHKCAZ: boolean;
+  supportsHKKAZ: boolean;
+  tanRequiredForStatements: boolean;
+  extractedAt: string | null;
+}
+
 /** Mirrors apps/api/src/fints/realtime/fints-realtime.service.ts. */
 export type FintsRunEventType = 'tan-required' | 'ok' | 'failed' | 'progress';
 export interface FintsRunEvent {
@@ -186,10 +195,20 @@ export class FintsService {
     );
   }
 
-  triggerSync(householdId: string, id: string): Observable<FintsSyncRunWithChallenge> {
+  triggerSync(
+    householdId: string,
+    id: string,
+    range?: { fromDate?: string; toDate?: string },
+  ): Observable<FintsSyncRunWithChallenge> {
     return this.http.post<FintsSyncRunWithChallenge>(
       `${this.baseUrl(householdId)}/connections/${id}/sync`,
-      {},
+      range ?? {},
+    );
+  }
+
+  getCapabilities(householdId: string, id: string): Observable<FintsCapabilities> {
+    return this.http.get<FintsCapabilities>(
+      `${this.baseUrl(householdId)}/connections/${id}/capabilities`,
     );
   }
 
