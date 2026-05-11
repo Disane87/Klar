@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { RecurringTransaction, RecurringFrequency, Visibility } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateRecurringTransactionData {
@@ -20,6 +21,7 @@ export interface CreateRecurringTransactionData {
   color?: string | null;
   icon?: string | null;
   isActive: boolean;
+  payrollInput?: Prisma.InputJsonValue | null;
 }
 
 export interface UpdateRecurringTransactionData {
@@ -37,6 +39,7 @@ export interface UpdateRecurringTransactionData {
   note?: string | null;
   color?: string | null;
   icon?: string | null;
+  payrollInput?: Prisma.InputJsonValue | null;
 }
 
 export interface FindAllOpts {
@@ -77,11 +80,28 @@ export class RecurringTransactionsRepository {
   }
 
   create(data: CreateRecurringTransactionData): Promise<RecurringTransaction> {
-    return this.prisma.recurringTransaction.create({ data });
+    const { payrollInput, ...rest } = data;
+    return this.prisma.recurringTransaction.create({
+      data: {
+        ...rest,
+        ...(payrollInput === undefined
+          ? {}
+          : { payrollInput: payrollInput === null ? Prisma.JsonNull : payrollInput }),
+      },
+    });
   }
 
   update(id: string, data: UpdateRecurringTransactionData): Promise<RecurringTransaction> {
-    return this.prisma.recurringTransaction.update({ where: { id }, data });
+    const { payrollInput, ...rest } = data;
+    return this.prisma.recurringTransaction.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(payrollInput === undefined
+          ? {}
+          : { payrollInput: payrollInput === null ? Prisma.JsonNull : payrollInput }),
+      },
+    });
   }
 
   delete(id: string): Promise<RecurringTransaction> {

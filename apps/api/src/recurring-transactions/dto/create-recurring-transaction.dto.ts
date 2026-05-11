@@ -98,6 +98,31 @@ export class CreateRecurringTransactionDto {
     required: false,
   })
   isActive?: boolean;
+
+  @ApiProperty({
+    description:
+      'Optional snapshot of the GrossToNetInput when this entry represents a salary computed ' +
+      'from gross. Pass `null` to clear. Persisted as JSON; the API does not interpret it. ' +
+      'See `@klar/shared` `GrossToNetInput`.',
+    type: Object,
+    required: false,
+    nullable: true,
+    example: {
+      grossCents: 600000,
+      period: 'monthly',
+      steuerklasse: 3,
+      bundesland: 'BY',
+      kirchensteuer: true,
+      birthYear: 1990,
+      kinderfreibetraege: 2,
+      krankenversicherung: 'gesetzlich',
+      kvZusatzbeitragPct: 1.7,
+      rentenversicherungRegion: 'west',
+      geldwerterVorteilMonthlyCents: 0,
+      lohnsteuerFreibetragYearlyCents: 0,
+    },
+  })
+  payrollInput?: Record<string, unknown> | null;
 }
 
 export class UpdateRecurringTransactionDto extends CreateRecurringTransactionDto {}

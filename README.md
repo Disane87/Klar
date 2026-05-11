@@ -27,6 +27,7 @@
 | **📈 Plan vs. Actual (Month)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Plan / Actual amounts, signed delta and threshold-based tone (ok / warn / over) |
 | **🎯 Projects** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Spent / Balance metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
+| **💶 Gross-to-Net Calculator** | German payroll calculator (`/app/tools/brutto-netto`) — gross salary in, full breakdown out (Lohnsteuer / Soli / Kirchensteuer / KV / PV / RV / AV); donut visualization plus per-line table; reusable from inside the Fixkosten dialog so a salary entry can be persisted as a `payrollInput` snapshot and re-computed later (e.g. after a KV-Zusatzbeitrag change). 2025 §32a EStG calibration shipped, 2026 BMF PAP refresh pending publication. |
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
 | **🤖 MCP Server (OAuth 2.1)** | Claude Desktop / Cursor / Codex read, create, update & delete with per-scope user consent |
 | **🔐 Authentication** | Local (email/password), OIDC (PocketID + any OIDC provider), API Keys |
@@ -383,6 +384,19 @@ Three identical bookings at a stable cadence yield ≈ 0.80; four ≈ 0.95. (The
 **UX.** The page `/app/vertraege` is now "Erkannte Fixkosten" with four tabs: **Aktiv** (all active FixedCosts), **Verträge** (subset with Contract extension), **Vorschläge** (CANDIDATE rows the user hasn't reviewed), **Beendet**. Per-row checkboxes drive a bulk-action bar (batch confirm / batch cancel). The detail drawer offers Confirm / Cancel / Delete plus **"Als Vertrag markieren"** (promote) and **"Vertrags-Markierung entfernen"** (demote). A `+ Hinzufügen` button opens the manual-create dialog; `Erneut scannen` triggers the same pipeline that runs after imports.
 
 **Privacy &amp; idempotency.** `recomputeForHousehold` only replaces `CANDIDATE` rows with `source = AUTO_DETECTED`. User-curated rows (CONFIRMED / DETECTED / CANCELLED) and all `USER_DEFINED` rows are preserved. Re-running the detection always converges on the same candidate set for the same transaction history.
+
+### 💶 Gross-to-Net Calculator (Brutto-Netto-Rechner)
+
+A German payroll calculator surfaced in two places:
+
+1. **Standalone tool** under `/app/tools/brutto-netto` — full form (Steuerklasse, Bundesland, Kirchensteuer, Geburtsjahr, Kinderfreibeträge, gesetzlich/privat KV with Zusatzbeitrag, RV-Region, geldwerter Vorteil, ELStAM-Freibetrag), live result card with big monthly net, donut chart split into Netto/Steuern/Sozialabgaben, full per-line breakdown.
+2. **From-gross mode in Fixkosten dialogs** — when a recurring entry has a positive amount (income context, typically a salary), a "Aus Brutto berechnen" toggle reveals a compact embedded form that computes the net and writes it into `amountCents`. The full input is persisted as `RecurringTransaction.payrollInput` (JSONB) so the calculation can be re-run later (after a KV-Zusatzbeitrag change, a new tax year, etc.) without re-asking the user for every parameter.
+
+**Engine** lives in `packages/shared/src/payroll/` so frontend + backend (and any future MCP tool) can share the same calculation. Implemented as a §32a EStG income tax tariff with all standard deductions: Werbungskostenpauschale, Sonderausgabenpauschbetrag, Vorsorgepauschale (RV/KV/PV components, capped at the Beitragsbemessungsgrenzen), Solidaritätszuschlag with Freigrenze + Milderungszone, Kirchensteuer (8% Bayern/BW, 9% rest), Sozialversicherungs-AN-Anteile (KV inkl. halber Zusatzbeitrag, PV inkl. Kinderlosenzuschlag und Sachsen-Sonderregel, RV bundeseinheitlich, AV).
+
+**Calibration:** the constants are calibrated against the official 2025 §32a tariff and 2025 Sozialversicherungs-Rechengrößen. The 2026 BMF Programmablaufplan refresh ships when the BMF publishes final values; the engine structure does not change.
+
+**Privacy:** all calculation runs on the client. The backend only stores the `payrollInput` snapshot — it never re-computes server-side, never logs gross amounts.
 
 ### 📅 Calendar
 

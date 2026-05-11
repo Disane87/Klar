@@ -27,6 +27,7 @@ const makeRt = (overrides: Partial<RecurringTransaction> = {}): RecurringTransac
   isVariable: false,
   note: null,
   isActive: true,
+  payrollInput: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   ...overrides,

@@ -10,6 +10,9 @@ import { KlarDialogCalloutComponent } from '../../shared/ui/klar-dialog-callout.
 import { KlarColorPickerComponent } from '../../shared/ui/klar-color-picker.component';
 import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.component';
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
+import { KlarSwitchComponent } from '../../shared/ui/klar-switch.component';
+import { KlarPayrollFormComponent, type PayrollApplyEvent } from '../../shared/ui/klar-payroll-form.component';
+import type { GrossToNetInput } from '@klar/shared';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -27,6 +30,7 @@ import { safeDayOfMonth } from '@klar/shared';
     HlmInputDirective, HlmLabelDirective, KlarSelectComponent,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
     KlarMoneyInputComponent, KlarDialogFooterComponent, KlarDialogCalloutComponent,
+    KlarSwitchComponent, KlarPayrollFormComponent,
   ],
   templateUrl: './recurring-create-dialog.component.html',
   styleUrl: './recurring-create-dialog.component.css',
@@ -53,6 +57,25 @@ export class RecurringCreateDialogComponent {
   readonly icon       = signal<string | null>(null);
   readonly saving     = signal(false);
   readonly err        = signal('');
+
+  // ── Payroll (Aus Brutto berechnen) ──────────────────────────
+  readonly payrollEnabled = signal(false);
+  readonly payrollInput   = signal<GrossToNetInput | null>(null);
+
+  onPayrollApplied(ev: PayrollApplyEvent): void {
+    this.amountCents.set(ev.nettoMonthlyCents);
+    this.payrollInput.set(ev.input);
+  }
+
+  onPayrollToggle(checked: boolean): void {
+    this.payrollEnabled.set(checked);
+    if (!checked) this.payrollInput.set(null);
+  }
+
+  readonly isIncomeContext = computed(() => {
+    const a = this.amountCents() ?? 0;
+    return a > 0;
+  });
 
   readonly isValid = computed(() => {
     const n = this.name().trim();
@@ -150,6 +173,9 @@ export class RecurringCreateDialogComponent {
         color:       this.color(),
         icon:        this.icon(),
         isActive:    true,
+        payrollInput: this.payrollEnabled()
+          ? (this.payrollInput() as unknown as Record<string, unknown> | null)
+          : null,
       });
       this.store.reload();
       this.dialog.close();

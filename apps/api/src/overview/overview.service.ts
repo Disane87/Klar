@@ -35,6 +35,8 @@ export interface FixedCostsItemResponse {
   icon: string | null;
   /** Optional internal breakdown (e.g. Festgehalt Netto → Brutto + Provision Brutto). */
   splits: FixedCostsSplitResponse[];
+  /** Snapshot of GrossToNetInput when this entry was last computed from gross. */
+  payrollInput: Record<string, unknown> | null;
 }
 
 export interface FixedCostsGroupResponse {
@@ -192,6 +194,7 @@ export class OverviewService {
           amountCents: s.amountCents,
           sortOrder: s.sortOrder,
         })),
+        payrollInput: (rt.payrollInput as Record<string, unknown> | null) ?? null,
       }));
 
       const totalCents = responseItems.reduce(

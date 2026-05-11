@@ -50,6 +50,16 @@ export class RecurringTransactionResponse {
   @ApiProperty({ description: 'Whether the recurring is currently active.', example: true })
   isActive!: boolean;
 
+  @ApiProperty({
+    description:
+      'Snapshot of the GrossToNetInput when this row was last computed from gross. ' +
+      '`null` for entries entered as a plain net amount.',
+    type: Object,
+    nullable: true,
+    example: null,
+  })
+  payrollInput!: Record<string, unknown> | null;
+
   @ApiProperty({ description: 'ISO 8601 creation timestamp.', example: '2026-04-15T08:30:00.000Z' })
   createdAt!: string;
 

@@ -26,6 +26,8 @@ export interface FixedCostItem {
   color: string | null;
   icon: string | null;
   splits?: FixedCostSplit[];
+  /** Snapshot of GrossToNetInput when this entry was last computed from gross. */
+  payrollInput?: Record<string, unknown> | null;
 }
 
 export interface FixedCostGroup {

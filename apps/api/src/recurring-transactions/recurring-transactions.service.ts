@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { RecurringTransaction } from '@prisma/client';
-import { RecurringFrequency, Visibility } from '@prisma/client';
+import { RecurringFrequency, Visibility, Prisma } from '@prisma/client';
 import type { RequestContext } from '../common/types/request-context.type';
 import {
   RecurringTransactionsRepository,
@@ -31,6 +31,7 @@ export interface CreateRecurringTransactionInput {
   color?: string | null;
   icon?: string | null;
   isActive?: boolean;
+  payrollInput?: Record<string, unknown> | null;
 }
 
 export type UpdateRecurringTransactionInput = Partial<CreateRecurringTransactionInput>;
@@ -87,6 +88,9 @@ export class RecurringTransactionsService {
       color: input.color ?? null,
       icon: input.icon ?? null,
       isActive: input.isActive ?? true,
+      payrollInput: input.payrollInput === undefined
+        ? undefined
+        : (input.payrollInput as Prisma.InputJsonValue | null),
     });
   }
 
@@ -130,6 +134,9 @@ export class RecurringTransactionsService {
     if (input.note !== undefined) data.note = input.note;
     if (input.color !== undefined) data.color = input.color;
     if (input.icon !== undefined) data.icon = input.icon;
+    if (input.payrollInput !== undefined) {
+      data.payrollInput = input.payrollInput as Prisma.InputJsonValue | null;
+    }
 
     return this.repo.update(existing.id, data);
   }
@@ -180,6 +187,7 @@ export class RecurringTransactionsService {
       isVariable: rt.isVariable,
       note: rt.note,
       isActive: rt.isActive,
+      payrollInput: rt.payrollInput as Record<string, unknown> | null,
       createdAt: rt.createdAt.toISOString(),
       updatedAt: rt.updatedAt.toISOString(),
     };

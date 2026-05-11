@@ -70,6 +70,18 @@
     </div>
   </div>
 
+  @if (isIncomeContext()) {
+    <div class="flex flex-col gap-2 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
+      <klar-switch label="Aus Brutto berechnen"
+                   description="Errechnet das Netto aus Brutto, Steuerklasse, KV usw. Das Ergebnis ersetzt den Betrag oben."
+                   [checked]="payrollEnabled()"
+                   (checkedChange)="onPayrollToggle($event)" />
+      @if (payrollEnabled()) {
+        <klar-payroll-form [initial]="payrollInput()" (applied)="onPayrollApplied($event)" />
+      }
+    </div>
+  }
+
   <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
     <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>
 

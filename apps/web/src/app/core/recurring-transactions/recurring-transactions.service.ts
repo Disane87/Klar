@@ -16,6 +16,7 @@ export interface CreateRecurringTransactionRequest {
   color?:      string | null;
   icon?:       string | null;
   isActive?:   boolean;
+  payrollInput?: Record<string, unknown> | null;
 }
 
 export interface UpdateRecurringTransactionRequest {
@@ -26,6 +27,7 @@ export interface UpdateRecurringTransactionRequest {
   dayOfMonth?:  number | null;
   color?:       string | null;
   icon?:        string | null;
+  payrollInput?: Record<string, unknown> | null;
 }
 
 export interface RecurringTransactionResponse {

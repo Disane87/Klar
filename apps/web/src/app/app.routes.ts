@@ -172,6 +172,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tools/brutto-netto',
+        loadComponent: () =>
+          import('./pages/tools/brutto-netto/brutto-netto.component').then(
+            m => m.BruttoNettoPageComponent,
+          ),
+      },
+      {
         path: 'mehr',
         loadComponent: () =>
           import('./pages/mehr/mehr.component').then(
