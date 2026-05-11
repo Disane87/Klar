@@ -172,6 +172,34 @@ export class FintsDiscoveredAccountResponse {
   alreadyAttached!: boolean;
 }
 
+export class FintsCapabilitiesResponse {
+  @ApiProperty({
+    description:
+      'Maximum days the bank will accept as `from`-date on a statement request. Derived from the HKKAZ/HKCAZ `maxDays` parameter in the BPD. `null` when the bank advertises no upper bound.',
+    example: 365,
+    nullable: true,
+  })
+  maxLookbackDays!: number | null;
+
+  @ApiProperty({ description: 'Bank supports CAMT statement retrieval (HKCAZ).', example: true })
+  supportsHKCAZ!: boolean;
+
+  @ApiProperty({ description: 'Bank supports MT940 statement retrieval (HKKAZ).', example: true })
+  supportsHKKAZ!: boolean;
+
+  @ApiProperty({
+    description: 'Bank flagged the statement segment as TAN-pflichtig — the wizard warns before a long range is picked.',
+    example: false,
+  })
+  tanRequiredForStatements!: boolean;
+
+  @ApiProperty({
+    description: 'When the snapshot was taken (refreshed after every successful sync).',
+    example: '2026-05-11T08:35:00.000Z',
+  })
+  extractedAt!: string;
+}
+
 export class FintsDeleteImpactResponse {
   @ApiProperty({ description: 'Klar accounts that will be detached or archived.', example: 2 })
   accounts!: number;

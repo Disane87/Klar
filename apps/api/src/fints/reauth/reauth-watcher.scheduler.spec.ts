@@ -21,6 +21,7 @@ const makeConn = (overrides: Partial<FintsConnection> = {}): FintsConnection => 
   scaExpiresAt: new Date('2026-05-12'),
   lastSyncAt: null,
   lastSyncStatus: null,
+  capabilitiesJson: null,
   createdAt: new Date('2026-02-01'),
   updatedAt: new Date('2026-02-01'),
   ...overrides,

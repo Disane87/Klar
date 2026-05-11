@@ -9,6 +9,10 @@ import type {
 import type { FintsSessionState } from './fints-session-state';
 import { loadLibFints } from './lib-fints-loader';
 import { APP_VERSION } from '../../common/app-version';
+import {
+  extractCapabilities,
+  type FintsCapabilities,
+} from '../capabilities/fints-capabilities';
 
 /**
  * lib-fints ships ESM-only (`"type": "module"` + import-only `exports`),
@@ -238,6 +242,16 @@ export class FintsClientService {
     tan?: string,
   ): Promise<AccountBalanceResponse> {
     return client.getAccountBalanceWithTan(tanReference, tan);
+  }
+
+  /**
+   * Projects the bank's BPD onto our slim {@link FintsCapabilities}
+   * shape so the connection-detail endpoint and the initial-sync range
+   * picker can consume bank-advertised limits without re-parsing BPD
+   * segments in three places.
+   */
+  extractCapabilities(client: FinTSClient): FintsCapabilities {
+    return extractCapabilities(client.config.bankingInformation);
   }
 
   /**

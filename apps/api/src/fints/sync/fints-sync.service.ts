@@ -637,6 +637,16 @@ export class FintsSyncService {
     base: FintsSessionState,
   ): Promise<void> {
     const fresh = this.client.extractSessionState(fintsClient, base);
+    const capabilities = this.client.extractCapabilities(fintsClient);
+
+    // Capabilities are not secret — write them even when the crypto
+    // master-key isn't configured (tests + bare dev runs). Session
+    // state needs encryption, so its update is gated below.
+    await this.prisma.fintsConnection.update({
+      where: { id: connection.id },
+      data: { capabilitiesJson: capabilities as unknown as Prisma.InputJsonValue },
+    });
+
     if (!this.crypto.isReady()) return; // Tests + dev without master key
     const sealed = this.crypto.encrypt(connection.id, fresh);
     await this.prisma.fintsConnection.update({

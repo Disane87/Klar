@@ -33,6 +33,7 @@ import {
 } from './fints.service';
 import {
   FintsBankLookupResponse,
+  FintsCapabilitiesResponse,
   FintsConnectionResponse,
   FintsCreateConnectionResponse,
   FintsTriggerSyncResponse,
@@ -160,6 +161,22 @@ export class FintsController {
       syncRun: this.service.toSyncRunResponse(result.syncRun),
       tanChallenge: result.tanChallenge ?? null,
     };
+  }
+
+  @Get('connections/:id/capabilities')
+  @ApiOperation({
+    summary: 'Get bank-advertised statement-fetch capabilities',
+    description:
+      'Returns the cached HKKAZ/HKCAZ capabilities extracted from the bank’s BPD after the last successful sync. The wizard’s initial-sync range picker uses `maxLookbackDays` as the upper bound for the date picker; `tanRequiredForStatements` decides whether to render a TAN hint. Fields default to null/false until the first sync has populated the cache. Any household member may read.',
+  })
+  @ApiParam({ name: 'id', description: 'FinTS connection ID.', example: 'fc_8a2d-...' })
+  @ApiResponse({ status: 200, type: FintsCapabilitiesResponse })
+  @ApiResponse({ status: 404, description: 'Connection not found in this household.' })
+  getCapabilities(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: string,
+  ) {
+    return this.service.getCapabilities(ctx, id);
   }
 
   @Post('connections/:id/sync')

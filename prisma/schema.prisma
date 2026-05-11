@@ -401,6 +401,14 @@ model FintsConnection {
   scaExpiresAt      DateTime?
   lastSyncAt        DateTime?
   lastSyncStatus    FintsSyncStatus?
+  /**
+   * Bank-advertised capabilities (HKKAZ/HKCAZ maxDays, TAN-Pflicht für
+   * Umsatzabruf). Befüllt aus der BPD nach jedem erfolgreichen
+   * Synchronise — Source-of-Truth liegt bei der Bank, wir cachen den
+   * letzten Snapshot für den Range-Picker im Setup-Wizard.
+   * Shape: `apps/api/src/fints/capabilities/fints-capabilities.ts#FintsCapabilities`.
+   */
+  capabilitiesJson  Json?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
@@ -598,6 +606,10 @@ model RecurringTransaction {
   color           String? // custom hex color, z.B. "#22c55e"
   icon            String? // iconify key, z.B. "simple-icons:spotify" oder "lucide:home"
   isActive        Boolean            @default(true)
+  // Optional snapshot of GrossToNetInput when this entry represents a salary
+  // computed from gross. Lets us re-run the calculation later (e.g. after a
+  // KV-Zusatzbeitrag change) without re-asking the user for the inputs.
+  payrollInput    Json?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 

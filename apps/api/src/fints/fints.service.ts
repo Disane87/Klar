@@ -20,6 +20,7 @@ import { FintsCryptoService } from './crypto/fints-crypto.service';
 import { FintsRealtimeService, type FintsRunEvent } from './realtime/fints-realtime.service';
 import { BankRegistryService } from './banks/bank-registry.service';
 import type { FintsSessionState } from './client/fints-session-state';
+import type { FintsCapabilities } from './capabilities/fints-capabilities';
 
 export interface CreateConnectionInput {
   bankName: string;
@@ -226,6 +227,29 @@ export class FintsService {
       throw new NotFoundException(`FinTS connection ${id} not found`);
     }
     return c;
+  }
+
+  /**
+   * Returns the bank-advertised statement-fetch capabilities cached on
+   * the connection (refreshed after every successful sync). Returns the
+   * neutral-defaults projection when the connection has not yet been
+   * synced — `extractedAt` is null in that case so the wizard can
+   * fall back to safe presets.
+   */
+  async getCapabilities(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<FintsCapabilities> {
+    const c = await this.findOne(ctx, id);
+    const cached = c.capabilitiesJson as unknown as FintsCapabilities | null;
+    if (cached && typeof cached === 'object') return cached;
+    return {
+      maxLookbackDays: null,
+      supportsHKCAZ: false,
+      supportsHKKAZ: false,
+      tanRequiredForStatements: false,
+      extractedAt: null,
+    };
   }
 
   async create(
