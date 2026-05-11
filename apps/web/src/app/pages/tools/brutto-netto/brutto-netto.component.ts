@@ -371,7 +371,7 @@ export class BruttoNettoPageComponent implements OnInit {
   readonly kinderStr                        = signal<string>('0');
   readonly krankenversicherung              = signal<Krankenversicherung>('gesetzlich');
   readonly krankenkasseId                   = signal<string>('tk');
-  readonly kvZusatzbeitragPct               = signal<number>(2.45); // matches default tk
+  readonly kvZusatzbeitragPct               = signal<number>(2.69); // TK 2026 default
   readonly pkvBeitragMonthlyCents           = signal<number | null>(null);
   readonly rentenversicherungRegion         = signal<RentenversicherungRegion>('west');
   readonly geldwerterVorteilMonthlyCents    = signal<number | null>(0);

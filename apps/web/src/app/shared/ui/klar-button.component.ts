@@ -113,6 +113,12 @@ export class KlarButtonComponent {
 
   onClick(ev: MouseEvent) {
     if (this.disabled() || this.loading()) return;
+    // Stop the native click here so it does not bubble to the host
+    // <klar-button> element — when callers bind `(click)` on the host,
+    // Angular wires both the output AND the bubbled DOM event, which
+    // would fire the handler twice. Stopping the bubble keeps the
+    // emit-once semantics callers expect.
+    ev.stopPropagation();
     this.click.emit(ev);
   }
 }

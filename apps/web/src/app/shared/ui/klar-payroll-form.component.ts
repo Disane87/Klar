@@ -203,7 +203,7 @@ export class KlarPayrollFormComponent {
   readonly kinderStr                        = signal<string>('0');
   readonly krankenversicherung              = signal<Krankenversicherung>('gesetzlich');
   readonly krankenkasseId                   = signal<string>('tk');
-  readonly kvZusatzbeitragPct               = signal<number>(2.45);
+  readonly kvZusatzbeitragPct               = signal<number>(2.69);
   readonly pkvBeitragMonthlyCents           = signal<number | null>(null);
   readonly rentenversicherungRegion         = signal<RentenversicherungRegion>('west');
   readonly geldwerterVorteilMonthlyCents    = signal<number | null>(0);
