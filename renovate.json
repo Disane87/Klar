@@ -53,8 +53,5 @@
       "matchUpdateTypes": ["patch", "minor"]
     }
   ],
-  "pnpm": {
-    "fileMatch": ["(^|/)pnpm-lock\\.yaml$"]
-  },
   "ignorePaths": ["**/node_modules/**", "**/dist/**"]
 }
