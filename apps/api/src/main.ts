@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { Logger as NestLogger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
@@ -8,6 +9,7 @@ import { Logger } from 'nestjs-pino';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const fastifyCookie = require('@fastify/cookie') as Parameters<NestFastifyApplication['register']>[0];
 import { AppModule } from './app.module';
+import { APP_VERSION } from './common/app-version';
 import { applyGlobalPrefix } from './common/global-prefix';
 import { setupOpenApi } from './common/openapi';
 
@@ -28,6 +30,9 @@ async function bootstrap(): Promise<void> {
 
   const port = Number(process.env['PORT'] ?? 3000);
   await app.listen(port, '0.0.0.0');
+  new NestLogger('Bootstrap').log(
+    `Klar API v${APP_VERSION} listening on port ${port} (NODE_ENV=${process.env['NODE_ENV'] ?? 'development'})`,
+  );
 }
 
 bootstrap();
