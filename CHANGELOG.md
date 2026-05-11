@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/Disane87/Klar/compare/v1.18.0...v1.18.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **layout:** mobile header no longer bleeds into iOS notch on scroll ([b6f89c4](https://github.com/Disane87/Klar/commit/b6f89c4886b5a1a5da47f9a1a339686c4a6674b5))
+
 # [1.18.0](https://github.com/Disane87/Klar/compare/v1.17.0...v1.18.0) (2026-05-11)
 
 
