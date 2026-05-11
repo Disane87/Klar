@@ -323,6 +323,7 @@ export class FintsService {
   async triggerSync(
     ctx: RequestContext,
     id: string,
+    options: { fromDate?: Date; toDate?: Date } = {},
   ): Promise<{ syncRun: FintsSyncRun; tanChallenge?: TanChallenge }> {
     const connection = await this.findOne(ctx, id);
     if (connection.status === 'REAUTH_REQUIRED') {
@@ -338,7 +339,12 @@ export class FintsService {
         message: 'Bitte ein paar Sekunden warten — der letzte Sync läuft noch oder ist gerade durch.',
       });
     }
-    return this.sync.start(id, { triggeredBy: 'MANUAL', triggeredById: ctx.userId });
+    return this.sync.start(id, {
+      triggeredBy: 'MANUAL',
+      triggeredById: ctx.userId,
+      fromDate: options.fromDate,
+      toDate: options.toDate,
+    });
   }
 
   async submitTan(

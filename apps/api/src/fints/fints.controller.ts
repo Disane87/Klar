@@ -31,6 +31,7 @@ import {
   type CreateConnectionInput,
   type PickAccountsInput,
 } from './fints.service';
+import { TriggerSyncDto } from './dto/trigger-sync.dto';
 import {
   FintsBankLookupResponse,
   FintsCapabilitiesResponse,
@@ -183,22 +184,39 @@ export class FintsController {
   @ApiOperation({
     summary: 'Trigger a manual sync',
     description:
-      'Queues a manual sync run for this connection. May take several seconds — runs synchronously. Rate-limited per connection (30s cooldown, ignored after a previous FAILED run). Only the connection owner can trigger; subject to SCA expiry which surfaces a tanChallenge.',
+      'Queues a manual sync run for this connection. May take several seconds — runs synchronously. Rate-limited per connection (30s cooldown, ignored after a previous FAILED run). Only the connection owner can trigger; subject to SCA expiry which surfaces a tanChallenge. Optional `fromDate`/`toDate` (ISO `YYYY-MM-DD`) override the default lookback window — used by the setup wizard for the initial deep sync.',
   })
   @ApiParam({ name: 'id', description: 'FinTS connection ID.', example: 'fc_8a2d-...' })
+  @ApiBody({ type: TriggerSyncDto, required: false })
   @ApiResponse({ status: 201, type: FintsTriggerSyncResponse })
+  @ApiResponse({ status: 400, description: 'Invalid fromDate/toDate (not ISO, fromDate>toDate, fromDate in the future).' })
   @ApiResponse({ status: 403, description: 'Caller is not the connection owner.' })
   @ApiResponse({ status: 404, description: 'Connection not found.' })
   @ApiResponse({ status: 409, description: 'Sync cooldown active (try again in a few seconds).' })
   async triggerSync(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: string,
+    @Body() body: TriggerSyncDto = {},
   ) {
-    const result = await this.service.triggerSync(ctx, id);
+    const range = this.parseSyncRange(body);
+    const result = await this.service.triggerSync(ctx, id, range);
     return {
       syncRun: this.service.toSyncRunResponse(result.syncRun),
       tanChallenge: result.tanChallenge ?? null,
     };
+  }
+
+  private parseSyncRange(body: TriggerSyncDto): { fromDate?: Date; toDate?: Date } {
+    const fromDate = body.fromDate ? new Date(`${body.fromDate}T00:00:00Z`) : undefined;
+    const toDate = body.toDate ? new Date(`${body.toDate}T23:59:59Z`) : undefined;
+    const now = new Date();
+    if (fromDate && fromDate.getTime() > now.getTime()) {
+      throw new BadRequestException('fromDate must not be in the future');
+    }
+    if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
+      throw new BadRequestException('fromDate must be on or before toDate');
+    }
+    return { fromDate, toDate };
   }
 
   /**
