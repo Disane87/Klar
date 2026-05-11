@@ -55,7 +55,9 @@ export class FintsClientService {
   /** Klar's product registration data. ZKA-issued IDs go in env when we apply. */
   private static readonly PRODUCT_ID =
     process.env['FINTS_PRODUCT_ID'] ?? 'klar-dev';
-  private static readonly PRODUCT_VERSION = APP_VERSION;
+  // ZKA FinTS field "Produktversion" is AN..5 — `1.20.2` would overflow.
+  // Strip dots and clamp so the value stays valid across all releases.
+  private static readonly PRODUCT_VERSION = APP_VERSION.replace(/\./g, '').slice(0, 5);
 
   /** TAN reflection window: how long we keep the FinTSClient alive after a
    *  synchronize() that returned requiresTan. lib-fints' continuation
