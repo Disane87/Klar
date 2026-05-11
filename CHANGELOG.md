@@ -1,3 +1,10 @@
+## [1.20.3](https://github.com/Disane87/Klar/compare/v1.20.2...v1.20.3) (2026-05-11)
+
+
+### Bug Fixes
+
+* **fints:** use APP_VERSION as ZKA product version ([14da521](https://github.com/Disane87/Klar/commit/14da52178a9917505661259b31e6b2d461eaf5ec))
+
 ## [1.20.2](https://github.com/Disane87/Klar/compare/v1.20.1...v1.20.2) (2026-05-11)
 
 
