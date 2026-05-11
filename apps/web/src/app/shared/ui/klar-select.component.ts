@@ -11,6 +11,8 @@ import {
   BrnSelectComponent,
   BrnSelectContentComponent,
   BrnSelectOptionDirective,
+  BrnSelectScrollDownDirective,
+  BrnSelectScrollUpDirective,
   BrnSelectTriggerDirective,
   BrnSelectValueComponent,
 } from '@spartan-ng/ui-select-brain';
@@ -50,6 +52,8 @@ export interface KlarSelectOption<TValue extends string = string> {
     BrnSelectValueComponent,
     BrnSelectContentComponent,
     BrnSelectOptionDirective,
+    BrnSelectScrollUpDirective,
+    BrnSelectScrollDownDirective,
     KlarIconComponent,
   ],
   providers: [
@@ -73,6 +77,13 @@ export interface KlarSelectOption<TValue extends string = string> {
       </button>
 
       <brn-select-content [class]="_contentCls()">
+        <!-- Required scroll-direction children: BrnSelectContentComponent
+             defines them as contentChild.required() so omitting them
+             throws NG0951 on every render. Spartan's helm wrappers ship
+             these for you; in this slim wrapper we provide invisible
+             stubs — the content panel's own template only renders the
+             visible scroll button when canScroll() is true. -->
+        <span brnSelectScrollUp class="hidden" aria-hidden="true"></span>
         @for (opt of options(); track opt.value) {
           <button
             type="button"
@@ -84,6 +95,7 @@ export interface KlarSelectOption<TValue extends string = string> {
             {{ opt.label }}
           </button>
         }
+        <span brnSelectScrollDown class="hidden" aria-hidden="true"></span>
       </brn-select-content>
     </brn-select>
   `,
