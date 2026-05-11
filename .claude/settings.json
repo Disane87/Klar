@@ -70,7 +70,14 @@
       "Bash(pnpm --filter @klar/api test -- accounts.repository)",
       "Bash(git mv *)",
       "Bash(findstr /i \"node\")",
-      "Bash(pnpm --filter @klar/web build)"
+      "Bash(pnpm --filter @klar/web build)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(pnpm --filter @klar/api exec tsc --noEmit -p tsconfig.json)",
+      "Bash(git reset *)",
+      "Bash(pnpm --filter @klar/api test)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",
