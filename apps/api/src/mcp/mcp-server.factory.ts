@@ -18,7 +18,7 @@ import './tools';
 
 const SERVER_INFO = {
   name: 'klar',
-  version: '0.1.0',
+  version: process.env['APP_VERSION'] ?? 'dev',
 } as const;
 
 @Injectable()

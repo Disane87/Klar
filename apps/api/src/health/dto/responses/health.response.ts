@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { APP_VERSION } from '../../../common/app-version';
 
 export class HealthResponse {
   @ApiProperty({
@@ -17,7 +18,7 @@ export class HealthResponse {
   @ApiProperty({
     description:
       'Application version, sourced from `APP_VERSION` (set during Docker build). Falls back to `dev` in local development.',
-    example: '1.17.0',
+    example: '1.18.0',
   })
   version!: string;
 }

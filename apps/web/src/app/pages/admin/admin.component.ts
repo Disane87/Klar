@@ -10,6 +10,7 @@ import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarTileComponent, type KlarTileTone } from '../../shared/ui/klar-tile.component';
+import { VersionService } from '../../core/version/version.service';
 import { AdminAuditTabComponent } from './tabs/audit-tab.component';
 import { AdminEmailsTabComponent } from './tabs/emails-tab.component';
 import { AdminHouseholdsTabComponent } from './tabs/households-tab.component';
@@ -307,6 +308,7 @@ const JOB_ICONS: Record<string, string> = {
 export class AdminPageComponent implements OnInit {
   private pageHeader = inject(PageHeaderService);
   private healthStore = inject(AdminHealthStore);
+  private versionService = inject(VersionService);
 
   protected readonly TABS = TABS;
   protected readonly tab = signal<Tab>('system');
@@ -321,7 +323,7 @@ export class AdminPageComponent implements OnInit {
   protected readonly instanceHost = signal<string>(
     typeof window !== 'undefined' ? window.location.hostname : 'klar.local',
   );
-  protected readonly version = signal('1.0.0');
+  protected readonly version = this.versionService.currentVersion;
 
   // ── Health-store derived signals ──────────────────────────────────────────
   protected readonly services = this.healthStore.services;

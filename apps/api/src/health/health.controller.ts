@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
+import { APP_VERSION } from '../common/app-version';
 import { HealthResponse as HealthResponseDto } from './dto/responses/health.response';
 
 export interface HealthResponse {
@@ -24,7 +25,7 @@ export class HealthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: process.env['APP_VERSION'] ?? 'dev',
+      version: APP_VERSION,
     };
   }
 }

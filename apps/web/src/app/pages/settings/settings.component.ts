@@ -27,6 +27,7 @@ import { ImportMappingDialogComponent } from './import-mapping-dialog.component'
 import { ConnectedAppsComponent } from './connected-apps/connected-apps.component';
 import { OAuthGrantsService } from '../../core/oauth/oauth-grants.service';
 import { DataTransferService, type ConfirmBody } from '../../core/data-transfer/data-transfer.service';
+import { VersionService } from '../../core/version/version.service';
 
 @Component({
   selector: 'app-settings',
@@ -57,8 +58,9 @@ export class SettingsPageComponent {
   private dtService = inject(DataTransferService);
   private oauthGrantsService = inject(OAuthGrantsService);
   private pageHeader = inject(PageHeaderService);
+  private versionService = inject(VersionService);
 
-  protected readonly version = signal('1.0.0');
+  protected readonly version = this.versionService.currentVersion;
   protected readonly buildId = signal('—');
   protected readonly serverHost = signal(
     typeof window !== 'undefined' ? window.location.hostname : 'klar.local',
