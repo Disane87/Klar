@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/Disane87/Klar/compare/v1.19.2...v1.20.0) (2026-05-11)
+
+
+### Features
+
+* **api:** log version and environment on startup ([2695efd](https://github.com/Disane87/Klar/commit/2695efd6098af6c9c52637738926bb4e0ecf5599))
+
 ## [1.19.2](https://github.com/Disane87/Klar/compare/v1.19.1...v1.19.2) (2026-05-11)
 
 
