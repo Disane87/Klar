@@ -8,6 +8,13 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditService } from '../audit/audit.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -26,6 +33,7 @@ import { McpServerFactory } from './mcp-server.factory';
  * `GET /mcp` ist erlaubt um SSE-Streams aufrechtzuerhalten — wird vom
  * Streamable-HTTP-Transport selbst behandelt.
  */
+@ApiTags('MCP')
 @Controller('mcp')
 export class McpController {
   private readonly logger = new Logger(McpController.name);
@@ -39,6 +47,44 @@ export class McpController {
   @Public()
   @UseGuards(OAuthBearerGuard)
   @Post()
+  @ApiBearerAuth('jwt')
+  @ApiOperation({
+    summary: 'MCP Streamable HTTP entry point',
+    description:
+      'Implements the MCP HTTP+SSE transport. Each request is a JSON-RPC 2.0 envelope; tool names and arg schemas are discoverable via the `tools/list` method, then invoked via `tools/call`. Authentication is OAuth-Bearer (audience `klar-mcp`) — a JWT issued through Klar\'s OAuth flow, not the regular SPA JWT. See https://modelcontextprotocol.io for the protocol spec.',
+  })
+  @ApiBody({
+    description: 'JSON-RPC 2.0 envelope.',
+    schema: {
+      type: 'object',
+      required: ['jsonrpc', 'method'],
+      properties: {
+        jsonrpc: { type: 'string', enum: ['2.0'], example: '2.0' },
+        id: { oneOf: [{ type: 'string' }, { type: 'number' }], example: 1 },
+        method: { type: 'string', example: 'tools/list' },
+        params: { type: 'object', example: {} },
+      },
+      example: { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'JSON-RPC 2.0 response envelope (or SSE stream for long-running tool calls).',
+    schema: {
+      type: 'object',
+      example: {
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          tools: [
+            { name: 'transactions.list', description: 'List transactions', inputSchema: { type: 'object' } },
+          ],
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Missing or invalid OAuth bearer token.' })
+  @ApiResponse({ status: 403, description: 'Token is valid but lacks the required scope for this tool.' })
   async handlePost(
     @Req() req: FastifyRequest & { reqContext: RequestContext },
     @Res() reply: FastifyReply,
@@ -112,6 +158,19 @@ export class McpController {
   @Public()
   @UseGuards(OAuthBearerGuard)
   @Get()
+  @ApiBearerAuth('jwt')
+  @ApiOperation({
+    summary: 'MCP SSE stream (stateless mode: not supported)',
+    description:
+      'The MCP Streamable HTTP transport may use `GET /mcp` to open a server-sent-events stream. Klar runs in stateless mode and rejects this with `405 Method Not Allowed` — the spec permits this. All MCP traffic flows through `POST /mcp` instead.',
+  })
+  @ApiResponse({
+    status: 405,
+    description: 'GET is not supported in stateless mode.',
+    schema: {
+      example: { error: 'method_not_allowed', error_description: 'GET not supported in stateless mode' },
+    },
+  })
   handleGet(@Res() reply: FastifyReply): void {
     void reply
       .code(HttpStatus.METHOD_NOT_ALLOWED)

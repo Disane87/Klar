@@ -16,11 +16,13 @@ import { CategoriesStore } from '../../core/categories/categories.store';
 import { RecurringTransactionsService } from '../../core/recurring-transactions/recurring-transactions.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
+import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { CategoryEditDialogComponent } from '../haushalt/category-edit-dialog.component';
 import type { Category } from '@klar/shared';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
 import { safeDayOfMonth } from '@klar/shared';
+import { formatBookingText } from '../../shared/transactions/format-booking-text';
 
 @Component({
   selector: 'app-recurring-edit-dialog',
@@ -43,6 +45,7 @@ export class RecurringEditDialogComponent {
   private recurring  = inject(RecurringTransactionsService);
   private toast      = inject(KlarToastService);
   private planspielStore = inject(PlanspielStore);
+  private transactions = inject(TransactionsStore);
   protected cats     = inject(CategoriesStore);
 
   readonly name       = signal('');
@@ -111,6 +114,30 @@ export class RecurringEditDialogComponent {
   });
 
   readonly isWeekly = computed(() => this.frequency() === 'WEEKLY');
+
+  /**
+   * Distinct, title-cased bank booking-types observed on transactions
+   * already matched to this recurring entry. Empty array when no linked
+   * bookings (manual-only recurrings) or when the store is unloaded.
+   * Scope-limited to whatever the TransactionsStore currently has loaded
+   * (typically the current month) — full history would need a dedicated
+   * endpoint, intentionally out of scope here.
+   */
+  readonly linkedBookingTexts = computed<readonly string[]>(() => {
+    const id = this.item().id;
+    const txs = this.transactions.items() ?? [];
+    const seen = new Set<string>();
+    for (const t of txs) {
+      if (t.recurringTransactionId !== id) continue;
+      const raw = t.bookingText?.trim();
+      if (!raw) continue;
+      seen.add(raw.toUpperCase());
+    }
+    return [...seen]
+      .sort()
+      .map(v => formatBookingText(v))
+      .filter(v => v.length > 0);
+  });
 
   private readonly fmt = new Intl.NumberFormat('de-DE', {
     style: 'currency', currency: 'EUR', minimumFractionDigits: 2,

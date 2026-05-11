@@ -16,6 +16,7 @@ const makeAccount = (overrides: Partial<Account> = {}): Account => ({
   bic: null,
   visibility: 'SHARED',
   archivedAt: null,
+  syncEnabled: true,
   fintsConnectionId: null,
   fintsAccountRef: null,
   lastKnownBalanceCents: null,
@@ -178,6 +179,34 @@ describe('AccountsService', () => {
       expect(repo.update).not.toHaveBeenCalled();
     });
 
+    it('forwards syncEnabled toggle for FinTS owner', async () => {
+      const { service, repo } = buildService();
+      const existing = makeAccount({
+        id: 'acc-1',
+        type: 'fints',
+        ownerId: 'owner-1',
+        syncEnabled: true,
+      });
+      vi.mocked(repo.findById).mockResolvedValue(existing);
+      vi.mocked(repo.update).mockResolvedValue({ ...existing, syncEnabled: false });
+      const result = await service.update(ctxFor('owner-1', 'hh1'), 'acc-1', {
+        syncEnabled: false,
+      });
+      expect(result.syncEnabled).toBe(false);
+      expect(repo.update).toHaveBeenCalledWith('acc-1', 'hh1', { syncEnabled: false });
+    });
+
+    it('rejects syncEnabled toggle from FinTS non-owner', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeAccount({ id: 'acc-1', type: 'fints', ownerId: 'owner-1' }),
+      );
+      await expect(
+        service.update(ctxFor('user-other', 'hh1'), 'acc-1', { syncEnabled: false }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
     it('throws NotFoundException when repo.update returns null (race)', async () => {
       const { service, repo } = buildService();
       vi.mocked(repo.findById).mockResolvedValue(makeAccount({ id: 'acc-1', type: 'csv_only' }));
@@ -194,6 +223,7 @@ describe('AccountsService', () => {
       const result = service.toResponse(makeAccount());
       expect(result.createdAt).toBe('2026-05-07T00:00:00.000Z');
       expect(result.archivedAt).toBeNull();
+      expect(result.syncEnabled).toBe(true);
     });
   });
 });

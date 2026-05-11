@@ -61,7 +61,7 @@ export class ImportPipelineService {
     const hashes = bookings.map(b => this.computeHash(b));
 
     const [existingRefs, existingHashes] = await Promise.all([
-      this.repo.findExistingRefs(ctx.accountId, refs),
+      this.repo.findExistingRefs(ctx.householdId, refs),
       this.repo.findExistingHashes(ctx.accountId, hashes),
     ]);
     const existingRefSet = new Set(existingRefs);
@@ -115,6 +115,7 @@ export class ImportPipelineService {
         fintsSyncRunId: ctx.fintsSyncRunId ?? null,
         bankFieldsLockedAt: ctx.source === 'fints' ? new Date() : null,
         transactionKind: booking.transactionKind ?? null,
+        bookingText: booking.bookingText ?? null,
       });
       imported++;
     }

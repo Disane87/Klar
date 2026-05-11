@@ -11,6 +11,8 @@ export interface TransactionFilters {
   source: SourceFilter;
   amount: AmountFilter;
   recurring: RecurringFilter;
+  /** Raw bookingText (case-insensitive equality). null = no filter. */
+  bookingText: string | null;
 }
 
 export const EMPTY_FILTERS: TransactionFilters = {
@@ -20,6 +22,7 @@ export const EMPTY_FILTERS: TransactionFilters = {
   source: 'all',
   amount: 'all',
   recurring: 'all',
+  bookingText: null,
 };
 
 export function mergeFilters(
@@ -46,6 +49,10 @@ export function applyFilters(
     if (filters.amount === 'expense' && t.amountCents >= 0) return false;
     if (filters.recurring === 'recurring' && !t.recurringTransactionId) return false;
     if (filters.recurring === 'manual' && !!t.recurringTransactionId) return false;
+    if (filters.bookingText) {
+      const v = t.bookingText?.trim().toLowerCase() ?? '';
+      if (v !== filters.bookingText.trim().toLowerCase()) return false;
+    }
     return true;
   });
 }

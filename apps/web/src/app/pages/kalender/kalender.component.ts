@@ -11,6 +11,9 @@ import { TransactionsStore } from '../../core/transactions/transactions.store';
 import type { Transaction } from '../../core/transactions/transactions.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
+import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
+import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
+import { KlarMonthSelectComponent } from '../../shared/ui/klar-month-select.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KalenderDayDialogComponent } from './dialogs/kalender-day-dialog.component';
@@ -36,50 +39,101 @@ const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   selector: 'klar-kalender-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KlarIconComponent],
+  imports: [KlarIconComponent, KlarHeroComponent, KlarTileComponent, KlarMonthSelectComponent],
+  // Take full remaining viewport height inside the shell flex column so the
+  // calendar grid can fill the screen (and rows can shrink to 1fr).
+  host: { class: 'flex flex-col flex-1 min-h-0 min-w-0' },
   template: `
-    <div class="page-body cal-body p-(--s-6) pb-16 flex flex-col gap-(--s-4)">
-      <!-- Inline prev/next/today (page-header has no slot for these) -->
-      <div class="flex items-center gap-2 max-md:flex-wrap">
-        <button class="btn ghost icon-only" type="button" (click)="prevMonth()" aria-label="Vorheriger Monat">
+    <div class="page-body cal-body p-(--s-6) flex flex-col gap-(--s-4) flex-1 min-h-0 min-w-0">
+      <klar-hero
+        eyebrow="Cashflow"
+        [title]="monthLabel()"
+        sub="Buchungen pro Tag · Klick auf einen Tag öffnet die Detailansicht."
+      >
+        <div heroActions class="flex items-center gap-2">
+          <button
+            class="btn ghost icon-only"
+            type="button"
+            (click)="prevMonth()"
+            aria-label="Vorheriger Monat"
+          >
+            <klar-icon name="chevron-left" [size]="14" />
+          </button>
+          <klar-month-select
+            [value]="txStore.currentMonth()"
+            (valueChange)="onMonthPicked($event)"
+          />
+          <button
+            class="btn ghost icon-only"
+            type="button"
+            (click)="nextMonth()"
+            aria-label="Nächster Monat"
+          >
+            <klar-icon name="chevron-right" [size]="14" />
+          </button>
+        </div>
+      </klar-hero>
+
+      <!-- Mobile-only month nav (hero is desktop-only per app rule) -->
+      <div class="md:hidden flex items-center gap-2">
+        <button
+          class="btn ghost icon-only"
+          type="button"
+          (click)="prevMonth()"
+          aria-label="Vorheriger Monat"
+        >
           <klar-icon name="chevron-left" [size]="14" />
         </button>
-        <button class="btn ghost icon-only" type="button" (click)="nextMonth()" aria-label="Nächster Monat">
+        <klar-month-select
+          [value]="txStore.currentMonth()"
+          (valueChange)="onMonthPicked($event)"
+        />
+        <button
+          class="btn ghost icon-only"
+          type="button"
+          (click)="nextMonth()"
+          aria-label="Nächster Monat"
+        >
           <klar-icon name="chevron-right" [size]="14" />
         </button>
-        <button class="btn ghost text-[11px]" type="button" (click)="goToday()">heute</button>
       </div>
 
-      <!-- Top stat strip -->
-      <div class="cal-strip">
-        <div>
-          <span>Einnahmen</span>
-          <strong class="pos">{{ formatStrip(totalIncomeCents(), true) }}</strong>
-        </div>
-        <div>
-          <span>Ausgaben</span>
-          <strong>{{ formatStrip(totalExpenseCents(), false) }}</strong>
-        </div>
-        <div>
-          <span>Saldo</span>
-          <strong [class.pos]="totalBalanceCents() >= 0" [class.neg]="totalBalanceCents() < 0">
-            {{ formatStrip(totalBalanceCents(), totalBalanceCents() >= 0) }}
-          </strong>
-        </div>
-        <div>
-          <span>Buchungen</span>
-          <strong>{{ totalCount() }}</strong>
-        </div>
+      <!-- Summary cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <klar-tile
+          label="Einnahmen"
+          tone="success"
+          [value]="formatStrip(totalIncomeCents(), true)"
+        />
+        <klar-tile
+          label="Ausgaben"
+          tone="danger"
+          [value]="formatStrip(totalExpenseCents(), false)"
+        />
+        <klar-tile
+          label="Saldo"
+          [tone]="totalBalanceCents() >= 0 ? 'success' : 'danger'"
+          [value]="formatStrip(totalBalanceCents(), totalBalanceCents() >= 0)"
+          [valueClass]="totalBalanceCents() >= 0 ? 'text-(--success)' : 'text-(--danger)'"
+        />
+        <klar-tile
+          label="Buchungen"
+          [value]="totalCount() + ''"
+        />
       </div>
 
-      <!-- Calendar grid -->
-      <div class="cal-grid-wrap">
+      <!-- Calendar grid: fills the rest of the viewport, rows split evenly -->
+      <div class="cal-grid-wrap flex-1 min-h-0">
         <div class="cal-week-head">
           @for (d of weekdays; track d) {
             <div>{{ d }}</div>
           }
         </div>
-        <div class="cal-grid">
+        <div
+          class="cal-grid"
+          [style.grid-template-rows]="'repeat(' + weekRows() + ', minmax(0, 1fr))'"
+          [style.grid-auto-rows]="'minmax(0, 1fr)'"
+        >
           @for (cell of cells(); track $index) {
             @if (cell.pad) {
               <div class="cal-cell pad"></div>
@@ -201,6 +255,11 @@ export class KalenderComponent implements OnInit {
     return cells;
   });
 
+  /** Number of week rows (5 or 6) — drives grid-template-rows. */
+  protected readonly weekRows = computed(() =>
+    Math.max(1, Math.ceil(this.cells().length / 7)),
+  );
+
   protected readonly totalIncomeCents = computed(() =>
     (this.txStore.items() ?? []).filter(t => t.amountCents > 0).reduce((s, t) => s + t.amountCents, 0),
   );
@@ -252,6 +311,12 @@ export class KalenderComponent implements OnInit {
 
   protected nextMonth(): void {
     this.shiftMonth(1);
+  }
+
+  protected onMonthPicked(ym: string): void {
+    if (!ym || ym === this.txStore.currentMonth()) return;
+    this.txStore.currentMonth.set(ym);
+    this.selectedIso.set(null);
   }
 
   protected goToday(): void {

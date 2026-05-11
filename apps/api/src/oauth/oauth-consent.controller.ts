@@ -8,11 +8,18 @@ import {
   Req,
   UseFilters,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import type { JwtPayload } from '../common/types/jwt-payload.type';
 import { HouseholdsRepository } from '../households/households.repository';
 import { OAuthService, type ConsentInfo, type IssuedAuthCode } from './oauth.service';
 import { OAuthExceptionFilter } from './oauth-exception.filter';
+import { ConsentInfoResponse, IssuedAuthCodeResponse } from './dto/rename-grant.dto';
 
 /**
  * Authentifizierter Companion zum public `/oauth2/authorize`.
@@ -24,6 +31,8 @@ import { OAuthExceptionFilter } from './oauth-exception.filter';
  * Liegt unter `/api/v1/oauth/consent` (mit globalem Prefix), nutzt den
  * normalen `JwtAuthGuard` und benötigt eine aktive Household-Mitgliedschaft.
  */
+@ApiTags('OAuth Server · Consent')
+@ApiBearerAuth('jwt')
 @Controller('oauth/consent')
 @UseFilters(OAuthExceptionFilter)
 export class OAuthConsentController {
@@ -33,6 +42,13 @@ export class OAuthConsentController {
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Describe a pending authorize request',
+    description: 'Called by the SPA consent page with the original /oauth2/authorize query parameters. Returns the client metadata, the requested scopes, and whether the same combination is already approved.',
+  })
+  @ApiResponse({ status: 200, description: 'Consent details.', type: ConsentInfoResponse })
+  @ApiResponse({ status: 400, description: 'Invalid authorize request (unknown client_id, bad redirect_uri, …).' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
   async getConsentInfo(
     @Query() query: Record<string, string | undefined>,
     @Req() req: FastifyRequest & { user: JwtPayload },
@@ -42,6 +58,13 @@ export class OAuthConsentController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Approve or deny a consent request',
+    description: 'Called by the SPA when the user clicks Approve or Deny. On approve, issues an authorization code and returns the final redirect URL the SPA should navigate to. On deny, returns a redirect URL with error=access_denied.',
+  })
+  @ApiResponse({ status: 200, description: 'Final redirect URL for the browser.', type: IssuedAuthCodeResponse })
+  @ApiResponse({ status: 400, description: 'Invalid request body or no active household membership.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
   async decide(
     @Body() body: Record<string, unknown>,
     @Req() req: FastifyRequest & { user: JwtPayload },

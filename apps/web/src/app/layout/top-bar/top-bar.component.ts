@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { KlarButtonComponent } from '../../shared/ui/klar-button.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarNotificationBellComponent } from '../notification-bell/notification-bell.component';
-import { KlarUserSwitchComponent } from '../../shared/ui/klar-user-switch.component';
+import { KlarUserSelectComponent } from '../../shared/ui/klar-user-select.component';
 import { KlarScopeSegmentComponent } from '../../shared/ui/klar-scope-segment.component';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import type { PageStat } from '../../core/page-header/page-header.service';
@@ -17,7 +17,7 @@ import type { PageStat } from '../../core/page-header/page-header.service';
     KlarButtonComponent,
     KlarMoneyPipe,
     KlarNotificationBellComponent,
-    KlarUserSwitchComponent,
+    KlarUserSelectComponent,
     KlarScopeSegmentComponent,
   ],
   templateUrl: './top-bar.component.html',

@@ -374,8 +374,15 @@ export class FintsSyncService {
     fromDate: Date,
     toDate: Date,
   ): Promise<SyncRunResult> {
+    // syncEnabled=false lets users pause individual sub-accounts (e.g. closed
+    // savings accounts the bank still advertises in UPD) without archiving
+    // them — history stays visible, sync just skips them.
     const linkedAccounts = await this.prisma.account.findMany({
-      where: { fintsConnectionId: connection.id, archivedAt: null },
+      where: {
+        fintsConnectionId: connection.id,
+        archivedAt: null,
+        syncEnabled: true,
+      },
     });
     if (linkedAccounts.length === 0) {
       // Setup case: the wizard hasn't picked accounts yet. Mark run OK so
@@ -417,6 +424,15 @@ export class FintsSyncService {
       const accountNumber = account.fintsAccountRef;
       if (!accountNumber) {
         this.logger.warn(`Account ${account.id} has no fintsAccountRef — skipping`);
+        continue;
+      }
+      if (!this.client.supportsStatements(fintsClient, accountNumber)) {
+        // Bank exposes the account in UPD but doesn't advertise HKCAZ/HKKAZ
+        // for it — typical for credit-card or limit/savings sub-accounts.
+        // Skip silently per account so the rest of the connection still syncs.
+        this.logger.warn(
+          `Account ${accountNumber} (${account.id}) does not support statement retrieval (no HKCAZ/HKKAZ) — skipping`,
+        );
         continue;
       }
       const stmts = await this.client.fetchStatements(fintsClient, accountNumber, fromDate, toDate);

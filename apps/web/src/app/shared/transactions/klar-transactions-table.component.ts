@@ -34,6 +34,7 @@ import type { Transaction } from '../../core/transactions/transactions.store';
         [filters]="filters()"
         [lockedKeys]="lockedKeys()"
         [accountOptions]="accountOptions()"
+        [bookingTextOptions]="distinctBookingTexts()"
         [showReset]="isFiltered()"
         (filtersChange)="onFiltersChange($event)"
         (resetClick)="onReset()"
@@ -109,6 +110,22 @@ export class KlarTransactionsTableComponent {
   readonly visibleTransactions = computed(() =>
     applyFilters(this.transactions(), this.filters()),
   );
+
+  /**
+   * Distinct bookingText values present in the dataset (case-insensitive,
+   * sorted alphabetically by their display label). Empty when no row carries
+   * a bookingText — manual-only households simply won't see the filter.
+   */
+  readonly distinctBookingTexts = computed<readonly string[]>(() => {
+    const map = new Map<string, string>();
+    for (const t of this.transactions()) {
+      const v = t.bookingText?.trim();
+      if (!v) continue;
+      const key = v.toLowerCase();
+      if (!map.has(key)) map.set(key, v);
+    }
+    return [...map.values()].sort((a, b) => a.localeCompare(b, 'de-DE'));
+  });
 
   readonly monthlyGroups = computed(() => groupByMonth(this.visibleTransactions()));
 

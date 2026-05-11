@@ -14,6 +14,7 @@ const makeAccount = (overrides: Partial<Account> = {}): Account => ({
   bic: null,
   visibility: 'SHARED',
   archivedAt: null,
+  syncEnabled: true,
   fintsConnectionId: null,
   fintsAccountRef: null,
   lastKnownBalanceCents: null,

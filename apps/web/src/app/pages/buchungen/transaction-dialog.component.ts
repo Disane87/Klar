@@ -20,6 +20,7 @@ import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { CategoryEditDialogComponent } from '../haushalt/category-edit-dialog.component';
 import type { Category } from '@klar/shared';
 import type { Transaction } from '../../core/transactions/transactions.store';
+import { formatBookingText } from '../../shared/transactions/format-booking-text';
 
 @Component({
   selector: 'app-transaction-dialog',
@@ -77,6 +78,9 @@ export class TransactionDialogComponent {
    * + remove reject mutation attempts as a safety net.
    */
   readonly bankFieldsLocked = computed(() => !!this.tx()?.bankFieldsLockedAt);
+
+  /** Title-cased bank booking-type label ("Folgelastschrift" etc.); empty when unknown. */
+  readonly bookingTextLabel = computed(() => formatBookingText(this.tx()?.bookingText));
 
   /** When editing a planned tx and the user toggles to realized, we show the
    *  archived plan + abweichung hint. */

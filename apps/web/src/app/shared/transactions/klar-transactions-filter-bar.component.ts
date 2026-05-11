@@ -9,6 +9,7 @@ import {
   type SourceFilter,
   type TransactionFilters,
 } from './transaction-filters';
+import { formatBookingText } from './format-booking-text';
 
 export type LockableFilterKey = 'accountId' | 'categoryId' | 'source' | 'amount';
 
@@ -61,6 +62,14 @@ export type LockableFilterKey = 'accountId' | 'categoryId' | 'source' | 'amount'
         />
       }
 
+      @if (bookingTextOptionsWithAll().length > 1) {
+        <klar-select
+          [options]="bookingTextOptionsWithAll()"
+          [value]="filters().bookingText ?? '__all__'"
+          (valueChange)="onBookingTextChange($event)"
+        />
+      }
+
       @if (showReset()) {
         <klar-button tone="ghost" size="sm" icon="x" (click)="resetClick.emit()">
           Filter zurücksetzen
@@ -74,6 +83,12 @@ export class KlarTransactionsFilterBarComponent {
   readonly lockedKeys = input<readonly LockableFilterKey[]>([]);
   readonly accountOptions = input<readonly KlarSelectOption<string>[]>([]);
   readonly showReset = input<boolean>(false);
+  /**
+   * Distinct bookingText values present in the current dataset. Empty list
+   * hides the picker — manual-only households without bank imports won't
+   * see this filter.
+   */
+  readonly bookingTextOptions = input<readonly string[]>([]);
 
   readonly filtersChange = output<TransactionFilters>();
   readonly resetClick = output<void>();
@@ -96,6 +111,15 @@ export class KlarTransactionsFilterBarComponent {
     ...this.accountOptions(),
   ]);
 
+  protected readonly bookingTextOptionsWithAll = computed<readonly KlarSelectOption<string>[]>(() => {
+    const opts = this.bookingTextOptions();
+    if (opts.length === 0) return [];
+    return [
+      { value: '__all__', label: 'Alle Buchungsarten' },
+      ...opts.map(v => ({ value: v, label: formatBookingText(v) })),
+    ];
+  });
+
   protected isLocked(key: LockableFilterKey): boolean {
     return this.lockedKeys().includes(key);
   }
@@ -114,5 +138,9 @@ export class KlarTransactionsFilterBarComponent {
 
   protected onSourceChange(value: SourceFilter | ''): void {
     this.patch({ source: (value || 'all') as SourceFilter });
+  }
+
+  protected onBookingTextChange(value: string | ''): void {
+    this.patch({ bookingText: !value || value === '__all__' ? null : value });
   }
 }

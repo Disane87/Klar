@@ -12,6 +12,7 @@ export interface UpdateAccountInput {
   name?: string;
   visibility?: 'SHARED' | 'PRIVATE';
   archivedAt?: string | null;
+  syncEnabled?: boolean;
 }
 
 @Injectable()
@@ -81,6 +82,10 @@ export class AccountsService {
       data.archivedAt = patch.archivedAt === null ? null : new Date(patch.archivedAt);
     }
 
+    if (patch.syncEnabled !== undefined) {
+      data.syncEnabled = patch.syncEnabled;
+    }
+
     const updated = await this.repo.update(id, ctx.householdId, data);
     if (!updated) {
       throw new NotFoundException(`Account ${id} nicht gefunden`);
@@ -100,6 +105,7 @@ export class AccountsService {
       bic: account.bic,
       visibility: account.visibility,
       archivedAt: account.archivedAt?.toISOString() ?? null,
+      syncEnabled: account.syncEnabled,
       createdAt: account.createdAt.toISOString(),
       updatedAt: account.updatedAt.toISOString(),
     };

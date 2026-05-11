@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HouseholdsModule } from '../households/households.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsRepository } from './accounts.repository';
@@ -12,7 +13,7 @@ import { AccountsService } from './accounts.service';
  * lands in a later FinTS UI phase.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, HouseholdsModule],
   controllers: [AccountsController],
   providers: [AccountsRepository, AccountsService],
   exports: [AccountsService],

@@ -1,6 +1,6 @@
 import type { Statement, Transaction as FintsTransaction } from 'lib-fints';
 import { TransactionKind } from '@prisma/client';
-import { detectTransactionKind } from '@klar/shared';
+import { detectTransactionKind, extractBookingText } from '@klar/shared';
 import type { RawBooking } from '../../import-pipeline/types';
 
 /**
@@ -45,21 +45,30 @@ export class FintsBookingMapper {
     const amountCents = Math.round((tx.amount ?? 0) * 100);
     const bankTxId = tx.e2eReference || tx.customerReference || undefined;
 
+    const purposeRaw = this.buildPurpose(tx);
     return {
       iban: ctx.iban,
       bookingDate: this.toIsoDate(tx.entryDate),
       valueDate: tx.valueDate ? this.toIsoDate(tx.valueDate) : undefined,
       amountCents,
       currency,
-      purposeRaw: this.buildPurpose(tx),
+      purposeRaw,
       counterpartyName: emptyToUndef(tx.remoteName),
       counterpartyIban: emptyToUndef(tx.remoteAccountNumber),
       counterpartyBic: emptyToUndef(tx.remoteBankId),
       bankTxId,
       bookingType: emptyToUndef(tx.transactionCode || tx.transactionType),
+      // Fallback: when lib-fints leaves bookingText empty (common for
+      // Sparkasse SEPA direct-debits) the keyword often sits at the end
+      // of the SVWZ purpose — extract the canonical token so the chip
+      // and the bookingText filter still work.
+      bookingText:
+        emptyToUndef(tx.bookingText) ??
+        extractBookingText(purposeRaw) ??
+        undefined,
       transactionKind: detectTransactionKind({
         bookingType: tx.transactionCode || tx.transactionType,
-        purposeRaw: this.buildPurpose(tx),
+        purposeRaw,
       }) as TransactionKind,
       source: 'fints',
       sourceRunId: ctx.syncRunId,

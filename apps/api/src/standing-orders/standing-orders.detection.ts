@@ -14,6 +14,7 @@ interface InboundTx {
   counterpartyName: string | null;
   counterpartyIban: string | null;
   transactionKind: TransactionKind;
+  bookingText: string | null;
 }
 
 // Minimum group size to surface as a recurring record.
@@ -39,19 +40,36 @@ export class StandingOrdersDetection {
     const txs = await this.repo.listStandingOrderTransactions(ctx);
     if (txs.length === 0) return { upserted: 0 };
 
-    const groups = new Map<string, { sample: InboundTx; dates: string[] }>();
+    const groups = new Map<
+      string,
+      { sample: InboundTx; dates: string[]; latestBookingText: string | null; latestDate: string }
+    >();
     for (const tx of txs) {
       const key = makeGroupKey(tx);
       const g = groups.get(key);
       if (g) {
         g.dates.push(tx.date);
+        // Keep the bookingText of the most-recent occurrence so the chip mirrors
+        // the bank's current vocabulary if it changes over time. Fall back to
+        // an earlier non-null label if the latest tx happens to lack one.
+        if (tx.date >= g.latestDate) {
+          g.latestDate = tx.date;
+          if (tx.bookingText) g.latestBookingText = tx.bookingText;
+        } else if (!g.latestBookingText && tx.bookingText) {
+          g.latestBookingText = tx.bookingText;
+        }
       } else {
-        groups.set(key, { sample: tx, dates: [tx.date] });
+        groups.set(key, {
+          sample: tx,
+          dates: [tx.date],
+          latestBookingText: tx.bookingText,
+          latestDate: tx.date,
+        });
       }
     }
 
     let upserted = 0;
-    for (const [groupKey, { sample, dates }] of groups) {
+    for (const [groupKey, { sample, dates, latestBookingText }] of groups) {
       const minOccur = MIN_OCCURRENCES[sample.transactionKind];
       if (dates.length < minOccur) continue;
 
@@ -72,6 +90,7 @@ export class StandingOrdersDetection {
         frequency,
         lastSeenAt,
         nextExpectedAt,
+        bookingText: latestBookingText,
       });
       upserted++;
     }

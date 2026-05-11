@@ -34,6 +34,8 @@ export interface Transaction {
     | 'FEE'
     | 'OTHER'
     | null;
+  /** Raw bank label (e.g. "FOLGELASTSCHRIFT", "BARGELDAUSZAHLUNG GA"); null when unknown. */
+  bookingText?: string | null;
   /** Set when the booking came from FinTS — UI must render bank fields read-only. */
   bankFieldsLockedAt?: string | null;
   /** FK to FintsSyncRun (read-only on the FE). */

@@ -18,6 +18,17 @@
            (input)="description.set($any($event.target).value)" />
   </div>
 
+  @if (bookingTextLabel()) {
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel for="td-bookingtext">Buchungstext</label>
+      <input id="td-bookingtext" hlmInput type="text" readonly disabled
+             [value]="bookingTextLabel()" />
+      <span class="text-[11px] text-(--text-muted)">
+        Bankseitiger Buchungstyp — wird als Filter genutzt und kann nicht geändert werden.
+      </span>
+    </div>
+  }
+
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     <div class="flex flex-col gap-1.5">
       <label hlmLabel for="td-amount">

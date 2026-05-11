@@ -23,6 +23,8 @@ import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { FintsSetupWizardComponent } from './fints-setup-wizard.component';
+import { AccountEditDialogComponent } from './account-edit-dialog.component';
+import type { FintsAttachedAccount } from '../../core/fints/fints.service';
 
 type BadgeToneShort = 'emerald' | 'amber' | 'rose' | 'zinc';
 
@@ -208,7 +210,10 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
                 } @else {
                   <ul class="border-t border-(--line-soft) bg-(--bg)">
                     @for (a of c.accounts; track a.id) {
-                      <li class="flex items-center gap-1 hover:bg-(--bg-2) active:bg-(--bg-2) transition-colors">
+                      <li
+                        class="flex items-center gap-1 hover:bg-(--bg-2) active:bg-(--bg-2) transition-colors"
+                        [class.opacity-60]="!a.syncEnabled"
+                      >
                         <button
                           type="button"
                           class="flex-1 flex items-center gap-3 px-5 py-3 text-left min-w-0"
@@ -217,7 +222,18 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
                         >
                           <klar-icon name="wallet" [size]="14" class="shrink-0 text-(--fg-2)" />
                           <div class="flex-1 min-w-0">
-                            <div class="text-[13px] font-medium truncate text-(--fg)">{{ a.name }}</div>
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-[13px] font-medium truncate text-(--fg)">{{ a.name }}</span>
+                              @if (!a.syncEnabled) {
+                                <klar-icon
+                                  name="pause"
+                                  [size]="11"
+                                  class="shrink-0 text-(--fg-3)"
+                                  aria-label="Vom Sync ausgeschlossen"
+                                  title="Vom Sync ausgeschlossen"
+                                />
+                              }
+                            </div>
                             @if (a.iban) {
                               <div class="text-[11px] text-(--fg-2) truncate mono">{{ a.iban }}</div>
                             }
@@ -234,6 +250,15 @@ const STATUS_VARIANTS: Record<FintsConnectionStatus, StatusVariant> = {
                           </div>
                           <klar-icon name="chevron-right" [size]="12" class="shrink-0 text-(--fg-3)" />
                         </button>
+                        <klar-button
+                          tone="ghost"
+                          size="sm"
+                          icon="pencil"
+                          class="shrink-0"
+                          [aria-label]="'Konto ' + a.name + ' umbenennen / Sync ein-aus'"
+                          title="Konto bearbeiten"
+                          (click)="$event.stopPropagation(); onEditAccount(a)"
+                        />
                         <klar-button
                           tone="ghost"
                           size="sm"
@@ -405,11 +430,38 @@ export class BankenPageComponent implements OnInit {
     }
   }
 
+  protected onEditAccount(a: FintsAttachedAccount): void {
+    this.dialog.open({
+      title: 'Konto bearbeiten',
+      component: AccountEditDialogComponent,
+      width: 'md',
+      inputs: {
+        accountId: a.id,
+        initialName: a.name,
+        initialSyncEnabled: a.syncEnabled,
+      },
+    });
+  }
+
   protected async onDelete(c: FintsConnectionResponse): Promise<void> {
+    // Pull cascade impact so the user sees concrete numbers ("3 Konten,
+    // 412 Buchungen") instead of a vague warning. Falls back to static
+    // wording if the endpoint fails — we don't want a network hiccup to
+    // block destructive intent.
+    let detail =
+      'Mit der Bank werden auch alle FinTS-Konten und ihre Buchungen unwiderruflich gelöscht.';
+    try {
+      const impact = await this.store.fetchDeleteImpact(c.id);
+      detail =
+        `${impact.accounts} Konto(en), ${impact.transactions} Buchung(en) ` +
+        `und ${impact.standingOrders} Dauerauftrag/-aufträge werden unwiderruflich gelöscht.`;
+    } catch {
+      // keep fallback wording
+    }
     const ok = await this.confirm.ask({
       title:        'Verbindung löschen?',
       message:      `Möchtest du die Verbindung zu „${c.bankName}" wirklich entfernen?`,
-      detail:       'Vorhandene Buchungen bleiben in Klar erhalten. Du kannst die Verbindung später wieder neu einrichten.',
+      detail,
       confirmLabel: 'Löschen',
       cancelLabel:  'Abbrechen',
       tone:         'danger',

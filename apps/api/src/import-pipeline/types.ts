@@ -48,6 +48,12 @@ export interface RawBooking {
   /** FinTS GVC / SWIFT code. */
   bookingType?: string;
   /**
+   * Human-readable booking label from the bank (FinTS `bookingText`,
+   * CSV "Buchungstext"-Spalte). Stored verbatim — UI title-cases it.
+   * Examples: "FOLGELASTSCHRIFT", "BARGELDAUSZAHLUNG GA", "GUTSCHRIFT".
+   */
+  bookingText?: string;
+  /**
    * Phase 14b — set when source='fints' so detection can group standing
    * orders without re-parsing GVC codes. Derived via
    * @klar/shared#detectTransactionKind in the FinTS sync runner.

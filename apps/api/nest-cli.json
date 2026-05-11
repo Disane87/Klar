@@ -7,6 +7,15 @@
     "assets": [
       "mail/templates/**/*.hbs",
       "fints/client/lib-fints-loader.js"
+    ],
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true
+        }
+      }
     ]
   }
 }

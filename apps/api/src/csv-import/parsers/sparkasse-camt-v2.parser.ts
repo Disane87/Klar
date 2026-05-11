@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as iconv from 'iconv-lite';
 import * as Papa from 'papaparse';
+import { extractBookingText } from '@klar/shared';
 import { counterpartyKey } from '../../import-pipeline/utils/counterparty-key';
 
 export interface ParsedRow {
@@ -12,6 +13,8 @@ export interface ParsedRow {
   purpose: string | null;
   purposeNorm: string;
   externalRef: string | null;
+  /** "Buchungstext" CSV column — bank-side label (e.g. "FOLGELASTSCHRIFT"). */
+  bookingText: string | null;
 }
 
 const REQUIRED_HEADERS = [
@@ -59,6 +62,12 @@ export class SparkasseCamtV2Parser {
       raw['Mandatsreferenz'] ?? '',
       raw['Kundenreferenz (End-to-End)'] ?? '',
     );
+    // Prefer the dedicated CSV column; fall back to keyword extraction
+    // from the purpose for rows where the bank leaves it blank but
+    // appends "FOLGELASTSCHRIFT" / "GUTSCHRIFT" / … to Verwendungszweck.
+    const bookingText =
+      ((raw['Buchungstext'] ?? '').trim() || null) ??
+      extractBookingText(purpose);
 
     return {
       rowIndex,
@@ -69,6 +78,7 @@ export class SparkasseCamtV2Parser {
       purpose,
       purposeNorm: counterpartyKey(purpose),
       externalRef,
+      bookingText,
     };
   }
 

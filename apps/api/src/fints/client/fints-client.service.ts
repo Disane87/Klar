@@ -201,6 +201,20 @@ export class FintsClientService {
     return client.getAccountStatements(accountNumber, from, to);
   }
 
+  /**
+   * Whether the bank advertises any statement-fetching capability (CAMT
+   * `HKCAZ` or MT940 `HKKAZ`) for this account. Credit-card and certain
+   * limit/savings sub-accounts in a FinTS connection only expose balance
+   * (`HKSAL`) — calling `getAccountStatements` on them throws.
+   */
+  supportsStatements(client: FinTSClient, accountNumber: string): boolean {
+    const cfg = client.config;
+    return (
+      cfg.isAccountTransactionSupported(accountNumber, 'HKCAZ') ||
+      cfg.isAccountTransactionSupported(accountNumber, 'HKKAZ')
+    );
+  }
+
   fetchStatementsWithTan(
     client: FinTSClient,
     tanReference: string,

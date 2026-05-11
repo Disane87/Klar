@@ -428,22 +428,70 @@ export class FintsService {
     return created;
   }
 
+  /**
+   * Counts the rows that {@link remove} would destroy: linked FinTS accounts
+   * plus their transactions and standing orders. Used by the UI to render a
+   * concrete confirmation prompt ("3 accounts, 412 transactions, …").
+   */
+  async getDeleteImpact(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<{ accounts: number; transactions: number; standingOrders: number }> {
+    const connection = await this.findOne(ctx, id);
+    if (connection.ownerId !== ctx.userId) {
+      throw new ForbiddenException(
+        'Only the owner can inspect deletion impact for this connection',
+      );
+    }
+    const accountIds = await this.prisma.account.findMany({
+      where: { fintsConnectionId: id, type: 'fints' },
+      select: { id: true },
+    });
+    if (accountIds.length === 0) {
+      return { accounts: 0, transactions: 0, standingOrders: 0 };
+    }
+    const ids = accountIds.map((a) => a.id);
+    const [transactions, standingOrders] = await Promise.all([
+      this.prisma.transaction.count({ where: { accountId: { in: ids } } }),
+      this.prisma.standingOrder.count({ where: { accountId: { in: ids } } }),
+    ]);
+    return { accounts: accountIds.length, transactions, standingOrders };
+  }
+
   async remove(ctx: RequestContext, id: string): Promise<void> {
     const connection = await this.findOne(ctx, id);
     if (connection.ownerId !== ctx.userId) {
       throw new ForbiddenException('Only the owner can delete this connection');
     }
-    // Overwrite cipher columns with random bytes before deletion so a
-    // subsequent backup-restore cannot accidentally resurrect the PIN.
-    await this.prisma.fintsConnection.update({
-      where: { id },
-      data: {
-        credentialsCipher: new Uint8Array(crypto.getRandomValues(new Uint8Array(64))),
-        credentialsIv: new Uint8Array(crypto.getRandomValues(new Uint8Array(12))),
-        credentialsTag: new Uint8Array(crypto.getRandomValues(new Uint8Array(16))),
-      },
+    // Cascade is intentional: when the user removes a bank we also drop every
+    // FinTS-typed account linked to it plus the imported history (transactions
+    // and standing orders). The Account.fintsConnectionId FK is onDelete=
+    // SetNull, so we must do this explicitly. csv_only / manual accounts that
+    // happen to share the FK are left untouched (defense in depth).
+    const fintsAccounts = await this.prisma.account.findMany({
+      where: { fintsConnectionId: id, type: 'fints' },
+      select: { id: true },
     });
-    await this.prisma.fintsConnection.delete({ where: { id } });
+    const accountIds = fintsAccounts.map((a) => a.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (accountIds.length > 0) {
+        await tx.transaction.deleteMany({ where: { accountId: { in: accountIds } } });
+        await tx.standingOrder.deleteMany({ where: { accountId: { in: accountIds } } });
+        await tx.account.deleteMany({ where: { id: { in: accountIds } } });
+      }
+      // Overwrite cipher columns with random bytes before deletion so a
+      // subsequent backup-restore cannot accidentally resurrect the PIN.
+      await tx.fintsConnection.update({
+        where: { id },
+        data: {
+          credentialsCipher: new Uint8Array(crypto.getRandomValues(new Uint8Array(64))),
+          credentialsIv: new Uint8Array(crypto.getRandomValues(new Uint8Array(12))),
+          credentialsTag: new Uint8Array(crypto.getRandomValues(new Uint8Array(16))),
+        },
+      });
+      await tx.fintsConnection.delete({ where: { id } });
+    });
   }
 
   toResponse(c: FintsConnection | ConnectionWithAccounts) {
@@ -457,6 +505,7 @@ export class FintsService {
           fintsAccountRef: a.fintsAccountRef,
           lastKnownBalanceCents: a.lastKnownBalanceCents,
           lastBalanceAt: a.lastBalanceAt?.toISOString() ?? null,
+          syncEnabled: a.syncEnabled,
         }))
       : [];
     return {

@@ -13,6 +13,7 @@ import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { BrandIconComponent } from '../../shared/ui/brand-icon.component';
 import { StandingOrderDialogComponent } from './standing-order-dialog.component';
 import type { StandingOrder } from '../../core/standing-orders/standing-orders.store';
+import { formatBookingText } from '../../shared/transactions/format-booking-text';
 
 // Standing orders rarely exceed 50 entries so a plain <ul> with divide-y
 // suffices here. If usage grows beyond ~50 items, migrate to klar-virtual-list.
@@ -148,12 +149,18 @@ function chipForOrder(order: StandingOrder): TypeChip {
                     </span>
                   }
                 </div>
-                <!-- Frequency + next date (shown on md+) -->
+                <!-- Frequency + next date + raw booking label (shown on md+) -->
                 <div class="hidden md:flex items-center gap-2 text-[11px] text-(--fg-2)">
                   <span>{{ freqLabel(order.frequency) }}</span>
                   @if (order.nextExpectedAt) {
                     <span>·</span>
                     <span>nächste: {{ formatDate(order.nextExpectedAt) }}</span>
+                  }
+                  @if (bookingLabel(order); as label) {
+                    <span>·</span>
+                    <span class="font-mono text-[10px] uppercase tracking-wide text-(--fg-3)">
+                      {{ label }}
+                    </span>
                   }
                 </div>
               </div>
@@ -204,6 +211,10 @@ export class DauerauftraegeComponent {
 
   protected typeChip(order: StandingOrder): TypeChip {
     return chipForOrder(order);
+  }
+
+  protected bookingLabel(order: StandingOrder): string {
+    return formatBookingText(order.bookingText);
   }
 
   // When the counterparty name doesn't auto-match a brand-icon, render a

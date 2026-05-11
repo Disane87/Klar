@@ -119,6 +119,49 @@ describe('StandingOrdersDetection', () => {
     );
   });
 
+  it('forwards bookingText from the most-recent transaction in the group', async () => {
+    (repo.listStandingOrderTransactions as any).mockResolvedValue([
+      { date: '2026-03-01', amountCents: -1000, counterpartyName: 'Netflix', counterpartyIban: null, transactionKind: DIRECT_DEBIT, bookingText: 'LASTSCHRIFT' },
+      { date: '2026-04-01', amountCents: -1000, counterpartyName: 'Netflix', counterpartyIban: null, transactionKind: DIRECT_DEBIT, bookingText: 'LASTSCHRIFT' },
+      { date: '2026-05-01', amountCents: -1000, counterpartyName: 'Netflix', counterpartyIban: null, transactionKind: DIRECT_DEBIT, bookingText: 'FOLGELASTSCHRIFT' },
+    ]);
+
+    await svc.runForAccount({ householdId: 'h1', accountId: 'a1' });
+
+    expect(repo.upsertByGroupKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupKey: 'direct_debit|netflix|-1000',
+        bookingText: 'FOLGELASTSCHRIFT',
+      }),
+    );
+  });
+
+  it('falls back to an earlier non-null bookingText when the latest tx has none', async () => {
+    (repo.listStandingOrderTransactions as any).mockResolvedValue([
+      { date: '2026-03-01', amountCents: -500, counterpartyName: 'Stadtwerke', counterpartyIban: null, transactionKind: STANDING_ORDER, bookingText: 'DAUERAUFTRAG' },
+      { date: '2026-04-01', amountCents: -500, counterpartyName: 'Stadtwerke', counterpartyIban: null, transactionKind: STANDING_ORDER, bookingText: null },
+    ]);
+
+    await svc.runForAccount({ householdId: 'h1', accountId: 'a1' });
+
+    expect(repo.upsertByGroupKey).toHaveBeenCalledWith(
+      expect.objectContaining({ bookingText: 'DAUERAUFTRAG' }),
+    );
+  });
+
+  it('passes bookingText: null when no tx has a label', async () => {
+    (repo.listStandingOrderTransactions as any).mockResolvedValue([
+      { date: '2026-03-01', amountCents: -100, counterpartyName: 'X', counterpartyIban: null, transactionKind: STANDING_ORDER, bookingText: null },
+      { date: '2026-04-01', amountCents: -100, counterpartyName: 'X', counterpartyIban: null, transactionKind: STANDING_ORDER, bookingText: null },
+    ]);
+
+    await svc.runForAccount({ householdId: 'h1', accountId: 'a1' });
+
+    expect(repo.upsertByGroupKey).toHaveBeenCalledWith(
+      expect.objectContaining({ bookingText: null }),
+    );
+  });
+
   it('groups separately when amountCents differs', async () => {
     (repo.listStandingOrderTransactions as any).mockResolvedValue([
       { date: '2026-03-01', amountCents: -100, counterpartyName: 'A', counterpartyIban: null, transactionKind: STANDING_ORDER },

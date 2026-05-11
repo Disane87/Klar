@@ -32,6 +32,13 @@ export interface FintsAttachedAccount {
   fintsAccountRef: string | null;
   lastKnownBalanceCents: number | null;
   lastBalanceAt: string | null;
+  syncEnabled: boolean;
+}
+
+export interface FintsDeleteImpact {
+  accounts: number;
+  transactions: number;
+  standingOrders: number;
 }
 
 export interface FintsConnectionResponse {
@@ -219,6 +226,12 @@ export class FintsService {
 
   delete(householdId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(householdId)}/connections/${id}`);
+  }
+
+  deleteImpact(householdId: string, id: string): Observable<FintsDeleteImpact> {
+    return this.http.get<FintsDeleteImpact>(
+      `${this.baseUrl(householdId)}/connections/${id}/delete-impact`,
+    );
   }
 
   /**

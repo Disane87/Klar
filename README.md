@@ -133,11 +133,13 @@ Bookings imported via FinTS carry `bankFieldsLockedAt` and `source='fints'`. The
 - Master key (`FINTS_MASTER_KEY`, 32-byte hex via `openssl rand -hex 32`) lives only in `FintsCryptoService`; Pino redaction blocks it from logs.
 - Plaintext PIN exists only inside the encrypt/decrypt boundary and is zeroed in the request handler immediately after sealing.
 - Connection deletion overwrites the cipher columns with random bytes before the row delete so a backup-restore cannot resurrect the PIN.
+- Connection deletion **cascades** to the linked FinTS accounts and their imported transactions and standing orders. The confirmation dialog renders the concrete impact (e.g. "3 accounts, 412 transactions, 18 standing orders") fetched from `GET /fints/connections/:id/delete-impact`. CSV-only and manual accounts that share the household are left untouched.
 
 **Privacy & ownership:**
 
 - A FinTS connection belongs to the user who set it up. Other household members can see status (active / reauth-required / etc.) but cannot edit credentials, submit TANs, or delete the connection.
 - The resulting `Account` is household-shared by default; the wizard's per-account `Private` toggle scopes it to the owner.
+- Per-account **rename** and **sync toggle** are exposed via the pencil button on each row in `/app/banken`. Renaming or pausing sync is restricted to the FinTS owner (API rejects others with `403`). Sync-disabled accounts keep their imported history but are silently skipped on every subsequent sync run; they appear muted with a small pause icon next to the name.
 
 **Backup note (operations):**
 

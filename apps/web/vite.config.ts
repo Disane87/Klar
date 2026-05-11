@@ -28,6 +28,7 @@ export default defineConfig({
         'src/app/shared/ui/**',
         'src/app/shared/brand/**',
         'src/app/shared/icons/**',
+        'src/app/shared/charts/**',
       ],
       thresholds: {
         lines: 45,

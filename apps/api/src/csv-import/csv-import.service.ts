@@ -281,6 +281,7 @@ export class CsvImportService {
         externalHash: DuplicateDetector.computeHash(row),
         counterparty: row.counterparty,
         sourceImportId: csvImport.id,
+        bookingText: row.bookingText,
       });
 
       await this.repo.upsertLearning(ctx.householdId, row.counterpartyNorm, sel.categoryId);

@@ -80,6 +80,22 @@
     </div>
   </div>
 
+  @if (linkedBookingTexts().length > 0) {
+    <div class="flex flex-col gap-1.5">
+      <label hlmLabel>Erkannte Buchungstexte</label>
+      <div class="flex flex-wrap gap-1.5">
+        @for (label of linkedBookingTexts(); track label) {
+          <span class="inline-flex items-center px-2 py-px rounded text-[11px] font-medium bg-(--fg-3)/15 text-(--fg-2)">
+            {{ label }}
+          </span>
+        }
+      </div>
+      <span class="text-[11px] text-(--text-muted)">
+        Bankseitige Buchungstypen aus den zugeordneten Transaktionen — dient als Filterhilfe, nicht editierbar.
+      </span>
+    </div>
+  }
+
   @if (changeSummary()) {
     <klar-dialog-callout tone="accent">
       <span lead>{{ changeSummary() }}</span> wirken ab dem nächsten Buchungstag.

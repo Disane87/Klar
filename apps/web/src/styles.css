@@ -509,10 +509,11 @@ input, select, textarea {
 }
 
 /* ============================================================
-   UserSwitch — pill group of 3 (Haushalt / Member1 / Member2)
-   from the bundle alerts.jsx + styles.css. --us-tone per pill.
+   UserSelect — canonical klar-user-select pill group
+   (Haushalt / Member1 / Member2). One visual, used app-wide.
+   --us-tone drives the avatar color per pill.
    ============================================================ */
-.user-switch {
+.user-select {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -521,7 +522,7 @@ input, select, textarea {
   border-radius: 999px;
   background: var(--bg-2);
 }
-.user-switch-pill {
+.user-select-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -534,17 +535,17 @@ input, select, textarea {
   cursor: pointer;
   transition: all var(--dur-1) ease;
 }
-.user-switch-pill:hover {
+.user-select-pill:hover {
   color: var(--fg);
   background: var(--bg-3);
 }
-.user-switch-pill.active {
+.user-select-pill.active {
   background: var(--bg);
   color: var(--fg);
   border-color: var(--line);
   box-shadow: 0 1px 2px oklch(0 0 0 / 0.15);
 }
-.user-switch-av {
+.user-select-av {
   width: 22px;
   height: 22px;
   border-radius: 999px;
@@ -555,10 +556,10 @@ input, select, textarea {
   color: white;
   background: var(--us-tone, var(--accent));
 }
-.user-switch-pill.active .user-switch-av {
+.user-select-pill.active .user-select-av {
   box-shadow: 0 0 0 2px oklch(from var(--us-tone, var(--accent)) l c h / 0.25);
 }
-.user-switch-label {
+.user-select-label {
   padding-right: 4px;
 }
 .sep-v {
@@ -801,11 +802,13 @@ input, select, textarea {
 .cal-week-head > div:last-child { border-right: 0; }
 
 .cal-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(112px, 1fr);
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  flex: 1; min-height: 0; min-width: 0;
 }
 .cal-cell {
-  display: flex; flex-direction: column; padding: 6px 8px; min-height: 0;
+  display: flex; flex-direction: column; padding: 6px 8px;
+  min-height: 0; min-width: 0; max-width: 100%; overflow: hidden;
   background: var(--bg);
   border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
   cursor: pointer; transition: background var(--dur-1) ease;
@@ -823,12 +826,13 @@ input, select, textarea {
   padding: 1px 6px; border-radius: 999px; font-size: 10px;
 }
 .cal-count { font-size: 9px; color: var(--fg-3); font-family: var(--font-mono); }
-.cal-cell-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; overflow: hidden; }
+.cal-cell-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 .cal-pill {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 5px;
   padding: 2px 5px; border-radius: 3px; font-size: 10px; line-height: 1.2;
   background: oklch(from var(--pill-tone) l c h / 0.12); color: var(--fg);
   border-left: 2px solid var(--pill-tone); overflow: hidden;
+  max-width: 100%; min-width: 0;
 }
 .cal-pill.income { background: oklch(from var(--success) l c h / 0.12); border-color: var(--success); }
 .cal-pill-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pill-tone); flex: none; }

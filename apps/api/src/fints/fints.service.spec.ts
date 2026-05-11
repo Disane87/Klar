@@ -344,3 +344,172 @@ describe('FintsService.streamSyncRunEvents', () => {
     });
   });
 });
+
+describe('FintsService.getDeleteImpact', () => {
+  it('returns counts of fints accounts, transactions, standing orders for owner', async () => {
+    const accountFindMany = vi.fn().mockResolvedValue([{ id: 'a1' }, { id: 'a2' }]);
+    const txCount = vi.fn().mockResolvedValue(412);
+    const soCount = vi.fn().mockResolvedValue(7);
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'user-1',
+        }),
+      },
+      prisma: {
+        account: { findMany: accountFindMany },
+        transaction: { count: txCount },
+        standingOrder: { count: soCount },
+      },
+    });
+    const impact = await svc.getDeleteImpact(ctx, 'c1');
+    expect(impact).toEqual({ accounts: 2, transactions: 412, standingOrders: 7 });
+    expect(accountFindMany).toHaveBeenCalledWith({
+      where: { fintsConnectionId: 'c1', type: 'fints' },
+      select: { id: true },
+    });
+    expect(txCount).toHaveBeenCalledWith({ where: { accountId: { in: ['a1', 'a2'] } } });
+    expect(soCount).toHaveBeenCalledWith({ where: { accountId: { in: ['a1', 'a2'] } } });
+  });
+
+  it('short-circuits to zeros when no accounts are linked', async () => {
+    const txCount = vi.fn();
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'user-1',
+        }),
+      },
+      prisma: {
+        account: { findMany: vi.fn().mockResolvedValue([]) },
+        transaction: { count: txCount },
+        standingOrder: { count: vi.fn() },
+      },
+    });
+    const impact = await svc.getDeleteImpact(ctx, 'c1');
+    expect(impact).toEqual({ accounts: 0, transactions: 0, standingOrders: 0 });
+    expect(txCount).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-owner with ForbiddenException', async () => {
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'someone-else',
+        }),
+      },
+      prisma: {
+        account: { findMany: vi.fn() },
+        transaction: { count: vi.fn() },
+        standingOrder: { count: vi.fn() },
+      },
+    });
+    await expect(svc.getDeleteImpact(ctx, 'c1')).rejects.toThrow(ForbiddenException);
+  });
+});
+
+describe('FintsService.remove cascade', () => {
+  it('deletes fints accounts + their transactions and standing orders, then the connection', async () => {
+    const accountFindMany = vi.fn().mockResolvedValue([{ id: 'a1' }, { id: 'a2' }]);
+    const txDeleteMany = vi.fn().mockResolvedValue({ count: 412 });
+    const soDeleteMany = vi.fn().mockResolvedValue({ count: 5 });
+    const accDeleteMany = vi.fn().mockResolvedValue({ count: 2 });
+    const connUpdate = vi.fn().mockResolvedValue({});
+    const connDelete = vi.fn().mockResolvedValue({});
+    // $transaction(callback) executes callback with a tx client. We pass the
+    // same prisma stub through so deleteMany/update/delete calls land on it.
+    const tx = {
+      transaction: { deleteMany: txDeleteMany },
+      standingOrder: { deleteMany: soDeleteMany },
+      account: { deleteMany: accDeleteMany },
+      fintsConnection: { update: connUpdate, delete: connDelete },
+    };
+    const $transaction = vi.fn().mockImplementation(async (cb) => cb(tx));
+
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'user-1',
+        }),
+      },
+      prisma: {
+        account: { findMany: accountFindMany },
+        $transaction,
+      },
+    });
+
+    await svc.remove(ctx, 'c1');
+
+    expect(accountFindMany).toHaveBeenCalledWith({
+      where: { fintsConnectionId: 'c1', type: 'fints' },
+      select: { id: true },
+    });
+    expect(txDeleteMany).toHaveBeenCalledWith({
+      where: { accountId: { in: ['a1', 'a2'] } },
+    });
+    expect(soDeleteMany).toHaveBeenCalledWith({
+      where: { accountId: { in: ['a1', 'a2'] } },
+    });
+    expect(accDeleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ['a1', 'a2'] } },
+    });
+    expect(connUpdate).toHaveBeenCalled();
+    expect(connDelete).toHaveBeenCalledWith({ where: { id: 'c1' } });
+  });
+
+  it('skips account/transaction deletes when no fints accounts are linked', async () => {
+    const txDeleteMany = vi.fn();
+    const accDeleteMany = vi.fn();
+    const connDelete = vi.fn().mockResolvedValue({});
+    const tx = {
+      transaction: { deleteMany: txDeleteMany },
+      standingOrder: { deleteMany: vi.fn() },
+      account: { deleteMany: accDeleteMany },
+      fintsConnection: { update: vi.fn().mockResolvedValue({}), delete: connDelete },
+    };
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'user-1',
+        }),
+      },
+      prisma: {
+        account: { findMany: vi.fn().mockResolvedValue([]) },
+        $transaction: vi.fn().mockImplementation(async (cb) => cb(tx)),
+      },
+    });
+    await svc.remove(ctx, 'c1');
+    expect(txDeleteMany).not.toHaveBeenCalled();
+    expect(accDeleteMany).not.toHaveBeenCalled();
+    expect(connDelete).toHaveBeenCalledWith({ where: { id: 'c1' } });
+  });
+
+  it('rejects non-owner with ForbiddenException and does not touch prisma', async () => {
+    const $transaction = vi.fn();
+    const svc = buildService({
+      connections: {
+        findById: vi.fn().mockResolvedValue({
+          id: 'c1',
+          householdId: 'hh-1',
+          ownerId: 'someone-else',
+        }),
+      },
+      prisma: {
+        account: { findMany: vi.fn() },
+        $transaction,
+      },
+    });
+    await expect(svc.remove(ctx, 'c1')).rejects.toThrow(ForbiddenException);
+    expect($transaction).not.toHaveBeenCalled();
+  });
+});

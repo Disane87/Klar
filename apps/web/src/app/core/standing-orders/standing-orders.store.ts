@@ -44,6 +44,8 @@ export interface StandingOrder {
   isActive: boolean;
   bankFieldsLockedAt: string | null;
   firstSeenAt: string;
+  /** Raw bank label (e.g. "FOLGELASTSCHRIFT"); UI title-cases via formatBookingText. */
+  bookingText: string | null;
 }
 
 export interface CreateStandingOrderInput {

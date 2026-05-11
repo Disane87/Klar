@@ -12,6 +12,7 @@ export interface ListStandingOrderTxRow {
   counterpartyName: string | null;
   counterpartyIban: string | null;
   transactionKind: TransactionKind;
+  bookingText: string | null;
 }
 
 export interface UpsertInput {
@@ -26,6 +27,7 @@ export interface UpsertInput {
   frequency: StandingOrderFrequency;
   lastSeenAt: string;
   nextExpectedAt: string | null;
+  bookingText: string | null;
 }
 
 @Injectable()
@@ -49,6 +51,7 @@ export class StandingOrdersRepository {
         amountCents: true,
         counterparty: true,
         transactionKind: true,
+        bookingText: true,
       },
       orderBy: { date: 'asc' },
     });
@@ -60,6 +63,7 @@ export class StandingOrdersRepository {
       // The query filters on { in: [...] } so the field is non-null in practice;
       // the cast is safe because Prisma's selected union type widens to nullable.
       transactionKind: r.transactionKind as TransactionKind,
+      bookingText: r.bookingText,
     }));
   }
 
@@ -89,6 +93,7 @@ export class StandingOrdersRepository {
         frequency: input.frequency,
         lastSeenAt,
         nextExpectedAt,
+        bookingText: input.bookingText,
         bankFieldsLockedAt: input.source === 'FINTS_DERIVED' ? new Date() : null,
       },
       update: {
@@ -100,6 +105,7 @@ export class StandingOrdersRepository {
         frequency: input.frequency,
         lastSeenAt,
         nextExpectedAt,
+        bookingText: input.bookingText,
         bankFieldsLockedAt: input.source === 'FINTS_DERIVED' ? new Date() : null,
         // categoryId / note / isActive are user fields — DO NOT touch.
       },

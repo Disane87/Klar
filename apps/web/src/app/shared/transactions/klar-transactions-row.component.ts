@@ -4,6 +4,8 @@ import { KlarIconComponent } from '../icons/klar-icon.component';
 import { BrandIconComponent } from '../ui/brand-icon.component';
 import { KlarMoneyPipe } from '../pipes/klar-money.pipe';
 import type { Transaction } from '../../core/transactions/transactions.store';
+import { formatPurpose } from './format-purpose';
+import { formatBookingText } from './format-booking-text';
 
 interface RowTypeChip {
   label: string;
@@ -53,6 +55,9 @@ const FINTS_KIND_CHIP: Partial<Record<NonNullable<Transaction['transactionKind']
             </span>
           }
         </div>
+        @if (purposeLine()) {
+          <div class="text-[11px] truncate text-(--fg-2)">{{ purposeLine() }}</div>
+        }
       </div>
       <div class="flex items-center gap-2 shrink-0">
         @let chip = typeChip();
@@ -85,6 +90,24 @@ export class KlarTransactionsRowComponent {
     this.tx().counterparty?.trim() || this.tx().description?.trim() || '—',
   );
 
+  /**
+   * Cleaned purpose line shown under the primary label.
+   * Empty when description is missing or duplicates the primary label.
+   * The bookingText (rendered as chip) is also stripped here so it doesn't
+   * appear twice on the row.
+   */
+  readonly purposeLine = computed(() => {
+    const t = this.tx();
+    let cleaned = formatPurpose(t.description);
+    if (!cleaned) return '';
+    if (t.bookingText) {
+      const escaped = t.bookingText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(^|\\s)${escaped}(\\s|$)`, 'i');
+      cleaned = cleaned.replace(re, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return cleaned === this.primaryLabel() ? '' : cleaned;
+  });
+
   readonly dayLabel = computed(() => {
     const [, mm, dd] = this.tx().date.split('-');
     return `${dd}.${mm}.`;
@@ -105,6 +128,12 @@ export class KlarTransactionsRowComponent {
 
   readonly typeChip = computed<RowTypeChip | null>(() => {
     const t = this.tx();
+    // Bank-side booking label takes precedence — more specific than the
+    // coarse transactionKind buckets (e.g. "Folgelastschrift" vs DIRECT_DEBIT).
+    const bookingText = formatBookingText(t.bookingText);
+    if (bookingText) {
+      return { label: bookingText, classes: bookingTextChipClasses(t.bookingText, t.amountCents) };
+    }
     if (t.source === 'manual') return { label: 'Manuell', classes: 'bg-(--fg-3)/20 text-(--fg-2)' };
     if (t.source === 'csv')    return { label: 'CSV',     classes: 'bg-(--fg-3)/20 text-(--fg-2)' };
     if (t.source === 'fints') {
@@ -115,4 +144,28 @@ export class KlarTransactionsRowComponent {
     }
     return null;
   });
+}
+
+/**
+ * Tints the chip based on the raw bookingText keyword so common categories
+ * (Lastschrift, Gutschrift, …) read at a glance. Falls back to amount sign
+ * for anything we don't recognise.
+ */
+function bookingTextChipClasses(raw: string | null | undefined, amountCents: number): string {
+  const v = (raw ?? '').toUpperCase();
+  if (/(LASTSCHRIFT|ABBUCHUNG|ENTGELT|GEBUEHR|GEBÜHR)/.test(v)) {
+    return 'bg-(--color-expense)/15 text-(--color-expense)';
+  }
+  if (/(GUTSCHRIFT|GEHALT|LOHN|RENTE)/.test(v)) {
+    return 'bg-(--color-income)/15 text-(--color-income)';
+  }
+  if (/(DAUERAUFTRAG)/.test(v)) {
+    return 'bg-(--accent)/15 text-(--accent)';
+  }
+  if (/(KARTE|BARGELD)/.test(v)) {
+    return 'bg-(--color-info)/15 text-(--color-info)';
+  }
+  return amountCents > 0
+    ? 'bg-(--color-income)/10 text-(--color-income)'
+    : 'bg-(--fg-3)/20 text-(--fg-2)';
 }

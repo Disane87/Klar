@@ -24,9 +24,9 @@
     style="scrollbar-width: none;"
   >
 
-    <!-- UserSwitch (Haushalt + Mitglieder) -->
+    <!-- UserSelect (Haushalt + Mitglieder) -->
     @if (showUserSwitch()) {
-      <klar-user-switch
+      <klar-user-select
         [value]="userSwitchValue()"
         (valueChange)="onUserSwitchChange($event)"
       />

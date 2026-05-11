@@ -27,6 +27,8 @@ export interface CreateIngestedTransactionData {
   bankFieldsLockedAt?: Date | null;
   /** Detected transaction kind (e.g. STANDING_ORDER); null when unknown. */
   transactionKind: TransactionKind | null;
+  /** Raw bank label (e.g. "FOLGELASTSCHRIFT"); null when unknown. */
+  bookingText: string | null;
 }
 
 @Injectable()
@@ -34,14 +36,15 @@ export class ImportPipelineRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Returns the subset of `refs` that already exist on a transaction
-   * within the given account. Account scoping mirrors the dedup design
-   * (each FinTS account / CSV pot has its own dedup namespace).
+   * Returns the subset of `refs` that already exist on a transaction in
+   * the household. Scoping mirrors the DB unique constraint
+   * `@@unique([householdId, externalRef])` — narrower scoping (by account)
+   * misses collisions across sibling sub-accounts and crashes on insert.
    */
-  async findExistingRefs(accountId: string, refs: string[]): Promise<string[]> {
+  async findExistingRefs(householdId: string, refs: string[]): Promise<string[]> {
     if (refs.length === 0) return [];
     const rows = await this.prisma.transaction.findMany({
-      where: { accountId, externalRef: { in: refs } },
+      where: { householdId, externalRef: { in: refs } },
       select: { externalRef: true },
     });
     return rows

@@ -335,6 +335,10 @@ model Account {
   bic                   String?
   visibility            Visibility  @default(SHARED)
   archivedAt            DateTime?
+  // Whether the FinTS sync loop should fetch statements/balances for this
+  // account. true = include (default), false = skip silently. Only meaningful
+  // for type=fints; ignored for csv_only/manual.
+  syncEnabled           Boolean     @default(true)
   // Phase 14a.3: FinTS-Anbindung
   fintsConnectionId     String?
   /**
@@ -666,6 +670,10 @@ model StandingOrder {
   // STANDING_ORDER = klassischer Bank-Dauerauftrag; DIRECT_DEBIT = SEPA-Folgelastschrift;
   // NULL for MANUAL records or detection patterns we have not yet surfaced.
   transactionKind    TransactionKind?
+  // Raw bank-side booking label (e.g. "FOLGELASTSCHRIFT", "DAUERAUFTRAG") taken
+  // from the latest transaction in the group; mirrors Transaction.bookingText
+  // semantics. NULL on MANUAL records and on legacy detections.
+  bookingText        String?
   // When non-null, bank-fields (counterparty, amount, frequency, nextExpectedAt) are read-only.
   bankFieldsLockedAt DateTime?
   firstSeenAt        DateTime               @default(now())
@@ -679,6 +687,7 @@ model StandingOrder {
   @@unique([householdId, accountId, groupKey])
   @@index([householdId, isActive])
   @@index([accountId])
+  @@index([householdId, bookingText])
 }
 
 // ─────────────────────────────────────────────
@@ -726,6 +735,11 @@ model Transaction {
   // Phase 14b — kind classifier derived from FinTS bookingType during ingest.
   // NULL allowed for legacy / manual / CSV rows; FinTS rows get a value at insert.
   transactionKind        TransactionKind?
+  // Raw FinTS/CAMT bookingText resp. CSV "Buchungstext" column (e.g.
+  // "FOLGELASTSCHRIFT", "BARGELDAUSZAHLUNG GA", "GUTSCHRIFT"). Stored
+  // verbatim from the bank — UI normalises to title-case for display.
+  // NULL for legacy/manual rows where no bank-side label exists.
+  bookingText            String?
   // bankFieldsLockedAt — wenn gesetzt, gelten Bank-Felder (amount, date,
   // counterparty, externalRef) als read-only (z. B. bei FinTS-Buchungen).
   // User-Klassifikationen (Kategorie, Projekt, Notiz, Icon, Farbe) bleiben
@@ -761,6 +775,7 @@ model Transaction {
   @@index([accountId, source])
   @@index([fintsSyncRunId])
   @@index([householdId, transactionKind])
+  @@index([householdId, bookingText])
 }
 
 // ─────────────────────────────────────────────

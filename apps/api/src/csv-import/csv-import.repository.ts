@@ -23,6 +23,7 @@ export interface CreateTransactionFromImport {
   externalHash: string;
   counterparty: string | null;
   sourceImportId: string;
+  bookingText: string | null;
 }
 
 export interface CreateRecurringFromImport {

@@ -64,7 +64,13 @@
       "Skill(remember)",
       "Skill(remember:*)",
       "Bash(pnpm --filter @klar/web exec tsc --noEmit -p tsconfig.json)",
-      "Bash(pnpm --filter @klar/web exec tsc --noEmit -p apps/web/tsconfig.app.json)"
+      "Bash(pnpm --filter @klar/web exec tsc --noEmit -p apps/web/tsconfig.app.json)",
+      "Bash(pnpm --filter web test -- transaction-filters.spec --run)",
+      "Bash(git -C c:/Workspace/Klar log --oneline -5)",
+      "Bash(pnpm --filter @klar/api test -- accounts.repository)",
+      "Bash(git mv *)",
+      "Bash(findstr /i \"node\")",
+      "Bash(pnpm --filter @klar/web build)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",

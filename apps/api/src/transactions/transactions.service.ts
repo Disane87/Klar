@@ -276,6 +276,9 @@ export class TransactionsService {
       // Phase 14b: classifier derived from FinTS bookingType. Drives the
       // type chip on the transactions table (Dauerauftrag / SEPA-Lastschrift / …).
       transactionKind: tx.transactionKind,
+      // Raw bank label ("Folgelastschrift", "Bargeldauszahlung", …). UI title-cases
+      // it for display and uses it as a filter facet.
+      bookingText: tx.bookingText,
       bankFieldsLockedAt: tx.bankFieldsLockedAt
         ? tx.bankFieldsLockedAt.toISOString()
         : null,

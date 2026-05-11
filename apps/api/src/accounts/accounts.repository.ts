@@ -17,6 +17,7 @@ export interface UpdateAccountData {
   name?: string;
   visibility?: Visibility;
   archivedAt?: Date | null;
+  syncEnabled?: boolean;
 }
 
 @Injectable()

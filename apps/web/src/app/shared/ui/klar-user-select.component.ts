@@ -10,7 +10,7 @@ import {
 import { HouseholdStore } from '../../core/household/household.store';
 import { AuthStore } from '../../core/auth/auth.store';
 
-export interface UserSwitchOption {
+export interface UserSelectOption {
   /** 'all' for the household-wide tab, otherwise the userId. */
   id: string;
   /** Two-letter avatar short, e.g. 'WG' / 'M' / 'L'. */
@@ -24,37 +24,38 @@ export interface UserSwitchOption {
 }
 
 /**
- * UserSwitch — bundle alerts.jsx pill group with the household + each
- * member as a tab. Klar wires this to the household members + auth user
- * and emits the selected scope (`'all'` or a userId) via the value
- * model so consumers (page-header service, lists) can filter by it.
+ * Canonical Klar user-scope selector — pill group of household-wide
+ * ("WG") + each member. Single visual across the whole app: every page
+ * that scopes data per member uses this exact component (Fixkosten,
+ * Kalender, Buchungen, Banken, …). Emits `'all'` or a userId via
+ * `value` so consumers can filter.
  */
 @Component({
-  selector: 'klar-user-switch',
+  selector: 'klar-user-select',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex' },
   template: `
-    <div class="user-switch" role="tablist" aria-label="Ansicht">
+    <div class="user-select" role="tablist" aria-label="Ansicht">
       @for (opt of options(); track opt.id) {
         <button
           type="button"
           role="tab"
           [attr.aria-selected]="opt.id === value()"
-          class="user-switch-pill"
+          class="user-select-pill"
           [class.active]="opt.id === value()"
           [style.--us-tone]="opt.color"
           [title]="opt.sub ? opt.name + ' · ' + opt.sub : opt.name"
           (click)="value.set(opt.id)"
         >
-          <span class="user-switch-av" aria-hidden="true">{{ opt.short }}</span>
-          <span class="user-switch-label">{{ opt.name }}</span>
+          <span class="user-select-av" aria-hidden="true">{{ opt.short }}</span>
+          <span class="user-select-label">{{ opt.name }}</span>
         </button>
       }
     </div>
   `,
 })
-export class KlarUserSwitchComponent {
+export class KlarUserSelectComponent {
   private readonly householdStore = inject(HouseholdStore);
   private readonly auth = inject(AuthStore);
 
@@ -67,10 +68,6 @@ export class KlarUserSwitchComponent {
   /** CSS color for the household-wide tab avatar (defaults to --accent). */
   readonly allTone = input<string>('var(--accent)');
 
-  /**
-   * Cached deterministic palette for member avatars — falls back to
-   * the cat-* palette in a stable order.
-   */
   private readonly toneFallbacks = signal<string[]>([
     'var(--cat-essen)',
     'var(--cat-freizeit)',
@@ -80,17 +77,17 @@ export class KlarUserSwitchComponent {
     'var(--cat-gesund)',
   ]);
 
-  protected readonly options = computed<UserSwitchOption[]>(() => {
+  protected readonly options = computed<UserSelectOption[]>(() => {
     const members = this.householdStore.members?.() ?? [];
     const fallbacks = this.toneFallbacks();
-    const memberOpts: UserSwitchOption[] = members.map((m, idx) => ({
+    const memberOpts: UserSelectOption[] = members.map((m, idx) => ({
       id: m.userId,
       short: this.shortFor(m.displayName),
       name: m.displayName.split(' ')[0] || m.displayName,
       color: fallbacks[idx % fallbacks.length],
       sub: m.displayName,
     }));
-    void this.auth; // wired for future "you" highlight
+    void this.auth;
     return [
       {
         id: 'all',

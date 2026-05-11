@@ -6,6 +6,7 @@ import {
   type FintsConnectionResponse,
   type FintsCreateConnectionRequest,
   type FintsCreateConnectionResponse,
+  type FintsDeleteImpact,
   type FintsSyncRunWithChallenge,
   type FintsTanChallenge,
 } from './fints.service';
@@ -179,6 +180,12 @@ export class FintsStore {
     } finally {
       this.tanSubmitting.set(false);
     }
+  }
+
+  async fetchDeleteImpact(id: string): Promise<FintsDeleteImpact> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId) throw new Error('No active household');
+    return firstValueFrom(this.fintsService.deleteImpact(householdId, id));
   }
 
   async deleteConnection(id: string): Promise<void> {
