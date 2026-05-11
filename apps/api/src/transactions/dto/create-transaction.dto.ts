@@ -172,6 +172,26 @@ export class BulkDeleteTransactionsDto {
   ids!: string[];
 }
 
+export class BulkSetVisibilityDto {
+  @ApiProperty({
+    description: 'Transaction UUIDs to update.',
+    example: [
+      '6b1f9cf2-3a7e-4d85-9f0b-6d2e0f1f1a02',
+      '7c2a9df3-4b8e-4d95-8f1c-6e2f0f2f2b13',
+    ],
+    type: [String],
+  })
+  ids!: string[];
+
+  @ApiProperty({
+    description:
+      'Target visibility. `PRIVATE` hides the transaction from other household members in lists and aggregates; `SHARED` exposes it to everyone.',
+    enum: Visibility,
+    example: 'PRIVATE',
+  })
+  visibility!: Visibility;
+}
+
 export class BulkCountResponse {
   @ApiProperty({ description: 'Number of rows actually mutated/deleted.', example: 2 })
   count!: number;

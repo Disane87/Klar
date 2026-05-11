@@ -333,7 +333,7 @@ model Account {
   currency              String      @default("EUR")
   iban                  String?
   bic                   String?
-  visibility            Visibility  @default(SHARED)
+  visibility            Visibility  @default(PRIVATE)
   archivedAt            DateTime?
   // Whether the FinTS sync loop should fetch statements/balances for this
   // account. true = include (default), false = skip silently. Only meaningful
@@ -724,7 +724,7 @@ model Transaction {
   projectId              String?
   date                   DateTime         @db.Date
   description            String?
-  visibility             Visibility       @default(SHARED)
+  visibility             Visibility       @default(PRIVATE)
   // Referenz wenn Transaktion zu einem Recurring-Eintrag gehört
   // (z.B. wenn User Ist-Wert für variablen Recurring nachträgt)
   recurringTransactionId String?

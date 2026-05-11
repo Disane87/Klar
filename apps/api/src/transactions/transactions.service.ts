@@ -223,6 +223,26 @@ export class TransactionsService {
   }
 
   /**
+   * Bulk-update visibility on transactions (SHARED ↔ PRIVATE). Authorized
+   * via the same rules as single-update: PRIVATE rows are only mutable by
+   * their creator, so a user can't unilaterally expose another household
+   * member's PRIVATE transactions. Bank-locked rows are NOT excluded —
+   * visibility is a Klar-side concept, not part of the bank-locked fields.
+   */
+  async bulkSetVisibility(
+    ctx: RequestContext,
+    ids: string[],
+    visibility: Visibility,
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(ids) || ids.length === 0) return { count: 0 };
+    if (visibility !== Visibility.PRIVATE && visibility !== Visibility.SHARED) {
+      throw new BadRequestException('visibility muss PRIVATE oder SHARED sein');
+    }
+    const allowedIds = await this.collectAuthorizedIds(ctx, ids);
+    return this.repo.bulkUpdateVisibility(allowedIds, ctx.householdId, visibility);
+  }
+
+  /**
    * Bulk-delete transactions. Each id is authorized via the same rules as
    * single-delete. Returns the count actually deleted.
    */

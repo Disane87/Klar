@@ -35,6 +35,7 @@ import {
   BulkCountResponse,
   BulkDeleteTransactionsDto,
   BulkMoveTransactionsDto,
+  BulkSetVisibilityDto,
   CreateTransactionDto,
   UpdateTransactionDto,
 } from './dto/create-transaction.dto';
@@ -181,6 +182,29 @@ export class TransactionsController {
     if (!Array.isArray(body?.ids)) throw new BadRequestException('ids muss ein Array sein');
     if (!body?.categoryId) throw new BadRequestException('categoryId ist erforderlich');
     return this.service.bulkMove(ctx, body.ids, body.categoryId);
+  }
+
+  @Patch('bulk-visibility')
+  @ApiBearerAuth('jwt')
+  @ApiOperation({
+    summary: 'Bulk-set visibility on transactions (PRIVATE / SHARED)',
+    description:
+      'Switches selected transactions between PRIVATE (only the creator sees them in lists and aggregates) and SHARED (visible to every household member). PRIVATE rows of other users are silently filtered out — a user cannot unilaterally expose someone else’s PRIVATE rows. Bank-locked rows are included, since visibility is not part of the bank-locked field set.',
+  })
+  @ApiBody({ type: BulkSetVisibilityDto })
+  @ApiResponse({ status: 200, type: BulkCountResponse })
+  @ApiResponse({ status: 400, description: 'Missing `ids` or invalid `visibility`.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
+  @ApiResponse({ status: 403, description: 'Caller is not a household member.' })
+  async bulkSetVisibility(
+    @ReqContext() ctx: RequestContext,
+    @Body() body: BulkSetVisibilityDto,
+  ): Promise<{ count: number }> {
+    if (!Array.isArray(body?.ids)) throw new BadRequestException('ids muss ein Array sein');
+    if (body.visibility !== Visibility.PRIVATE && body.visibility !== Visibility.SHARED) {
+      throw new BadRequestException('visibility muss PRIVATE oder SHARED sein');
+    }
+    return this.service.bulkSetVisibility(ctx, body.ids, body.visibility);
   }
 
   @Delete('bulk')

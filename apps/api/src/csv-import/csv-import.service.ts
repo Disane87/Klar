@@ -262,7 +262,7 @@ export class CsvImportService {
           frequency: RecurringFrequency.MONTHLY,
           dayOfMonth: Number(row.date.slice(8, 10)),
           startDate: new Date(`${row.date}T00:00:00Z`),
-          visibility: sel.visibility ?? Visibility.SHARED,
+          visibility: sel.visibility ?? Visibility.PRIVATE,
         });
         newRecs++;
       }
@@ -276,7 +276,7 @@ export class CsvImportService {
         projectId: sel.projectId ?? null,
         date: new Date(`${row.date}T00:00:00Z`),
         description: row.purpose,
-        visibility: sel.visibility ?? Visibility.SHARED,
+        visibility: sel.visibility ?? Visibility.PRIVATE,
         externalRef: row.externalRef,
         externalHash: DuplicateDetector.computeHash(row),
         counterparty: row.counterparty,

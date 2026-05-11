@@ -157,6 +157,19 @@ export class TransactionsRepository {
     });
   }
 
+  /** Bulk update visibility (SHARED/PRIVATE) for household transactions. */
+  bulkUpdateVisibility(
+    ids: string[],
+    householdId: string,
+    visibility: Visibility,
+  ): Promise<{ count: number }> {
+    if (ids.length === 0) return Promise.resolve({ count: 0 });
+    return this.prisma.transaction.updateMany({
+      where: { id: { in: ids }, householdId },
+      data: { visibility },
+    });
+  }
+
   /** Bulk delete transactions belonging to the household. */
   bulkDelete(ids: string[], householdId: string): Promise<{ count: number }> {
     if (ids.length === 0) return Promise.resolve({ count: 0 });

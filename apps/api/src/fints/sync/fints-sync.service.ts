@@ -466,10 +466,16 @@ export class FintsSyncService {
         syncRunId: syncRun.id,
       });
       totalFetched += rawBookings.length;
+      // Cron-driven syncs have a null triggeredById — fall back to the
+      // connection owner so PRIVATE-by-default rows aren't orphaned.
+      // The Transactions service filters PRIVATE rows by createdByUserId,
+      // so without this fallback nobody would see new bookings imported
+      // by the daily cron once Visibility defaults to PRIVATE.
+      const ingestOwnerId = syncRun.triggeredById ?? connection.ownerId;
       const ingest = await this.pipeline.ingest(rawBookings, {
         householdId: account.householdId,
         accountId: account.id,
-        triggeredByUserId: syncRun.triggeredById,
+        triggeredByUserId: ingestOwnerId,
         source: 'fints',
         fintsSyncRunId: syncRun.id,
       });
