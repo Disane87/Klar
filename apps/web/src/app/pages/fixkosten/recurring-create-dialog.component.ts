@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
@@ -22,6 +22,11 @@ import { CategoryEditDialogComponent } from '../haushalt/category-edit-dialog.co
 import type { Category } from '@klar/shared';
 import type { RecurringFrequency } from '@klar/shared';
 import { safeDayOfMonth } from '@klar/shared';
+
+export interface PrefillSplit {
+  label: string;
+  amountCents: number;
+}
 
 @Component({
   selector: 'app-recurring-create-dialog',
@@ -47,6 +52,16 @@ export class RecurringCreateDialogComponent {
   /** When true, the new entry is added to the local PlanspielStore instead of the backend. */
   readonly planspielMode = input<boolean>(false);
 
+  // ── Prefill inputs (used by external triggers, e.g. brutto-netto tool) ──
+  readonly prefillName          = input<string>('');
+  readonly prefillAmountCents   = input<number | null>(null);
+  readonly prefillCategoryId    = input<string | null>(null);
+  readonly prefillFrequency     = input<RecurringFrequency | null>(null);
+  readonly prefillIcon          = input<string | null>(null);
+  readonly prefillColor         = input<string | null>(null);
+  readonly prefillPayrollInput  = input<GrossToNetInput | null>(null);
+  readonly prefillSplits        = input<PrefillSplit[] | null>(null);
+
   readonly name       = signal('');
   readonly amountCents = signal<number | null>(null);
   readonly categoryId = signal<string | null>(null);
@@ -57,6 +72,36 @@ export class RecurringCreateDialogComponent {
   readonly icon       = signal<string | null>(null);
   readonly saving     = signal(false);
   readonly err        = signal('');
+
+  // ── Payroll (Aus Brutto berechnen) — extended to receive prefill ─────
+  // (The existing payrollEnabled/payrollInput signals declared further below
+  //  are kept; this effect just pre-loads them when prefillPayrollInput is
+  //  set by the brutto-netto tool's "In Fixkosten übernehmen" button.)
+  constructor() {
+    effect(() => {
+      // Only seed once per dialog open. The prefill input is static during
+      // the dialog lifecycle, so a single read of input() is enough.
+      const n     = this.prefillName();
+      const amt   = this.prefillAmountCents();
+      const catId = this.prefillCategoryId();
+      const freq  = this.prefillFrequency();
+      const ic    = this.prefillIcon();
+      const col   = this.prefillColor();
+      const pi    = this.prefillPayrollInput();
+
+      if (n)              this.name.set(n);
+      if (amt !== null)   this.amountCents.set(amt);
+      if (catId)          this.categoryId.set(catId);
+      if (freq)           this.frequency.set(freq);
+      if (ic)             this.icon.set(ic);
+      if (col)            this.color.set(col);
+      if (pi) {
+        this.payrollInput.set(pi);
+        this.payrollEnabled.set(true);
+      }
+      // prefillSplits is consumed at save time via this.prefillSplits().
+    });
+  }
 
   // ── Payroll (Aus Brutto berechnen) ──────────────────────────
   readonly payrollEnabled = signal(false);
@@ -176,6 +221,7 @@ export class RecurringCreateDialogComponent {
         payrollInput: this.payrollEnabled()
           ? (this.payrollInput() as unknown as Record<string, unknown> | null)
           : null,
+        splits: this.prefillSplits() ?? undefined,
       });
       this.store.reload();
       this.dialog.close();

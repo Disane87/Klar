@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateNet } from './gross-to-net';
+import { calculateNet, splitNetByPositions, sumPositions, effectiveGrossCents } from './gross-to-net';
 import type { GrossToNetInput } from './types';
 
 const baseInput: GrossToNetInput = {
@@ -127,10 +127,91 @@ describe('calculateNet — sanity / invariants', () => {
     expect(r.monthly.nettoCents).toBeLessThan(450000);
   });
 
+  it('uses sum of positions when positions provided', () => {
+    const r = calculateNet({
+      ...baseInput,
+      grossCents: 0, // overridden
+      positions: [
+        { id: 'p1', label: 'Festgehalt', amountCents: 350000 },
+        { id: 'p2', label: 'Provision',  amountCents:  50000 },
+      ],
+    });
+    expect(r.monthly.bruttoCents).toBe(400000);
+  });
+
+  it('falls back to grossCents when positions empty', () => {
+    const r = calculateNet({ ...baseInput, positions: [] });
+    expect(r.monthly.bruttoCents).toBe(400000);
+  });
+
   it('hits BBG-RV at very high income (RV grows sub-linearly)', () => {
     const at = calculateNet({ ...baseInput, grossCents: 800000 });   // 8000€ ≈ at BBG
     const above = calculateNet({ ...baseInput, grossCents: 1500000 }); // 15.000€
     // RV scales linearly until BBG, then flat. Verify above-BBG RV doesn't double.
     expect(above.monthly.rvCents).toBeLessThan(at.monthly.rvCents * 1.5);
+  });
+});
+
+describe('sumPositions / effectiveGrossCents', () => {
+  it('sumPositions returns 0 for empty/missing list', () => {
+    expect(sumPositions(undefined)).toBe(0);
+    expect(sumPositions([])).toBe(0);
+  });
+
+  it('sumPositions sums signed amounts', () => {
+    expect(sumPositions([
+      { id: 'a', label: 'A', amountCents: 100 },
+      { id: 'b', label: 'B', amountCents: 250 },
+      { id: 'c', label: 'C', amountCents: -50 },
+    ])).toBe(300);
+  });
+
+  it('effectiveGrossCents prefers positions when present', () => {
+    expect(effectiveGrossCents({
+      ...baseInput,
+      grossCents: 999999,
+      positions: [{ id: '1', label: 'X', amountCents: 1000 }],
+    })).toBe(1000);
+  });
+
+  it('effectiveGrossCents falls back to grossCents when positions empty', () => {
+    expect(effectiveGrossCents({ ...baseInput, grossCents: 1234, positions: [] })).toBe(1234);
+  });
+});
+
+describe('splitNetByPositions', () => {
+  it('returns empty array when no positions', () => {
+    const result = calculateNet(baseInput);
+    expect(splitNetByPositions(baseInput, result)).toEqual([]);
+  });
+
+  it('splits net proportionally and sum equals total net', () => {
+    const input: GrossToNetInput = {
+      ...baseInput,
+      grossCents: 0,
+      positions: [
+        { id: 'p1', label: 'Festgehalt', amountCents: 350000 },
+        { id: 'p2', label: 'Provision',  amountCents:  50000 },
+      ],
+    };
+    const result = calculateNet(input);
+    const splits = splitNetByPositions(input, result);
+    expect(splits).toHaveLength(2);
+    expect(splits.reduce((s, x) => s + x.nettoMonthlyCents, 0)).toBe(result.monthly.nettoCents);
+    // Proportional: Festgehalt is 87.5% of brutto, so it should be ~87.5% of net.
+    const ratio = splits[0].nettoMonthlyCents / result.monthly.nettoCents;
+    expect(ratio).toBeGreaterThan(0.85);
+    expect(ratio).toBeLessThan(0.90);
+  });
+
+  it('handles zero total brutto without crashing', () => {
+    const input: GrossToNetInput = {
+      ...baseInput,
+      grossCents: 0,
+      positions: [{ id: 'p1', label: 'Empty', amountCents: 0 }],
+    };
+    const result = calculateNet(input);
+    const splits = splitNetByPositions(input, result);
+    expect(splits[0].nettoMonthlyCents).toBe(0);
   });
 });

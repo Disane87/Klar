@@ -1,6 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RecurringFrequency, Visibility } from '@prisma/client';
 
+export class RecurringTransactionSplitInputDto {
+  @ApiProperty({ description: 'Display label for this split row.', example: 'Festgehalt (Netto)' })
+  label!: string;
+
+  @ApiProperty({ description: 'Signed integer cents.', example: 263000 })
+  amountCents!: number;
+
+  @ApiProperty({ description: 'Display order (lower first).', example: 0, required: false })
+  sortOrder?: number;
+
+  @ApiProperty({ description: 'Optional free-text note.', example: null, required: false, nullable: true })
+  note?: string | null;
+}
+
 export class CreateRecurringTransactionDto {
   @ApiProperty({ description: 'Display name for this recurring template.', example: 'Netflix Abo' })
   name!: string;
@@ -123,6 +137,15 @@ export class CreateRecurringTransactionDto {
     },
   })
   payrollInput?: Record<string, unknown> | null;
+
+  @ApiProperty({
+    description:
+      'Optional list of split rows persisted alongside this recurring entry. Used to break a single ' +
+      'amount into named sub-rows (e.g. salary = "Festgehalt" + "Provision"). Sum should equal `amountCents`.',
+    type: [RecurringTransactionSplitInputDto],
+    required: false,
+  })
+  splits?: RecurringTransactionSplitInputDto[];
 }
 
 export class UpdateRecurringTransactionDto extends CreateRecurringTransactionDto {}

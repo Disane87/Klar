@@ -17,6 +17,7 @@ export interface CreateRecurringTransactionRequest {
   icon?:       string | null;
   isActive?:   boolean;
   payrollInput?: Record<string, unknown> | null;
+  splits?:     { label: string; amountCents: number; sortOrder?: number; note?: string | null }[];
 }
 
 export interface UpdateRecurringTransactionRequest {

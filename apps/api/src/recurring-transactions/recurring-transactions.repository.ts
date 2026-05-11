@@ -22,6 +22,7 @@ export interface CreateRecurringTransactionData {
   icon?: string | null;
   isActive: boolean;
   payrollInput?: Prisma.InputJsonValue | null;
+  splits?: { label: string; amountCents: number; sortOrder?: number; note?: string | null }[];
 }
 
 export interface UpdateRecurringTransactionData {
@@ -80,13 +81,25 @@ export class RecurringTransactionsRepository {
   }
 
   create(data: CreateRecurringTransactionData): Promise<RecurringTransaction> {
-    const { payrollInput, ...rest } = data;
+    const { payrollInput, splits, ...rest } = data;
     return this.prisma.recurringTransaction.create({
       data: {
         ...rest,
         ...(payrollInput === undefined
           ? {}
           : { payrollInput: payrollInput === null ? Prisma.JsonNull : payrollInput }),
+        ...(splits && splits.length > 0
+          ? {
+              splits: {
+                create: splits.map((s, i) => ({
+                  label:       s.label,
+                  amountCents: s.amountCents,
+                  sortOrder:   s.sortOrder ?? i,
+                  note:        s.note ?? null,
+                })),
+              },
+            }
+          : {}),
       },
     });
   }

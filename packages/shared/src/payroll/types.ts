@@ -11,9 +11,33 @@ export type Krankenversicherung = 'gesetzlich' | 'privat';
 export type RentenversicherungRegion = 'west' | 'ost';
 export type GrossPeriod = 'monthly' | 'yearly';
 
+/**
+ * One line item from a Lohnzettel — e.g. "Festgehalt", "Provision",
+ * "Schichtzulage". The total brutto used in the tax calculation is the
+ * sum of all positions. UI only — the engine simply sums them.
+ */
+export interface PayrollPosition {
+  /** Stable identifier (UUID or generated string). Used only by the UI. */
+  id: string;
+  /** Display name shown next to the amount. */
+  label: string;
+  /** Signed integer cents. Interpretation follows the parent `period`. */
+  amountCents: number;
+}
+
 export interface GrossToNetInput {
-  /** Gross amount in cents — interpretation depends on `period`. */
+  /**
+   * Total gross amount in cents — interpretation depends on `period`.
+   * Used as the brutto basis when `positions` is omitted or empty.
+   * When `positions` has entries, their sum overrides this value.
+   */
   grossCents: number;
+  /**
+   * Optional list of brutto line items (e.g. Festgehalt + Provision).
+   * When provided and non-empty, their sum is the effective brutto.
+   * Each amount uses the same `period` as the parent input.
+   */
+  positions?: PayrollPosition[];
   period: GrossPeriod;
   steuerklasse: Steuerklasse;
   bundesland: Bundesland;

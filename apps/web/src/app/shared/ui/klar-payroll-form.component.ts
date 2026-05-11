@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, output, si
 import { FormsModule } from '@angular/forms';
 import {
   calculateNet,
+  KRANKENKASSEN_2026,
+  KRANKENKASSE_MANUAL_ID,
   type Bundesland,
   type GrossToNetInput,
   type Krankenversicherung,
@@ -58,6 +60,14 @@ const RV_REGION_OPTIONS: KlarSelectOption[] = [
 const PERIOD_OPTIONS: KlarSelectOption[] = [
   { value: 'monthly', label: 'pro Monat' },
   { value: 'yearly',  label: 'pro Jahr' },
+];
+
+const KK_OPTIONS: KlarSelectOption[] = [
+  ...KRANKENKASSEN_2026.map(kk => ({
+    value: kk.id,
+    label: `${kk.name} — ${kk.zusatzbeitragPct.toFixed(2).replace('.', ',')} %`,
+  })),
+  { value: KRANKENKASSE_MANUAL_ID, label: 'Andere — manuell' },
 ];
 
 const KINDER_OPTIONS: KlarSelectOption[] = [
@@ -131,6 +141,9 @@ export interface PayrollApplyEvent {
         <klar-select [(value)]="krankenversicherung" [options]="kvOptions" />
       </klar-form-field>
       @if (krankenversicherung() === 'gesetzlich') {
+        <klar-form-field label="Krankenkasse">
+          <klar-select [(value)]="krankenkasseId" [options]="kkOptions" (valueChange)="onKkSelected($event)" />
+        </klar-form-field>
         <klar-form-field label="KV-Zusatzbeitrag (%)">
           <klar-input type="number" suffix="%" [ngModel]="kvZusatzbeitragStr()" (ngModelChange)="onZusatzStr($event)" />
         </klar-form-field>
@@ -179,6 +192,7 @@ export class KlarPayrollFormComponent {
   protected readonly rvRegionOptions     = RV_REGION_OPTIONS;
   protected readonly periodOptions       = PERIOD_OPTIONS;
   protected readonly kinderOptions       = KINDER_OPTIONS;
+  protected readonly kkOptions           = KK_OPTIONS;
 
   readonly grossCents                       = signal<number | null>(400000);
   readonly period                           = signal<'monthly' | 'yearly'>('monthly');
@@ -188,7 +202,8 @@ export class KlarPayrollFormComponent {
   readonly birthYear                        = signal<number>(1990);
   readonly kinderStr                        = signal<string>('0');
   readonly krankenversicherung              = signal<Krankenversicherung>('gesetzlich');
-  readonly kvZusatzbeitragPct               = signal<number>(2.9);
+  readonly krankenkasseId                   = signal<string>('tk');
+  readonly kvZusatzbeitragPct               = signal<number>(2.45);
   readonly pkvBeitragMonthlyCents           = signal<number | null>(null);
   readonly rentenversicherungRegion         = signal<RentenversicherungRegion>('west');
   readonly geldwerterVorteilMonthlyCents    = signal<number | null>(0);
@@ -259,5 +274,14 @@ export class KlarPayrollFormComponent {
   onZusatzStr(v: string): void {
     const n = parseFloat(v.replace(',', '.'));
     if (!isNaN(n)) this.kvZusatzbeitragPct.set(n);
+    if (this.krankenkasseId() !== KRANKENKASSE_MANUAL_ID) {
+      this.krankenkasseId.set(KRANKENKASSE_MANUAL_ID);
+    }
+  }
+
+  onKkSelected(id: string): void {
+    if (id === KRANKENKASSE_MANUAL_ID) return;
+    const kk = KRANKENKASSEN_2026.find(k => k.id === id);
+    if (kk) this.kvZusatzbeitragPct.set(kk.zusatzbeitragPct);
   }
 }

@@ -2,9 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { FormsModule } from '@angular/forms';
 import {
   calculateNet,
+  splitNetByPositions,
+  KRANKENKASSEN_2026,
+  KRANKENKASSE_MANUAL_ID,
   type Bundesland,
   type GrossToNetInput,
   type Krankenversicherung,
+  type PayrollPosition,
   type RentenversicherungRegion,
   type Steuerklasse,
 } from '@klar/shared';
@@ -14,9 +18,17 @@ import { KlarInputComponent } from '../../../shared/ui/klar-input.component';
 import { KlarMoneyInputComponent } from '../../../shared/ui/klar-money-input.component';
 import { KlarSelectComponent, type KlarSelectOption } from '../../../shared/ui/klar-select.component';
 import { KlarSwitchComponent } from '../../../shared/ui/klar-switch.component';
+import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { KlarDonutChartComponent, type DonutSegment } from '../../../shared/ui/klar-donut-chart.component';
 import { KlarMoneyPipe } from '../../../shared/pipes/klar-money.pipe';
+import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
+import { KlarToastService } from '../../../shared/ui/klar-toast.service';
+import { CategoriesStore } from '../../../core/categories/categories.store';
 import { PageHeaderService } from '../../../core/page-header/page-header.service';
+import {
+  RecurringCreateDialogComponent,
+  type PrefillSplit,
+} from '../../fixkosten/recurring-create-dialog.component';
 
 const STEUERKLASSE_OPTIONS: KlarSelectOption[] = [
   { value: '1', label: 'Steuerklasse 1 — ledig' },
@@ -73,6 +85,17 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
   { value: '4',   label: '4' },
 ];
 
+const KK_OPTIONS: KlarSelectOption[] = [
+  ...KRANKENKASSEN_2026.map(kk => ({
+    value: kk.id,
+    label: `${kk.name} — ${kk.zusatzbeitragPct.toFixed(2).replace('.', ',')} %`,
+  })),
+  { value: KRANKENKASSE_MANUAL_ID, label: 'Andere — manueller Zusatzbeitrag' },
+];
+
+let _positionId = 0;
+const newPositionId = () => `pos-${Date.now()}-${++_positionId}`;
+
 @Component({
   selector: 'klar-brutto-netto-page',
   standalone: true,
@@ -87,13 +110,14 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
     KlarMoneyInputComponent,
     KlarSelectComponent,
     KlarSwitchComponent,
+    KlarButtonComponent,
     KlarDonutChartComponent,
     KlarMoneyPipe,
   ],
   template: `
     <div class="page">
 
-      <!-- ── Summary tiles (like Fixkosten) ───────────────────── -->
+      <!-- ── Summary tiles (analog Fixkosten) ─────────────────── -->
       <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
         <klar-tile
           label="Brutto / Monat"
@@ -111,17 +135,60 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
         />
       </div>
 
-      <!-- ── Gehalt ───────────────────────────────────────────── -->
+      <!-- ── Action bar ───────────────────────────────────────── -->
+      <div class="flex justify-end">
+        <klar-button
+          tone="primary"
+          icon="plus"
+          [disabled]="!canTransfer()"
+          (click)="transferToFixkosten()"
+        >
+          In Fixkosten übernehmen
+        </klar-button>
+      </div>
+
+      <!-- ── Gehalt: Bestandteile + Zeitraum ──────────────────── -->
       <div>
-        <div class="section-head"><span>Gehalt</span></div>
+        <div class="section-head"><span>Gehaltsbestandteile</span></div>
         <div class="card">
-          <div class="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-3 p-(--s-4)">
-            <klar-form-field label="Brutto" for="bn-brutto">
-              <klar-money-input inputId="bn-brutto" [(amountCents)]="grossCents" placeholder="0,00" />
-            </klar-form-field>
+          <div class="px-(--s-4) pt-(--s-4) pb-(--s-2)">
             <klar-form-field label="Zeitraum">
               <klar-select [(value)]="period" [options]="periodOptions" />
             </klar-form-field>
+          </div>
+
+          @for (pos of positions(); track pos.id; let i = $index) {
+            <div class="row" style="grid-template-columns: 1.4fr auto 32px; gap: var(--s-3);">
+              <klar-input
+                placeholder="Position (z. B. Festgehalt, Provision)"
+                [ngModel]="pos.label"
+                (ngModelChange)="updatePosition(i, { label: $event })"
+              />
+              <klar-money-input
+                placeholder="0,00"
+                [amountCents]="pos.amountCents"
+                (amountCentsChange)="updatePosition(i, { amountCents: $event ?? 0 })"
+              />
+              <klar-button
+                tone="danger"
+                size="sm"
+                icon="trash"
+                [disabled]="positions().length <= 1"
+                (click)="removePosition(i)"
+              ></klar-button>
+            </div>
+          }
+
+          <div class="row" style="grid-template-columns: 1fr auto;">
+            <klar-button tone="ghost" icon="plus" (click)="addPosition()">
+              Position hinzufügen
+            </klar-button>
+            <span class="text-[11px] uppercase tracking-widest text-(--fg-3)">
+              Σ Brutto / {{ periodLabelShort() }}
+              <span class="ml-2 font-mono text-(--fg-1)" style="font-variant-numeric: tabular-nums;">
+                {{ totalGrossCents() | klarMoney }}
+              </span>
+            </span>
           </div>
         </div>
       </div>
@@ -163,6 +230,9 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
               <klar-select [(value)]="krankenversicherung" [options]="kvOptions" />
             </klar-form-field>
             @if (krankenversicherung() === 'gesetzlich') {
+              <klar-form-field label="Krankenkasse">
+                <klar-select [(value)]="krankenkasseId" [options]="kkOptions" (valueChange)="onKkSelected($event)" />
+              </klar-form-field>
               <klar-form-field label="KV-Zusatzbeitrag (%)">
                 <klar-input type="number" suffix="%"
                             [ngModel]="kvZusatzbeitragStr()"
@@ -240,10 +310,35 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
         </div>
       </div>
 
+      <!-- ── Netto pro Position ───────────────────────────────── -->
+      @if (netSplits().length > 1) {
+        <div>
+          <div class="section-head"><span>Netto pro Position</span></div>
+          <div class="card">
+            @for (split of netSplits(); track split.position.id) {
+              <div class="row">
+                <div class="lhs">
+                  <span class="name">{{ split.position.label || 'Ohne Bezeichnung' }}</span>
+                  <span class="meta">
+                    Brutto <span class="mono">{{ display(split.position.amountCents) | klarMoney }}</span>
+                  </span>
+                </div>
+                <span class="amt mono pos">{{ display(split.nettoMonthlyCents) | klarMoney }}</span>
+              </div>
+            }
+            <div class="row subtotal">
+              <div class="lhs"><span class="name">Gesamt Netto</span></div>
+              <span class="amt mono pos">{{ display(result().monthly.nettoCents) | klarMoney }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
       <p class="text-[11px] text-(--fg-2) leading-relaxed max-w-[70ch]">
         Berechnung mit 2026er Werten (§32a EStG, Sozialversicherungs-Rechengrößen-Verordnung 2026,
         PV 3,6 %, BBG-KV/PV 5.812,50 €, BBG-RV/AV 8.450 €). Soli-Freigrenze 20.350 €
-        (40.700 € im Splittingverfahren). Richtgrößen, keine verbindliche Steuerauskunft.
+        (40.700 € im Splittingverfahren). Krankenkassen-Zusatzbeiträge werden jährlich aktualisiert.
+        Richtgrößen, keine verbindliche Steuerauskunft.
       </p>
 
     </div>
@@ -251,6 +346,9 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
 })
 export class BruttoNettoPageComponent implements OnInit {
   private readonly pageHeader = inject(PageHeaderService);
+  private readonly dialog     = inject(KlarDialogService);
+  private readonly toast      = inject(KlarToastService);
+  protected readonly cats     = inject(CategoriesStore);
 
   protected readonly steuerklasseOptions = STEUERKLASSE_OPTIONS;
   protected readonly bundeslandOptions   = BUNDESLAND_OPTIONS;
@@ -258,8 +356,13 @@ export class BruttoNettoPageComponent implements OnInit {
   protected readonly rvRegionOptions     = RV_REGION_OPTIONS;
   protected readonly periodOptions       = PERIOD_OPTIONS;
   protected readonly kinderOptions       = KINDER_OPTIONS;
+  protected readonly kkOptions           = KK_OPTIONS;
 
-  readonly grossCents                       = signal<number | null>(400000);
+  // ── Positions ────────────────────────────────────────────────
+  readonly positions = signal<PayrollPosition[]>([
+    { id: newPositionId(), label: 'Festgehalt', amountCents: 400000 },
+  ]);
+
   readonly period                           = signal<'monthly' | 'yearly'>('monthly');
   readonly steuerklasse                     = signal<string>('1');
   readonly bundesland                       = signal<string>('NW');
@@ -267,7 +370,8 @@ export class BruttoNettoPageComponent implements OnInit {
   readonly birthYear                        = signal<number>(1990);
   readonly kinderStr                        = signal<string>('0');
   readonly krankenversicherung              = signal<Krankenversicherung>('gesetzlich');
-  readonly kvZusatzbeitragPct               = signal<number>(2.9);
+  readonly krankenkasseId                   = signal<string>('tk');
+  readonly kvZusatzbeitragPct               = signal<number>(2.45); // matches default tk
   readonly pkvBeitragMonthlyCents           = signal<number | null>(null);
   readonly rentenversicherungRegion         = signal<RentenversicherungRegion>('west');
   readonly geldwerterVorteilMonthlyCents    = signal<number | null>(0);
@@ -277,9 +381,15 @@ export class BruttoNettoPageComponent implements OnInit {
 
   readonly birthYearStr        = computed(() => String(this.birthYear()));
   readonly kvZusatzbeitragStr  = computed(() => String(this.kvZusatzbeitragPct()));
+  readonly periodLabelShort    = computed(() => this.period() === 'monthly' ? 'Monat' : 'Jahr');
+
+  readonly totalGrossCents = computed(() =>
+    this.positions().reduce((s, p) => s + p.amountCents, 0),
+  );
 
   readonly input = computed<GrossToNetInput>(() => ({
-    grossCents:                       this.grossCents() ?? 0,
+    grossCents:                       this.totalGrossCents(),
+    positions:                        this.positions(),
     period:                           this.period(),
     steuerklasse:                     parseInt(this.steuerklasse(), 10) as Steuerklasse,
     bundesland:                       this.bundesland() as Bundesland,
@@ -294,7 +404,8 @@ export class BruttoNettoPageComponent implements OnInit {
     lohnsteuerFreibetragYearlyCents:  this.lohnsteuerFreibetragYearlyCents() ?? 0,
   }));
 
-  readonly result = computed(() => calculateNet(this.input()));
+  readonly result    = computed(() => calculateNet(this.input()));
+  readonly netSplits = computed(() => splitNetByPositions(this.input(), this.result()));
 
   readonly deductionsCents = computed(() => {
     const m = this.result().monthly;
@@ -325,8 +436,24 @@ export class BruttoNettoPageComponent implements OnInit {
     ];
   });
 
+  readonly canTransfer = computed(() => this.result().monthly.nettoCents > 0);
+
   display(monthlyCents: number): number {
     return this.showYearly() ? monthlyCents * 12 : monthlyCents;
+  }
+
+  addPosition(): void {
+    const next = this.positions().length === 1 ? 'Provision' : 'Position ' + (this.positions().length + 1);
+    this.positions.update(arr => [...arr, { id: newPositionId(), label: next, amountCents: 0 }]);
+  }
+
+  removePosition(index: number): void {
+    if (this.positions().length <= 1) return;
+    this.positions.update(arr => arr.filter((_, i) => i !== index));
+  }
+
+  updatePosition(index: number, patch: Partial<PayrollPosition>): void {
+    this.positions.update(arr => arr.map((p, i) => i === index ? { ...p, ...patch } : p));
   }
 
   onBirthYearStr(v: string): void {
@@ -337,6 +464,55 @@ export class BruttoNettoPageComponent implements OnInit {
   onZusatzStr(v: string): void {
     const n = parseFloat(v.replace(',', '.'));
     if (!isNaN(n)) this.kvZusatzbeitragPct.set(n);
+    // User edited manually — flip the KK select to "manuell".
+    if (this.krankenkasseId() !== KRANKENKASSE_MANUAL_ID) {
+      this.krankenkasseId.set(KRANKENKASSE_MANUAL_ID);
+    }
+  }
+
+  onKkSelected(id: string): void {
+    if (id === KRANKENKASSE_MANUAL_ID) return; // keep current Zusatzbeitrag
+    const kk = KRANKENKASSEN_2026.find(k => k.id === id);
+    if (kk) this.kvZusatzbeitragPct.set(kk.zusatzbeitragPct);
+  }
+
+  /**
+   * Open the recurring-create dialog, pre-filled with name/amount/payroll
+   * snapshot, plus a split row per Lohnzettel-position (each carrying its
+   * proportional share of the monthly net).
+   */
+  transferToFixkosten(): void {
+    if (!this.canTransfer()) return;
+    if (this.period() === 'yearly') {
+      this.toast.error('Zeitraum auf "pro Monat" stellen, dann übernehmen.');
+      return;
+    }
+
+    const splits: PrefillSplit[] = this.netSplits().map(s => ({
+      label:       (s.position.label?.trim() || 'Position') + ' (Netto)',
+      amountCents: s.nettoMonthlyCents,
+    }));
+
+    const incomeCategory = this.cats.active().find(c =>
+      c.type === 'FIXED_INCOME' || c.type === 'INCOME' || c.type === 'VARIABLE_INCOME',
+    ) ?? null;
+
+    const positionsLabel = this.positions().map(p => p.label).filter(Boolean).join(' + ');
+    const name = positionsLabel || 'Gehalt';
+
+    this.dialog.open({
+      title:     'Gehalt als Fixkosten anlegen',
+      component: RecurringCreateDialogComponent,
+      width:     'lg',
+      inputs: {
+        prefillName:         name,
+        prefillAmountCents:  this.result().monthly.nettoCents,
+        prefillCategoryId:   incomeCategory?.id ?? null,
+        prefillFrequency:    'MONTHLY',
+        prefillPayrollInput: this.input(),
+        prefillSplits:       splits.length > 1 ? splits : null,
+      },
+    });
   }
 
   ngOnInit(): void {

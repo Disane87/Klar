@@ -32,6 +32,7 @@ export interface CreateRecurringTransactionInput {
   icon?: string | null;
   isActive?: boolean;
   payrollInput?: Record<string, unknown> | null;
+  splits?: { label: string; amountCents: number; sortOrder?: number; note?: string | null }[];
 }
 
 export type UpdateRecurringTransactionInput = Partial<CreateRecurringTransactionInput>;
@@ -91,6 +92,7 @@ export class RecurringTransactionsService {
       payrollInput: input.payrollInput === undefined
         ? undefined
         : (input.payrollInput as Prisma.InputJsonValue | null),
+      splits: input.splits,
     });
   }
 
