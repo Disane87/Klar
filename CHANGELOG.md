@@ -1,3 +1,13 @@
+# [1.18.0](https://github.com/Disane87/Klar/compare/v1.17.0...v1.18.0) (2026-05-11)
+
+
+### Features
+
+* **accounts:** add repository.update with householdId scoping ([0f870b5](https://github.com/Disane87/Klar/commit/0f870b58b61119017a3e67f417f5f40ea537d67b))
+* **accounts:** expose GET /accounts and PATCH /accounts/:id ([3b98ed9](https://github.com/Disane87/Klar/commit/3b98ed9376d3f89167825bc5bcc50803ec312e79))
+* **accounts:** service.update with FinTS owner-only guard ([788136f](https://github.com/Disane87/Klar/commit/788136f34474e456470ec9e7888ed126f9003d24))
+* OpenAPI doc ([787cd4b](https://github.com/Disane87/Klar/commit/787cd4b0120ce8985155a6b4ecc5bb102d481c95))
+
 # [1.17.0](https://github.com/Disane87/Klar/compare/v1.16.0...v1.17.0) (2026-05-08)
 
 
