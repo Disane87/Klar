@@ -43,9 +43,11 @@ function buildService() {
   const repo = {
     findAll: vi.fn(),
     findById: vi.fn(),
+    findManyByIds: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    bulkUpdateVisibility: vi.fn().mockResolvedValue({ count: 0 }),
   } as unknown as TransactionsRepository;
   const accounts = {
     ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
@@ -227,6 +229,38 @@ describe('TransactionsService', () => {
       );
       await expect(service.remove(ctx, 'tx-1')).rejects.toThrow(BadRequestException);
       expect(repo.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('bulkSetVisibility', () => {
+    it('returns zero count for empty ids array', async () => {
+      const { service, repo } = buildService();
+      const result = await service.bulkSetVisibility(ctx, [], Visibility.PRIVATE);
+      expect(result).toEqual({ count: 0 });
+      expect(repo.bulkUpdateVisibility).not.toHaveBeenCalled();
+    });
+
+    it('rejects unknown visibility values', async () => {
+      const { service } = buildService();
+      await expect(
+        service.bulkSetVisibility(ctx, ['tx-1'], 'BOGUS' as Visibility),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('filters out PRIVATE rows of other users before updating', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findManyByIds).mockResolvedValue([
+        makeTx({ id: 'tx-1' }),
+        makeTx({ id: 'tx-2', visibility: Visibility.PRIVATE, createdByUserId: 'other' }),
+      ]);
+      vi.mocked(repo.bulkUpdateVisibility).mockResolvedValue({ count: 1 });
+      const result = await service.bulkSetVisibility(ctx, ['tx-1', 'tx-2'], Visibility.PRIVATE);
+      expect(result.count).toBe(1);
+      expect(repo.bulkUpdateVisibility).toHaveBeenCalledWith(
+        ['tx-1'],
+        'hh1',
+        Visibility.PRIVATE,
+      );
     });
   });
 

@@ -16,11 +16,11 @@
 
 | Feature | Description |
 |---|---|
-| **🏠 Multi-Household** | Share with partner/flatmates, per-entry visibility (shared vs. private) |
+| **🏠 Multi-Household** | Share with partner/flatmates, per-entry visibility (private by default — shared on explicit opt-in), multi-select bulk-visibility toggle on the transactions table |
 | **📊 Fixed Costs Dashboard** | Grouped by category, color-coded, net surplus calculation |
 | **🔁 Recurring Transactions** | Monthly, quarterly, yearly, or custom intervals — computed on-the-fly (no data bloat!) |
 | **📥 CSV Import (CAMT v2)** | Sparkasse CSV with fixed-cost matching, duplicate detection, learning categorization |
-| **🏦 FinTS Bank Sync** | Read-only PIN/TAN sync of bookings + balances, AES-256-GCM-encrypted credentials, 4-step setup wizard, 90-day SCA reauth watcher, daily cron + manual trigger |
+| **🏦 FinTS Bank Sync** | Read-only PIN/TAN sync of bookings + balances, AES-256-GCM-encrypted credentials, 5-step setup wizard (Bank → Login → TAN → Konten → Zeitraum) with bank-capability-aware initial backfill, 90-day SCA reauth watcher, daily cron + manual trigger |
 | **📌 Standing Orders (Daueraufträge)** | Auto-detected from FinTS bookings (MT940 GVC `158/159/164/166`, CAMT `STDO`, German free-text fallback) plus manually-created entries; bank-locked fields, frequency inference, dedicated `/app/daueraufträge` page |
 | **📒 Transactions** | Unified transactions table shared by `/app/buchungen` (cashflow lens, monthly scope) and `/app/banken/:c/:a` (per-account historical lens). Search · account · source · amount filters; quick-chip shortcuts (Recurring / Income / FinTS / Manual); per-month sticky group headers with signed monthly sum |
 | **📅 Monthly Budgets** | Set category budgets, track actuals vs. plan, see the delta |
@@ -116,10 +116,11 @@ For banks that ship a FinTS PIN/TAN endpoint, Klar can pull bookings + balances 
 2. **Login** — VR-Kennung / Anmeldename + PIN. The PIN is AES-256-GCM-encrypted with a server-side master key (`FINTS_MASTER_KEY`) and never logged.
 3. **TAN** — covers pushTAN, decoupled approval, mobile-TAN, photoTAN, chipTAN-QR. Empty input is the decoupled / pushTAN path; the bank's own banking app issues the prompt.
 4. **Accounts** — pick which sub-accounts (checking, savings, credit card) to attach as Klar `Account` rows. Subsequent syncs walk only the picked ones.
+5. **Zeitraum** — initial-sync date window with presets (30 / 90 / 180 / 365 days) bounded by the bank's advertised `HKKAZ/HKCAZ maxDays` parameter. Presets that exceed the bank limit are hidden so the user never picks a window that's guaranteed to fail. Banks that flag the statement segment as TAN-pflichtig surface a hint above the action row; "Überspringen" lands directly on done and lets the daily cron pick up new bookings from then on.
 
 **Sync model:**
 
-- **Initial sync** with the user-configurable date window, defaulting to 90 days back.
+- **Initial sync** triggered from the wizard's Zeitraum step or — if skipped — by the next daily cron tick.
 - **Daily cron** at 03:00 with a 2-day overlap window to catch backdated postings — the dedup hash makes overlap safe.
 - **Manual trigger** ("Sync now") — rate-limited to 1× / 5 min per connection.
 - **Reauth watcher** at 08:00: 7-day pre-warning notification, plus an `ACTIVE → REAUTH_REQUIRED` flip the moment the 89-day SCA window expires.
@@ -139,7 +140,7 @@ Bookings imported via FinTS carry `bankFieldsLockedAt` and `source='fints'`. The
 **Privacy & ownership:**
 
 - A FinTS connection belongs to the user who set it up. Other household members can see status (active / reauth-required / etc.) but cannot edit credentials, submit TANs, or delete the connection.
-- The resulting `Account` is household-shared by default; the wizard's per-account `Private` toggle scopes it to the owner.
+- The resulting `Account` defaults to `PRIVATE` — only the connection owner sees the balance and bookings until they flip it to `SHARED`. Cron-imported bookings are owned by the connection owner so the PRIVATE filter (`createdByUserId === userId`) never orphans them.
 - Per-account **rename** and **sync toggle** are exposed via the pencil button on each row in `/app/banken`. Renaming or pausing sync is restricted to the FinTS owner (API rejects others with `403`). Sync-disabled accounts keep their imported history but are silently skipped on every subsequent sync run; they appear muted with a small pause icon next to the name.
 
 **Backup note (operations):**
@@ -205,6 +206,19 @@ Implementation lives at `apps/web/src/app/shared/transactions/`. Pure helpers
 isolation; the row, quick-chips, filter-bar, and table-container components are
 assembled on top. `TransactionsStore.accountIdFilter` switches the store loader
 from month-scoped to account-historical mode without duplicating HTTP code.
+
+**Bulk visibility:** every row carries a leading checkbox. Selecting one or
+more reveals a sticky bar at the top of the table with a `Privat / Geteilt`
+segmented control that hits `PATCH /transactions/bulk-visibility` in a single
+round-trip. The control's pre-selected value reflects the consensus of the
+selection — when rows have mixed visibility, neither toggle is highlighted so
+a click is always an explicit choice. PRIVATE rows owned by other household
+members are silently filtered out of the update on the server, so you can
+never unilaterally expose someone else's private booking. Bank-locked rows
+are included because visibility is a Klar-side concept, not part of the
+bank-locked field set. New `Account` and `Transaction` rows default to
+`PRIVATE` — opt into `SHARED` per row, per account, or in bulk via this
+toolbar.
 
 ---
 
