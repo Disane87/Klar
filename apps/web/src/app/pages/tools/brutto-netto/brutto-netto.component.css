@@ -1,0 +1,11 @@
+/* Inherit the canonical Klar page wrapper used by Fixkosten et al. */
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-5) var(--s-6) calc(var(--s-16) + var(--safe-bottom));
+  gap: var(--s-5);
+  animation: klar-enter 160ms ease-out both;
+}

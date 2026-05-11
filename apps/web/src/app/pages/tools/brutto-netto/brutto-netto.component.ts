@@ -8,7 +8,7 @@ import {
   type RentenversicherungRegion,
   type Steuerklasse,
 } from '@klar/shared';
-import { KlarHeroComponent } from '../../../shared/ui/klar-hero.component';
+import { KlarTileComponent } from '../../../shared/ui/klar-tile.component';
 import { KlarFormFieldComponent } from '../../../shared/ui/klar-form-field.component';
 import { KlarInputComponent } from '../../../shared/ui/klar-input.component';
 import { KlarMoneyInputComponent } from '../../../shared/ui/klar-money-input.component';
@@ -77,9 +77,11 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
   selector: 'klar-brutto-netto-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden' },
+  styleUrl: './brutto-netto.component.css',
   imports: [
     FormsModule,
-    KlarHeroComponent,
+    KlarTileComponent,
     KlarFormFieldComponent,
     KlarInputComponent,
     KlarMoneyInputComponent,
@@ -88,124 +90,129 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
     KlarDonutChartComponent,
     KlarMoneyPipe,
   ],
-  host: { class: 'flex flex-col flex-1 min-h-0 min-w-0 overflow-y-auto' },
   template: `
-    <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16 max-w-3xl w-full mx-auto">
+    <div class="page">
 
-      <klar-hero
-        eyebrow="Tools"
-        title="Brutto-Netto-Rechner"
-        sub="Brutto eingeben — Netto inklusive Lohnsteuer, Soli, Kirchensteuer und Sozialabgaben."
-      />
+      <!-- ── Summary tiles (like Fixkosten) ───────────────────── -->
+      <div class="grid grid-cols-3 gap-2 md:gap-(--s-4)">
+        <klar-tile
+          label="Brutto / Monat"
+          [value]="(result().monthly.bruttoCents | klarMoney) ?? ''"
+        />
+        <klar-tile
+          label="Netto / Monat"
+          tone="success"
+          valueClass="text-(--success)"
+          [value]="(result().monthly.nettoCents | klarMoney) ?? ''"
+        />
+        <klar-tile
+          label="Abzüge"
+          [value]="(deductionsCents() | klarMoney) ?? ''"
+        />
+      </div>
 
-      <!-- ── Gehalt ─────────────────────────────────────── -->
-      <section class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden">
-        <header class="flex items-center justify-between px-5 py-3 border-b border-(--line-soft)">
-          <span class="eyebrow">Gehalt</span>
-        </header>
-        <div class="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-3 p-5">
-          <klar-form-field label="Brutto" for="bn-brutto">
-            <klar-money-input inputId="bn-brutto" [(amountCents)]="grossCents" placeholder="0,00" />
-          </klar-form-field>
-          <klar-form-field label="Zeitraum">
-            <klar-select [(value)]="period" [options]="periodOptions" />
-          </klar-form-field>
-        </div>
-      </section>
-
-      <!-- ── Steuer ─────────────────────────────────────── -->
-      <section class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden">
-        <header class="flex items-center justify-between px-5 py-3 border-b border-(--line-soft)">
-          <span class="eyebrow">Steuer</span>
-        </header>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-5">
-          <klar-form-field label="Steuerklasse">
-            <klar-select [(value)]="steuerklasse" [options]="steuerklasseOptions" />
-          </klar-form-field>
-          <klar-form-field label="Bundesland">
-            <klar-select [(value)]="bundesland" [options]="bundeslandOptions" />
-          </klar-form-field>
-          <klar-form-field label="Geburtsjahr">
-            <klar-input type="number" [ngModel]="birthYearStr()" (ngModelChange)="onBirthYearStr($event)" />
-          </klar-form-field>
-          <klar-form-field label="Kinderfreibeträge">
-            <klar-select [(value)]="kinderStr" [options]="kinderOptions" />
-          </klar-form-field>
-        </div>
-        <div class="px-5 pb-5">
-          <klar-switch
-            label="Kirchensteuer"
-            description="9 % vom LSt-Betrag (8 % in Bayern und Baden-Württemberg)."
-            [(checked)]="kirchensteuer"
-          />
-        </div>
-      </section>
-
-      <!-- ── Sozialversicherung ─────────────────────────── -->
-      <section class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden">
-        <header class="flex items-center justify-between px-5 py-3 border-b border-(--line-soft)">
-          <span class="eyebrow">Sozialversicherung</span>
-        </header>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-5">
-          <klar-form-field label="Krankenversicherung">
-            <klar-select [(value)]="krankenversicherung" [options]="kvOptions" />
-          </klar-form-field>
-          @if (krankenversicherung() === 'gesetzlich') {
-            <klar-form-field label="KV-Zusatzbeitrag (%)">
-              <klar-input type="number" suffix="%" [ngModel]="kvZusatzbeitragStr()" (ngModelChange)="onZusatzStr($event)" />
+      <!-- ── Gehalt ───────────────────────────────────────────── -->
+      <div>
+        <div class="section-head"><span>Gehalt</span></div>
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-3 p-(--s-4)">
+            <klar-form-field label="Brutto" for="bn-brutto">
+              <klar-money-input inputId="bn-brutto" [(amountCents)]="grossCents" placeholder="0,00" />
             </klar-form-field>
-          } @else {
-            <klar-form-field label="PKV-Beitrag / Monat" for="bn-pkv">
-              <klar-money-input inputId="bn-pkv" [(amountCents)]="pkvBeitragMonthlyCents" placeholder="0,00" />
+            <klar-form-field label="Zeitraum">
+              <klar-select [(value)]="period" [options]="periodOptions" />
             </klar-form-field>
-          }
-          <klar-form-field label="Rentenversicherung">
-            <klar-select [(value)]="rentenversicherungRegion" [options]="rvRegionOptions" />
-          </klar-form-field>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- ── Optional ───────────────────────────────────── -->
-      <section class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden">
-        <header class="flex items-center justify-between px-5 py-3 border-b border-(--line-soft)">
-          <span class="eyebrow">Optional</span>
-        </header>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-5">
-          <klar-form-field label="Geldwerter Vorteil / Monat" for="bn-gw">
-            <klar-money-input inputId="bn-gw" [(amountCents)]="geldwerterVorteilMonthlyCents" placeholder="0,00" />
-          </klar-form-field>
-          <klar-form-field label="Lohnsteuer-Freibetrag / Jahr" for="bn-fb">
-            <klar-money-input inputId="bn-fb" [(amountCents)]="lohnsteuerFreibetragYearlyCents" placeholder="0,00" />
-          </klar-form-field>
+      <!-- ── Steuer ───────────────────────────────────────────── -->
+      <div>
+        <div class="section-head"><span>Steuer</span></div>
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-(--s-4)">
+            <klar-form-field label="Steuerklasse">
+              <klar-select [(value)]="steuerklasse" [options]="steuerklasseOptions" />
+            </klar-form-field>
+            <klar-form-field label="Bundesland">
+              <klar-select [(value)]="bundesland" [options]="bundeslandOptions" />
+            </klar-form-field>
+            <klar-form-field label="Geburtsjahr">
+              <klar-input type="number" [ngModel]="birthYearStr()" (ngModelChange)="onBirthYearStr($event)" />
+            </klar-form-field>
+            <klar-form-field label="Kinderfreibeträge">
+              <klar-select [(value)]="kinderStr" [options]="kinderOptions" />
+            </klar-form-field>
+          </div>
+          <div class="px-(--s-4) pb-(--s-4)">
+            <klar-switch
+              label="Kirchensteuer"
+              description="9 % vom LSt-Betrag (8 % in Bayern und Baden-Württemberg)."
+              [(checked)]="kirchensteuer"
+            />
+          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- ── Ergebnis ───────────────────────────────────── -->
-      <section class="rounded-lg border border-(--line) bg-(--bg-1) overflow-hidden">
-        <header class="flex items-center justify-between px-5 py-3 border-b border-(--line-soft)">
-          <span class="eyebrow">Ergebnis</span>
+      <!-- ── Sozialversicherung ───────────────────────────────── -->
+      <div>
+        <div class="section-head"><span>Sozialversicherung</span></div>
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-(--s-4)">
+            <klar-form-field label="Krankenversicherung">
+              <klar-select [(value)]="krankenversicherung" [options]="kvOptions" />
+            </klar-form-field>
+            @if (krankenversicherung() === 'gesetzlich') {
+              <klar-form-field label="KV-Zusatzbeitrag (%)">
+                <klar-input type="number" suffix="%"
+                            [ngModel]="kvZusatzbeitragStr()"
+                            (ngModelChange)="onZusatzStr($event)" />
+              </klar-form-field>
+            } @else {
+              <klar-form-field label="PKV-Beitrag / Monat" for="bn-pkv">
+                <klar-money-input inputId="bn-pkv" [(amountCents)]="pkvBeitragMonthlyCents" placeholder="0,00" />
+              </klar-form-field>
+            }
+            <klar-form-field label="Rentenversicherung">
+              <klar-select [(value)]="rentenversicherungRegion" [options]="rvRegionOptions" />
+            </klar-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Optional ─────────────────────────────────────────── -->
+      <div>
+        <div class="section-head"><span>Optional</span></div>
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-(--s-4)">
+            <klar-form-field label="Geldwerter Vorteil / Monat" for="bn-gw">
+              <klar-money-input inputId="bn-gw" [(amountCents)]="geldwerterVorteilMonthlyCents" placeholder="0,00" />
+            </klar-form-field>
+            <klar-form-field label="Lohnsteuer-Freibetrag / Jahr" for="bn-fb">
+              <klar-money-input inputId="bn-fb" [(amountCents)]="lohnsteuerFreibetragYearlyCents" placeholder="0,00" />
+            </klar-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Aufschlüsselung ──────────────────────────────────── -->
+      <div>
+        <div class="section-head">
+          <span>Aufschlüsselung</span>
           <klar-switch label="Jahreswerte" [(checked)]="showYearly" />
-        </header>
-
-        <div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-5 px-5 py-5 items-center">
-          <klar-donut-chart
-            [segments]="donutSegments()"
-            [size]="160"
-            [thickness]="28"
-            [showLegend]="false"
-            ariaLabel="Verteilung Netto Steuern Sozialabgaben"
-          />
-          <div class="flex flex-col gap-2 min-w-0">
-            <div class="text-[10px] uppercase tracking-widest text-(--fg-3)">
-              Netto · {{ showYearly() ? 'pro Jahr' : 'pro Monat' }}
-            </div>
-            <div class="font-mono text-(--success)"
-                 style="font-family: var(--font-display); font-size: 32px; font-variant-numeric: tabular-nums; line-height: 1.05;">
-              {{ display(result().monthly.nettoCents) | klarMoney }}
-            </div>
-            <ul class="flex flex-col gap-1 text-[12px] mt-2">
+        </div>
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-(--s-4) p-(--s-4) items-center">
+            <klar-donut-chart
+              [segments]="donutSegments()"
+              [size]="160"
+              [thickness]="28"
+              [showLegend]="false"
+              ariaLabel="Verteilung Netto Steuern Sozialabgaben"
+            />
+            <ul class="flex flex-col gap-1.5 text-[13px] min-w-0">
               @for (seg of donutSegments(); track seg.label) {
-                <li class="flex items-center justify-between">
+                <li class="flex items-center justify-between gap-3">
                   <span class="flex items-center gap-2 text-(--fg-1)">
                     <span class="inline-block w-2.5 h-2.5 rounded-sm" [style.background]="seg.color"></span>
                     {{ seg.label }}
@@ -217,39 +224,28 @@ const KINDER_OPTIONS: KlarSelectOption[] = [
               }
             </ul>
           </div>
+
+          @for (row of breakdown(); track row.label) {
+            <div class="row" [class.subtotal]="row.emphasize">
+              <div class="lhs">
+                <span class="name">{{ row.label }}</span>
+              </div>
+              <span class="amt mono"
+                    [class.pos]="row.tone === 'positive'"
+                    [class.text-(--danger)]="row.tone === 'negative'">
+                {{ row.signPrefix }}{{ display(row.cents) | klarMoney }}
+              </span>
+            </div>
+          }
         </div>
+      </div>
 
-        <table class="w-full text-[13px] border-t border-(--line-soft)">
-          <tbody>
-            @for (row of breakdown(); track row.label) {
-              <tr [class.border-b]="!row.divider"
-                  [class.border-t]="row.divider === 'top'"
-                  [class.border-(--line-soft)]="!row.divider"
-                  [class.border-(--line)]="row.divider === 'top'"
-                  [class.font-medium]="row.emphasize">
-                <td class="px-5 py-2"
-                    [class.text-(--fg-2)]="!row.emphasize"
-                    [class.text-(--fg-1)]="row.emphasize">
-                  {{ row.label }}
-                </td>
-                <td class="px-5 py-2 text-right font-mono"
-                    [class.text-(--success)]="row.tone === 'positive'"
-                    [class.text-(--danger)]="row.tone === 'negative'"
-                    [class.text-(--fg-1)]="row.tone === 'neutral'"
-                    style="font-variant-numeric: tabular-nums;">
-                  {{ row.signPrefix }}{{ display(row.cents) | klarMoney }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <p class="text-[11px] text-(--fg-2) leading-relaxed max-w-[70ch]">
+        Berechnung mit 2026er Werten (§32a EStG, Sozialversicherungs-Rechengrößen-Verordnung 2026,
+        PV 3,6 %, BBG-KV/PV 5.812,50 €, BBG-RV/AV 8.450 €). Soli-Freigrenze 20.350 €
+        (40.700 € im Splittingverfahren). Richtgrößen, keine verbindliche Steuerauskunft.
+      </p>
 
-        <p class="px-5 py-3 text-[11px] text-(--fg-2) leading-relaxed border-t border-(--line-soft)">
-          Berechnung mit 2026er Werten (§32a EStG, Sozialversicherungs-Rechengrößen-Verordnung 2026,
-          PV 3,6 %, BBG-KV/PV 5.812,50 €, BBG-RV/AV 8.450 €). Soli-Freigrenze 20.350 €
-          (40.700 € im Splittingverfahren). Richtgrößen, keine verbindliche Steuerauskunft.
-        </p>
-      </section>
     </div>
   `,
 })
@@ -279,7 +275,6 @@ export class BruttoNettoPageComponent implements OnInit {
 
   readonly showYearly = signal(false);
 
-  // String views for the klar-input bridges (klar-input emits string).
   readonly birthYearStr        = computed(() => String(this.birthYear()));
   readonly kvZusatzbeitragStr  = computed(() => String(this.kvZusatzbeitragPct()));
 
@@ -301,6 +296,11 @@ export class BruttoNettoPageComponent implements OnInit {
 
   readonly result = computed(() => calculateNet(this.input()));
 
+  readonly deductionsCents = computed(() => {
+    const m = this.result().monthly;
+    return m.steuernCents + m.sozialabgabenCents;
+  });
+
   readonly donutSegments = computed<DonutSegment[]>(() => {
     const m = this.result().monthly;
     return [
@@ -313,15 +313,15 @@ export class BruttoNettoPageComponent implements OnInit {
   readonly breakdown = computed(() => {
     const m = this.result().monthly;
     return [
-      { label: 'Brutto',                cents: m.bruttoCents,        tone: 'neutral'  as const, signPrefix: '',  emphasize: false, divider: null },
-      { label: 'Lohnsteuer',            cents: m.lohnsteuerCents,    tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Solidaritätszuschlag',  cents: m.soliCents,          tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Kirchensteuer',         cents: m.kirchensteuerCents, tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Krankenversicherung',   cents: m.kvCents, tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Pflegeversicherung',    cents: m.pvCents, tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Rentenversicherung',    cents: m.rvCents, tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Arbeitslosenvers.',     cents: m.avCents, tone: 'negative' as const, signPrefix: '−', emphasize: false, divider: null },
-      { label: 'Netto',                 cents: m.nettoCents, tone: 'positive' as const, signPrefix: '', emphasize: true, divider: 'top' as const },
+      { label: 'Brutto',                cents: m.bruttoCents,        tone: 'neutral'  as const, signPrefix: '',  emphasize: false },
+      { label: 'Lohnsteuer',            cents: m.lohnsteuerCents,    tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Solidaritätszuschlag',  cents: m.soliCents,          tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Kirchensteuer',         cents: m.kirchensteuerCents, tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Krankenversicherung',   cents: m.kvCents,            tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Pflegeversicherung',    cents: m.pvCents,            tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Rentenversicherung',    cents: m.rvCents,            tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Arbeitslosenvers.',     cents: m.avCents,            tone: 'negative' as const, signPrefix: '−', emphasize: false },
+      { label: 'Netto',                 cents: m.nettoCents,         tone: 'positive' as const, signPrefix: '',  emphasize: true  },
     ];
   });
 
