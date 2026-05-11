@@ -323,7 +323,7 @@ Editieren von Listen-Items IMMER via Modal/Dialog — niemals inline (App-weite 
 8 Shared Berechnungs-Funktionen ·
 9 Overview-Endpoints ·
 10 API-Keys + Public API ·
-11 Planspiel (lokaler Signal-State) ·
+11 Planspiel (lokaler Signal-State, eingebetteter Modus auf der Fixkosten-Seite — keine eigene Route) ·
 12 Admin-Panel ·
 13 UI-Politur ·
 14 Hardening (CSP, Backups, Prod-Compose, Doku).

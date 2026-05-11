@@ -62,11 +62,6 @@
     }
 
     <!-- Action buttons -->
-    @if (showPlanspiel()) {
-      <klar-button tone="ghost" size="sm" icon="planspiel" (click)="planspielClick.emit()">
-        Planspiel
-      </klar-button>
-    }
     @if (showExport()) {
       <klar-button tone="ghost" size="sm" icon="download" (click)="exportClick.emit()">
         PDF

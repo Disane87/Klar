@@ -43,11 +43,9 @@ export class MonatPageComponent {
     this.pageHeader.set({
       title:         this.monthLabel(),
       subtitle:      'Cashflow · Monatsansicht',
-      showPlanspiel: true,
       showAdd:       true,
       showUserSwitch: true,
       addLabel:      'Buchung',
-      onPlanspiel:   () => this.router.navigate(['/app/planspiel']),
       onAdd:         () => this.router.navigate(['/app/buchungen']),
     });
 

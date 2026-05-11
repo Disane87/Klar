@@ -21,10 +21,6 @@ describe('PageHeaderService', () => {
       expect(service.showAdd()).toBe(false);
     });
 
-    it('should have showPlanspiel false', () => {
-      expect(service.showPlanspiel()).toBe(false);
-    });
-
     it('should have showExport false', () => {
       expect(service.showExport()).toBe(false);
     });
@@ -52,11 +48,6 @@ describe('PageHeaderService', () => {
     it('should set showAdd to true', () => {
       service.set({ title: 'Test', showAdd: true });
       expect(service.showAdd()).toBe(true);
-    });
-
-    it('should set showPlanspiel to true', () => {
-      service.set({ title: 'Test', showPlanspiel: true });
-      expect(service.showPlanspiel()).toBe(true);
     });
 
     it('should set showExport to true', () => {

@@ -79,15 +79,6 @@ test.describe('Page navigation', () => {
     await expect(content.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('navigates to Planspiel page', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    // Planspiel header "Planspiel" heading is always rendered
-    const heading = page.locator('h1', { hasText: 'Planspiel' });
-    await expect(heading).toBeVisible({ timeout: 10000 });
-  });
-
   test('navigates to Haushalt page', async ({ page }) => {
     await page.goto('/app/haushalt');
     await page.waitForLoadState('networkidle');

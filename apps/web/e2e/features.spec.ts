@@ -3,7 +3,7 @@
  * All tests are authenticated via the shared authedCtx fixture (see fixtures.ts).
  *
  * Coverage:
- *  Planspiel  — add income/expense, delete, yearly frequency, reset (local state only)
+ *  Planspiel  — toggle on/off lives inside the Fixkosten page (no separate route)
  *  Projekte   — filter buttons
  *  Buchungen  — stat strip, forward/back month navigation
  *  Monat      — month navigation, stat cards
@@ -13,232 +13,33 @@
 import { authedTest as test, expect } from './fixtures';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// PLANSPIEL — local what-if mode embedded in Fixkosten, no separate route
 // ─────────────────────────────────────────────────────────────────────────────
+test.describe('Planspiel (Fixkosten mode)', () => {
 
-/** Open the Planspiel add-entry form and fill it. Submit is left to the caller. */
-async function fillPlanspielForm(
-  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
-  opts: {
-    label: string;
-    amount: string;
-    type?: 'income' | 'expense';
-    frequency?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
-  },
-): Promise<void> {
-  // Open form if not already open
-  const addBtn = page.locator('button:has-text("Posten hinzufügen")');
-  if (await addBtn.isVisible()) {
-    await addBtn.click();
-  }
-  if (opts.type === 'expense') {
-    await page.locator('button:has-text("Ausgabe")').click();
-  } else {
-    await page.locator('button:has-text("Einnahme")').click();
-  }
-  await page.locator('input[placeholder="z.B. Gehalt, Miete…"]').fill(opts.label);
-  await page.locator('input[placeholder="0,00"]').fill(opts.amount);
-  if (opts.frequency && opts.frequency !== 'MONTHLY') {
-    await page.locator('select').selectOption(opts.frequency);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PLANSPIEL — fully local, no API calls, fully deterministic
-// ─────────────────────────────────────────────────────────────────────────────
-test.describe('Planspiel', () => {
-
-  test('shows empty state and zero surplus on first load', async ({ page }) => {
-    await page.goto('/app/planspiel');
+  test('toggle is rendered in the Fixkosten side panel and switches the hypo chip on', async ({ page }) => {
+    await page.goto('/app/fixkosten');
     await page.waitForLoadState('networkidle');
 
-    // Empty state: calculator icon + helper text
-    const emptyMsg = page.locator('p:has-text("Füge Einnahmen und Ausgaben hinzu")');
-    await expect(emptyMsg).toBeVisible({ timeout: 10000 });
+    const toggleLabel = page.locator('text=Was wäre, wenn …?');
+    await expect(toggleLabel).toBeVisible({ timeout: 10000 });
 
-    // Surplus/deficit display starts at 0,00 €
-    const surplusDisplay = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplusDisplay).toContainText('0,00');
+    // Initially off — no hypo chip in the side-panel section heading
+    const sectionHead = page.locator('.section-head', { hasText: 'Planspiel' });
+    await expect(sectionHead).toBeVisible();
+    await expect(sectionHead.locator('text=HYPOTHETISCH')).toHaveCount(0);
 
-    // "Posten hinzufügen" floating button is visible
-    await expect(page.locator('button:has-text("Posten hinzufügen")')).toBeVisible();
+    // Turn on
+    await toggleLabel.click();
+    await expect(sectionHead.locator('text=HYPOTHETISCH')).toBeVisible();
 
-    // "Zurücksetzen" reset button is hidden (no entries yet)
+    // Reset button shows up while active
+    await expect(page.locator('button:has-text("Zurücksetzen")')).toBeVisible();
+
+    // Turn off again — chip and reset button disappear
+    await toggleLabel.click();
+    await expect(sectionHead.locator('text=HYPOTHETISCH')).toHaveCount(0);
     await expect(page.locator('button:has-text("Zurücksetzen")')).not.toBeVisible();
-  });
-
-  test('can open the add-entry form and cancel without adding', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    await page.locator('button:has-text("Posten hinzufügen")').click();
-
-    // Form is visible
-    await expect(page.locator('input[placeholder="z.B. Gehalt, Miete…"]')).toBeVisible();
-    await expect(page.locator('input[placeholder="0,00"]')).toBeVisible();
-
-    // "Hinzufügen" is disabled while label and amount are empty
-    await expect(page.locator('button:has-text("Hinzufügen")')).toBeDisabled();
-
-    // Cancel → form disappears, floating button returns
-    await page.locator('button:has-text("Abbrechen")').click();
-    await expect(page.locator('input[placeholder="z.B. Gehalt, Miete…"]')).not.toBeVisible();
-    await expect(page.locator('button:has-text("Posten hinzufügen")')).toBeVisible();
-  });
-
-  test('can add an income entry and it appears in the list', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    await fillPlanspielForm(page, { label: 'Gehalt', amount: '3000', type: 'income' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Entry appears in the list
-    await expect(page.locator('text=Gehalt')).toBeVisible();
-
-    // Surplus shows 3 000,00 €
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('3.000,00');
-
-    // Summary box contains the income total
-    await expect(page.locator('span.text-success.font-mono').first()).toContainText('3.000,00');
-  });
-
-  test('can add an expense entry and surplus is calculated correctly', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    // Add income
-    await fillPlanspielForm(page, { label: 'Gehalt', amount: '3000', type: 'income' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Add expense
-    await fillPlanspielForm(page, { label: 'Miete', amount: '1200', type: 'expense' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Both entries in the list
-    await expect(page.locator('text=Gehalt')).toBeVisible();
-    await expect(page.locator('text=Miete')).toBeVisible();
-
-    // Surplus: 3 000 − 1 200 = 1 800 €
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('1.800,00');
-  });
-
-  test('yearly frequency converts to correct monthly equivalent', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    await fillPlanspielForm(page, {
-      label: 'KFZ-Versicherung',
-      amount: '1200',
-      frequency: 'YEARLY',
-    });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Monthly equivalent: 1 200 / 12 = 100 €
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('100,00');
-
-    // The entry row shows the total amount as well
-    await expect(page.locator('text=1.200,00 € gesamt')).toBeVisible();
-  });
-
-  test('quarterly frequency converts to correct monthly equivalent', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    await fillPlanspielForm(page, {
-      label: 'Quartalsbonus',
-      amount: '900',
-      frequency: 'QUARTERLY',
-    });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Monthly equivalent: 900 / 3 = 300 €
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('300,00');
-  });
-
-  test('can delete an entry and empty state returns', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    // Add one entry
-    await fillPlanspielForm(page, { label: 'Lösch-Mich', amount: '500' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-    await expect(page.locator('text=Lösch-Mich')).toBeVisible();
-
-    // Delete it
-    await page.locator('button[aria-label="Posten entfernen"]').click();
-
-    // Entry gone, empty state returns
-    await expect(page.locator('text=Lösch-Mich')).not.toBeVisible();
-    await expect(page.locator('button:has-text("Posten hinzufügen")')).toBeVisible();
-
-    // Surplus back to 0
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('0,00');
-  });
-
-  test('can select a color for an entry', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    await page.locator('button:has-text("Posten hinzufügen")').click();
-
-    // Color picker is visible
-    const colorButtons = page.locator('button.rounded-full');
-    await expect(colorButtons.first()).toBeVisible();
-
-    // Click the second color
-    await colorButtons.nth(1).click();
-
-    // Second color button gets ring classes (selected indicator)
-    await expect(colorButtons.nth(1)).toHaveClass(/ring-2/);
-  });
-
-  test('Zurücksetzen clears all entries', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    // Add two entries
-    await fillPlanspielForm(page, { label: 'Eintrag A', amount: '1000' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    await fillPlanspielForm(page, { label: 'Eintrag B', amount: '500', type: 'expense' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    await expect(page.locator('text=Eintrag A')).toBeVisible();
-    await expect(page.locator('text=Eintrag B')).toBeVisible();
-
-    // Reset
-    await page.locator('button:has-text("Zurücksetzen")').click();
-
-    // All entries cleared, empty state
-    await expect(page.locator('text=Eintrag A')).not.toBeVisible();
-    await expect(page.locator('text=Eintrag B')).not.toBeVisible();
-    await expect(page.locator('button:has-text("Posten hinzufügen")')).toBeVisible();
-
-    // Surplus reset to 0
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('0,00');
-  });
-
-  test('deficit state shows when expenses exceed income', async ({ page }) => {
-    await page.goto('/app/planspiel');
-    await page.waitForLoadState('networkidle');
-
-    // Only add an expense — no income
-    await fillPlanspielForm(page, { label: 'Miete', amount: '1500', type: 'expense' });
-    await page.locator('button:has-text("Hinzufügen")').click();
-
-    // Summary box labels change to "Defizit"
-    await expect(page.locator('span.text-danger').first()).toBeVisible();
-
-    // Surplus value is negative
-    const surplus = page.locator('span.font-mono.tabular-nums.text-3xl');
-    await expect(surplus).toContainText('1.500,00');
   });
 
 });

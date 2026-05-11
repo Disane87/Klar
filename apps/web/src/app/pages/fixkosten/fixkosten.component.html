@@ -203,27 +203,27 @@
       <!-- RIGHT — side panel (Szenario + Status diesen Monat + Notiz) — bundle PageFixkosten -->
       <div>
         <!-- Szenario / Planspiel -->
-        <div class="section-head">Szenario</div>
-        <a class="side-card szenario-card no-underline block" routerLink="/app/planspiel"
-           aria-label="Planspiel öffnen">
-          <div class="flex items-center gap-3">
-            <span class="size-8 rounded-md grid place-items-center shrink-0"
-                  style="background: var(--accent-soft); color: var(--accent);">
-              <klar-icon name="planspiel" [size]="14" />
-            </span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="eyebrow">Planspiel · Szenario</span>
-                <klar-hypo-chip />
-              </div>
-              <span class="text-[14px] font-medium text-(--fg) truncate block"
-                    style="font-family: var(--font-display); letter-spacing: -0.01em;">
-                Was bleibt, wenn …?
-              </span>
+        <div class="section-head flex items-center gap-2">
+          <span>Planspiel</span>
+          @if (planspielActive()) { <klar-hypo-chip /> }
+        </div>
+        <div class="side-card">
+          <klar-switch
+            [checked]="planspielActive()"
+            (checkedChange)="togglePlanspiel()"
+            label="Was wäre, wenn …?"
+            description="Beträge, Provision, Posten lokal verändern. Wird nicht gespeichert."
+          />
+          @if (planspielActive()) {
+            <div class="flex items-center justify-between mt-(--s-3) pt-(--s-3) border-t border-(--line-soft)">
+              <span class="text-[12px] text-(--fg-2)">Echte Fixkosten neu laden</span>
+              <button type="button" hlmBtn variant="ghost" size="sm" (click)="resetPlanspiel()">
+                <klar-icon name="refresh" [size]="13" />
+                Zurücksetzen
+              </button>
             </div>
-            <klar-icon name="chevron-right" [size]="14" class="text-(--fg-2) shrink-0" />
-          </div>
-        </a>
+          }
+        </div>
 
         <!-- Status diesen Monat — bundle PageFixkosten 4 workflow counters -->
         <div class="section-head">Status diesen Monat</div>

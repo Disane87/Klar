@@ -1,5 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { PlanspielStore } from '../../core/planspiel/planspiel.store';
 import { HlmInputDirective } from '../../shared/ui/hlm/hlm-input.directive';
 import { HlmLabelDirective } from '../../shared/ui/hlm/hlm-label.directive';
 import { KlarSelectComponent } from '../../shared/ui/klar-select.component';
@@ -36,7 +37,11 @@ export class RecurringCreateDialogComponent {
   private household  = inject(HouseholdStore);
   private recurring  = inject(RecurringTransactionsService);
   private toast      = inject(KlarToastService);
+  private planspiel  = inject(PlanspielStore);
   protected cats     = inject(CategoriesStore);
+
+  /** When true, the new entry is added to the local PlanspielStore instead of the backend. */
+  readonly planspielMode = input<boolean>(false);
 
   readonly name       = signal('');
   readonly amountCents = signal<number | null>(null);
@@ -115,6 +120,25 @@ export class RecurringCreateDialogComponent {
 
     this.saving.set(true);
     this.err.set('');
+
+    if (this.planspielMode()) {
+      const cat = this.cats.all().find(c => c.id === this.categoryId());
+      this.planspiel.addEntry({
+        label:        this.name().trim(),
+        amountCents:  actualCents,
+        frequency:    freq,
+        color:        this.color() ?? cat?.color ?? '#6366f1',
+        categoryId:   cat?.id,
+        categoryName: cat?.name,
+        categoryType: cat?.type,
+        categorySortOrder: cat?.sortOrder ?? 0,
+      });
+      this.saving.set(false);
+      this.dialog.close();
+      this.toast.success('Im Planspiel hinzugefügt');
+      return;
+    }
+
     try {
       await this.recurring.create(hid, {
         name:        this.name().trim(),

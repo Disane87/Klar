@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
-import { RouterLink } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarHypoChipComponent } from '../../shared/ui/klar-hypo-chip.component';
+import { KlarSwitchComponent } from '../../shared/ui/klar-switch.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
@@ -31,7 +31,7 @@ import type { RecurringFrequency } from '@klar/shared';
   selector: 'app-fixkosten',
   standalone: true,
   host: { class: 'flex flex-col flex-1 min-h-0 overflow-hidden' },
-  imports: [NgClass, RouterLink, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarMoneyPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, KlarFabComponent, HlmButtonDirective, KlarTileComponent],
+  imports: [NgClass, KlarSkeletonComponent, KlarIconComponent, KlarHypoChipComponent, KlarSwitchComponent, KlarMoneyPipe, KlarAsyncStateComponent, KlarLoadingTplDirective, KlarFabComponent, HlmButtonDirective, KlarTileComponent],
   templateUrl: './fixkosten.component.html',
   styleUrl: './fixkosten.component.css',
 })
@@ -63,7 +63,6 @@ export class FixkostenPageComponent {
     this.pageHeader.set({
       title:         'Fixkosten-Übersicht',
       subtitle:      this.subtitleLabel(),
-      showPlanspiel: false,
       showAdd:       true,
       showExport:    true,
       showUserSwitch: true,
@@ -157,11 +156,40 @@ export class FixkostenPageComponent {
   // ── Create new ───────────────────────────────────────────────────────────────
 
   openCreate(): void {
+    const planspiel = this.planspielActive();
     this.dialogService.open({
-      title:     'Fixkosten erstellen',
+      title:     planspiel ? 'Eintrag hinzufügen (Planspiel)' : 'Fixkosten erstellen',
       component: RecurringCreateDialogComponent,
       width:     'md',
+      inputs:    { planspielMode: planspiel },
     });
+  }
+
+  async resetPlanspiel(): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Planspiel zurücksetzen?',
+      message: 'Alle lokalen Änderungen werden verworfen und die echten Fixkosten neu geladen.',
+      confirmLabel: 'Zurücksetzen',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    const data = this.store.fixedCosts();
+    if (data) {
+      const allItems = data.groups.flatMap(g =>
+        g.items.map(item => ({
+          name: item.name,
+          amountCents: item.amountCents,
+          monthlyEquivalentCents: item.monthlyEquivalentCents,
+          frequency: item.frequency as RecurringFrequency,
+          categoryId: g.categoryId,
+          categoryName: g.categoryName,
+          categoryColor: g.categoryColor,
+          categoryType: g.categoryType,
+          categorySortOrder: g.categorySortOrder ?? 0,
+        }))
+      );
+      this.planspielStore.loadFromFixkosten(allItems);
+    }
   }
 
   // ── Bulk Selection ───────────────────────────────────────────────────────────

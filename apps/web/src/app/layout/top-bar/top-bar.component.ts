@@ -29,14 +29,12 @@ export class TopBarComponent {
   title         = input('');
   subtitle      = input<string>();
   monthChip     = input('April 2026');
-  showPlanspiel = input(false);
   showAdd       = input(false);
   showExport     = input(false);
   addLabel      = input('Buchung');
   stats         = input<PageStat[]>([]);
 
   addClick       = output<void>();
-  planspielClick = output<void>();
   exportClick    = output<void>();
 
   /** Local mirror of the service's scope value — gives us a model<> sink. */

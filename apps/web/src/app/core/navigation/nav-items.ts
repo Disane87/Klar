@@ -47,7 +47,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: 'statistik', label: 'Statistik',    icon: 'trending',      route: '/app/statistik', tone: 'var(--cat-freizeit)', section: 'main' },
   { id: 'vertraege', label: 'Verträge',     icon: 'shield',        route: '/app/vertraege', tone: 'var(--cat-versicher)', section: 'main' },
   { id: 'recurring', label: 'Daueraufträge', icon: 'wiederkehrend', route: '/app/daueraufträge', tone: 'var(--cat-versicher)', section: 'main' },
-  { id: 'planspiel', label: 'Planspiel',    icon: 'planspiel',     route: '/app/planspiel', tone: 'var(--cat-abos)',     section: 'main' },
   { id: 'tresor',    label: 'Tresor',       icon: 'tresor',        route: '/app/tresor',    tone: 'var(--cat-spar)',     section: 'main' },
   { id: 'banken',    label: 'Banken',       icon: 'wallet',        route: '/app/banken',    tone: 'var(--cat-gesund)',   section: 'main' },
   { id: 'import',    label: 'CSV-Import',   icon: 'receipt',       route: '/app/import',    tone: 'var(--cat-gesund)',   section: 'main' },

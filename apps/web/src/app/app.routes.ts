@@ -102,13 +102,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'planspiel',
-        loadComponent: () =>
-          import('./pages/planspiel/planspiel.component').then(
-            m => m.PlanspielPageComponent,
-          ),
-      },
-      {
         path: 'tresor',
         loadComponent: () =>
           import('./pages/tresor/tresor.component').then(

@@ -29,7 +29,6 @@ export class ProjektePageComponent {
     inject(PageHeaderService).set({
       title:         'Projekte',
       subtitle:      'Vorhaben · Budgets gegen Ist',
-      showPlanspiel: false,
       showAdd:       true,
       addLabel:      'Neues Projekt',
       onAdd:         () => this.openCreate(),
