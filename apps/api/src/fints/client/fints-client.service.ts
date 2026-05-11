@@ -8,6 +8,7 @@ import type {
 } from 'lib-fints';
 import type { FintsSessionState } from './fints-session-state';
 import { loadLibFints } from './lib-fints-loader';
+import { APP_VERSION } from '../../common/app-version';
 
 /**
  * lib-fints ships ESM-only (`"type": "module"` + import-only `exports`),
@@ -54,8 +55,7 @@ export class FintsClientService {
   /** Klar's product registration data. ZKA-issued IDs go in env when we apply. */
   private static readonly PRODUCT_ID =
     process.env['FINTS_PRODUCT_ID'] ?? 'klar-dev';
-  private static readonly PRODUCT_VERSION =
-    process.env['FINTS_PRODUCT_VERSION'] ?? '0.1';
+  private static readonly PRODUCT_VERSION = APP_VERSION;
 
   /** TAN reflection window: how long we keep the FinTSClient alive after a
    *  synchronize() that returned requiresTan. lib-fints' continuation
