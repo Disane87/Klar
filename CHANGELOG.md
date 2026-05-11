@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/Disane87/Klar/compare/v1.19.1...v1.19.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* **api:** resolve root package.json by walking upward at runtime ([ee5a721](https://github.com/Disane87/Klar/commit/ee5a7216a92bf68f3157ea0a51c2c97af96fedd9))
+
 ## [1.19.1](https://github.com/Disane87/Klar/compare/v1.19.0...v1.19.1) (2026-05-11)
 
 
