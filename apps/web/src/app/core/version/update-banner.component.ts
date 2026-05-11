@@ -9,7 +9,7 @@ import { RouterLink } from '@angular/router';
   imports: [KlarIconComponent, RouterLink],
   template: `
     @if (version.showUpdateBanner()) {
-      <div class="flex items-center justify-between gap-3 px-4 py-2 bg-accent/10 border-b border-accent/20 text-sm shrink-0">
+      <div class="flex items-center justify-between gap-3 px-4 py-2 max-md:pt-[calc(0.5rem+var(--safe-top))] bg-accent/10 border-b border-accent/20 text-sm shrink-0">
         <div class="flex items-center gap-2 text-accent">
           <klar-icon name="arrow-up" [size]="14" [stroke]="2" />
           <span class="font-medium">

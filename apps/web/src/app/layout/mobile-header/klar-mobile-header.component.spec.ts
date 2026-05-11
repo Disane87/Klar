@@ -39,6 +39,17 @@ describe('KlarMobileHeaderComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Mai 2026');
   });
 
+  it('includes safe-top padding so the sticky header does not bleed into the iOS notch on scroll', () => {
+    const fixture = TestBed.createComponent(KlarMobileHeaderComponent);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const cls = host.className;
+    expect(cls).toContain('sticky');
+    expect(cls).toContain('top-0');
+    expect(cls).toContain('pt-(--safe-top)');
+    expect(cls).toContain('h-[calc(var(--header-h)+var(--safe-top))]');
+  });
+
   it('prefers the explicit chipLabel from PageHeaderService over the month fallback', () => {
     (pageHeaderStub.chipLabel as any).set('Q2 · 2026');
     const fixture = TestBed.createComponent(KlarMobileHeaderComponent);

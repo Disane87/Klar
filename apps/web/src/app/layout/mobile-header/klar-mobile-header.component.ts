@@ -12,7 +12,7 @@ import { OverviewStore } from '../../core/overview/overview.store';
   host: {
     class:
       'flex md:hidden sticky top-0 z-5 shrink-0 ' +
-      'h-(--header-h) px-4 ' +
+      'h-[calc(var(--header-h)+var(--safe-top))] pt-(--safe-top) px-4 ' +
       'border-b border-(--line) bg-(--bg) ' +
       'items-center justify-between',
   },
