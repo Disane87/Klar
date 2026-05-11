@@ -166,6 +166,16 @@ describe('ImportPipelineService.ingest', () => {
     );
   });
 
+  it('dedups bookings that repeat the same bankTxId within one batch', async () => {
+    const { service, repo } = buildService();
+    const first = makeBooking({ bankTxId: 'EREF-DUP', bookingDate: '2026-04-01', amountCents: -1000 });
+    const second = makeBooking({ bankTxId: 'EREF-DUP', bookingDate: '2026-04-02', amountCents: -2000 });
+    const result = await service.ingest([first, second], ctxFinTS);
+    expect(result.imported).toBe(1);
+    expect(result.skippedExternalRef).toBe(1);
+    expect(repo.createTransaction).toHaveBeenCalledOnce();
+  });
+
   it('handles a mix of new + duplicate-by-ref + in-batch hash dup in one batch', async () => {
     const { service, repo } = buildService();
     vi.mocked(repo.findExistingRefs).mockResolvedValue(['EREF-OLD']);

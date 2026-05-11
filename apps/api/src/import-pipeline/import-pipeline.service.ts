@@ -94,10 +94,11 @@ export class ImportPipelineService {
         continue;
       }
 
-      // Track the freshly-inserted hash so dupes within the same batch
+      // Track freshly-inserted ref + hash so dupes within the same batch
       // skip too — banks sometimes return the same posting on the
-      // overlap window.
+      // overlap window (and occasionally repeat bankTxId in one response).
       existingHashSet.add(hash);
+      if (booking.bankTxId) existingRefSet.add(booking.bankTxId);
 
       await this.repo.createTransaction({
         householdId: ctx.householdId,
