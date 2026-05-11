@@ -1,3 +1,10 @@
+## [1.20.2](https://github.com/Disane87/Klar/compare/v1.20.1...v1.20.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* **api:** load lib-fints by reading package.json from disk ([decef8a](https://github.com/Disane87/Klar/commit/decef8a6c800332cc08e6086a999418aa7150377))
+
 ## [1.20.1](https://github.com/Disane87/Klar/compare/v1.20.0...v1.20.1) (2026-05-11)
 
 
