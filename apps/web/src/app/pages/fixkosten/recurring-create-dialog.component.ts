@@ -12,6 +12,7 @@ import { KlarIconPickerComponent } from '../../shared/ui/klar-icon-picker.compon
 import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarSwitchComponent } from '../../shared/ui/klar-switch.component';
 import { KlarPayrollFormComponent, type PayrollApplyEvent } from '../../shared/ui/klar-payroll-form.component';
+import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import type { GrossToNetInput } from '@klar/shared';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
@@ -35,7 +36,7 @@ export interface PrefillSplit {
     HlmInputDirective, HlmLabelDirective, KlarSelectComponent,
     KlarColorPickerComponent, KlarIconPickerComponent, KlarComboboxComponent,
     KlarMoneyInputComponent, KlarDialogFooterComponent, KlarDialogCalloutComponent,
-    KlarSwitchComponent, KlarPayrollFormComponent,
+    KlarSwitchComponent, KlarPayrollFormComponent, KlarMoneyPipe,
   ],
   templateUrl: './recurring-create-dialog.component.html',
   styleUrl: './recurring-create-dialog.component.css',

@@ -488,8 +488,12 @@ export class BruttoNettoPageComponent implements OnInit {
       return;
     }
 
+    // 1:1 mapping of the calculator's "Netto pro Position" rows — same
+    // labels the user sees, no synthetic suffix, no length-guard. A single
+    // position still gets one split so the resulting Fixkosten entry
+    // documents what the amount stands for.
     const splits: PrefillSplit[] = this.netSplits().map(s => ({
-      label:       (s.position.label?.trim() || 'Position') + ' (Netto)',
+      label:       s.position.label?.trim() || 'Position',
       amountCents: s.nettoMonthlyCents,
     }));
 
@@ -510,7 +514,7 @@ export class BruttoNettoPageComponent implements OnInit {
         prefillCategoryId:   incomeCategory?.id ?? null,
         prefillFrequency:    'MONTHLY',
         prefillPayrollInput: this.input(),
-        prefillSplits:       splits.length > 1 ? splits : null,
+        prefillSplits:       splits.length > 0 ? splits : null,
       },
     });
   }

@@ -82,6 +82,22 @@
     </div>
   }
 
+  @if (prefillSplits()?.length) {
+    <div class="flex flex-col gap-2 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
+      <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">
+        Aufteilung ({{ prefillSplits()?.length }} Position{{ prefillSplits()!.length === 1 ? '' : 'en' }})
+      </p>
+      <div class="flex flex-col gap-1">
+        @for (s of prefillSplits(); track s.label) {
+          <div class="flex justify-between text-[12px]">
+            <span class="text-(--fg-2) truncate">{{ s.label }}</span>
+            <span class="mono tabular-nums">{{ s.amountCents | klarMoney }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <div class="flex flex-col gap-3 rounded-md border border-(--border) p-3 bg-(--surface-2)/30">
     <p class="text-[10px] uppercase tracking-wider font-semibold text-(--text-muted)">Aussehen</p>
 
