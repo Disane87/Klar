@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/Disane87/Klar/compare/v1.18.1...v1.19.0) (2026-05-11)
+
+
+### Features
+
+* update application version to 1.18.0 and integrate VersionService for dynamic versioning ([f19551f](https://github.com/Disane87/Klar/commit/f19551ffc8995edaa13a37853e0320e4c3245633))
+
 ## [1.18.1](https://github.com/Disane87/Klar/compare/v1.18.0...v1.18.1) (2026-05-11)
 
 
