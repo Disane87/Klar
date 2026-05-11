@@ -1,3 +1,10 @@
+## [1.20.5](https://github.com/Disane87/Klar/compare/v1.20.4...v1.20.5) (2026-05-11)
+
+
+### Bug Fixes
+
+* **import-pipeline:** dedup repeated bankTxId within a single batch ([1f7cf39](https://github.com/Disane87/Klar/commit/1f7cf39927d54121e6731711ee3f2c7ad243eccd))
+
 ## [1.20.4](https://github.com/Disane87/Klar/compare/v1.20.3...v1.20.4) (2026-05-11)
 
 
