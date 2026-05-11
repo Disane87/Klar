@@ -5,6 +5,7 @@ import { KlarHeaderUserComponent } from '../../shared/ui/klar-header-user.compon
 import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import { AuthStore } from '../../core/auth/auth.store';
 import { HouseholdStore } from '../../core/household/household.store';
+import { VersionService } from '../../core/version/version.service';
 import { sideNavItems, type NavItem } from '../../core/navigation/nav-items';
 
 // /app/spec and /app/crud are design-reference pages (controls + dialog patterns).
@@ -22,6 +23,7 @@ export type { NavItem };
 export class SideNavComponent {
   private auth = inject(AuthStore);
   protected householdStore = inject(HouseholdStore);
+  protected version = inject(VersionService);
 
   private readonly groups = computed(() =>
     sideNavItems({ isAdmin: this.auth.user()?.appRole === 'ADMIN' }),
