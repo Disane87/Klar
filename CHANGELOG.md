@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/Disane87/Klar/compare/v1.19.0...v1.19.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **web:** use dynamic version in side-nav brand label ([5e0b77f](https://github.com/Disane87/Klar/commit/5e0b77f0c041e27c6af698af800142443897b8dc))
+
 # [1.19.0](https://github.com/Disane87/Klar/compare/v1.18.1...v1.19.0) (2026-05-11)
 
 
