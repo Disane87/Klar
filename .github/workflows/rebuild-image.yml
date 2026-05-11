@@ -52,6 +52,5 @@ jobs:
           tags: |
             ghcr.io/disane87/klar:${{ steps.ver.outputs.value }}
             ghcr.io/disane87/klar:${{ inputs.tag }}
-            ghcr.io/disane87/klar:latest
           cache-from: type=gha,scope=klar
           cache-to: type=gha,mode=max,scope=klar
