@@ -1,3 +1,10 @@
+## [1.20.4](https://github.com/Disane87/Klar/compare/v1.20.3...v1.20.4) (2026-05-11)
+
+
+### Bug Fixes
+
+* **fints:** clamp product version to ZKA AN..5 length ([94aff8c](https://github.com/Disane87/Klar/commit/94aff8cf76656ab4a0ef40ad6ececef6ba3b15d5))
+
 ## [1.20.3](https://github.com/Disane87/Klar/compare/v1.20.2...v1.20.3) (2026-05-11)
 
 
