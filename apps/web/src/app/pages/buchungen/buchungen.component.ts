@@ -2,8 +2,11 @@ import { Component, computed, effect, inject, OnInit } from '@angular/core';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
 import { TransactionsStore, type Transaction } from '../../core/transactions/transactions.store';
+import { TransactionsService } from '../../core/transactions/transactions.service';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
+import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { TransactionDialogComponent } from './transaction-dialog.component';
+import type { BulkVisibilityChange } from '../../shared/transactions/klar-transactions-table.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarTileComponent } from '../../shared/ui/klar-tile.component';
@@ -36,6 +39,8 @@ export class BuchungenPageComponent implements OnInit {
   protected householdStore = inject(HouseholdStore);
   private dialogService = inject(KlarDialogService);
   private pageHeader = inject(PageHeaderService);
+  private transactionsService = inject(TransactionsService);
+  private toast = inject(KlarToastService);
 
   readonly monthLabel = computed(() => this.formatMonthLabel(this.store.currentMonth()));
 
@@ -126,6 +131,23 @@ export class BuchungenPageComponent implements OnInit {
       inputs: { tx },
       width: 'md',
     });
+  }
+
+  async onBulkVisibility(change: BulkVisibilityChange): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId) return;
+    try {
+      const { count } = await this.transactionsService.bulkSetVisibility(
+        householdId,
+        change.ids,
+        change.visibility,
+      );
+      this.store.reload();
+      const label = change.visibility === 'PRIVATE' ? 'privat' : 'geteilt';
+      this.toast.success(`${count} ${count === 1 ? 'Buchung' : 'Buchungen'} ${label} gesetzt`);
+    } catch {
+      this.toast.error('Sichtbarkeit konnte nicht geändert werden');
+    }
   }
 
   private formatMonthLabel(yearMonth: string): string {

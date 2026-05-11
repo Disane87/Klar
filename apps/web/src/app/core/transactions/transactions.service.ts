@@ -29,4 +29,17 @@ export class TransactionsService {
       this.http.delete<void>(`${this.base(householdId)}/${id}`),
     );
   }
+
+  bulkSetVisibility(
+    householdId: string,
+    ids: readonly string[],
+    visibility: 'PRIVATE' | 'SHARED',
+  ): Promise<{ count: number }> {
+    return firstValueFrom(
+      this.http.patch<{ count: number }>(
+        `${this.base(householdId)}/bulk-visibility`,
+        { ids, visibility },
+      ),
+    );
+  }
 }

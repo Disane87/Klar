@@ -31,12 +31,29 @@ const FINTS_KIND_CHIP: Partial<Record<NonNullable<Transaction['transactionKind']
       role="button"
       tabindex="0"
       class="grid items-center gap-3 px-4 py-3 border-b border-(--line-soft) hover:bg-(--bg-2) transition-colors cursor-pointer min-h-[44px]"
-      style="grid-template-columns: 60px auto 1fr auto;"
+      [class.bg-\\(--bg-2\\)]="selected()"
+      [style.grid-template-columns]="selectable() ? '24px 60px auto 1fr auto' : '60px auto 1fr auto'"
       [style.border-left]="'2px solid ' + categoryColor()"
       (click)="rowClick.emit(tx())"
       (keydown.enter)="rowClick.emit(tx())"
       (keydown.space)="$event.preventDefault(); rowClick.emit(tx())"
     >
+      @if (selectable()) {
+        <button
+          type="button"
+          class="flex items-center justify-center w-6 h-6 rounded border border-(--line) hover:border-(--accent) transition-colors min-w-6 min-h-6"
+          [class.bg-\\(--accent\\)]="selected()"
+          [class.border-\\(--accent\\)]="selected()"
+          [attr.aria-pressed]="selected()"
+          [attr.aria-label]="selected() ? 'Auswahl entfernen' : 'Auswählen'"
+          (click)="$event.stopPropagation(); selectionToggle.emit(tx().id)"
+          (keydown.space)="$event.preventDefault(); $event.stopPropagation(); selectionToggle.emit(tx().id)"
+        >
+          @if (selected()) {
+            <klar-icon name="check" [size]="12" class="text-(--accent-fg)" />
+          }
+        </button>
+      }
       <span class="text-[11px] mono tabular-nums text-(--fg-2)">{{ dayLabel() }}</span>
       <!-- Brand-icon auto-detects from counterparty/description; falls back to the category icon + colour -->
       <app-brand-icon
@@ -82,7 +99,10 @@ const FINTS_KIND_CHIP: Partial<Record<NonNullable<Transaction['transactionKind']
 })
 export class KlarTransactionsRowComponent {
   readonly tx = input.required<Transaction>();
+  readonly selectable = input<boolean>(false);
+  readonly selected = input<boolean>(false);
   readonly rowClick = output<Transaction>();
+  readonly selectionToggle = output<string>();
 
   private readonly categories = inject(CategoriesStore);
 

@@ -8,10 +8,14 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
+import { TransactionsService } from '../../core/transactions/transactions.service';
 import { FintsStore } from '../../core/fints/fints.store';
+import { HouseholdStore } from '../../core/household/household.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
+import type { BulkVisibilityChange } from '../../shared/transactions/klar-transactions-table.component';
 import type {
   FintsAttachedAccount,
   FintsConnectionResponse,
@@ -110,6 +114,7 @@ import { KlarTransactionsTableComponent } from '../../shared/transactions/klar-t
             [transactions]="store.sortedItems()"
             [lockedFilters]="{ accountId: accountId() }"
             (rowClick)="openEdit($event)"
+            (bulkVisibilityChange)="onBulkVisibility($event)"
           />
         }
       } @else {
@@ -126,6 +131,9 @@ export class BankenAccountDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly pageHeader = inject(PageHeaderService);
   private readonly dialog = inject(KlarDialogService);
+  private readonly transactionsService = inject(TransactionsService);
+  private readonly householdStore = inject(HouseholdStore);
+  private readonly toast = inject(KlarToastService);
   protected readonly store = inject(TransactionsStore);
   protected readonly fintsStore = inject(FintsStore);
 
@@ -198,6 +206,23 @@ export class BankenAccountDetailComponent implements OnInit {
       inputs: { tx },
       width: 'md',
     });
+  }
+
+  async onBulkVisibility(change: BulkVisibilityChange): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId) return;
+    try {
+      const { count } = await this.transactionsService.bulkSetVisibility(
+        householdId,
+        change.ids,
+        change.visibility,
+      );
+      this.store.reload();
+      const label = change.visibility === 'PRIVATE' ? 'privat' : 'geteilt';
+      this.toast.success(`${count} ${count === 1 ? 'Buchung' : 'Buchungen'} ${label} gesetzt`);
+    } catch {
+      this.toast.error('Sichtbarkeit konnte nicht geändert werden');
+    }
   }
 
   goBack(): void {
