@@ -541,8 +541,8 @@ All configuration is via environment variables. Copy `.env.example` to `.env` an
 | `FINTS_MASTER_KEY` | _empty_ | 32-byte hex (`openssl rand -hex 32`) for AES-256-GCM credential sealing. Boot warns when missing; FinTS encrypt/decrypt then throws on first use. **Back up separately from the DB** — without it, all stored bank connections are unrecoverable. |
 | `FINTS_SCA_WINDOW_DAYS` | `89` | PSD2 reauth window. The watcher pre-warns 7 days before this expires. |
 | `FINTS_BLZ_SOURCES` | `https://raw.githubusercontent.com/hbci4j/hbci4java/master/src/main/resources/blz.properties` | Comma-separated list of upstream URLs for the BLZ → FinTS-server-URL registry. The first source that returns a payload with ≥1000 records wins. |
-| `FINTS_PRODUCT_ID` | `klar-dev` | ZKA product registration ID; replace with the real ID when registered. |
-| `FINTS_PRODUCT_VERSION` | `0.1` | ZKA product version. |
+| `FINTS_PRODUCT_ID` | `klar-dev` | ZKA product registration ID. Sparkasse, VR-Banken and several others reject unregistered IDs with bank-code **9078** — register your own ID at [hbci-zka.de/register/prod_register.htm](https://www.hbci-zka.de/register/prod_register.htm) and set it here. The container reads this from the environment (see `docker/docker-compose.prod.yml` — `FINTS_*` are wired through). |
+| `FINTS_PRODUCT_VERSION` | `0.1` | ZKA product version that pairs with `FINTS_PRODUCT_ID`. |
 
 ### Mail
 
