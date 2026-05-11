@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { OAuthScope } from '@klar/shared';
 import type { RequestContext } from '../common/types/request-context.type';
+import { APP_VERSION } from '../common/app-version';
 import { AuditService } from '../audit/audit.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { RecurringTransactionsService } from '../recurring-transactions/recurring-transactions.service';
@@ -18,7 +19,7 @@ import './tools';
 
 const SERVER_INFO = {
   name: 'klar',
-  version: process.env['APP_VERSION'] ?? 'dev',
+  version: APP_VERSION,
 } as const;
 
 @Injectable()

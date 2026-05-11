@@ -17,8 +17,8 @@ export class HealthResponse {
 
   @ApiProperty({
     description:
-      'Application version, sourced from `APP_VERSION` (set during Docker build). Falls back to `dev` in local development.',
-    example: '1.18.0',
+      'Application version, sourced from the root `package.json` at build time.',
+    example: APP_VERSION,
   })
   version!: string;
 }
