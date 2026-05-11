@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/Disane87/Klar/compare/v1.20.0...v1.20.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **api:** resolve lib-fints via createRequire so ESM import works in prod ([ec8ee93](https://github.com/Disane87/Klar/commit/ec8ee93a923bb08031664ba38ebda5990927f0c9))
+
 # [1.20.0](https://github.com/Disane87/Klar/compare/v1.19.2...v1.20.0) (2026-05-11)
 
 
