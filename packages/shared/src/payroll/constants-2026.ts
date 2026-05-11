@@ -1,35 +1,47 @@
-// German payroll constants — last calibrated against the official 2025
-// §32a EStG tariff and 2025 Sozialversicherungs-Rechengrößen. The internal
-// zone offsets in §32a are calibrated by the BMF to be continuous at zone
-// boundaries; we therefore keep the published 2025 calibration here rather
-// than guessing at uncalibrated 2026 values. When the BMF publishes the
-// final 2026 Programmablaufplan, refresh the constants in this file —
-// engine structure does not change.
+// German payroll constants for the 2026 tax year.
 //
-// TODO(payroll): refresh to 2026 once BMF PAP 2026 is published.
+// Sources:
+// - §32a EStG 2026 — Steuerfortentwicklungsgesetz (passed Dec 2024):
+//   Grundfreibetrag 12,348 EUR, Eckwerte um Inflationsausgleich verschoben.
+// - Sozialversicherungs-Rechengrößen-Verordnung 2026 (BMAS, late 2025):
+//   BBG-KV/PV 5,812.50 EUR/Monat, BBG-RV/AV 8,450 EUR/Monat (bundeseinheitlich).
+// - Pflegeversicherungs-Beitragssatzanpassung: PV-Satz 2026 angehoben auf 3.6 %.
+// - Solidaritätszuschlag: Freigrenze 2026 angehoben auf 20,350 EUR LSt
+//   (40,700 EUR im Splittingverfahren).
+//
+// Internal §32a zone offsets are calibrated for continuity at zone boundaries
+// (zone3Offset, zone4Offset, zone5Offset are derived so that tax(zoneUpper)
+// matches across both formulas). A unit test enforces continuity.
+//
+// When the BMF publishes the official Programmablaufplan 2026, double-check
+// these constants — only numbers should change, not engine structure.
 
 import type { Bundesland } from './types';
 
 // ────────────────────────────────────────────────────────────────
-// §32a EStG income tax tariff (yearly amounts in EUR, not cents)
+// §32a EStG income tax tariff 2026 (yearly amounts in EUR, not cents)
 // ────────────────────────────────────────────────────────────────
 
 export const ESTG_2026 = {
   // Zone boundaries (zu versteuerndes Einkommen in EUR/year)
-  grundfreibetrag:        12096, // Zone 1 upper bound
-  zone2Upper:             17443,
-  zone3Upper:             68480,
+  grundfreibetrag:        12348, // Zone 1 upper bound
+  zone2Upper:             17799,
+  zone3Upper:             69798,
   zone4Upper:             277825,
-  // Slopes / offsets per §32a
+  // Zone formulas — slopes unchanged from prior years; offsets recalibrated
+  // for boundary continuity given the new zone boundaries.
   zone2SlopeA:            932.30,
   zone2SlopeB:            1400,
   zone3SlopeA:            176.64,
   zone3SlopeB:            2397,
-  zone3Offset:            1015.13,
+  // tax_z2(zone2Upper) ≈ 1040.17  →  zone3Offset = 1040.17
+  zone3Offset:            1040.17,
   zone4Rate:              0.42,
-  zone4Offset:            10911.92,
+  // 0.42 * zone3Upper - tax_z3(zone3Upper) = 11035.25
+  zone4Offset:            11035.25,
   zone5Rate:              0.45,
-  zone5Offset:            19246.67,
+  // 0.45 * zone4Upper - tax_z4(zone4Upper) = 19370.00
+  zone5Offset:            19370.00,
 } as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -41,8 +53,9 @@ export const PAUSCHBETRAEGE_2026 = {
   werbungskostenYearlyEur:        1230,
   /** Sonderausgabenpauschbetrag §10c EStG. */
   sonderausgabenYearlyEur:        36,
-  /** Kinderfreibetrag (full = both parents) §32 Abs. 6 EStG — relevant for Soli/KiSt only. */
-  kinderfreibetragFullYearlyEur:  9600,
+  /** Kinderfreibetrag (full = beider Eltern, inkl. BEA) §32 Abs. 6 EStG —
+   *  relevant für Soli/KiSt-Berechnung, nicht für die LSt selbst. */
+  kinderfreibetragFullYearlyEur:  9756,
 } as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -54,11 +67,11 @@ export const PAUSCHBETRAEGE_2026 = {
 export const SV_2026 = {
   /** Krankenversicherung allgemeiner Beitragssatz. AN-Anteil = halbe Rate. */
   kvRate:                 0.146,
-  /** Pflegeversicherung Beitragssatz (bundeseinheitlich, ex Sachsen). */
-  pvRate:                 0.034,
+  /** Pflegeversicherung Beitragssatz 2026 (bundeseinheitlich, ex Sachsen). */
+  pvRate:                 0.036,
   /** Zuschlag für Kinderlose > 23. Voll vom AN getragen. */
   pvKinderloseZuschlag:   0.006,
-  /** Sachsen-Sonderregel: AN trägt 0.5%-Punkt mehr. */
+  /** Sachsen-Sonderregel: AN trägt 0.5 %-Punkt mehr. */
   pvAnZuschlagSachsen:    0.005,
   /** Rentenversicherung. AN-Anteil = halbe Rate. */
   rvRate:                 0.186,
@@ -68,37 +81,36 @@ export const SV_2026 = {
 
 // ────────────────────────────────────────────────────────────────
 // Beitragsbemessungsgrenzen 2026 (monthly, EUR/month)
-// Since 2025 RV is bundeseinheitlich (West = Ost).
+// Sozialversicherungs-Rechengrößen-Verordnung 2026.
+// RV/AV bundeseinheitlich seit 2025.
 // ────────────────────────────────────────────────────────────────
 
 export const BBG_2026 = {
   /** Krankenversicherung und Pflegeversicherung. */
-  kvPvMonthlyEur:         5512.50,
-  /** Rentenversicherung und Arbeitslosenversicherung (bundeseinheitlich seit 2025). */
-  rvAvMonthlyEur:         8050,
+  kvPvMonthlyEur:         5812.50,
+  /** Rentenversicherung und Arbeitslosenversicherung (bundeseinheitlich). */
+  rvAvMonthlyEur:         8450,
 } as const;
 
 // ────────────────────────────────────────────────────────────────
 // Solidaritätszuschlag 2026 (§§3, 4 SolzG)
-// Wegfallgrenze: Soli fällt erst an, wenn die Jahres-Lohnsteuer über
-// Freigrenze liegt. Darüber bis Milderungszone-Obergrenze gleitender
-// Anstieg. Darüber 5.5% von LSt.
+// Freigrenze 2026 angehoben auf 20,350 EUR Jahres-Lohnsteuer
+// (40,700 EUR bei Anwendung des Splittingverfahrens).
 // ────────────────────────────────────────────────────────────────
 
 export const SOLI_2026 = {
-  /** Rate beyond the milderungszone — 5.5% of Lohnsteuer. */
+  /** Rate beyond the Milderungszone — 5.5 % der Lohnsteuer. */
   rate:                       0.055,
-  /** Freigrenze (no Soli below this LSt amount), StKl 1/2/4/5/6. */
-  freigrenzeYearlyEur:        19950,
-  /** Doubled for StKl 3 (splitting). */
-  freigrenzeYearlyEurStKl3:   39900,
-  /** Milderungszone: tax surplus over Freigrenze is multiplied by this factor
-   *  before being multiplied by the rate. Source: §4 SolzG (2026 projection). */
+  /** Freigrenze (kein Soli unterhalb dieses LSt-Betrags), StKl 1/2/4/5/6. */
+  freigrenzeYearlyEur:        20350,
+  /** Verdoppelt im Splittingverfahren (StKl 3). */
+  freigrenzeYearlyEurStKl3:   40700,
+  /** Milderungszone: Überhang über Freigrenze * Faktor → Soli-Betrag. */
   milderungszoneFactor:       0.119,
 } as const;
 
 // ────────────────────────────────────────────────────────────────
-// Kirchensteuer rates by Bundesland
+// Kirchensteuer rates by Bundesland (8 % BY/BW, 9 % rest)
 // ────────────────────────────────────────────────────────────────
 
 const KIRCHENSTEUER_RATES: Record<Bundesland, number> = {

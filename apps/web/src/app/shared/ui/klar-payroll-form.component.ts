@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   calculateNet,
   type Bundesland,
@@ -7,13 +8,13 @@ import {
   type RentenversicherungRegion,
   type Steuerklasse,
 } from '@klar/shared';
+import { KlarFormFieldComponent } from './klar-form-field.component';
+import { KlarInputComponent } from './klar-input.component';
 import { KlarMoneyInputComponent } from './klar-money-input.component';
 import { KlarSelectComponent, type KlarSelectOption } from './klar-select.component';
 import { KlarSwitchComponent } from './klar-switch.component';
 import { KlarDonutChartComponent, type DonutSegment } from './klar-donut-chart.component';
 import { KlarMoneyPipe } from '../pipes/klar-money.pipe';
-import { HlmInputDirective } from './hlm/hlm-input.directive';
-import { HlmLabelDirective } from './hlm/hlm-label.directive';
 import { KlarButtonComponent } from './klar-button.component';
 
 const STEUERKLASSE_OPTIONS: KlarSelectOption[] = [
@@ -79,97 +80,90 @@ export interface PayrollApplyEvent {
 }
 
 /**
- * Compact embeddable gross-to-net form. Used in the recurring create/edit
- * dialogs — when the user toggles "Aus Brutto berechnen" this component
- * collects the inputs, shows a live breakdown, and on `apply` emits the
- * computed monthly net and the input snapshot back to the host dialog.
+ * Compact embeddable gross-to-net form. Used inside the recurring create/edit
+ * dialogs — the "Aus Brutto berechnen" toggle reveals it, the user fills in
+ * the inputs, and "Übernehmen" emits both the computed monthly net (so the
+ * dialog can write it into `amountCents`) and the full input snapshot (which
+ * the dialog persists as `payrollInput`).
  */
 @Component({
   selector: 'klar-payroll-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex flex-col gap-(--s-3)' },
+  host: { class: 'flex flex-col gap-3' },
   imports: [
-    KlarMoneyInputComponent, KlarSelectComponent, KlarSwitchComponent,
-    KlarDonutChartComponent, KlarMoneyPipe, HlmInputDirective, HlmLabelDirective,
-    KlarButtonComponent,
+    FormsModule, KlarFormFieldComponent, KlarInputComponent, KlarMoneyInputComponent,
+    KlarSelectComponent, KlarSwitchComponent, KlarDonutChartComponent,
+    KlarMoneyPipe, KlarButtonComponent,
   ],
   template: `
-    <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-(--s-3)">
-      <div class="flex flex-col gap-1">
-        <label hlmLabel for="pf-brutto">Brutto</label>
+    <div class="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3">
+      <klar-form-field label="Brutto" for="pf-brutto">
         <klar-money-input inputId="pf-brutto" [(amountCents)]="grossCents" placeholder="0,00" />
-      </div>
-      <div class="flex flex-col gap-1 min-w-[140px]">
-        <label hlmLabel>Zeitraum</label>
+      </klar-form-field>
+      <klar-form-field label="Zeitraum">
         <klar-select [(value)]="period" [options]="periodOptions" />
-      </div>
+      </klar-form-field>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--s-3)">
-      <div class="flex flex-col gap-1">
-        <label hlmLabel>Steuerklasse</label>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <klar-form-field label="Steuerklasse">
         <klar-select [(value)]="steuerklasse" [options]="steuerklasseOptions" />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label hlmLabel>Bundesland</label>
+      </klar-form-field>
+      <klar-form-field label="Bundesland">
         <klar-select [(value)]="bundesland" [options]="bundeslandOptions" />
-      </div>
+      </klar-form-field>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--s-3) items-end">
-      <div class="flex flex-col gap-1">
-        <label hlmLabel for="pf-birth">Geburtsjahr</label>
-        <input hlmInput id="pf-birth" type="number" min="1900" max="2030"
-               [value]="birthYear()" (input)="onBirthYear($event)" />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label hlmLabel>Kinderfreibeträge</label>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <klar-form-field label="Geburtsjahr">
+        <klar-input type="number" [ngModel]="birthYearStr()" (ngModelChange)="onBirthYearStr($event)" />
+      </klar-form-field>
+      <klar-form-field label="Kinderfreibeträge">
         <klar-select [(value)]="kinderStr" [options]="kinderOptions" />
-      </div>
+      </klar-form-field>
     </div>
 
     <klar-switch label="Kirchensteuer" [(checked)]="kirchensteuer" />
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--s-3) items-end">
-      <div class="flex flex-col gap-1">
-        <label hlmLabel>Krankenversicherung</label>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <klar-form-field label="Krankenversicherung">
         <klar-select [(value)]="krankenversicherung" [options]="kvOptions" />
-      </div>
+      </klar-form-field>
       @if (krankenversicherung() === 'gesetzlich') {
-        <div class="flex flex-col gap-1">
-          <label hlmLabel for="pf-kvz">KV-Zusatz (%)</label>
-          <input hlmInput id="pf-kvz" type="number" min="0" max="10" step="0.1"
-                 [value]="kvZusatzbeitragPct()" (input)="onZusatz($event)" />
-        </div>
+        <klar-form-field label="KV-Zusatzbeitrag (%)">
+          <klar-input type="number" suffix="%" [ngModel]="kvZusatzbeitragStr()" (ngModelChange)="onZusatzStr($event)" />
+        </klar-form-field>
       } @else {
-        <div class="flex flex-col gap-1">
-          <label hlmLabel for="pf-pkv">PKV-Beitrag / Monat</label>
+        <klar-form-field label="PKV-Beitrag / Monat" for="pf-pkv">
           <klar-money-input inputId="pf-pkv" [(amountCents)]="pkvBeitragMonthlyCents" placeholder="0,00" />
-        </div>
+        </klar-form-field>
       }
     </div>
 
     <!-- ── Result strip ────────────────────────────────────── -->
-    <div class="rounded-(--r-6) border border-(--line-soft) bg-(--bg-2) p-(--s-3) flex items-center gap-(--s-3)">
-      <klar-donut-chart
-        [segments]="donutSegments()"
-        [size]="100"
-        [thickness]="20"
-        [showLegend]="false"
-        ariaLabel="Verteilung Netto Steuern Sozialabgaben"
-      />
-      <div class="flex-1 min-w-0">
-        <div class="text-[10px] uppercase tracking-widest text-(--fg-3)">Netto / Monat</div>
-        <div class="font-mono text-(--success)"
-             style="font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1;">
-          {{ result().monthly.nettoCents | klarMoney }}
+    <div class="rounded-lg border border-(--line-soft) bg-(--bg-2) overflow-hidden">
+      <div class="grid grid-cols-[80px_1fr_auto] items-center gap-3 p-4">
+        <klar-donut-chart
+          [segments]="donutSegments()"
+          [size]="80"
+          [thickness]="16"
+          [showLegend]="false"
+          ariaLabel="Verteilung Netto Steuern Sozialabgaben"
+        />
+        <div class="flex flex-col min-w-0">
+          <div class="text-[10px] uppercase tracking-widest text-(--fg-3)">Netto / Monat</div>
+          <div class="font-mono text-(--success)"
+               style="font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1;">
+            {{ result().monthly.nettoCents | klarMoney }}
+          </div>
+          <div class="text-[11px] text-(--fg-3) mt-1">
+            Steuern −{{ result().monthly.steuernCents | klarMoney }} ·
+            SV −{{ result().monthly.sozialabgabenCents | klarMoney }}
+          </div>
         </div>
-        <div class="text-[11px] text-(--fg-3) mt-1">
-          Steuern −{{ result().monthly.steuernCents | klarMoney }} · SV −{{ result().monthly.sozialabgabenCents | klarMoney }}
-        </div>
+        <klar-button tone="primary" (click)="apply()">Übernehmen</klar-button>
       </div>
-      <klar-button tone="primary" (click)="apply()">Übernehmen</klar-button>
     </div>
   `,
 })
@@ -194,11 +188,14 @@ export class KlarPayrollFormComponent {
   readonly birthYear                        = signal<number>(1990);
   readonly kinderStr                        = signal<string>('0');
   readonly krankenversicherung              = signal<Krankenversicherung>('gesetzlich');
-  readonly kvZusatzbeitragPct               = signal<number>(1.7);
+  readonly kvZusatzbeitragPct               = signal<number>(2.9);
   readonly pkvBeitragMonthlyCents           = signal<number | null>(null);
   readonly rentenversicherungRegion         = signal<RentenversicherungRegion>('west');
   readonly geldwerterVorteilMonthlyCents    = signal<number | null>(0);
   readonly lohnsteuerFreibetragYearlyCents  = signal<number | null>(0);
+
+  readonly birthYearStr       = computed(() => String(this.birthYear()));
+  readonly kvZusatzbeitragStr = computed(() => String(this.kvZusatzbeitragPct()));
 
   constructor() {
     effect(() => {
@@ -254,13 +251,13 @@ export class KlarPayrollFormComponent {
     });
   }
 
-  onBirthYear(e: Event): void {
-    const v = parseInt((e.target as HTMLInputElement).value, 10);
-    if (!isNaN(v)) this.birthYear.set(v);
+  onBirthYearStr(v: string): void {
+    const n = parseInt(v, 10);
+    if (!isNaN(n)) this.birthYear.set(n);
   }
 
-  onZusatz(e: Event): void {
-    const v = parseFloat((e.target as HTMLInputElement).value);
-    if (!isNaN(v)) this.kvZusatzbeitragPct.set(v);
+  onZusatzStr(v: string): void {
+    const n = parseFloat(v.replace(',', '.'));
+    if (!isNaN(n)) this.kvZusatzbeitragPct.set(n);
   }
 }
