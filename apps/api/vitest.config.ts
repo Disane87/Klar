@@ -18,6 +18,8 @@ export default defineConfig({
         'src/**/*.guard.ts',
         'src/**/*.decorator.ts',
         'src/**/*.dto.ts',
+        'src/**/dto/**',
+        'src/common/openapi.ts',
         'src/**/*.filter.ts',
         'src/**/*.d.ts',
         'src/**/strategies/**',
