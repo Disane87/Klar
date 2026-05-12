@@ -27,7 +27,7 @@
 | **📈 Plan vs. Actual (Month)** | Cashflow page shows per-category budget vs. actuals with a category-tinted progress meter, mono Plan / Actual amounts, signed delta and threshold-based tone (ok / warn / over) |
 | **🎯 Projects** | Tile grid with circular klar-progress-ring per project tinted in project color, 3-up Budget / Spent / Balance metric-tiles on detail page, scoped transactions list, archive / edit sticky footer |
 | **🧮 Scenario Calculator** | "What if my bonus is X this month?" — live calculation, nothing saved |
-| **💶 Gross-to-Net Calculator** | German payroll calculator (`/app/tools/brutto-netto`) — gross salary in, full breakdown out (Lohnsteuer / Soli / Kirchensteuer / KV / PV / RV / AV); donut visualization plus per-line table; reusable from inside the Fixkosten dialog so a salary entry can be persisted as a `payrollInput` snapshot and re-computed later (e.g. after a KV-Zusatzbeitrag change). 2025 §32a EStG calibration shipped, 2026 BMF PAP refresh pending publication. |
+| **💶 Gehaltsrechner** | German payroll calculator (`/app/tools/brutto-netto`) — gross salary in, full breakdown out (Lohnsteuer / Soli / Kirchensteuer / KV / PV / RV / AV); donut visualization plus per-line table; reusable from inside the Fixkosten dialog so a salary entry can be persisted as a `payrollInput` snapshot and re-computed later (e.g. after a KV-Zusatzbeitrag change). 2025 §32a EStG calibration shipped, 2026 BMF PAP refresh pending publication. |
 | **🔑 Public REST API** | API keys with scopes, rate limiting, OpenAPI docs at `/api/docs` |
 | **🤖 MCP Server (OAuth 2.1)** | Claude Desktop / Cursor / Codex read, create, update & delete with per-scope user consent |
 | **🔐 Authentication** | Local (email/password), OIDC (PocketID + any OIDC provider), API Keys |
@@ -399,12 +399,13 @@ Three identical bookings at a stable cadence yield ≈ 0.80; four ≈ 0.95. (The
 
 **Privacy &amp; idempotency.** `recomputeForHousehold` only replaces `CANDIDATE` rows with `source = AUTO_DETECTED`. User-curated rows (CONFIRMED / DETECTED / CANCELLED) and all `USER_DEFINED` rows are preserved. Re-running the detection always converges on the same candidate set for the same transaction history.
 
-### 💶 Gross-to-Net Calculator (Brutto-Netto-Rechner)
+### 💶 Gehaltsrechner (Gross-to-Net Calculator)
 
 A German payroll calculator surfaced in two places:
 
-1. **Standalone tool** under `/app/tools/brutto-netto` — full form (Steuerklasse, Bundesland, Kirchensteuer, Geburtsjahr, Kinderfreibeträge, gesetzlich/privat KV with Zusatzbeitrag, RV-Region, geldwerter Vorteil, ELStAM-Freibetrag), live result card with big monthly net, donut chart split into Netto/Steuern/Sozialabgaben, full per-line breakdown.
-2. **From-gross mode in Fixkosten dialogs** — when a recurring entry has a positive amount (income context, typically a salary), a "Aus Brutto berechnen" toggle reveals a compact embedded form that computes the net and writes it into `amountCents`. The full input is persisted as `RecurringTransaction.payrollInput` (JSONB) so the calculation can be re-run later (after a KV-Zusatzbeitrag change, a new tax year, etc.) without re-asking the user for every parameter.
+1. **Standalone tool** under `/app/tools/brutto-netto` — full form (Steuerklasse, Bundesland, Kirchensteuer, Geburtsjahr, Kinderfreibeträge, gesetzlich/privat KV with explicit Krankenkasse-Picker and verified 2026 Zusatzbeitrag, RV-Region, geldwerter Vorteil, ELStAM-Freibetrag), **multiple gross positions** (base salary + bonuses / vermögenswirksame Leistungen / sonstige Bezüge, each with its own label and amount), live result card with big monthly net, donut chart split into Netto/Steuern/Sozialabgaben, full per-line breakdown.
+2. **Transfer to Fixkosten** — the standalone tool offers an "In Fixkosten übernehmen" action that opens the recurring-create dialog pre-filled with the calculation's `payrollInput` snapshot. If the user entered multiple gross positions, each position is transferred **1:1 as a separate split** on the recurring entry so the income shows up correctly itemized in the cashflow view.
+3. **From-gross mode in Fixkosten dialogs** — when a recurring entry has a positive amount (income context, typically a salary), a "Aus Brutto berechnen" toggle reveals a compact embedded form that computes the net and writes it into `amountCents`. The full input is persisted as `RecurringTransaction.payrollInput` (JSONB) so the calculation can be re-run later (after a KV-Zusatzbeitrag change, a new tax year, etc.) without re-asking the user for every parameter.
 
 **Engine** lives in `packages/shared/src/payroll/` so frontend + backend (and any future MCP tool) can share the same calculation. Implemented as a §32a EStG income tax tariff with all standard deductions: Werbungskostenpauschale, Sonderausgabenpauschbetrag, Vorsorgepauschale (RV/KV/PV components, capped at the Beitragsbemessungsgrenzen), Solidaritätszuschlag with Freigrenze + Milderungszone, Kirchensteuer (8% Bayern/BW, 9% rest), Sozialversicherungs-AN-Anteile (KV inkl. halber Zusatzbeitrag, PV inkl. Kinderlosenzuschlag und Sachsen-Sonderregel, RV bundeseinheitlich, AV).
 

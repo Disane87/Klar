@@ -50,7 +50,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: 'tresor',    label: 'Tresor',       icon: 'tresor',        route: '/app/tresor',    tone: 'var(--cat-spar)',     section: 'main' },
   { id: 'banken',    label: 'Banken',       icon: 'wallet',        route: '/app/banken',    tone: 'var(--cat-gesund)',   section: 'main' },
   { id: 'import',    label: 'CSV-Import',   icon: 'receipt',       route: '/app/import',    tone: 'var(--cat-gesund)',   section: 'main' },
-  { id: 'brutto-netto', label: 'Brutto-Netto-Rechner', icon: 'trending', route: '/app/tools/brutto-netto', tone: 'var(--cat-spar)', section: 'main' },
+  { id: 'brutto-netto', label: 'Gehaltsrechner', icon: 'trending', route: '/app/tools/brutto-netto', tone: 'var(--cat-spar)', section: 'main' },
 
   // System
   { id: 'haushalt',  label: 'Haushalt',      icon: 'haushalt', route: '/app/haushalt', tone: 'var(--cat-essen)',    section: 'system' },

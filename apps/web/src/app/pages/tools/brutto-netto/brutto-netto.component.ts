@@ -520,6 +520,6 @@ export class BruttoNettoPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.pageHeader.set({ title: 'Brutto-Netto-Rechner', subtitle: 'Tools' });
+    this.pageHeader.set({ title: 'Gehaltsrechner', subtitle: 'Tools' });
   }
 }
