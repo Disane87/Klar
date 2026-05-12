@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { KlarEmptyStateComponent } from '../ui/klar-empty-state.component';
-import { KlarIconComponent } from '../icons/klar-icon.component';
 import { KlarToggleGroupComponent, type KlarToggleOption } from '../ui/klar-toggle-group.component';
 import { KlarTransactionsRowComponent } from './klar-transactions-row.component';
 import { KlarTransactionsFilterBarComponent, type LockableFilterKey } from './klar-transactions-filter-bar.component';
@@ -26,7 +25,6 @@ import type { Transaction } from '../../core/transactions/transactions.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     KlarEmptyStateComponent,
-    KlarIconComponent,
     KlarToggleGroupComponent,
     KlarTransactionsRowComponent,
     KlarTransactionsFilterBarComponent,

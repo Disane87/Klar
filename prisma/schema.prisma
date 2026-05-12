@@ -179,6 +179,7 @@ model User {
   totpSecret    String? // Base32 encoded TOTP secret
   totpEnabled   Boolean   @default(false)
   avatarUrl     String? // base64 JPEG data URL (~15KB), stored directly in DB
+  payrollCalculatorState Json? // last saved Gehaltsrechner input snapshot (per-user, device-agnostic)
 
   memberships           HouseholdMembership[]
   oidcIdentities        OidcIdentity[]

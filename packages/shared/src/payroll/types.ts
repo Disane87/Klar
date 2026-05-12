@@ -84,3 +84,27 @@ export interface NetResult {
   monthly: NetBreakdown;
   yearly: NetBreakdown;
 }
+
+/**
+ * Persisted Gehaltsrechner state for a user. Mirrors `GrossToNetInput`
+ * but is decoupled to keep the API/storage shape stable when the
+ * calculation engine evolves. All fields are optional so older or
+ * partially saved snapshots can still hydrate.
+ */
+export interface PayrollCalculatorState {
+  positions?: PayrollPosition[];
+  period?: GrossPeriod;
+  steuerklasse?: Steuerklasse;
+  bundesland?: Bundesland;
+  kirchensteuer?: boolean;
+  birthYear?: number;
+  kinderfreibetraege?: number;
+  krankenversicherung?: Krankenversicherung;
+  /** Selected Krankenkasse ID — `manual` keeps the user-typed Zusatzbeitrag. */
+  krankenkasseId?: string;
+  kvZusatzbeitragPct?: number;
+  pkvBeitragMonthlyCents?: number | null;
+  rentenversicherungRegion?: RentenversicherungRegion;
+  geldwerterVorteilMonthlyCents?: number | null;
+  lohnsteuerFreibetragYearlyCents?: number | null;
+}

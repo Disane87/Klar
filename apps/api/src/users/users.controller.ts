@@ -25,6 +25,7 @@ import {
   UpdateProfileDto,
   UploadAvatarDto,
 } from './dto/update-profile.dto';
+import { PayrollCalculatorStateDto } from './dto/payroll-calculator-state.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/types/jwt-payload.type';
@@ -168,6 +169,32 @@ export class UsersController {
   ): Promise<{ avatarUrl: string }> {
     if (!body?.data) throw new BadRequestException('Kein Bild übermittelt');
     return this.usersService.uploadAvatar(payload.sub, body.data);
+  }
+
+  @Get('me/payroll-calculator-state')
+  @ApiOperation({
+    summary: 'Get the saved Gehaltsrechner input snapshot',
+    description: 'Returns the user-scoped Gehaltsrechner state (positions, tax class, KV/PV settings, optional add-ons) or `null` when no snapshot has been saved yet.',
+  })
+  @ApiResponse({ status: 200, description: 'Saved snapshot or null.', type: PayrollCalculatorStateDto })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
+  getPayrollCalculatorState(@CurrentUser() payload: JwtPayload) {
+    return this.usersService.getPayrollCalculatorState(payload.sub);
+  }
+
+  @Patch('me/payroll-calculator-state')
+  @ApiOperation({
+    summary: 'Save the Gehaltsrechner input snapshot',
+    description: 'Stores the current Gehaltsrechner inputs so the form can be rehydrated on the next visit. Replaces any previous snapshot in full (PUT-style).',
+  })
+  @ApiResponse({ status: 200, description: 'Snapshot stored.', type: PayrollCalculatorStateDto })
+  @ApiResponse({ status: 400, description: 'Validation failed (e.g. invalid Bundesland or out-of-range value).' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
+  savePayrollCalculatorState(
+    @CurrentUser() payload: JwtPayload,
+    @Body() body: PayrollCalculatorStateDto,
+  ) {
+    return this.usersService.savePayrollCalculatorState(payload.sub, body);
   }
 
   @Delete('me/avatar')

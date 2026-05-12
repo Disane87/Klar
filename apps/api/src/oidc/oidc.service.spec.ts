@@ -40,6 +40,7 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   totpSecret: null,
   totpEnabled: false,
   avatarUrl: null,
+  payrollCalculatorState: null,
   ...overrides,
 });
 

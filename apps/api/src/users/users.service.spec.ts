@@ -43,6 +43,8 @@ const makeRepo = () => ({
   findWithOidc: vi.fn(),
   updateProfile: vi.fn(),
   softDelete: vi.fn(),
+  getPayrollCalculatorState: vi.fn(),
+  setPayrollCalculatorState: vi.fn(),
 } as unknown as Mocked<UsersRepository>);
 
 let service: UsersService;
@@ -139,6 +141,33 @@ describe('unlinkOidc', () => {
 
     await service.unlinkOidc('u-1', 'oi-1');
     expect(oidcRepo.deleteIdentityById).toHaveBeenCalledWith('oi-1', 'u-1');
+  });
+});
+
+describe('payroll calculator state', () => {
+  it('returns null when nothing has been saved yet', async () => {
+    repo.getPayrollCalculatorState.mockResolvedValue(null);
+
+    const state = await service.getPayrollCalculatorState('u-1');
+    expect(state).toBeNull();
+  });
+
+  it('returns the persisted snapshot when present', async () => {
+    const snapshot = { period: 'monthly', steuerklasse: 1, bundesland: 'NW' };
+    repo.getPayrollCalculatorState.mockResolvedValue(snapshot);
+
+    const state = await service.getPayrollCalculatorState('u-1');
+    expect(state).toEqual(snapshot);
+  });
+
+  it('writes the state through and echoes it back', async () => {
+    const snapshot = { period: 'monthly' as const, steuerklasse: 1 as const };
+    repo.setPayrollCalculatorState.mockResolvedValue(undefined as unknown as void);
+
+    const result = await service.savePayrollCalculatorState('u-1', snapshot);
+
+    expect(repo.setPayrollCalculatorState).toHaveBeenCalledWith('u-1', snapshot);
+    expect(result).toEqual(snapshot);
   });
 });
 

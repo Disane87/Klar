@@ -98,4 +98,19 @@ export class UsersRepository {
   async setAvatar(id: string, avatarUrl: string | null): Promise<void> {
     await this.prisma.user.update({ where: { id }, data: { avatarUrl } });
   }
+
+  async getPayrollCalculatorState(id: string): Promise<unknown> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { payrollCalculatorState: true },
+    });
+    return user?.payrollCalculatorState ?? null;
+  }
+
+  async setPayrollCalculatorState(id: string, state: unknown): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { payrollCalculatorState: state as never },
+    });
+  }
 }

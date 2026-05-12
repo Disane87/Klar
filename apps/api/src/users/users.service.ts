@@ -8,7 +8,13 @@ import {
 import * as argon2 from 'argon2';
 import type { User } from '@prisma/client';
 import { AppRole } from '@prisma/client';
-import type { AuthUser, UserProfile, OidcIdentityItem, SessionItem } from '@klar/shared';
+import type {
+  AuthUser,
+  UserProfile,
+  OidcIdentityItem,
+  PayrollCalculatorState,
+  SessionItem,
+} from '@klar/shared';
 import { UsersRepository } from './users.repository';
 import { OidcRepository } from '../oidc/oidc.repository';
 import { RefreshTokenRepository } from '../auth/repositories/refresh-token.repository';
@@ -200,6 +206,19 @@ export class UsersService {
 
   async deleteAvatar(userId: string): Promise<void> {
     await this.repo.setAvatar(userId, null);
+  }
+
+  async getPayrollCalculatorState(userId: string): Promise<PayrollCalculatorState | null> {
+    const raw = await this.repo.getPayrollCalculatorState(userId);
+    return (raw as PayrollCalculatorState | null) ?? null;
+  }
+
+  async savePayrollCalculatorState(
+    userId: string,
+    state: PayrollCalculatorState,
+  ): Promise<PayrollCalculatorState> {
+    await this.repo.setPayrollCalculatorState(userId, state);
+    return state;
   }
 
   toAuthUser(user: User): AuthUser {
