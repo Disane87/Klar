@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/Disane87/Klar/compare/v1.21.0...v1.22.0) (2026-05-12)
+
+
+### Features
+
+* **payroll-calc:** persist inputs, dual-period view, effective rates ([07f41fe](https://github.com/Disane87/Klar/commit/07f41fe7eddcf10e5c631772674203dfb77c56e2))
+
 # [1.21.0](https://github.com/Disane87/Klar/compare/v1.20.5...v1.21.0) (2026-05-12)
 
 
