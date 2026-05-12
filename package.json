@@ -1,6 +1,6 @@
 {
   "name": "klar",
-  "version": "1.20.5",
+  "version": "1.21.0",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",

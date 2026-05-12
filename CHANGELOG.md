@@ -1,3 +1,23 @@
+# [1.21.0](https://github.com/Disane87/Klar/compare/v1.20.5...v1.21.0) (2026-05-12)
+
+
+### Bug Fixes
+
+* **klar-select:** silence NG0951 from BrnSelectContent scroll buttons ([05c71b3](https://github.com/Disane87/Klar/commit/05c71b331bec7ba7ba308ba0cbd97e552b2a290b))
+* **payroll:** verified 2026 KK Zusatzbeiträge + double-click on klar-button ([619f534](https://github.com/Disane87/Klar/commit/619f53475198e0d8052480fc309a1b055b99c88c))
+
+
+### Features
+
+* **brutto-netto:** transfer position splits 1:1 to Fixkosten ([d3ab29e](https://github.com/Disane87/Klar/commit/d3ab29e12ae7ccfa8e2bf48a72fb5a3d6fa8af5f))
+* **fints:** accept optional fromDate/toDate on manual sync endpoint ([9c82bce](https://github.com/Disane87/Klar/commit/9c82bcecfaa607691c99dfdc05098881d0dad310))
+* **fints:** add 'range' wizard step for initial-sync date picker ([62e0045](https://github.com/Disane87/Klar/commit/62e0045bee024f0aaad497e1a2f055e9f89eb48a))
+* **fints:** cache bank-advertised statement capabilities per connection ([4f00ac8](https://github.com/Disane87/Klar/commit/4f00ac85387949f89b126ddf561c30cbad69e883))
+* **payroll:** add German gross-to-net calculator ([2beb560](https://github.com/Disane87/Klar/commit/2beb56087302613b2f8114792a7043e6bec2399b))
+* **payroll:** multiple gross positions, KK select, transfer to Fixkosten ([7eca8dd](https://github.com/Disane87/Klar/commit/7eca8dd99346f8c18b65ac1529d139b70366e22f))
+* **transactions:** bulk-set visibility + flip default to PRIVATE ([d294543](https://github.com/Disane87/Klar/commit/d294543c3216bd4526963405193223b44e3d3b7b))
+* **web:** multi-select transactions with bulk visibility toggle ([df9ead3](https://github.com/Disane87/Klar/commit/df9ead3f3070d8e33e3a74ff467dc9908c4c0bcc))
+
 ## [1.20.5](https://github.com/Disane87/Klar/compare/v1.20.4...v1.20.5) (2026-05-11)
 
 
