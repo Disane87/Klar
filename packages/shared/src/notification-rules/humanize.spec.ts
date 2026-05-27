@@ -11,7 +11,7 @@ describe('humanizePredicate (TRANSACTION_CREATED)', () => {
       value: 100000,
     };
     const out = humanizePredicate(p, { trigger: 'TRANSACTION_CREATED' });
-    expect(out).toBe('Betrag (Cent) größer als 1.000,00 €');
+    expect(out).toBe('Betrag größer als 1.000,00 €');
   });
 
   it('uses friendly labels for id values from the labels map', () => {
@@ -40,7 +40,7 @@ describe('humanizePredicate (TRANSACTION_CREATED)', () => {
       trigger: 'TRANSACTION_CREATED',
       labels: { cat_salary: 'Gehalt' },
     });
-    expect(out).toBe('Betrag (Cent) größer als 1.000,00 € UND Kategorie ist Gehalt');
+    expect(out).toBe('Betrag größer als 1.000,00 € UND Kategorie ist Gehalt');
   });
 
   it('wraps nested OR clauses in parens when inside an AND', () => {

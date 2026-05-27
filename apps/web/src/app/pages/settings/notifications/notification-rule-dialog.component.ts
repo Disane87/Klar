@@ -28,6 +28,21 @@ interface ConditionRow {
 }
 
 /**
+ * Parse user-typed numbers tolerantly. Accepts both German (1.000,50) and
+ * English (1000.50) notation. Strips thousands separators before parsing.
+ */
+function parseLocaleNumber(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  let normalised = trimmed;
+  if (trimmed.includes(',')) {
+    normalised = trimmed.replace(/\./g, '').replace(',', '.');
+  }
+  const n = Number(normalised);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
  * Phase 2 rule builder: single AND-group of cmp rows, no nested or/not.
  * The full recursive builder lands with Phase 7. This shape covers the
  * integration-test target ("amountCents > X AND categoryId = Y") and is
@@ -94,14 +109,19 @@ interface ConditionRow {
               (valueChange)="updateRow(i, 'operator', $event)"
               ariaLabel="Operator"
             />
-            <input
-              class="hlm-input flex-1 min-w-[140px]"
-              type="text"
-              [ngModel]="row.value"
-              (ngModelChange)="updateRow(i, 'value', $event)"
-              [name]="'cond-' + i"
-              [placeholder]="placeholderFor(row.field)"
-            />
+            <div class="flex-1 min-w-[140px] flex items-center gap-1">
+              <input
+                class="hlm-input flex-1"
+                type="text"
+                [ngModel]="row.value"
+                (ngModelChange)="updateRow(i, 'value', $event)"
+                [name]="'cond-' + i"
+                [placeholder]="placeholderFor(row.field)"
+              />
+              @if (isMoneyField(row.field)) {
+                <span class="text-[12px] text-(--fg-3) mono">€</span>
+              }
+            </div>
             <button
               type="button"
               class="text-(--fg-3) hover:text-(--danger) p-1"
@@ -165,7 +185,8 @@ export class NotificationRuleDialogComponent {
   protected readonly name = signal('');
   protected readonly trigger = signal<NotificationTrigger>('TRANSACTION_CREATED');
   protected readonly conditions = signal<ConditionRow[]>([
-    { field: 'amountCents', operator: '>', value: '100000' },
+    // amountCents is a money field — UI accepts Euro and converts to cents on save.
+    { field: 'amountCents', operator: '>', value: '1000' },
   ]);
   protected readonly ch_inApp = signal(true);
   protected readonly ch_webPush = signal(false);
@@ -210,10 +231,14 @@ export class NotificationRuleDialogComponent {
     return spec.operators.map(op => ({ value: op, label: this.operatorLabel(op) }));
   }
 
+  protected isMoneyField(field: string): boolean {
+    return TRIGGER_FIELDS[this.trigger()].find(f => f.field === field)?.kind === 'money';
+  }
+
   protected placeholderFor(field: string): string {
     const spec = TRIGGER_FIELDS[this.trigger()].find(f => f.field === field);
     if (!spec) return 'Wert';
-    if (spec.kind === 'money') return 'Cent (z. B. 100000 = 1000 €)';
+    if (spec.kind === 'money') return 'Euro (z. B. 1000 oder 999,50)';
     if (spec.kind === 'boolean') return 'true / false';
     if (spec.kind === 'id') return 'ID';
     if (spec.kind === 'date') return 'YYYY-MM-DD';
@@ -288,9 +313,15 @@ export class NotificationRuleDialogComponent {
   private coerceValue(field: string, raw: string): string | number | boolean {
     const spec = TRIGGER_FIELDS[this.trigger()].find(f => f.field === field);
     if (!spec) return raw;
-    if (spec.kind === 'money' || spec.kind === 'integer' || spec.kind === 'percentage') {
-      const n = Number(raw);
-      return Number.isFinite(n) ? n : 0;
+    if (spec.kind === 'money') {
+      // UI accepts Euro (German or English notation); predicate stores cents.
+      const euro = parseLocaleNumber(raw);
+      if (euro === null) return 0;
+      return Math.round(euro * 100);
+    }
+    if (spec.kind === 'integer' || spec.kind === 'percentage') {
+      const n = parseLocaleNumber(raw);
+      return n === null ? 0 : n;
     }
     if (spec.kind === 'boolean') {
       return raw === 'true' || raw === '1';
@@ -313,10 +344,22 @@ export class NotificationRuleDialogComponent {
   }
 
   private cmpToRow(cmp: Extract<Predicate, { op: 'cmp' }>): ConditionRow {
+    const spec = TRIGGER_FIELDS[this.trigger()].find(f => f.field === cmp.field);
+    let displayValue: string;
+    if (spec?.kind === 'money' && typeof cmp.value === 'number') {
+      // Reverse the cents→euro conversion for editing.
+      displayValue = (cmp.value / 100).toLocaleString('de-DE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+        useGrouping: false,
+      });
+    } else {
+      displayValue = String(cmp.value ?? '');
+    }
     return {
       field: cmp.field,
       operator: cmp.operator,
-      value: String(cmp.value ?? ''),
+      value: displayValue,
     };
   }
 

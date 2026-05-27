@@ -62,7 +62,7 @@ const FINTS_EVENT_ENUM = [
 const SCHEDULE_FIELDS: ReadonlyArray<TriggerFieldSpec> = [];
 
 const TRANSACTION_CREATED_FIELDS: ReadonlyArray<TriggerFieldSpec> = [
-  { field: 'amountCents', label: 'Betrag (Cent)', kind: 'money', operators: NUMERIC },
+  { field: 'amountCents', label: 'Betrag', kind: 'money', operators: NUMERIC },
   {
     field: 'kind',
     label: 'Transaktions-Art',
@@ -99,7 +99,7 @@ const TRANSACTION_CREATED_FIELDS: ReadonlyArray<TriggerFieldSpec> = [
 ];
 
 const STANDING_ORDER_DUE_FIELDS: ReadonlyArray<TriggerFieldSpec> = [
-  { field: 'amountCents', label: 'Betrag (Cent)', kind: 'money', operators: NUMERIC },
+  { field: 'amountCents', label: 'Betrag', kind: 'money', operators: NUMERIC },
   { field: 'name', label: 'Dauerauftrag-Name', kind: 'string', operators: TEXT },
   {
     field: 'categoryId',
@@ -133,8 +133,8 @@ const BUDGET_THRESHOLD_FIELDS: ReadonlyArray<TriggerFieldSpec> = [
     pickerKind: 'category',
   },
   { field: 'month', label: 'Monat', kind: 'string', operators: TEXT },
-  { field: 'usedCents', label: 'Verbraucht (Cent)', kind: 'money', operators: NUMERIC },
-  { field: 'limitCents', label: 'Limit (Cent)', kind: 'money', operators: NUMERIC },
+  { field: 'usedCents', label: 'Verbraucht', kind: 'money', operators: NUMERIC },
+  { field: 'limitCents', label: 'Limit', kind: 'money', operators: NUMERIC },
   { field: 'usedPct', label: 'Verbraucht (%)', kind: 'percentage', operators: NUMERIC },
 ];
 
