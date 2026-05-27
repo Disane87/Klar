@@ -172,6 +172,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'settings/notifications',
+        loadComponent: () =>
+          import('./pages/settings/notifications/notification-rules-page.component').then(
+            m => m.NotificationRulesPageComponent,
+          ),
+      },
+      {
         path: 'tools/brutto-netto',
         loadComponent: () =>
           import('./pages/tools/brutto-netto/brutto-netto.component').then(

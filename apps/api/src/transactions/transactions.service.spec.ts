@@ -53,8 +53,9 @@ function buildService() {
     ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
     findById: vi.fn(),
   } as unknown as AccountsService;
-  const service = new TransactionsService(repo, accounts);
-  return { service, repo, accounts };
+  const events = { emit: vi.fn() } as unknown as import('@nestjs/event-emitter').EventEmitter2;
+  const service = new TransactionsService(repo, accounts, events);
+  return { service, repo, accounts, events };
 }
 
 describe('TransactionsService', () => {

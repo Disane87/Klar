@@ -43,7 +43,7 @@ describe('evaluatePredicate', () => {
   const ctx = {
     amountCents: 250000,
     categoryId: 'cat_salary',
-    counterpartyName: 'Arbeitgeber GmbH',
+    counterparty: 'Arbeitgeber GmbH',
     kind: 'TRANSFER',
   };
 
@@ -68,7 +68,7 @@ describe('evaluatePredicate', () => {
       op: 'or',
       clauses: [
         { op: 'cmp', field: 'amountCents', operator: '<', value: 0 },
-        { op: 'cmp', field: 'counterpartyName', operator: 'contains', value: 'arbeit' },
+        { op: 'cmp', field: 'counterparty', operator: 'contains', value: 'arbeit' },
       ],
     };
     await expect(evaluatePredicate(p, ctx)).resolves.toBe(true);
@@ -91,7 +91,7 @@ describe('evaluatePredicate', () => {
           op: 'or',
           clauses: [
             { op: 'cmp', field: 'categoryId', operator: '=', value: 'cat_salary' },
-            { op: 'cmp', field: 'counterpartyName', operator: 'contains', value: 'bonus' },
+            { op: 'cmp', field: 'counterparty', operator: 'contains', value: 'bonus' },
           ],
         },
       ],

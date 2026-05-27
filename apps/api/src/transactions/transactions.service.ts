@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { Transaction } from '@prisma/client';
 import { Visibility } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { RequestContext } from '../common/types/request-context.type';
 import { AccountsService } from '../accounts/accounts.service';
 import {
@@ -14,6 +15,10 @@ import {
   type TransactionWithSplits,
   type UpdateTransactionData,
 } from './transactions.repository';
+import {
+  RULE_EVENT,
+  type TransactionCreatedEvent,
+} from '../notification-rules/events/rule-events';
 
 export { Visibility };
 
@@ -69,6 +74,7 @@ export class TransactionsService {
   constructor(
     private readonly repo: TransactionsRepository,
     private readonly accounts: AccountsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   list(ctx: RequestContext, opts: ListOpts = {}): Promise<TransactionWithSplits[]> {
@@ -105,12 +111,36 @@ export class TransactionsService {
       color: input.color ?? null,
       icon: input.icon ?? null,
     });
+    let result: TransactionWithSplits = created;
     if (input.splits && input.splits.length > 0) {
       await this.repo.replaceSplits(created.id, input.splits);
       const reloaded = await this.repo.findById(created.id, ctx.householdId);
-      if (reloaded) return reloaded;
+      if (reloaded) result = reloaded;
     }
-    return created;
+    this.emitTransactionCreated(result, ctx.userId);
+    return result;
+  }
+
+  private emitTransactionCreated(tx: TransactionWithSplits, ownerUserId: string | null): void {
+    const event: TransactionCreatedEvent = {
+      transactionId: tx.id,
+      householdId: tx.householdId,
+      ownerUserId: tx.createdByUserId ?? ownerUserId,
+      visibility: tx.visibility,
+      fields: {
+        amountCents: tx.amountCents,
+        isIncome: tx.amountCents > 0,
+        kind: tx.transactionKind ?? null,
+        categoryId: tx.categoryId,
+        projectId: tx.projectId ?? null,
+        accountId: tx.accountId,
+        counterparty: tx.counterparty ?? null,
+        description: tx.description ?? null,
+        bookingText: tx.bookingText ?? null,
+        date: tx.date.toISOString().slice(0, 10),
+      },
+    };
+    this.events.emit(RULE_EVENT.TRANSACTION_CREATED, event);
   }
 
   /**

@@ -1,0 +1,236 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import type { NotificationRule } from '@prisma/client';
+import { Visibility } from '@prisma/client';
+import {
+  evaluatePredicate,
+  type NotificationChannel,
+  type Predicate,
+} from '@klar/shared';
+import { NotificationRulesRepository } from './notification-rules.repository';
+import { InAppDispatcher } from './dispatchers/in-app.dispatcher';
+import {
+  RULE_EVENT,
+  type TransactionCreatedBatchEvent,
+  type TransactionCreatedEvent,
+} from './events/rule-events';
+
+interface QuietHoursState {
+  start: string;
+  end: string;
+  tz: string;
+}
+
+/**
+ * The RulesEngine listens to producer events, evaluates every rule matching
+ * the trigger, applies the throttle/quiet-hours/idempotency gates, and
+ * dispatches to enabled channels.
+ *
+ * Phase 2 wires only `TRANSACTION_CREATED` and the in-app channel; later
+ * phases (web push, email, digest, scheduled, additional triggers) bolt
+ * onto the same evaluate() pipeline.
+ */
+@Injectable()
+export class RulesEngineService {
+  private readonly logger = new Logger(RulesEngineService.name);
+
+  constructor(
+    private readonly rules: NotificationRulesRepository,
+    private readonly inApp: InAppDispatcher,
+  ) {}
+
+  @OnEvent(RULE_EVENT.TRANSACTION_CREATED)
+  async onTransactionCreated(event: TransactionCreatedEvent): Promise<void> {
+    await this.evaluateTransactionEvent(event);
+  }
+
+  @OnEvent(RULE_EVENT.TRANSACTION_CREATED_BATCH)
+  async onTransactionCreatedBatch(batch: TransactionCreatedBatchEvent): Promise<void> {
+    if (batch.events.length === 0) return;
+    // Pre-fetch rules once per (trigger, household) and reuse for every event
+    // in the batch — avoids N queries on a 500-row CSV import.
+    const rules = await this.rules.findAll(batch.householdId, {
+      trigger: 'TRANSACTION_CREATED',
+      enabled: true,
+    });
+    for (const event of batch.events) {
+      await this.evaluateTransactionEvent(event, rules);
+    }
+  }
+
+  /** Dispatch a hand-crafted test notification through every enabled channel. */
+  async dispatchTest(rule: NotificationRule): Promise<NotificationChannel[]> {
+    const sent: NotificationChannel[] = [];
+    if (rule.channels.includes('IN_APP')) {
+      await this.inApp.dispatch({
+        rule,
+        title: `Testbenachrichtigung: ${rule.name}`,
+        body: 'Diese Test-Benachrichtigung wurde manuell ausgelöst.',
+        payload: { test: true },
+      });
+      sent.push('IN_APP');
+    }
+    // WEB_PUSH / EMAIL channels land with phase 3 + 4.
+    return sent;
+  }
+
+  private async evaluateTransactionEvent(
+    event: TransactionCreatedEvent,
+    prefetched?: NotificationRule[],
+  ): Promise<void> {
+    const rules =
+      prefetched ??
+      (await this.rules.findAll(event.householdId, {
+        trigger: 'TRANSACTION_CREATED',
+        enabled: true,
+      }));
+    if (rules.length === 0) return;
+
+    const ctx = event.fields as unknown as Record<string, unknown>;
+    const now = new Date();
+    const aggregationResolver = this.makeUnsupportedAggregationResolver();
+
+    for (const rule of rules) {
+      // PRIVATE guard: a PRIVATE tx is only visible to its owner; rules
+      // owned by other users must never see it. This is the spec's
+      // "PRIVATE leakage" mitigation.
+      if (
+        event.visibility === Visibility.PRIVATE &&
+        event.ownerUserId !== null &&
+        event.ownerUserId !== rule.userId
+      ) {
+        continue;
+      }
+
+      // Idempotency: same (rule, sourceKind, sourceId) cannot fire twice.
+      const fired = await this.rules.hasFired(rule.id, 'transaction', event.transactionId);
+      if (fired) continue;
+
+      // Throttle guard: cooldown, hourly cap, daily cap.
+      if (this.isThrottled(rule, now)) continue;
+
+      let matched: boolean;
+      try {
+        matched = await evaluatePredicate(
+          rule.predicateJson as unknown as Predicate,
+          ctx,
+          { resolveAggregation: aggregationResolver },
+        );
+      } catch (err) {
+        this.logger.warn(
+          { err, ruleId: rule.id, txId: event.transactionId },
+          'predicate evaluation failed; skipping',
+        );
+        continue;
+      }
+      if (!matched) continue;
+
+      const channels = this.channelsAfterQuietHours(rule, now);
+      if (channels.length === 0) continue;
+
+      const channelsSent: NotificationChannel[] = [];
+      let notificationId: string | null = null;
+      try {
+        if (channels.includes('IN_APP')) {
+          notificationId = await this.inApp.dispatch({
+            rule,
+            title: rule.name,
+            body: this.formatBody(event),
+            payload: {
+              transactionId: event.transactionId,
+              amountCents: event.fields.amountCents,
+              counterparty: event.fields.counterparty,
+            },
+          });
+          channelsSent.push('IN_APP');
+        }
+
+        await this.rules.recordFire({
+          ruleId: rule.id,
+          sourceKind: 'transaction',
+          sourceId: event.transactionId,
+          channelsSent,
+          notificationId,
+        });
+        await this.rules.updateThrottleCounters(rule.id, now);
+      } catch (err) {
+        if (this.isUniqueViolation(err)) {
+          // Idempotency collision under race — already recorded by a
+          // concurrent dispatch, swallow.
+          continue;
+        }
+        this.logger.error(
+          { err, ruleId: rule.id, txId: event.transactionId },
+          'rule dispatch failed',
+        );
+      }
+    }
+  }
+
+  private formatBody(event: TransactionCreatedEvent): string {
+    const sign = event.fields.amountCents >= 0 ? '+' : '−';
+    const abs = Math.abs(event.fields.amountCents) / 100;
+    const eur = abs.toLocaleString('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const cp = event.fields.counterparty ? ` · ${event.fields.counterparty}` : '';
+    return `${sign}${eur} €${cp}`;
+  }
+
+  private isThrottled(rule: NotificationRule, now: Date): boolean {
+    if (rule.cooldownMinutes && rule.lastFiredAt) {
+      const next = rule.lastFiredAt.getTime() + rule.cooldownMinutes * 60_000;
+      if (now.getTime() < next) return true;
+    }
+    if (rule.maxPerDay && rule.firedBucketDate && rule.firedCountToday >= rule.maxPerDay) {
+      const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      if (
+        rule.firedBucketDate.getUTCFullYear() === today.getUTCFullYear() &&
+        rule.firedBucketDate.getUTCMonth() === today.getUTCMonth() &&
+        rule.firedBucketDate.getUTCDate() === today.getUTCDate()
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Quiet-hours stub: future phase enriches with user-level
+   * NotificationUserSettings. For Phase 2 we return all channels as-is.
+   */
+  private channelsAfterQuietHours(
+    rule: NotificationRule,
+    _now: Date,
+  ): NotificationChannel[] {
+    return rule.channels.filter(
+      (c): c is NotificationChannel => c === 'IN_APP' || c === 'WEB_PUSH' || c === 'EMAIL',
+    );
+  }
+
+  /**
+   * Phase 2 has no aggregation providers yet — any predicate referencing
+   * one is rejected at validation time, so this should be unreachable.
+   * Throws explicitly to surface bugs if it ever runs.
+   */
+  private makeUnsupportedAggregationResolver(): (spec: unknown) => Promise<never> {
+    return async () => {
+      throw new Error('Aggregations not implemented in this phase');
+    };
+  }
+
+  private isUniqueViolation(err: unknown): boolean {
+    return (
+      typeof err === 'object' &&
+      err !== null &&
+      'code' in err &&
+      (err as { code?: string }).code === 'P2002'
+    );
+  }
+
+  // QuietHoursState is reserved for the Phase 4 implementation but kept
+  // imported via the type to avoid an unused-import dance during phase
+  // hand-offs.
+  private readonly _quietHoursStub: QuietHoursState | null = null;
+}

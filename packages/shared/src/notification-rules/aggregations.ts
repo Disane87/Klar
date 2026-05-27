@@ -91,10 +91,10 @@ const TRANSACTION_CREATED_FIELDS: ReadonlyArray<TriggerFieldSpec> = [
     operators: ID,
     pickerKind: 'account',
   },
-  { field: 'counterpartyName', label: 'Gegenkonto-Name', kind: 'string', operators: TEXT },
-  { field: 'counterpartyIban', label: 'Gegenkonto-IBAN', kind: 'string', operators: TEXT },
+  { field: 'counterparty', label: 'Gegenkonto / Empfänger', kind: 'string', operators: TEXT },
   { field: 'description', label: 'Verwendungszweck', kind: 'string', operators: TEXT },
-  { field: 'valueDate', label: 'Buchungsdatum', kind: 'date', operators: DATE },
+  { field: 'bookingText', label: 'Buchungstext (Bank)', kind: 'string', operators: TEXT },
+  { field: 'date', label: 'Buchungsdatum', kind: 'date', operators: DATE },
   { field: 'isIncome', label: 'Ist Einnahme', kind: 'boolean', operators: ['=', '!='] },
 ];
 

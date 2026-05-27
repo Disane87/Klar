@@ -52,7 +52,7 @@ describe('humanizePredicate (TRANSACTION_CREATED)', () => {
           op: 'or',
           clauses: [
             { op: 'cmp', field: 'categoryId', operator: '=', value: 'cat_salary' },
-            { op: 'cmp', field: 'counterpartyName', operator: 'contains', value: 'bonus' },
+            { op: 'cmp', field: 'counterparty', operator: 'contains', value: 'bonus' },
           ],
         },
       ],
@@ -62,7 +62,7 @@ describe('humanizePredicate (TRANSACTION_CREATED)', () => {
       labels: { cat_salary: 'Gehalt' },
     });
     expect(out).toContain(
-      '(Kategorie ist Gehalt ODER Gegenkonto-Name enthält "bonus")',
+      '(Kategorie ist Gehalt ODER Gegenkonto / Empfänger enthält "bonus")',
     );
   });
 
