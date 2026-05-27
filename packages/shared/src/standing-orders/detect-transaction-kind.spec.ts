@@ -64,4 +64,25 @@ describe('detectTransactionKind', () => {
       detectTransactionKind({ purposeRaw: 'Daueraufträgliche Sonderaktion 2026' }),
     ).toBe('STANDING_ORDER');
   });
+
+  it('returns TRANSFER for Sparkasse-style "ÜBERTRAG" in purpose', () => {
+    expect(
+      detectTransactionKind({ purposeRaw: 'ÜBERTRAG (GUTSCHRIFT ÜBERWEISUNG)' }),
+    ).toBe('TRANSFER');
+    expect(
+      detectTransactionKind({ purposeRaw: 'übertrag von Tagesgeldkonto' }),
+    ).toBe('TRANSFER');
+  });
+
+  it('returns TRANSFER for VR-Bank-style "UMBUCHUNG"', () => {
+    expect(detectTransactionKind({ purposeRaw: 'Umbuchung Sparkonto' })).toBe('TRANSFER');
+  });
+
+  it('does NOT mistake plain GUTSCHRIFT ÜBERWEISUNG as a transfer', () => {
+    // Every SEPA inbound payment carries this stamp — would catch every
+    // salary, refund, gift, etc. if we matched on ÜBERWEISUNG alone.
+    expect(
+      detectTransactionKind({ purposeRaw: 'GUTSCHRIFT ÜBERWEISUNG Holland Reise Anteil 1/2' }),
+    ).toBe('OTHER');
+  });
 });

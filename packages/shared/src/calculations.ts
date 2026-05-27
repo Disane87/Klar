@@ -90,6 +90,15 @@ export interface TransactionEntry {
   amountCents: number;
   visibility: 'PRIVATE' | 'SHARED';
   createdByUserId: string | null;
+  /**
+   * Detected kind from the FinTS booking type or purpose pattern. `TRANSFER`
+   * entries — money moved between two of the user's OWN accounts — are
+   * excluded from monthly income/expense totals; they cancel out at the
+   * household level and would otherwise inflate both sides of the cashflow.
+   * Other kinds (`STANDING_ORDER`, `DIRECT_DEBIT`, `CARD`, `FEE`, `OTHER`)
+   * keep their amount-sign-based classification.
+   */
+  transactionKind?: string | null;
 }
 
 export interface OverviewInput {
@@ -152,6 +161,12 @@ export function calculateMonthlyOverview(input: OverviewInput): OverviewResult {
 
   for (const entry of transactionEntries) {
     if (!isVisible(entry)) continue;
+    // Own-account transfers (Sparkasse "ÜBERTRAG", VR-Bank "UMBUCHUNG",
+    // or anything the booking-type classifier flagged as TRANSFER between
+    // the user's own accounts) cancel out at the household level and
+    // would otherwise inflate both income AND expense totals — exclude
+    // them from the cashflow.
+    if (entry.transactionKind === 'TRANSFER') continue;
     if (entry.amountCents >= 0) {
       transactionIncomeCents += entry.amountCents;
     } else {

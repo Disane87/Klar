@@ -45,5 +45,14 @@ export function detectTransactionKind(input: KindInput): TransactionKind {
   if (input.purposeRaw && /dauerauftr/i.test(input.purposeRaw)) {
     return 'STANDING_ORDER';
   }
+  // Own-account transfers: Sparkasse stamps these as "ÜBERTRAG" (with TR);
+  // VR-Banks/HypoVereinsbank use "UMBUCHUNG". Both mean "moved money
+  // between two of MY accounts at this bank" — they're not real income/
+  // expense and must drop out of the monthly cashflow. Note: matching
+  // "ÜBERWEISUNG" alone would be too broad (every SEPA payment carries
+  // GUTSCHRIFT ÜBERWEISUNG); the discriminating root is `ÜBERTRAG`/UMBUCHUNG.
+  if (input.purposeRaw && /(?:^|\b)(?:übertrag|umbuchung)/i.test(input.purposeRaw)) {
+    return 'TRANSFER';
+  }
   return 'OTHER';
 }
