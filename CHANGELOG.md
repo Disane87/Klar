@@ -1,3 +1,16 @@
+# [1.25.0](https://github.com/Disane87/Klar/compare/v1.24.0...v1.25.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* **fixed-costs:** show monthly equivalent on rows, original on meta line ([a398d33](https://github.com/Disane87/Klar/commit/a398d332d66479a69103cec7b3eb182985d6fb86))
+* **recurring:** derive sign from category type instead of input amount ([c662f10](https://github.com/Disane87/Klar/commit/c662f1080ee74808618d474c11f1287f866b519e))
+
+
+### Features
+
+* **accounts:** add endpoint to purge an account's transactions ([448c8f1](https://github.com/Disane87/Klar/commit/448c8f18cf5331eddf70e74dc6029370bdee59d8))
+
 # [1.24.0](https://github.com/Disane87/Klar/compare/v1.23.0...v1.24.0) (2026-05-27)
 
 
