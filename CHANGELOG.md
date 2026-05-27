@@ -1,3 +1,17 @@
+# [1.24.0](https://github.com/Disane87/Klar/compare/v1.23.0...v1.24.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* **cashflow:** treat Übertrag/Umbuchung as TRANSFER and exclude from monthly cashflow ([1b0adeb](https://github.com/Disane87/Klar/commit/1b0adeb555a050d1ae3692047e87ae6bc30131e1))
+
+
+### Features
+
+* **fints:** cap TAN-resume attempts to prevent PIN/TAN lockouts ([cd9a751](https://github.com/Disane87/Klar/commit/cd9a75115e719870e9ea63957a025d517e38084e))
+* **fixed-costs:** add weekly billing cycle ([9f323f8](https://github.com/Disane87/Klar/commit/9f323f847812d93e280dd879459668e08d0e7c03))
+* **overview:** liquidity forecast + cashflow insights on monat page ([be8e05c](https://github.com/Disane87/Klar/commit/be8e05c605871836a35d2dc12774ae4b6ff04b3b))
+
 # [1.23.0](https://github.com/Disane87/Klar/compare/v1.22.0...v1.23.0) (2026-05-27)
 
 
