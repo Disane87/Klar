@@ -9,6 +9,7 @@ import {
 } from '@klar/shared';
 import { NotificationRulesRepository } from './notification-rules.repository';
 import { InAppDispatcher } from './dispatchers/in-app.dispatcher';
+import { WebPushDispatcher } from './dispatchers/web-push.dispatcher';
 import {
   RULE_EVENT,
   type TransactionCreatedBatchEvent,
@@ -37,6 +38,7 @@ export class RulesEngineService {
   constructor(
     private readonly rules: NotificationRulesRepository,
     private readonly inApp: InAppDispatcher,
+    private readonly webPush: WebPushDispatcher,
   ) {}
 
   @OnEvent(RULE_EVENT.TRANSACTION_CREATED)
@@ -61,8 +63,9 @@ export class RulesEngineService {
   /** Dispatch a hand-crafted test notification through every enabled channel. */
   async dispatchTest(rule: NotificationRule): Promise<NotificationChannel[]> {
     const sent: NotificationChannel[] = [];
+    let notificationId: string | null = null;
     if (rule.channels.includes('IN_APP')) {
-      await this.inApp.dispatch({
+      notificationId = await this.inApp.dispatch({
         rule,
         title: `Testbenachrichtigung: ${rule.name}`,
         body: 'Diese Test-Benachrichtigung wurde manuell ausgelöst.',
@@ -70,7 +73,17 @@ export class RulesEngineService {
       });
       sent.push('IN_APP');
     }
-    // WEB_PUSH / EMAIL channels land with phase 3 + 4.
+    if (rule.channels.includes('WEB_PUSH') && this.webPush.isConfigured()) {
+      await this.webPush.send(rule.userId, {
+        title: `Testbenachrichtigung: ${rule.name}`,
+        body: 'Diese Test-Benachrichtigung wurde manuell ausgelöst.',
+        url: '/app/settings/notifications',
+        tag: `rule:${rule.id}`,
+        notificationId,
+      });
+      sent.push('WEB_PUSH');
+    }
+    // EMAIL lands with Phase 4.
     return sent;
   }
 
@@ -143,6 +156,16 @@ export class RulesEngineService {
             },
           });
           channelsSent.push('IN_APP');
+        }
+        if (channels.includes('WEB_PUSH') && this.webPush.isConfigured()) {
+          const delivered = await this.webPush.send(rule.userId, {
+            title: rule.name,
+            body: this.formatBody(event),
+            url: `/app/buchungen?tx=${event.transactionId}`,
+            tag: `rule:${rule.id}`,
+            notificationId,
+          });
+          if (delivered > 0) channelsSent.push('WEB_PUSH');
         }
 
         await this.rules.recordFire({

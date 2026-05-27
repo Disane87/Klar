@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { humanizePredicate, type Predicate } from '@klar/shared';
@@ -15,6 +17,7 @@ import { KlarConfirmService } from '../../../shared/ui/klar-confirm.service';
 import { NotificationRulesStore } from '../../../core/notification-rules/notification-rules.store';
 import type { NotificationRuleDto } from '../../../core/notification-rules/notification-rules.service';
 import { NotificationRuleDialogComponent } from './notification-rule-dialog.component';
+import { WebPushService } from '../../../core/notification-rules/web-push.service';
 
 @Component({
   selector: 'klar-notification-rules-page',
@@ -41,6 +44,47 @@ import { NotificationRuleDialogComponent } from './notification-rule-dialog.comp
           </klar-button>
         </div>
       </klar-hero>
+
+      <section class="rounded-md border border-(--line-soft) bg-(--bg-1) p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+          <div class="text-[13px] font-medium text-(--fg)">Web-Push auf diesem Gerät</div>
+          @if (!push.supported()) {
+            <div class="text-[12px] text-(--fg-3) mt-1">
+              Dein Browser unterstützt keine Push-Benachrichtigungen.
+            </div>
+          } @else if (push.iosBlocked()) {
+            <div class="text-[12px] text-(--fg-3) mt-1">
+              Auf iOS erst nach „Zum Home-Bildschirm hinzufügen" möglich.
+            </div>
+          } @else if (push.subscribed()) {
+            <div class="text-[12px] text-(--fg-3) mt-1">
+              Aktiv auf {{ push.subscriptions().length }} Gerät{{ push.subscriptions().length === 1 ? '' : 'en' }}.
+            </div>
+          } @else {
+            <div class="text-[12px] text-(--fg-3) mt-1">
+              Aktiviere Push, damit Regeln dich auch im Hintergrund erreichen.
+            </div>
+          }
+          @if (pushError()) {
+            <div class="text-[12px] text-(--danger) mt-1">{{ pushError() }}</div>
+          }
+        </div>
+        <div class="flex items-center gap-2">
+          @if (push.subscribed()) {
+            <klar-button tone="ghost" size="sm" (click)="onDisablePush()">Deaktivieren</klar-button>
+          } @else {
+            <klar-button
+              tone="primary"
+              size="sm"
+              icon="bell"
+              [disabled]="!push.supported() || push.iosBlocked() || pushBusy()"
+              (click)="onEnablePush()"
+            >
+              {{ pushBusy() ? 'Aktiviere …' : 'Aktivieren' }}
+            </klar-button>
+          }
+        </div>
+      </section>
 
       @if (store.loading() && rules().length === 0) {
         <div class="rounded-lg border border-(--line) bg-(--bg-1) px-5 py-10 text-center text-(--fg-2)">
@@ -101,16 +145,52 @@ import { NotificationRuleDialogComponent } from './notification-rule-dialog.comp
     </div>
   `,
 })
-export class NotificationRulesPageComponent {
+export class NotificationRulesPageComponent implements OnInit {
   protected readonly store = inject(NotificationRulesStore);
+  protected readonly push = inject(WebPushService);
   private readonly dialog = inject(KlarDialogService);
   private readonly confirm = inject(KlarConfirmService);
 
   protected readonly rules = computed<NotificationRuleDto[]>(() => this.store.items());
+  protected readonly pushBusy = signal(false);
+  protected readonly pushError = signal<string | null>(null);
   protected readonly testing = (() => {
     let value: string | null = null;
     return () => value;
   })();
+
+  ngOnInit(): void {
+    if (this.push.supported()) void this.push.refreshSubscriptions();
+  }
+
+  protected async onEnablePush(): Promise<void> {
+    this.pushError.set(null);
+    this.pushBusy.set(true);
+    try {
+      const res = await this.push.enable();
+      if (!res.ok) {
+        const messages: Record<string, string> = {
+          unsupported: 'Browser unterstützt kein Push.',
+          denied: 'Berechtigung verweigert.',
+          'no-vapid': 'Server nicht für Push konfiguriert (VAPID fehlt).',
+          'ios-needs-pwa': 'Auf iOS bitte erst „Zum Home-Bildschirm".',
+          error: res.message ?? 'Aktivierung fehlgeschlagen.',
+        };
+        this.pushError.set(messages[res.reason] ?? 'Aktivierung fehlgeschlagen.');
+      }
+    } finally {
+      this.pushBusy.set(false);
+    }
+  }
+
+  protected async onDisablePush(): Promise<void> {
+    this.pushBusy.set(true);
+    try {
+      await this.push.disable();
+    } finally {
+      this.pushBusy.set(false);
+    }
+  }
 
   protected openCreate(): void {
     this.dialog.open({

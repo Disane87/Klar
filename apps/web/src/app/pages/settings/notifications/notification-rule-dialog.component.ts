@@ -147,9 +147,9 @@ function parseLocaleNumber(raw: string): number | null {
           <input type="checkbox" [(ngModel)]="ch_inApp" name="ch-in-app" />
           Inbox (immer empfohlen)
         </label>
-        <label class="flex items-center gap-2 text-[13px] text-(--fg-3)">
-          <input type="checkbox" [(ngModel)]="ch_webPush" name="ch-web-push" disabled />
-          Web-Push (Phase 3 — folgt)
+        <label class="flex items-center gap-2 text-[13px]">
+          <input type="checkbox" [(ngModel)]="ch_webPush" name="ch-web-push" />
+          Web-Push (OS-Benachrichtigung) — Geräte unter Einstellungen aktivieren
         </label>
         <label class="flex items-center gap-2 text-[13px] text-(--fg-3)">
           <input type="checkbox" [(ngModel)]="ch_email" name="ch-email" disabled />
@@ -206,7 +206,7 @@ export class NotificationRuleDialogComponent {
     if (!this.name().trim()) return false;
     if (this.conditions().length === 0) return false;
     if (this.conditions().some(c => !c.value && c.field !== 'isIncome')) return false;
-    if (!this.ch_inApp()) return false;
+    if (!this.ch_inApp() && !this.ch_webPush() && !this.ch_email()) return false;
     return true;
   });
 
@@ -274,6 +274,7 @@ export class NotificationRuleDialogComponent {
     try {
       const channels: NotificationChannel[] = [];
       if (this.ch_inApp()) channels.push('IN_APP');
+      if (this.ch_webPush()) channels.push('WEB_PUSH');
       const predicate = this.rowsToPredicate(this.conditions());
       const payload: CreateNotificationRuleInput = {
         name: this.name().trim(),

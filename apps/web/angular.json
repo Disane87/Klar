@@ -53,7 +53,8 @@
                   "glob": "safety-worker.js",
                   "input": "node_modules/@angular/service-worker",
                   "output": "."
-                }
+                },
+                "src/sw-push.js"
               ]
             },
             "development": {

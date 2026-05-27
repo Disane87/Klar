@@ -3,6 +3,7 @@ import { Visibility, type NotificationRule } from '@prisma/client';
 import { RulesEngineService } from './rules-engine.service';
 import type { NotificationRulesRepository } from './notification-rules.repository';
 import type { InAppDispatcher } from './dispatchers/in-app.dispatcher';
+import type { WebPushDispatcher } from './dispatchers/web-push.dispatcher';
 import type { TransactionCreatedEvent } from './events/rule-events';
 
 function makeRule(over: Partial<NotificationRule> = {}): NotificationRule {
@@ -60,7 +61,11 @@ function buildEngine() {
     updateThrottleCounters: vi.fn().mockResolvedValue(undefined),
   } as unknown as NotificationRulesRepository;
   const inApp = { dispatch: vi.fn().mockResolvedValue('ntf_new') } as unknown as InAppDispatcher;
-  return { engine: new RulesEngineService(repo, inApp), repo, inApp };
+  const webPush = {
+    isConfigured: vi.fn().mockReturnValue(false),
+    send: vi.fn().mockResolvedValue(0),
+  } as unknown as WebPushDispatcher;
+  return { engine: new RulesEngineService(repo, inApp, webPush), repo, inApp, webPush };
 }
 
 describe('RulesEngineService.onTransactionCreated', () => {
@@ -149,5 +154,27 @@ describe('RulesEngineService.dispatchTest', () => {
     const sent = await engine.dispatchTest(makeRule({ channels: [] }));
     expect(sent).toEqual([]);
     expect(inApp.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('also fans out via WEB_PUSH when channel + dispatcher configured', async () => {
+    const { engine, webPush, inApp } = buildEngine();
+    vi.mocked(webPush.isConfigured).mockReturnValue(true);
+    vi.mocked(webPush.send).mockResolvedValue(1);
+    const sent = await engine.dispatchTest(
+      makeRule({ channels: ['IN_APP', 'WEB_PUSH'] }),
+    );
+    expect(sent).toEqual(['IN_APP', 'WEB_PUSH']);
+    expect(inApp.dispatch).toHaveBeenCalled();
+    expect(webPush.send).toHaveBeenCalled();
+  });
+
+  it('skips WEB_PUSH silently when VAPID is not configured', async () => {
+    const { engine, webPush } = buildEngine();
+    vi.mocked(webPush.isConfigured).mockReturnValue(false);
+    const sent = await engine.dispatchTest(
+      makeRule({ channels: ['IN_APP', 'WEB_PUSH'] }),
+    );
+    expect(sent).toEqual(['IN_APP']);
+    expect(webPush.send).not.toHaveBeenCalled();
   });
 });

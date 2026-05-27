@@ -37,7 +37,7 @@ export const appConfig: ApplicationConfig = {
       deps: [ThemeService],
       multi: true,
     },
-    provideServiceWorker('ngsw-worker.js', {
+    provideServiceWorker('sw-push.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),

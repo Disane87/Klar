@@ -56,6 +56,16 @@ export const oidcConfig = registerAs('oidc', () => ({
 // Niemals ins Repo, niemals in Logs (siehe Pino-Redaction in app.module.ts).
 // Backup separat zur DB sichern; ohne Master-Key sind Credentials
 // unwiederherstellbar.
+// Notification Rules (Phase 3) — Web Push VAPID configuration.
+// Generate via `pnpm --filter @klar/api vapid:generate`. All three values
+// are required to enable WEB_PUSH delivery; without them, the dispatcher
+// logs a warning once and drops the push silently.
+export const webPushConfig = registerAs('webPush', () => ({
+  publicKey: process.env['VAPID_PUBLIC_KEY'] ?? '',
+  privateKey: process.env['VAPID_PRIVATE_KEY'] ?? '',
+  subject: process.env['VAPID_SUBJECT'] ?? '',
+}));
+
 export const fintsConfig = registerAs('fints', () => ({
   masterKeyHex: process.env['FINTS_MASTER_KEY'] ?? '',
   /** PSD2 Strong-Customer-Authentication-Window in Tagen (default 89). */
