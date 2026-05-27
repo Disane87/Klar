@@ -1,3 +1,20 @@
+# [1.27.0](https://github.com/Disane87/Klar/compare/v1.26.0...v1.27.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* **notifications:** SSRF allowlist on push endpoint + faster bell refresh ([96b78dd](https://github.com/Disane87/Klar/commit/96b78ddefffc37ea8b661ccb44d053380df8efd6))
+
+
+### Features
+
+* **fints:** per-connection sync interval (Phase 8) ([559be7d](https://github.com/Disane87/Klar/commit/559be7d992acea57c13b081e426c4cc63e8a0f72))
+* **notifications:** email channel + digest queue (Phase 4) ([ad62560](https://github.com/Disane87/Klar/commit/ad625606b98b5b906bb3f4ed61160efc10332dec))
+* **notifications:** schedule editor, live preview, activity feed (Phase 7) ([f0a14e2](https://github.com/Disane87/Klar/commit/f0a14e23109fd71929b2d117fff4020f2c1a6743))
+* **notifications:** SCHEDULED trigger + aggregation providers (Phase 6) ([0a5926e](https://github.com/Disane87/Klar/commit/0a5926eed2f7a6400974081313ca9f185decb655))
+* **notifications:** STANDING_ORDER_DUE, BUDGET_THRESHOLD, FINTS_SYNC_EVENT triggers (Phase 5) ([bdb0d72](https://github.com/Disane87/Klar/commit/bdb0d72a62d7fa6258505fe72997078c13360cc8))
+* **notifications:** web push channel (Phase 3) ([977888b](https://github.com/Disane87/Klar/commit/977888bab1e873d404210f837fda6c90ffd9c809))
+
 # [1.26.0](https://github.com/Disane87/Klar/compare/v1.25.0...v1.26.0) (2026-05-27)
 
 
