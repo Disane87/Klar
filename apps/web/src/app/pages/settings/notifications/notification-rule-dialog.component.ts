@@ -14,7 +14,12 @@ import {
   type NotificationChannel,
   type NotificationTrigger,
   type Predicate,
+  type Schedule,
+  type ScheduleType,
 } from '@klar/shared';
+import { NotificationRulesService as NotificationRulesApi } from '../../../core/notification-rules/notification-rules.service';
+import { HouseholdStore } from '../../../core/household/household.store';
+import { firstValueFrom } from 'rxjs';
 import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
@@ -177,6 +182,77 @@ function parseLocaleNumber(raw: string): number | null {
         </span>
       </div>
 
+      @if (trigger() === 'SCHEDULED') {
+        <fieldset class="flex flex-col gap-2 border border-(--line-soft) rounded-md p-3">
+          <legend class="text-[11px] uppercase tracking-widest text-(--fg-2) px-1">
+            Zeitplan
+          </legend>
+          <div class="flex flex-wrap items-center gap-2">
+            <klar-select
+              [options]="scheduleTypeOptions"
+              [value]="scheduleType()"
+              (valueChange)="setScheduleType($event)"
+              ariaLabel="Häufigkeit"
+            />
+            <input
+              class="hlm-input w-24"
+              type="time"
+              [ngModel]="scheduleTime()"
+              (ngModelChange)="scheduleTime.set($event)"
+              name="schedule-time"
+            />
+            @if (scheduleType() === 'weekly') {
+              <klar-select
+                [options]="dayOfWeekOptions"
+                [value]="scheduleDayOfWeek() + ''"
+                (valueChange)="scheduleDayOfWeek.set(+$event)"
+                ariaLabel="Wochentag"
+              />
+            }
+            @if (scheduleType() === 'monthly') {
+              <input
+                class="hlm-input w-20"
+                type="number"
+                min="1"
+                max="31"
+                [ngModel]="scheduleDayOfMonth()"
+                (ngModelChange)="scheduleDayOfMonth.set(+$event)"
+                name="schedule-day-of-month"
+              />
+              <span class="text-[12px] text-(--fg-3)">des Monats</span>
+            }
+          </div>
+          <span class="text-[11px] text-(--fg-3)">
+            Wird zur angegebenen Zeit (Europe/Berlin) ausgewertet.
+            Bedingungen für SCHEDULED-Regeln müssen Aggregationen nutzen
+            (z. B. Kontostand, Summe der letzten 30 Tage).
+          </span>
+        </fieldset>
+      }
+
+      @if (trigger() === 'TRANSACTION_CREATED') {
+        <div class="flex items-center justify-between gap-3 border-t border-(--line-soft) pt-2">
+          <span class="text-[11px] text-(--fg-3)">
+            @if (previewResult(); as r) {
+              In den letzten 90 Tagen hätte das {{ r.count }}× gefeuert.
+              @if (r.count > 0) {
+                Beispiel: {{ r.sample[0] }}
+              }
+            } @else {
+              Live-Vorschau gegen die letzten 90 Tage.
+            }
+          </span>
+          <klar-button
+            tone="ghost"
+            size="sm"
+            [disabled]="!canSave() || previewing()"
+            (click)="onPreview()"
+          >
+            {{ previewing() ? 'Prüfe …' : 'Vorschau' }}
+          </klar-button>
+        </div>
+      }
+
       <div class="flex items-center justify-between gap-3 pt-2 border-t border-(--line-soft)">
         <span class="text-[11px] text-(--fg-3)">
           Idempotent — jede Buchung löst eine Regel höchstens einmal aus.
@@ -212,6 +288,17 @@ export class NotificationRuleDialogComponent {
   protected readonly ch_webPush = signal(false);
   protected readonly ch_email = signal(false);
   protected readonly digestMode = signal<DigestMode>('IMMEDIATE');
+  // Schedule (only relevant when trigger=SCHEDULED).
+  protected readonly scheduleType = signal<ScheduleType>('daily');
+  protected readonly scheduleTime = signal('08:00');
+  protected readonly scheduleDayOfWeek = signal<number>(1); // Monday
+  protected readonly scheduleDayOfMonth = signal<number>(1);
+  // Live-preview result.
+  protected readonly previewing = signal(false);
+  protected readonly previewResult = signal<{ count: number; sample: string[] } | null>(null);
+
+  private readonly api = inject(NotificationRulesApi);
+  private readonly householdStore = inject(HouseholdStore);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -227,6 +314,28 @@ export class NotificationRuleDialogComponent {
     { value: 'HOURLY', label: 'Stündliche Zusammenfassung' },
     { value: 'DAILY', label: 'Tägliche Zusammenfassung' },
   ];
+
+  protected readonly scheduleTypeOptions: KlarSelectOption[] = [
+    { value: 'daily', label: 'Täglich' },
+    { value: 'weekly', label: 'Wöchentlich' },
+    { value: 'monthly', label: 'Monatlich' },
+  ];
+
+  protected readonly dayOfWeekOptions: KlarSelectOption[] = [
+    { value: '1', label: 'Mo' },
+    { value: '2', label: 'Di' },
+    { value: '3', label: 'Mi' },
+    { value: '4', label: 'Do' },
+    { value: '5', label: 'Fr' },
+    { value: '6', label: 'Sa' },
+    { value: '0', label: 'So' },
+  ];
+
+  protected setScheduleType(value: string): void {
+    if (value === 'daily' || value === 'weekly' || value === 'monthly') {
+      this.scheduleType.set(value);
+    }
+  }
 
   protected readonly fieldOptions = computed<KlarSelectOption[]>(() =>
     TRIGGER_FIELDS[this.trigger()].map(f => ({ value: f.field, label: f.label })),
@@ -254,6 +363,16 @@ export class NotificationRuleDialogComponent {
     this.ch_email.set(e.channels.includes('EMAIL'));
     this.digestMode.set(e.digestMode);
     this.conditions.set(this.predicateToRows(e.predicate));
+    if (e.schedule) {
+      this.scheduleType.set(e.schedule.type);
+      this.scheduleTime.set(e.schedule.time);
+      if (typeof e.schedule.dayOfWeek === 'number') {
+        this.scheduleDayOfWeek.set(e.schedule.dayOfWeek);
+      }
+      if (typeof e.schedule.dayOfMonth === 'number') {
+        this.scheduleDayOfMonth.set(e.schedule.dayOfMonth);
+      }
+    }
   }
 
   protected operatorOptionsFor(field: string): KlarSelectOption[] {
@@ -299,6 +418,31 @@ export class NotificationRuleDialogComponent {
     this.dialog.close();
   }
 
+  protected async onPreview(): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId) return;
+    this.previewing.set(true);
+    try {
+      const result = await firstValueFrom(
+        this.api.preview(householdId, {
+          trigger: this.trigger(),
+          predicate: this.rowsToPredicate(this.conditions()),
+          days: 90,
+        }),
+      );
+      this.previewResult.set({
+        count: result.wouldHaveFiredCount,
+        sample: result.sample.map(
+          s => `${s.at} · ${s.title} (${(s.amountCents / 100).toFixed(2)} €)`,
+        ),
+      });
+    } catch {
+      this.previewResult.set({ count: 0, sample: ['Vorschau fehlgeschlagen'] });
+    } finally {
+      this.previewing.set(false);
+    }
+  }
+
   protected async save(): Promise<void> {
     this.errorMessage.set(null);
     this.saving.set(true);
@@ -315,6 +459,12 @@ export class NotificationRuleDialogComponent {
         channels,
         digestMode: this.digestMode(),
       };
+      if (this.trigger() === 'SCHEDULED') {
+        const schedule: Schedule = { type: this.scheduleType(), time: this.scheduleTime() };
+        if (schedule.type === 'weekly') schedule.dayOfWeek = this.scheduleDayOfWeek();
+        if (schedule.type === 'monthly') schedule.dayOfMonth = this.scheduleDayOfMonth();
+        payload.schedule = schedule;
+      }
       const e = this.existing();
       if (e) await this.store.update(e.id, payload);
       else await this.store.create(payload);

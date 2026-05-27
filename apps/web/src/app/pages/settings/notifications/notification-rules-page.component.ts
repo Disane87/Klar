@@ -18,6 +18,12 @@ import { NotificationRulesStore } from '../../../core/notification-rules/notific
 import type { NotificationRuleDto } from '../../../core/notification-rules/notification-rules.service';
 import { NotificationRuleDialogComponent } from './notification-rule-dialog.component';
 import { WebPushService } from '../../../core/notification-rules/web-push.service';
+import {
+  NotificationRulesService as NotificationRulesApi,
+  type RuleActivityItemDto,
+} from '../../../core/notification-rules/notification-rules.service';
+import { HouseholdStore } from '../../../core/household/household.store';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'klar-notification-rules-page',
@@ -142,6 +148,45 @@ import { WebPushService } from '../../../core/notification-rules/web-push.servic
           }
         </ul>
       }
+
+      <!-- Activity feed -->
+      <section class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] uppercase tracking-widest text-(--fg-2)">
+            Aktivität — letzte Auslösungen
+          </span>
+          <klar-button
+            tone="ghost"
+            size="sm"
+            icon="refresh"
+            [iconSpin]="activityLoading()"
+            (click)="refreshActivity()"
+          >
+            Aktualisieren
+          </klar-button>
+        </div>
+        @if (activity().length === 0 && !activityLoading()) {
+          <div class="rounded-md border border-(--line-soft) bg-(--bg-1) px-4 py-6 text-center text-[12px] text-(--fg-3)">
+            Noch keine Auslösungen.
+          </div>
+        } @else {
+          <ul class="flex flex-col">
+            @for (fire of activity(); track fire.id) {
+              <li class="flex items-center gap-3 py-2 px-3 border-b border-(--line-soft) last:border-b-0 text-[12px]">
+                <span class="mono text-(--fg-3) shrink-0">
+                  {{ fire.firedAt | date:'dd.MM. HH:mm' }}
+                </span>
+                <span class="flex-1 min-w-0 text-(--fg) truncate">
+                  {{ ruleNameOf(fire.ruleId) }}
+                </span>
+                <span class="text-[11px] text-(--fg-3) shrink-0">
+                  {{ fire.channelsSent.join(' · ') || '—' }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
     </div>
   `,
 })
@@ -150,10 +195,14 @@ export class NotificationRulesPageComponent implements OnInit {
   protected readonly push = inject(WebPushService);
   private readonly dialog = inject(KlarDialogService);
   private readonly confirm = inject(KlarConfirmService);
+  private readonly api = inject(NotificationRulesApi);
+  private readonly householdStore = inject(HouseholdStore);
 
   protected readonly rules = computed<NotificationRuleDto[]>(() => this.store.items());
   protected readonly pushBusy = signal(false);
   protected readonly pushError = signal<string | null>(null);
+  protected readonly activity = signal<RuleActivityItemDto[]>([]);
+  protected readonly activityLoading = signal(false);
   protected readonly testing = (() => {
     let value: string | null = null;
     return () => value;
@@ -161,6 +210,21 @@ export class NotificationRulesPageComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.push.supported()) void this.push.refreshSubscriptions();
+    void this.refreshActivity();
+  }
+
+  protected async refreshActivity(): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    if (!householdId) return;
+    this.activityLoading.set(true);
+    try {
+      const res = await firstValueFrom(this.api.activity(householdId, 25));
+      this.activity.set(res.items);
+    } catch {
+      // best-effort
+    } finally {
+      this.activityLoading.set(false);
+    }
   }
 
   protected async onEnablePush(): Promise<void> {
@@ -241,6 +305,10 @@ export class NotificationRulesPageComponent implements OnInit {
       case 'FINTS_SYNC_EVENT': return 'FinTS';
       case 'SCHEDULED': return 'Zeitplan';
     }
+  }
+
+  protected ruleNameOf(ruleId: string): string {
+    return this.rules().find(r => r.id === ruleId)?.name ?? '(gelöschte Regel)';
   }
 
   protected channelLabel(ch: string): string {
