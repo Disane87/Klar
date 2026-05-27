@@ -14,6 +14,7 @@ import type {
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 
 const CYCLE_OPTIONS: { value: FixedCostCycle; label: string }[] = [
+  { value: 'WEEKLY',      label: 'Wöchentlich' },
   { value: 'MONTHLY',     label: 'Monatlich' },
   { value: 'QUARTERLY',   label: 'Quartalsweise' },
   { value: 'HALF_YEARLY', label: 'Halbjährlich' },

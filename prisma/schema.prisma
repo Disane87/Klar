@@ -78,6 +78,7 @@ enum NotificationKind {
 }
 
 enum FixedCostCycle {
+  WEEKLY
   MONTHLY
   QUARTERLY
   HALF_YEARLY

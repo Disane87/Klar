@@ -381,6 +381,7 @@ export class VertraegeComponent implements OnInit {
     let total = 0;
     for (const c of active) {
       switch (c.cycle) {
+        case 'WEEKLY':      total += c.amountCents * 52; break;
         case 'MONTHLY':     total += c.amountCents * 12; break;
         case 'QUARTERLY':   total += c.amountCents * 4;  break;
         case 'HALF_YEARLY': total += c.amountCents * 2;  break;
@@ -555,6 +556,7 @@ export class VertraegeComponent implements OnInit {
 
   protected cycleLabel(cycle: FixedCostDto['cycle']): string {
     switch (cycle) {
+      case 'WEEKLY':      return 'wöchentlich';
       case 'MONTHLY':     return 'monatlich';
       case 'QUARTERLY':   return 'quartalsweise';
       case 'HALF_YEARLY': return 'halbjährlich';
