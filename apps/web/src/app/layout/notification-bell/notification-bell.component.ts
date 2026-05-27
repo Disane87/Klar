@@ -8,7 +8,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { NotificationStore } from '../../core/notifications/notifications.store';
 import type { NotificationDto } from '../../core/notifications/notifications.service';
@@ -22,7 +22,7 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
 @Component({
   selector: 'klar-notification-bell',
   standalone: true,
-  imports: [KlarIconComponent, DatePipe, RouterLink],
+  imports: [KlarIconComponent, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'relative inline-flex' },
   template: `
@@ -112,13 +112,13 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
           <span class="text-(--fg-3)">
             Benachrichtigungen folgen deinen Regeln.
           </span>
-          <a
-            routerLink="/app/settings/notifications"
+          <button
+            type="button"
             class="text-(--accent) hover:opacity-80"
-            (click)="close()"
+            (click)="openRules()"
           >
             Regeln verwalten →
-          </a>
+          </button>
         </footer>
       </div>
     }
@@ -127,6 +127,7 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
 export class KlarNotificationBellComponent {
   protected readonly store = inject(NotificationStore);
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly router = inject(Router);
   protected readonly open = signal(false);
 
   protected readonly ariaLabel = computed(() => {
@@ -142,6 +143,11 @@ export class KlarNotificationBellComponent {
 
   close(): void {
     this.open.set(false);
+  }
+
+  protected openRules(): void {
+    this.close();
+    void this.router.navigate(['/app/settings/notifications']);
   }
 
   protected async handleClick(n: NotificationDto): Promise<void> {
