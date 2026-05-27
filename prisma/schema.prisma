@@ -77,6 +77,29 @@ enum NotificationKind {
   FINTS_BLZ_REGISTRY_STALE
 }
 
+// Notification Rules Engine (Phase: notification-rules foundation)
+// Generic, user-modelled triggers. Each NotificationRule attaches a predicate
+// AST (see packages/shared/src/notification-rules) and a channel-set.
+enum NotificationTrigger {
+  TRANSACTION_CREATED
+  STANDING_ORDER_DUE
+  BUDGET_THRESHOLD
+  FINTS_SYNC_EVENT
+  SCHEDULED
+}
+
+enum NotificationChannel {
+  IN_APP
+  WEB_PUSH
+  EMAIL
+}
+
+enum DigestMode {
+  IMMEDIATE
+  HOURLY
+  DAILY
+}
+
 enum FixedCostCycle {
   WEEKLY
   MONTHLY
@@ -192,6 +215,10 @@ model User {
   oauthGrants           OAuthGrant[]
   oauthConsents         OAuthConsent[]
   notifications         Notification[]
+  notificationRules     NotificationRule[]
+  pushSubscriptions     WebPushSubscription[]
+  notificationDigests   NotificationDigestQueue[]
+  notificationSettings  NotificationUserSettings?
   connectedApps         ConnectedApp[]
   ownedAccounts         Account[]              @relation("AccountOwner")
   fintsConnections      FintsConnection[]      @relation("FintsConnectionOwner")
@@ -312,6 +339,7 @@ model Household {
   csvImports            CsvImport[]
   importLearnings       ImportLearning[]
   notifications         Notification[]
+  notificationRules     NotificationRule[]
   fixedCosts            FixedCost[]
   accounts              Account[]
   fintsConnections      FintsConnection[]
@@ -1220,4 +1248,114 @@ model ConnectedApp {
 
   @@unique([userId, provider, externalId])
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION RULES ENGINE
+// ─────────────────────────────────────────────
+// User-modelled rules with a predicate AST stored in predicateJson.
+// Validation, evaluation and humanisation live in packages/shared/src/notification-rules.
+// Rules are owned per-user; PRIVATE transactions are filtered out for non-owners
+// at evaluation time, never at write time.
+model NotificationRule {
+  id              String              @id @default(cuid())
+  householdId     String
+  userId          String
+  name            String
+  enabled         Boolean             @default(true)
+
+  trigger         NotificationTrigger
+  predicateJson   Json
+
+  scheduleJson    Json? // only for trigger=SCHEDULED { type, time, dayOfWeek?, dayOfMonth? }
+  leadTimeDays    Int? // only for trigger=STANDING_ORDER_DUE (default 1, resolved by service)
+
+  channels        NotificationChannel[]
+  digestMode      DigestMode          @default(IMMEDIATE)
+
+  cooldownMinutes Int?
+  maxPerHour      Int?
+  maxPerDay       Int?
+
+  lastFiredAt     DateTime?
+  firedCountToday Int                 @default(0)
+  firedBucketDate DateTime?           @db.Date
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  household Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fires     NotificationRuleFire[]
+
+  @@index([householdId, userId, enabled])
+  @@index([trigger, enabled])
+}
+
+// Idempotency + audit trail for rule firings. The unique constraint over
+// (ruleId, sourceKind, sourceId) prevents a single source event from firing
+// the same rule twice.
+model NotificationRuleFire {
+  id             String                @id @default(cuid())
+  ruleId         String
+  sourceKind     String // 'transaction' | 'standing_order' | 'budget' | 'fints_event' | 'scheduled'
+  sourceId       String
+  firedAt        DateTime              @default(now())
+  channelsSent   NotificationChannel[]
+  notificationId String? // FK to created in-app notification (NotificationsService)
+
+  rule NotificationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleId, sourceKind, sourceId])
+  @@index([ruleId, firedAt])
+}
+
+// Web Push subscriptions per user (multiple devices supported). Endpoint is
+// the natural unique key; userAgent is purely cosmetic ("Manage devices" UI).
+model WebPushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  householdId String
+  endpoint    String   @unique
+  p256dh      String
+  auth        String
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([householdId])
+}
+
+// Holds matches awaiting their next digest flush (hourly or daily).
+// bucketKey shape: 'hour:2026-05-08T14' or 'day:2026-05-08'.
+model NotificationDigestQueue {
+  id          String              @id @default(cuid())
+  userId      String
+  channel     NotificationChannel
+  ruleId      String
+  payloadJson Json
+  bucketKey   String
+  createdAt   DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, channel, bucketKey])
+}
+
+// Per-user knobs (quiet hours, master channel toggles). One row per user is
+// created lazily on first read.
+model NotificationUserSettings {
+  userId          String   @id
+  householdId     String
+  quietHoursStart String? // 'HH:mm', null = quiet hours disabled
+  quietHoursEnd   String?
+  quietHoursTz    String? // IANA TZ, default 'Europe/Berlin'
+  emailEnabled    Boolean  @default(true)
+  webPushEnabled  Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -7,6 +7,7 @@ import * as pino from 'pino';
 import pinoPretty from 'pino-pretty';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LiveLogModule } from './admin/health/live-log.module';
 import { LiveLogBuffer } from './admin/health/live-log.buffer';
 import { HealthModule } from './health/health.module';
@@ -105,6 +106,13 @@ const REDACT_PATHS = [
       skipIf: () => process.env['NODE_ENV'] === 'test',
     }]),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      maxListeners: 32,
+      verboseMemoryLeak: false,
+      ignoreErrors: false,
+    }),
     AppConfigModule,
     PrismaModule,
     MailModule,

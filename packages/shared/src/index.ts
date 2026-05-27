@@ -7,3 +7,4 @@ export * from './budgets/budgets-vs-actuals';
 export * from './standing-orders';
 export * from './booking-text';
 export * from './payroll';
+export * from './notification-rules';
