@@ -1,3 +1,19 @@
+# [1.26.0](https://github.com/Disane87/Klar/compare/v1.25.0...v1.26.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* **notifications:** bell popover clipped by top-bar overflow-x-auto ([0147d0c](https://github.com/Disane87/Klar/commit/0147d0c897b7c4bf3513b5eb3ee5afdd7c860d9b))
+* **notifications:** bell popover crash when RouterLink injects ActivatedRoute ([2ea6896](https://github.com/Disane87/Klar/commit/2ea68969988d8153fcd9e24f6840cd520ebb348e))
+* **notifications:** rule builder accepts Euro for money fields ([190d28c](https://github.com/Disane87/Klar/commit/190d28c7d32313fb430dac7ade6939caed997b3f))
+
+
+### Features
+
+* **notifications:** rules CRUD + in-app dispatcher + transaction trigger (Phase 2) ([4e5a4fd](https://github.com/Disane87/Klar/commit/4e5a4fd9f89f39823dc0fa3add81bdb84957df87))
+* **notifications:** rules engine foundation (Phase 1) ([ceb9976](https://github.com/Disane87/Klar/commit/ceb9976cf4ea830ae702dc8925170242bdf7d1f9))
+* **notifications:** surface rules page in Settings + bell popover ([803ce00](https://github.com/Disane87/Klar/commit/803ce0074efe5a465d40f5b5eb84af47e14996aa))
+
 # [1.25.0](https://github.com/Disane87/Klar/compare/v1.24.0...v1.25.0) (2026-05-27)
 
 
