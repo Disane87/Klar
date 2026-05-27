@@ -37,6 +37,8 @@
 | **🛡️ Row-Level Security** | PostgreSQL RLS ensures household data is always isolated |
 | **🛠️ Admin Panel** | Hero status chip + 4-up metric tiles (Uptime / DB Size / Warnings / Sessions); cards for Services (per-service uptime histogram), Performance (CPU / RAM / Disk / DB-Avg / Mail-Lag / MCP-Latency progress bars), Jobs (cron schedule + last/next); existing Audit / MCP / Emails / Households tabs preserved below |
 | **🔔 Notifications** | In-app bell with unread badge, polling-based feed (CONTRACT_RENEWAL, RECURRING_DUE, IMPORT_READY, BUDGET_THRESHOLD, MEMBER_INVITE, SYSTEM); per-item mark-read + bulk "mark all read" |
+| **🪄 Notification Rules Engine** | User-defined rules with a typed predicate AST (AND of cmp conditions, aggregations as values), four event triggers (`TRANSACTION_CREATED`, `STANDING_ORDER_DUE`, `BUDGET_THRESHOLD`, `FINTS_SYNC_EVENT`) plus a `SCHEDULED` cron trigger. Three delivery channels (in-app inbox, Web Push with VAPID, e-mail), per-rule digest mode (immediate / hourly / daily), cooldown + daily cap throttle, PRIVATE-aware (a rule never fires on someone else's PRIVATE transaction). Live preview against the last 90 days, manual test button per rule, activity feed showing recent firings. |
+| **⏱️ FinTS Per-Connection Sync Interval** | Each bank connection has its own `syncInterval` (MANUAL / 4h / 6h / 12h / 24h / 48h / weekly) and `syncEnabled` kill-switch. Master tick runs hourly and picks only the connections whose `nextSyncAt` is due. Replaces the previous single global cadence. |
 | **📜 Fixed Costs &amp; Contracts — Unified Detection** | One detection pipeline for CSV imports, FinTS sync, and on-demand recompute groups recurring bookings by merchant + signed amount + token signature into `FixedCost` candidates with a calibrated confidence score (`MONTHLY` / `QUARTERLY` / `HALF_YEARLY` / `YEARLY` / `CUSTOM`). Promote any FixedCost into a `Contract` extension to track cancellation deadline, holder, contract number, and provider. Page tabs: Aktiv / Verträge / Vorschläge / Beendet. Manual create + batch confirm/cancel + drawer detail. |
 | **📅 Calendar** | Month grid with each day's bookings as category-colored dots and signed total in mono; click a day → drawer with the full per-day list |
 | **📈 Statistics** | KPI strip (income / expense / surplus / savings rate via Fraunces metric tiles), category mix with inline progress bars in category tones, top-5 bookings of the month |
@@ -372,6 +374,43 @@ The following user-facing modules ship with the editorial-technical refresh and 
 In-app notification feed (`Notification` model + `NotificationKind` enum: `CONTRACT_RENEWAL`, `CONTRACT_PRICE_CHANGE`, `RECURRING_DUE`, `IMPORT_READY`, `BUDGET_THRESHOLD`, `MEMBER_INVITE`, `SYSTEM`). The bell in the page header lights up with an amber glow when there are unread items; the popover (animated via `klar-pop`) groups by date, marks read on click, and supports bulk "Mark all read" plus per-item delete. The store polls every 60 seconds; mutations always reload to reconcile against the authoritative server state.
 
 **Privacy:** notifications are scoped to the household and optionally to a single user (`userId IS NULL` = household-wide). Only the household's members can read them.
+
+### 🪄 Notification Rules Engine
+
+A user-modelled rules engine sits on top of the in-app inbox: users define exactly when Klar should reach out, instead of consuming a hard-coded list of alerts. Reached via Settings → Benachrichtigungen → Regeln (or the "Regeln verwalten →" link in the bell popover).
+
+**Triggers (5):**
+
+| Trigger | Event source | Idempotency key |
+|---|---|---|
+| `TRANSACTION_CREATED` | `TransactionsService.create()` + CSV/FinTS batch ingest | `transactionId` |
+| `STANDING_ORDER_DUE` | Daily 06:00 cron scans `StandingOrder.nextExpectedAt` in the next 30 days | `${standingOrderId}|${dueDate}` |
+| `BUDGET_THRESHOLD` | Listens to TRANSACTION_CREATED, recomputes `usedPct` for the affected (budget, month); thresholds 50 / 80 / 100 / 120 % | `${budgetId}|${month}|${threshold}` |
+| `FINTS_SYNC_EVENT` | Reserved; engine wiring shipped, FinTS-side emit lands with banking refinements | `${syncRunId}|${eventType}` |
+| `SCHEDULED` | Per-rule cron registered in `SchedulerRegistry` (daily/weekly/monthly + HH:mm) | `${ruleId}|${YYYY-MM-DDTHH}` |
+
+**Predicate AST** lives in `@klar/shared/notification-rules/` (single source of truth for backend zod validation and frontend builder). A predicate is a tree of `and`/`or`/`not` nodes that bottom out in `cmp` comparisons. Each `cmp` references a whitelisted field for the rule's trigger (e.g. `amountCents`, `categoryId`, `counterparty`, `usedPct`, `daysUntilDue`, `eventType`). Values may be literals or deferred `AggregationSpec` lookups: account balance, sum/count over a window (this month / last 7d / last 30d / custom days, optionally filtered by category / project / kind), budget % usage, upcoming standing-orders sum/count.
+
+**Channels (3):** `IN_APP` always fires immediately so the bell stays current. `WEB_PUSH` (RFC 8030/8291 — VAPID keys via `pnpm --filter @klar/api vapid:generate`, custom service worker chains Angular's `ngsw-worker.js`, iOS PWA detection gates the toggle on `display-mode: standalone`) and `EMAIL` (uses the existing nodemailer-based `MailService` with `notification-immediate.hbs` / `notification-digest.hbs` templates) respect the rule's `digestMode`. `HOURLY` and `DAILY` digests queue into `NotificationDigestQueue` and flush via two crons (every full hour for `hour:*` buckets, every day at 08:00 for `day:*`); items are grouped by `(userId, channel)` so a CSV import that matches a rule 200 times produces one e-mail summarising all 200 — not 200 e-mails.
+
+**Throttling & idempotency:** every rule has optional `cooldownMinutes`, `maxPerHour`, `maxPerDay`. Idempotency uses the `NotificationRuleFire` unique key over `(ruleId, sourceKind, sourceId)` so a single source event can never fire the same rule twice — race-safe via the DB unique constraint.
+
+**PRIVATE-aware:** the engine checks `tx.visibility === PRIVATE && tx.ownerUserId !== rule.userId` at every dispatch. A rule owned by user B can never observe user A's private transactions on any channel.
+
+**SSRF guard for Web Push:** push endpoints submitted by the frontend are validated against an allowlist of known browser-vendor push services (Mozilla, FCM, Apple, WNS). The same check runs at dispatch time as defence-in-depth, so a manipulated DB row can't redirect pushes to an arbitrary URL.
+
+**UI affordances:**
+
+- Rule list with badges (trigger / channels / digest mode), humanised predicate via `humanizePredicate()`.
+- Create/edit dialog with a flat-AND condition builder (each row = field + operator + value), Euro-native money inputs (accepts `1000` or `1.000,50`), schedule editor for `SCHEDULED` triggers.
+- "Vorschau" button runs `POST /preview` against the last 90 days and shows "In den letzten 90 Tagen hätte das X× gefeuert".
+- "Test" button per rule fires a hand-crafted sample notification through every enabled channel.
+- "Aktivität — letzte Auslösungen" section lists recent `NotificationRuleFire` rows with rule name, channels sent, timestamp.
+- Web-Push toggle on the rules page with per-device opt-in; ngsw caches blocked on Safari/iOS unless the app is added to Home Screen first.
+
+### ⏱️ FinTS Per-Connection Sync Interval
+
+Each `FintsConnection` carries a `syncInterval` (`MANUAL`, `H4`, `H6`, `H12`, `H24` default, `H48`, `H168`) and a `syncEnabled` master kill-switch independent of the interval. The hourly `FintsSyncScheduler` picks rows where `syncEnabled = true`, `syncInterval != MANUAL` and `nextSyncAt <= now`, then stamps `lastSyncAt` + `nextSyncAt = now + intervalHours` after each successful sync. `PATCH /fints/connections/:id` (owner-only) recomputes `nextSyncAt` from the new interval so a setting change takes effect on the next tick. Replaces the previous single global `FINTS_SYNC_INTERVAL_MINUTES` cadence (which now only controls how often the master tick checks — not which connections fire).
 
 ### 📜 Fixed Costs &amp; Contracts — Unified Detection
 
