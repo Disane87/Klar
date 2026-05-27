@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/Disane87/Klar/compare/v1.22.0...v1.23.0) (2026-05-27)
+
+
+### Features
+
+* **fints:** configurable auto-sync cron + registered product ID ([a5a5308](https://github.com/Disane87/Klar/commit/a5a5308c0492e3c6e83efc1f8a807feb099f7b7c))
+
 # [1.22.0](https://github.com/Disane87/Klar/compare/v1.21.0...v1.22.0) (2026-05-12)
 
 
