@@ -14,6 +14,9 @@ import { EmailDispatcher } from './dispatchers/email.dispatcher';
 import { DigestQueueRepository, digestBucketKey } from './digest/digest-queue.repository';
 import {
   RULE_EVENT,
+  type BudgetThresholdEvent,
+  type FintsSyncEvent,
+  type StandingOrderDueEvent,
   type TransactionCreatedBatchEvent,
   type TransactionCreatedEvent,
 } from './events/rule-events';
@@ -48,6 +51,51 @@ export class RulesEngineService {
   @OnEvent(RULE_EVENT.TRANSACTION_CREATED)
   async onTransactionCreated(event: TransactionCreatedEvent): Promise<void> {
     await this.evaluateTransactionEvent(event);
+  }
+
+  @OnEvent(RULE_EVENT.STANDING_ORDER_DUE)
+  async onStandingOrderDue(event: StandingOrderDueEvent): Promise<void> {
+    await this.evaluateGenericEvent({
+      trigger: 'STANDING_ORDER_DUE',
+      sourceKind: 'standing_order',
+      sourceId: event.sourceId,
+      householdId: event.householdId,
+      ownerUserId: event.ownerUserId,
+      visibility: event.visibility,
+      fields: event.fields,
+      formatBody: () => this.formatStandingOrderBody(event),
+      deepLinkUrl: `/app/dauerauftraege?id=${event.standingOrderId}`,
+    });
+  }
+
+  @OnEvent(RULE_EVENT.BUDGET_THRESHOLD)
+  async onBudgetThreshold(event: BudgetThresholdEvent): Promise<void> {
+    await this.evaluateGenericEvent({
+      trigger: 'BUDGET_THRESHOLD',
+      sourceKind: 'budget',
+      sourceId: event.sourceId,
+      householdId: event.householdId,
+      ownerUserId: null,
+      visibility: 'SHARED',
+      fields: event.fields,
+      formatBody: () => `${event.fields.usedPct}% von Budget erreicht`,
+      deepLinkUrl: `/app/budgets?categoryId=${event.fields.categoryId}`,
+    });
+  }
+
+  @OnEvent(RULE_EVENT.FINTS_SYNC_EVENT)
+  async onFintsSyncEvent(event: FintsSyncEvent): Promise<void> {
+    await this.evaluateGenericEvent({
+      trigger: 'FINTS_SYNC_EVENT',
+      sourceKind: 'fints_event',
+      sourceId: event.sourceId,
+      householdId: event.householdId,
+      ownerUserId: event.ownerUserId,
+      visibility: 'SHARED',
+      fields: event.fields,
+      formatBody: () => this.formatFintsBody(event),
+      deepLinkUrl: `/app/banken/${event.fields.connectionId}`,
+    });
   }
 
   @OnEvent(RULE_EVENT.TRANSACTION_CREATED_BATCH)
@@ -102,32 +150,58 @@ export class RulesEngineService {
     event: TransactionCreatedEvent,
     prefetched?: NotificationRule[],
   ): Promise<void> {
+    await this.evaluateGenericEvent({
+      trigger: 'TRANSACTION_CREATED',
+      sourceKind: 'transaction',
+      sourceId: event.transactionId,
+      householdId: event.householdId,
+      ownerUserId: event.ownerUserId,
+      visibility: event.visibility,
+      fields: event.fields as unknown as Record<string, unknown>,
+      formatBody: () => this.formatBody(event),
+      deepLinkUrl: `/app/buchungen?tx=${event.transactionId}`,
+      prefetched,
+    });
+  }
+
+  /**
+   * Generic evaluation pipeline shared by every trigger. Producers map
+   * their event shape onto a `fields` record matching the trigger's
+   * field whitelist + supply a sourceId for idempotency.
+   */
+  private async evaluateGenericEvent(input: {
+    trigger: 'TRANSACTION_CREATED' | 'STANDING_ORDER_DUE' | 'BUDGET_THRESHOLD' | 'FINTS_SYNC_EVENT';
+    sourceKind: string;
+    sourceId: string;
+    householdId: string;
+    ownerUserId: string | null;
+    visibility: 'SHARED' | 'PRIVATE';
+    fields: Record<string, unknown>;
+    formatBody: () => string;
+    deepLinkUrl: string;
+    prefetched?: NotificationRule[];
+  }): Promise<void> {
     const rules =
-      prefetched ??
-      (await this.rules.findAll(event.householdId, {
-        trigger: 'TRANSACTION_CREATED',
+      input.prefetched ??
+      (await this.rules.findAll(input.householdId, {
+        trigger: input.trigger,
         enabled: true,
       }));
     if (rules.length === 0) return;
 
-    const ctx = event.fields as unknown as Record<string, unknown>;
+    const ctx = input.fields;
     const now = new Date();
     const aggregationResolver = this.makeUnsupportedAggregationResolver();
 
     for (const rule of rules) {
-      // PRIVATE guard: a PRIVATE tx is only visible to its owner; rules
-      // owned by other users must never see it. This is the spec's
-      // "PRIVATE leakage" mitigation.
       if (
-        event.visibility === Visibility.PRIVATE &&
-        event.ownerUserId !== null &&
-        event.ownerUserId !== rule.userId
+        input.visibility === Visibility.PRIVATE &&
+        input.ownerUserId !== null &&
+        input.ownerUserId !== rule.userId
       ) {
         continue;
       }
-
-      // Idempotency: same (rule, sourceKind, sourceId) cannot fire twice.
-      const fired = await this.rules.hasFired(rule.id, 'transaction', event.transactionId);
+      const fired = await this.rules.hasFired(rule.id, input.sourceKind, input.sourceId);
       if (fired) continue;
 
       // Throttle guard: cooldown, hourly cap, daily cap.
@@ -142,7 +216,7 @@ export class RulesEngineService {
         );
       } catch (err) {
         this.logger.warn(
-          { err, ruleId: rule.id, txId: event.transactionId },
+          { err, ruleId: rule.id, sourceId: input.sourceId },
           'predicate evaluation failed; skipping',
         );
         continue;
@@ -154,16 +228,17 @@ export class RulesEngineService {
 
       const channelsSent: NotificationChannel[] = [];
       let notificationId: string | null = null;
+      const body = input.formatBody();
       try {
         if (channels.includes('IN_APP')) {
           notificationId = await this.inApp.dispatch({
             rule,
             title: rule.name,
-            body: this.formatBody(event),
+            body,
             payload: {
-              transactionId: event.transactionId,
-              amountCents: event.fields.amountCents,
-              counterparty: event.fields.counterparty,
+              sourceKind: input.sourceKind,
+              sourceId: input.sourceId,
+              ...input.fields,
             },
           });
           channelsSent.push('IN_APP');
@@ -173,8 +248,8 @@ export class RulesEngineService {
           if (immediate) {
             const delivered = await this.webPush.send(rule.userId, {
               title: rule.name,
-              body: this.formatBody(event),
-              url: `/app/buchungen?tx=${event.transactionId}`,
+              body,
+              url: input.deepLinkUrl,
               tag: `rule:${rule.id}`,
               notificationId,
             });
@@ -185,10 +260,7 @@ export class RulesEngineService {
               channel: 'WEB_PUSH',
               ruleId: rule.id,
               bucketKey: digestBucketKey(rule.digestMode === 'HOURLY' ? 'HOURLY' : 'DAILY'),
-              payload: {
-                title: rule.name,
-                body: this.formatBody(event),
-              },
+              payload: { title: rule.name, body },
             });
           }
         }
@@ -196,8 +268,8 @@ export class RulesEngineService {
           if (immediate) {
             const ok = await this.email.sendImmediate(rule, {
               ruleName: rule.name,
-              body: this.formatBody(event),
-              deepLinkUrl: `/app/buchungen?tx=${event.transactionId}`,
+              body,
+              deepLinkUrl: input.deepLinkUrl,
             });
             if (ok) channelsSent.push('EMAIL');
           } else {
@@ -206,34 +278,61 @@ export class RulesEngineService {
               channel: 'EMAIL',
               ruleId: rule.id,
               bucketKey: digestBucketKey(rule.digestMode === 'HOURLY' ? 'HOURLY' : 'DAILY'),
-              payload: {
-                title: rule.name,
-                body: this.formatBody(event),
-              },
+              payload: { title: rule.name, body },
             });
           }
         }
 
         await this.rules.recordFire({
           ruleId: rule.id,
-          sourceKind: 'transaction',
-          sourceId: event.transactionId,
+          sourceKind: input.sourceKind,
+          sourceId: input.sourceId,
           channelsSent,
           notificationId,
         });
         await this.rules.updateThrottleCounters(rule.id, now);
       } catch (err) {
         if (this.isUniqueViolation(err)) {
-          // Idempotency collision under race — already recorded by a
-          // concurrent dispatch, swallow.
           continue;
         }
         this.logger.error(
-          { err, ruleId: rule.id, txId: event.transactionId },
+          { err, ruleId: rule.id, sourceId: input.sourceId },
           'rule dispatch failed',
         );
       }
     }
+  }
+
+  private formatStandingOrderBody(event: StandingOrderDueEvent): string {
+    const abs = Math.abs(event.fields.amountCents) / 100;
+    const eur = abs.toLocaleString('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const sign = event.fields.amountCents < 0 ? '−' : '+';
+    const when =
+      event.fields.daysUntilDue === 0
+        ? 'heute'
+        : event.fields.daysUntilDue === 1
+          ? 'morgen'
+          : `in ${event.fields.daysUntilDue} Tagen`;
+    return `${sign}${eur} € · ${event.fields.name} — fällig ${when}`;
+  }
+
+  private formatFintsBody(event: FintsSyncEvent): string {
+    const label =
+      {
+        SYNC_STARTED: 'Sync gestartet',
+        SYNC_FINISHED: 'Sync erfolgreich',
+        SYNC_FAILED: 'Sync fehlgeschlagen',
+        REAUTH_REQUIRED: 'TAN-Bestätigung nötig',
+        REAUTH_WARNING: 'TAN läuft bald ab',
+        BALANCE_DRIFT: 'Saldo-Abweichung erkannt',
+      }[event.fields.eventType] ?? event.fields.eventType;
+    const bank = event.fields.bankName ?? event.fields.connectionId;
+    return event.fields.errorMessage
+      ? `${label}: ${bank} — ${event.fields.errorMessage}`
+      : `${label}: ${bank}`;
   }
 
   private formatBody(event: TransactionCreatedEvent): string {

@@ -11,12 +11,8 @@ function buildDispatcher() {
   const prisma = {
     user: { findUnique: vi.fn() },
   } as unknown as PrismaService;
-  const appCfg = { frontendUrl: 'https://klar.test' };
-  const dispatcher = new EmailDispatcher(
-    mail,
-    prisma,
-    appCfg as unknown as Parameters<typeof EmailDispatcher>[2],
-  );
+  const appCfg = { frontendUrl: 'https://klar.test' } as never;
+  const dispatcher = new EmailDispatcher(mail, prisma, appCfg);
   return { dispatcher, mail, prisma };
 }
 

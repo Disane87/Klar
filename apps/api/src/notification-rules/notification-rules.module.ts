@@ -15,6 +15,8 @@ import { PushSubscriptionsService } from './push-subscriptions/push-subscription
 import { PushSubscriptionsController } from './push-subscriptions/push-subscriptions.controller';
 import { DigestQueueRepository } from './digest/digest-queue.repository';
 import { DigestScheduler } from './digest/digest.scheduler';
+import { StandingOrderDueScheduler } from './producers/standing-order-due.scheduler';
+import { BudgetThresholdService } from './producers/budget-threshold.service';
 
 @Module({
   imports: [PrismaModule, HouseholdsModule, NotificationsModule, MailModule],
@@ -29,6 +31,8 @@ import { DigestScheduler } from './digest/digest.scheduler';
     PushSubscriptionsService,
     DigestQueueRepository,
     DigestScheduler,
+    StandingOrderDueScheduler,
+    BudgetThresholdService,
   ],
   controllers: [NotificationRulesController, PushSubscriptionsController],
   exports: [NotificationRulesService, RulesEngineService, WebPushDispatcher, EmailDispatcher],

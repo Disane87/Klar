@@ -217,6 +217,9 @@ export class NotificationRuleDialogComponent {
 
   protected readonly triggerOptions: KlarSelectOption[] = [
     { value: 'TRANSACTION_CREATED', label: 'Buchung erstellt' },
+    { value: 'STANDING_ORDER_DUE', label: 'Dauerauftrag fällig' },
+    { value: 'BUDGET_THRESHOLD', label: 'Budget-Schwelle' },
+    { value: 'FINTS_SYNC_EVENT', label: 'FinTS-Sync-Ereignis' },
   ];
 
   protected readonly digestOptions: KlarSelectOption[] = [
