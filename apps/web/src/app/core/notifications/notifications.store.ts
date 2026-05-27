@@ -7,7 +7,11 @@ import {
   type NotificationListResponse,
 } from './notifications.service';
 
-const REFRESH_INTERVAL_MS = 60_000;
+// Long-poll cadence. Kept short so a rule fired by a self-action (e.g.
+// transaction create) appears in the bell within ~15s without a manual
+// reload. Visibilitychange triggers an immediate reload when the tab
+// re-gains focus.
+const REFRESH_INTERVAL_MS = 15_000;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationStore {
@@ -44,10 +48,14 @@ export class NotificationStore {
   readonly hasUnread = computed(() => this.unreadCount() > 0);
 
   constructor() {
-    // Lightweight long-poll: bump tick every 60s to trigger reload via resource params.
-    if (typeof window !== 'undefined') {
-      setInterval(() => this.tick.update(t => t + 1), REFRESH_INTERVAL_MS);
-    }
+    if (typeof window === 'undefined') return;
+    setInterval(() => this.reload(), REFRESH_INTERVAL_MS);
+    // Tab regained focus / system woke from sleep — the local clock may have
+    // jumped, refresh immediately rather than waiting for the next tick.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this.reload();
+    });
+    window.addEventListener('focus', () => this.reload());
   }
 
   /** Force a refresh — call after a known-side-effect (e.g. import-ready). */

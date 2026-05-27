@@ -3,6 +3,27 @@ import { ConfigService } from '@nestjs/config';
 import webPush, { type WebPushError } from 'web-push';
 import { PushSubscriptionsRepository } from '../push-subscriptions/push-subscriptions.repository';
 
+const ALLOWED_PUSH_HOST_SUFFIXES = [
+  'push.services.mozilla.com',
+  'updates.push.services.mozilla.com',
+  'fcm.googleapis.com',
+  'web.push.apple.com',
+  'notify.windows.com',
+];
+
+function isAllowedPushHost(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname.toLowerCase().replace(/\.$/, '');
+    return ALLOWED_PUSH_HOST_SUFFIXES.some(
+      suffix => host === suffix || host.endsWith(`.${suffix}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export interface WebPushPayload {
   title: string;
   body: string;
@@ -62,6 +83,14 @@ export class WebPushDispatcher implements OnModuleInit {
 
     await Promise.all(
       subscriptions.map(async sub => {
+        if (!isAllowedPushHost(sub.endpoint)) {
+          this.logger.warn(
+            { subId: sub.id, endpoint: sub.endpoint },
+            'refusing push to non-allowlisted host (defence-in-depth)',
+          );
+          await this.subs.deleteByEndpoint(sub.endpoint);
+          return;
+        }
         try {
           await webPush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },

@@ -18,7 +18,7 @@ function makeSub(over: Partial<WebPushSubscription> = {}): WebPushSubscription {
     id: 'sub_1',
     userId: 'usr_1',
     householdId: 'hh_1',
-    endpoint: 'https://push.example/abc',
+    endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
     p256dh: 'P',
     auth: 'A',
     userAgent: 'UA',
@@ -74,8 +74,8 @@ describe('WebPushDispatcher', () => {
   it('fans out to every user subscription', async () => {
     const { dispatcher, subs } = buildDispatcher({ configured: true });
     vi.mocked(subs.findByUserId).mockResolvedValue([
-      makeSub({ id: 'sub_a', endpoint: 'https://a' }),
-      makeSub({ id: 'sub_b', endpoint: 'https://b' }),
+      makeSub({ id: 'sub_a', endpoint: 'https://fcm.googleapis.com/fcm/send/a' }),
+      makeSub({ id: 'sub_b', endpoint: 'https://updates.push.services.mozilla.com/b' }),
     ]);
     vi.mocked(webPush.sendNotification).mockResolvedValue(undefined as never);
 
@@ -90,7 +90,7 @@ describe('WebPushDispatcher', () => {
   it('reaps gone subscriptions (404 / 410)', async () => {
     const { dispatcher, subs } = buildDispatcher({ configured: true });
     vi.mocked(subs.findByUserId).mockResolvedValue([
-      makeSub({ id: 'sub_a', endpoint: 'https://a' }),
+      makeSub({ id: 'sub_a', endpoint: 'https://fcm.googleapis.com/fcm/send/a' }),
     ]);
     vi.mocked(webPush.sendNotification).mockRejectedValue(
       Object.assign(new Error('gone'), { statusCode: 410 }),
@@ -99,6 +99,6 @@ describe('WebPushDispatcher', () => {
     await dispatcher.send('usr_1', {
       title: 'x', body: 'y', url: '/', tag: 't', notificationId: null,
     });
-    expect(subs.deleteByEndpoint).toHaveBeenCalledWith('https://a');
+    expect(subs.deleteByEndpoint).toHaveBeenCalledWith('https://fcm.googleapis.com/fcm/send/a');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { WebPushSubscription } from '@prisma/client';
 import { PushSubscriptionsService } from './push-subscriptions.service';
@@ -24,7 +24,7 @@ function makeSub(over: Partial<WebPushSubscription> = {}): WebPushSubscription {
     id: 'sub_1',
     userId: 'usr_1',
     householdId: 'hh_1',
-    endpoint: 'https://push.example/abc',
+    endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
     p256dh: 'key1',
     auth: 'key2',
     userAgent: 'UA',
@@ -51,7 +51,7 @@ describe('PushSubscriptionsService', () => {
     const { service, repo } = buildService();
     vi.mocked(repo.upsert).mockResolvedValue(makeSub());
     const dto = {
-      endpoint: 'https://push.example/abc',
+      endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
       keys: { p256dh: 'P', auth: 'A' },
       userAgent: 'UA',
     };
@@ -60,7 +60,7 @@ describe('PushSubscriptionsService', () => {
     expect(repo.upsert).toHaveBeenCalledWith({
       userId: 'usr_1',
       householdId: 'hh_1',
-      endpoint: 'https://push.example/abc',
+      endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
       p256dh: 'P',
       auth: 'A',
       userAgent: 'UA',
@@ -81,11 +81,31 @@ describe('PushSubscriptionsService', () => {
     await expect(service.remove(ctx, 'sub_missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('rejects an endpoint that is not from a known push service (SSRF guard)', async () => {
+    const { service } = buildService();
+    await expect(
+      service.subscribe(ctx, {
+        endpoint: 'https://attacker.example/path',
+        keys: { p256dh: 'P', auth: 'A' },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects an internal http endpoint', async () => {
+    const { service } = buildService();
+    await expect(
+      service.subscribe(ctx, {
+        endpoint: 'http://192.168.0.5/admin',
+        keys: { p256dh: 'P', auth: 'A' },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('toResponse drops the keys (only metadata is exposed)', () => {
     const { service } = buildService();
     const r = service.toResponse(makeSub());
     expect(r.id).toBe('sub_1');
-    expect(r.endpoint).toBe('https://push.example/abc');
+    expect(r.endpoint).toBe('https://fcm.googleapis.com/fcm/send/abc');
     expect((r as Record<string, unknown>)['p256dh']).toBeUndefined();
     expect((r as Record<string, unknown>)['auth']).toBeUndefined();
   });
