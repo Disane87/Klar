@@ -13,6 +13,7 @@ import { KlarComboboxComponent } from '../../shared/ui/klar-combobox.component';
 import { KlarSwitchComponent } from '../../shared/ui/klar-switch.component';
 import { KlarPayrollFormComponent, type PayrollApplyEvent } from '../../shared/ui/klar-payroll-form.component';
 import type { GrossToNetInput } from '@klar/shared';
+import { signedAmountForCategory, isIncomeCategoryType } from '@klar/shared';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -71,7 +72,7 @@ export class RecurringEditDialogComponent {
     effect(() => {
       const i = this.item();
       this.name.set(i.name);
-      this.amountCents.set(i.amountCents);
+      this.amountCents.set(Math.abs(i.amountCents));
       this.categoryId.set(i.categoryId);
       this.frequency.set(i.frequency);
       if (i.frequency === 'WEEKLY') {
@@ -100,10 +101,12 @@ export class RecurringEditDialogComponent {
     }
   }
 
-  /** Income context: only show payroll mode for positive amounts (Einnahme/Gehalt). */
+  /** Income context derives from the selected category type, not from the typed amount. */
   readonly isIncomeContext = computed(() => {
-    const a = this.amountCents() ?? 0;
-    return a > 0;
+    const id = this.categoryId();
+    if (!id) return false;
+    const cat = this.cats.all().find(c => c.id === id);
+    return isIncomeCategoryType(cat?.type);
   });
 
   readonly isValid = computed(() => {
@@ -172,12 +175,12 @@ export class RecurringEditDialogComponent {
     style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
   });
   readonly originalAmount = computed(() => this.fmt.format(this.item().amountCents / 100));
-  readonly amountChanged  = computed(() => (this.amountCents() ?? 0) !== this.item().amountCents);
+  readonly amountChanged  = computed(() => (this.amountCents() ?? 0) !== Math.abs(this.item().amountCents));
   readonly changeSummary  = computed(() => {
     const parts: string[] = [];
     const i = this.item();
     if (this.name().trim() !== i.name) parts.push('Name');
-    if ((this.amountCents() ?? 0) !== i.amountCents) parts.push('Betrag');
+    if ((this.amountCents() ?? 0) !== Math.abs(i.amountCents)) parts.push('Betrag');
     if (this.categoryId() !== i.categoryId) parts.push('Kategorie');
     if (this.frequency() !== i.frequency) parts.push('Frequenz');
     if (!parts.length) return '';
@@ -204,7 +207,9 @@ export class RecurringEditDialogComponent {
   async save(): Promise<void> {
     if (!this.isValid() || this.saving()) return;
 
-    const actualCents = this.amountCents() ?? 0;
+    const inputCents  = this.amountCents() ?? 0;
+    const cat         = this.cats.all().find(c => c.id === this.categoryId());
+    const actualCents = signedAmountForCategory(inputCents, cat?.type);
     const freq        = this.frequency();
     const dom         = this.computeDay(freq);
 

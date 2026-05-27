@@ -14,6 +14,7 @@ import { KlarSwitchComponent } from '../../shared/ui/klar-switch.component';
 import { KlarPayrollFormComponent, type PayrollApplyEvent } from '../../shared/ui/klar-payroll-form.component';
 import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import type { GrossToNetInput } from '@klar/shared';
+import { signedAmountForCategory, isIncomeCategoryType } from '@klar/shared';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -119,8 +120,10 @@ export class RecurringCreateDialogComponent {
   }
 
   readonly isIncomeContext = computed(() => {
-    const a = this.amountCents() ?? 0;
-    return a > 0;
+    const id = this.categoryId();
+    if (!id) return false;
+    const cat = this.cats.all().find(c => c.id === id);
+    return isIncomeCategoryType(cat?.type);
   });
 
   readonly isValid = computed(() => {
@@ -183,7 +186,9 @@ export class RecurringCreateDialogComponent {
     const hid = this.household.activeId();
     if (!hid) return;
 
-    const actualCents = this.amountCents() ?? 0;
+    const inputCents  = this.amountCents() ?? 0;
+    const cat         = this.cats.all().find(c => c.id === this.categoryId());
+    const actualCents = signedAmountForCategory(inputCents, cat?.type);
     const freq        = this.frequency();
     const dom         = this.computeDay(freq);
 
@@ -191,7 +196,6 @@ export class RecurringCreateDialogComponent {
     this.err.set('');
 
     if (this.planspielMode()) {
-      const cat = this.cats.all().find(c => c.id === this.categoryId());
       this.planspiel.addEntry({
         label:        this.name().trim(),
         amountCents:  actualCents,

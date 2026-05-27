@@ -65,8 +65,12 @@
       <klar-money-input
         [inputId]="'red-amount'"
         placeholder="0,00"
+        [allowNegative]="false"
         [(amountCents)]="amountCents"
       />
+      <span class="text-[11px] text-(--text-muted)">
+        Vorzeichen kommt automatisch aus der Kategorie ({{ isIncomeContext() ? 'Einnahme' : 'Ausgabe' }}).
+      </span>
     </div>
 
     <div class="flex flex-col gap-1.5">

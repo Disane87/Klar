@@ -119,9 +119,30 @@ export type CategoryType =
   | 'FIXED_EXPENSE'
   | 'VARIABLE_EXPENSE'
   | 'SAVINGS'
-  // Legacy — bleibt für Bestandsdaten erhalten, in neuen Daten nicht mehr verwenden
+  // Legacy — kept for existing data, not used for new entries
   | 'INCOME'
   | 'EXPENSE';
+
+const INCOME_CATEGORY_TYPES = new Set<CategoryType>([
+  'FIXED_INCOME',
+  'VARIABLE_INCOME',
+  'INCOME',
+]);
+
+/** Returns true if the category type represents income (positive amounts). */
+export function isIncomeCategoryType(type: CategoryType | string | null | undefined): boolean {
+  return !!type && INCOME_CATEGORY_TYPES.has(type as CategoryType);
+}
+
+/**
+ * Applies the sign implied by a category type to a positive (absolute) amount in cents.
+ * INCOME types → positive; EXPENSE/SAVINGS → negative. The input is taken as the
+ * user-facing absolute value (e.g. 999 for "9,99 €").
+ */
+export function signedAmountForCategory(absCents: number, type: CategoryType | string | null | undefined): number {
+  const abs = Math.abs(absCents);
+  return isIncomeCategoryType(type) ? abs : -abs;
+}
 
 export type Category = {
   id: string;
