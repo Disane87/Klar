@@ -4,6 +4,8 @@ import { RulesEngineService } from './rules-engine.service';
 import type { NotificationRulesRepository } from './notification-rules.repository';
 import type { InAppDispatcher } from './dispatchers/in-app.dispatcher';
 import type { WebPushDispatcher } from './dispatchers/web-push.dispatcher';
+import type { EmailDispatcher } from './dispatchers/email.dispatcher';
+import type { DigestQueueRepository } from './digest/digest-queue.repository';
 import type { TransactionCreatedEvent } from './events/rule-events';
 
 function makeRule(over: Partial<NotificationRule> = {}): NotificationRule {
@@ -65,7 +67,21 @@ function buildEngine() {
     isConfigured: vi.fn().mockReturnValue(false),
     send: vi.fn().mockResolvedValue(0),
   } as unknown as WebPushDispatcher;
-  return { engine: new RulesEngineService(repo, inApp, webPush), repo, inApp, webPush };
+  const email = {
+    sendImmediate: vi.fn().mockResolvedValue(true),
+    sendDigest: vi.fn().mockResolvedValue(true),
+  } as unknown as EmailDispatcher;
+  const digestQueue = {
+    enqueue: vi.fn().mockResolvedValue({}),
+  } as unknown as DigestQueueRepository;
+  return {
+    engine: new RulesEngineService(repo, inApp, webPush, email, digestQueue),
+    repo,
+    inApp,
+    webPush,
+    email,
+    digestQueue,
+  };
 }
 
 describe('RulesEngineService.onTransactionCreated', () => {
@@ -154,6 +170,18 @@ describe('RulesEngineService.dispatchTest', () => {
     const sent = await engine.dispatchTest(makeRule({ channels: [] }));
     expect(sent).toEqual([]);
     expect(inApp.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('digestMode HOURLY enqueues EMAIL instead of sending immediately', async () => {
+    const { engine, repo, email, digestQueue } = buildEngine();
+    vi.mocked(repo.findAll).mockResolvedValue([
+      makeRule({ channels: ['IN_APP', 'EMAIL'], digestMode: 'HOURLY' }),
+    ]);
+    await engine.onTransactionCreated(makeEvent());
+    expect(email.sendImmediate).not.toHaveBeenCalled();
+    expect(digestQueue.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: 'EMAIL', ruleId: 'nrl_1' }),
+    );
   });
 
   it('also fans out via WEB_PUSH when channel + dispatcher configured', async () => {

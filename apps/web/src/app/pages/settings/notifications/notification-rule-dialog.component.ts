@@ -7,7 +7,14 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TRIGGER_FIELDS, type ComparisonOperator, type NotificationChannel, type NotificationTrigger, type Predicate } from '@klar/shared';
+import {
+  TRIGGER_FIELDS,
+  type ComparisonOperator,
+  type DigestMode,
+  type NotificationChannel,
+  type NotificationTrigger,
+  type Predicate,
+} from '@klar/shared';
 import { KlarButtonComponent } from '../../../shared/ui/klar-button.component';
 import { KlarIconComponent } from '../../../shared/icons/klar-icon.component';
 import { KlarDialogService } from '../../../shared/ui/klar-dialog.service';
@@ -151,10 +158,23 @@ function parseLocaleNumber(raw: string): number | null {
           <input type="checkbox" [(ngModel)]="ch_webPush" name="ch-web-push" />
           Web-Push (OS-Benachrichtigung) — Geräte unter Einstellungen aktivieren
         </label>
-        <label class="flex items-center gap-2 text-[13px] text-(--fg-3)">
-          <input type="checkbox" [(ngModel)]="ch_email" name="ch-email" disabled />
-          E-Mail (Phase 4 — folgt)
+        <label class="flex items-center gap-2 text-[13px]">
+          <input type="checkbox" [(ngModel)]="ch_email" name="ch-email" />
+          E-Mail
         </label>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <span class="text-[11px] uppercase tracking-widest text-(--fg-2)">Häufigkeit</span>
+        <klar-select
+          [options]="digestOptions"
+          [(value)]="digestMode"
+          ariaLabel="Häufigkeit"
+        />
+        <span class="text-[11px] text-(--fg-3)">
+          Inbox kommt immer sofort. Push/E-Mail werden gesammelt, wenn du
+          stündliche oder tägliche Zusammenfassung wählst.
+        </span>
       </div>
 
       <div class="flex items-center justify-between gap-3 pt-2 border-t border-(--line-soft)">
@@ -191,11 +211,18 @@ export class NotificationRuleDialogComponent {
   protected readonly ch_inApp = signal(true);
   protected readonly ch_webPush = signal(false);
   protected readonly ch_email = signal(false);
+  protected readonly digestMode = signal<DigestMode>('IMMEDIATE');
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly triggerOptions: KlarSelectOption[] = [
     { value: 'TRANSACTION_CREATED', label: 'Buchung erstellt' },
+  ];
+
+  protected readonly digestOptions: KlarSelectOption[] = [
+    { value: 'IMMEDIATE', label: 'Sofort' },
+    { value: 'HOURLY', label: 'Stündliche Zusammenfassung' },
+    { value: 'DAILY', label: 'Tägliche Zusammenfassung' },
   ];
 
   protected readonly fieldOptions = computed<KlarSelectOption[]>(() =>
@@ -222,6 +249,7 @@ export class NotificationRuleDialogComponent {
     this.ch_inApp.set(e.channels.includes('IN_APP'));
     this.ch_webPush.set(e.channels.includes('WEB_PUSH'));
     this.ch_email.set(e.channels.includes('EMAIL'));
+    this.digestMode.set(e.digestMode);
     this.conditions.set(this.predicateToRows(e.predicate));
   }
 
@@ -275,12 +303,14 @@ export class NotificationRuleDialogComponent {
       const channels: NotificationChannel[] = [];
       if (this.ch_inApp()) channels.push('IN_APP');
       if (this.ch_webPush()) channels.push('WEB_PUSH');
+      if (this.ch_email()) channels.push('EMAIL');
       const predicate = this.rowsToPredicate(this.conditions());
       const payload: CreateNotificationRuleInput = {
         name: this.name().trim(),
         trigger: this.trigger(),
         predicate,
         channels,
+        digestMode: this.digestMode(),
       };
       const e = this.existing();
       if (e) await this.store.update(e.id, payload);

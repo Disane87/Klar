@@ -10,6 +10,8 @@ import {
 import { NotificationRulesRepository } from './notification-rules.repository';
 import { InAppDispatcher } from './dispatchers/in-app.dispatcher';
 import { WebPushDispatcher } from './dispatchers/web-push.dispatcher';
+import { EmailDispatcher } from './dispatchers/email.dispatcher';
+import { DigestQueueRepository, digestBucketKey } from './digest/digest-queue.repository';
 import {
   RULE_EVENT,
   type TransactionCreatedBatchEvent,
@@ -39,6 +41,8 @@ export class RulesEngineService {
     private readonly rules: NotificationRulesRepository,
     private readonly inApp: InAppDispatcher,
     private readonly webPush: WebPushDispatcher,
+    private readonly email: EmailDispatcher,
+    private readonly digestQueue: DigestQueueRepository,
   ) {}
 
   @OnEvent(RULE_EVENT.TRANSACTION_CREATED)
@@ -83,7 +87,14 @@ export class RulesEngineService {
       });
       sent.push('WEB_PUSH');
     }
-    // EMAIL lands with Phase 4.
+    if (rule.channels.includes('EMAIL')) {
+      const ok = await this.email.sendImmediate(rule, {
+        ruleName: rule.name,
+        body: 'Diese Test-Benachrichtigung wurde manuell ausgelöst.',
+        deepLinkUrl: '/app/settings/notifications',
+      });
+      if (ok) sent.push('EMAIL');
+    }
     return sent;
   }
 
@@ -157,15 +168,50 @@ export class RulesEngineService {
           });
           channelsSent.push('IN_APP');
         }
+        const immediate = rule.digestMode === 'IMMEDIATE';
         if (channels.includes('WEB_PUSH') && this.webPush.isConfigured()) {
-          const delivered = await this.webPush.send(rule.userId, {
-            title: rule.name,
-            body: this.formatBody(event),
-            url: `/app/buchungen?tx=${event.transactionId}`,
-            tag: `rule:${rule.id}`,
-            notificationId,
-          });
-          if (delivered > 0) channelsSent.push('WEB_PUSH');
+          if (immediate) {
+            const delivered = await this.webPush.send(rule.userId, {
+              title: rule.name,
+              body: this.formatBody(event),
+              url: `/app/buchungen?tx=${event.transactionId}`,
+              tag: `rule:${rule.id}`,
+              notificationId,
+            });
+            if (delivered > 0) channelsSent.push('WEB_PUSH');
+          } else {
+            await this.digestQueue.enqueue({
+              userId: rule.userId,
+              channel: 'WEB_PUSH',
+              ruleId: rule.id,
+              bucketKey: digestBucketKey(rule.digestMode === 'HOURLY' ? 'HOURLY' : 'DAILY'),
+              payload: {
+                title: rule.name,
+                body: this.formatBody(event),
+              },
+            });
+          }
+        }
+        if (channels.includes('EMAIL')) {
+          if (immediate) {
+            const ok = await this.email.sendImmediate(rule, {
+              ruleName: rule.name,
+              body: this.formatBody(event),
+              deepLinkUrl: `/app/buchungen?tx=${event.transactionId}`,
+            });
+            if (ok) channelsSent.push('EMAIL');
+          } else {
+            await this.digestQueue.enqueue({
+              userId: rule.userId,
+              channel: 'EMAIL',
+              ruleId: rule.id,
+              bucketKey: digestBucketKey(rule.digestMode === 'HOURLY' ? 'HOURLY' : 'DAILY'),
+              payload: {
+                title: rule.name,
+                body: this.formatBody(event),
+              },
+            });
+          }
         }
 
         await this.rules.recordFire({

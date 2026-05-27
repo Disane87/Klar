@@ -53,6 +53,17 @@ export class NotificationRulesRepository {
     return this.prisma.notificationRule.findFirst({ where: { id, householdId } });
   }
 
+  /**
+   * Look up a rule by id without an explicit household scope. Used by the
+   * digest scheduler when composing flush emails — the queued row already
+   * carries the userId, and the rule itself is the only thing missing for
+   * the email's `groups[].ruleName`. Do NOT call this from request-path
+   * code; always scope by householdId there.
+   */
+  findByIdAny(id: string): Promise<NotificationRule | null> {
+    return this.prisma.notificationRule.findUnique({ where: { id } });
+  }
+
   create(data: CreateRuleData): Promise<NotificationRule> {
     return this.prisma.notificationRule.create({
       data: {

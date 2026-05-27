@@ -75,6 +75,36 @@ export class MailService {
     });
   }
 
+  /**
+   * Generic template-driven send. Used by the notification rules engine
+   * (Phase 4) so it doesn't have to know about nodemailer or template
+   * compilation. Errors are NOT re-thrown — the caller still records the
+   * fire as dispatched on IN_APP even if email delivery hiccups.
+   */
+  async sendTemplate(args: {
+    to: string;
+    subject: string;
+    template: string;
+    context: Record<string, unknown>;
+    userId?: string;
+    householdId?: string;
+  }): Promise<{ ok: boolean }> {
+    try {
+      const html = this.compile(args.template, args.context);
+      await this.send({
+        to: args.to,
+        subject: args.subject,
+        html,
+        template: args.template,
+        userId: args.userId,
+        householdId: args.householdId,
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
+  }
+
   private async send(args: SendArgs): Promise<void> {
     try {
       await this.transporter.sendMail({
