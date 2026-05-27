@@ -23,6 +23,15 @@ export type FintsSyncStatus =
 
 export type FintsSyncTrigger = 'CRON' | 'MANUAL' | 'SETUP';
 
+export type FintsSyncInterval =
+  | 'MANUAL'
+  | 'H4'
+  | 'H6'
+  | 'H12'
+  | 'H24'
+  | 'H48'
+  | 'H168';
+
 export interface FintsAttachedAccount {
   id: string;
   name: string;
@@ -53,6 +62,9 @@ export interface FintsConnectionResponse {
   scaExpiresAt: string | null;
   lastSyncAt: string | null;
   lastSyncStatus: FintsSyncStatus | null;
+  syncInterval: FintsSyncInterval;
+  syncEnabled: boolean;
+  nextSyncAt: string | null;
   createdAt: string;
   updatedAt: string;
   /** Linked Klar Account rows (FinTS sub-accounts user picked). */
@@ -245,6 +257,24 @@ export class FintsService {
 
   delete(householdId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(householdId)}/connections/${id}`);
+  }
+
+  updateConnection(
+    householdId: string,
+    id: string,
+    body: { syncInterval?: FintsSyncInterval; syncEnabled?: boolean },
+  ): Observable<{
+    id: string;
+    syncInterval: FintsSyncInterval;
+    syncEnabled: boolean;
+    nextSyncAt: string | null;
+  }> {
+    return this.http.patch<{
+      id: string;
+      syncInterval: FintsSyncInterval;
+      syncEnabled: boolean;
+      nextSyncAt: string | null;
+    }>(`${this.baseUrl(householdId)}/connections/${id}`, body);
   }
 
   deleteImpact(householdId: string, id: string): Observable<FintsDeleteImpact> {

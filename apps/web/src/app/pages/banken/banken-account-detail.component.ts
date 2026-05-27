@@ -18,10 +18,14 @@ import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
 import type { BulkVisibilityChange } from '../../shared/transactions/klar-transactions-table.component';
-import type {
-  FintsAttachedAccount,
-  FintsConnectionResponse,
+import {
+  FintsService,
+  type FintsAttachedAccount,
+  type FintsConnectionResponse,
+  type FintsSyncInterval,
 } from '../../core/fints/fints.service';
+import { firstValueFrom } from 'rxjs';
+import { KlarSelectComponent, type KlarSelectOption } from '../../shared/ui/klar-select.component';
 import type { Transaction } from '../../core/transactions/transactions.store';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
@@ -48,6 +52,7 @@ import { KlarTransactionsTableComponent } from '../../shared/transactions/klar-t
     KlarEmptyStateComponent,
     KlarButtonComponent,
     KlarTransactionsTableComponent,
+    KlarSelectComponent,
   ],
   template: `
     <div class="flex flex-col gap-(--s-6) p-(--s-6) pb-16">
@@ -112,6 +117,33 @@ import { KlarTransactionsTableComponent } from '../../shared/transactions/klar-t
           </div>
         </div>
 
+        @if (connection(); as conn) {
+          <section class="rounded-md border border-(--line-soft) bg-(--bg-1) p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="text-[11px] uppercase tracking-widest text-(--fg-2)">Auto-Sync</div>
+              <div class="text-[12px] text-(--fg-3) mt-1">
+                @if (conn.syncEnabled && conn.syncInterval !== 'MANUAL') {
+                  {{ syncIntervalLabel(conn.syncInterval) }} ·
+                  Nächster Lauf: {{ nextSyncLabel() }}
+                } @else {
+                  Auto-Sync ist deaktiviert — Buchungen kommen nur per „Synchronisieren" rein.
+                }
+              </div>
+              @if (intervalError()) {
+                <div class="text-[12px] text-(--danger) mt-1">{{ intervalError() }}</div>
+              }
+            </div>
+            <div class="flex items-center gap-2">
+              <klar-select
+                [options]="syncIntervalOptions"
+                [value]="conn.syncEnabled ? conn.syncInterval : 'MANUAL'"
+                (valueChange)="onSyncIntervalChange($event)"
+                ariaLabel="Sync-Intervall"
+              />
+            </div>
+          </section>
+        }
+
         @if (store.loading() && store.sortedItems().length === 0) {
           <div class="rounded-lg border border-(--line) bg-(--bg-1) px-5 py-10 text-center text-(--fg-2)">
             Lädt Buchungen …
@@ -154,6 +186,18 @@ export class BankenAccountDetailComponent implements OnInit {
   protected readonly connectionId = signal('');
   protected readonly accountId = signal('');
   protected readonly purging = signal(false);
+  protected readonly intervalError = signal<string | null>(null);
+  private readonly fintsApi = inject(FintsService);
+
+  protected readonly syncIntervalOptions: KlarSelectOption[] = [
+    { value: 'MANUAL', label: 'Manuell' },
+    { value: 'H4',    label: 'Alle 4 Stunden' },
+    { value: 'H6',    label: 'Alle 6 Stunden' },
+    { value: 'H12',   label: 'Alle 12 Stunden' },
+    { value: 'H24',   label: 'Täglich (Standard)' },
+    { value: 'H48',   label: 'Alle 2 Tage' },
+    { value: 'H168',  label: 'Wöchentlich' },
+  ];
 
   protected readonly connection = computed<FintsConnectionResponse | undefined>(() => {
     const id = this.connectionId();
@@ -189,6 +233,45 @@ export class BankenAccountDetailComponent implements OnInit {
     if (hours < 24) return `vor ${hours} Std`;
     return `vor ${Math.floor(hours / 24)} Tg`;
   });
+
+  protected readonly nextSyncLabel = computed(() => {
+    const iso = this.connection()?.nextSyncAt;
+    if (!iso) return '—';
+    const minutes = Math.floor((new Date(iso).getTime() - Date.now()) / 60000);
+    if (minutes <= 0) return 'beim nächsten Tick';
+    if (minutes < 60) return `in ${minutes} Min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `in ${hours} Std`;
+    return `in ${Math.floor(hours / 24)} Tg`;
+  });
+
+  protected syncIntervalLabel(interval: FintsSyncInterval): string {
+    return this.syncIntervalOptions.find(o => o.value === interval)?.label ?? interval;
+  }
+
+  protected async onSyncIntervalChange(value: string): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    const id = this.connectionId();
+    if (!householdId || !id) return;
+    this.intervalError.set(null);
+    const next = value as FintsSyncInterval;
+    try {
+      await firstValueFrom(
+        this.fintsApi.updateConnection(householdId, id, {
+          syncInterval: next,
+          // MANUAL doubles as "off" semantically — keep syncEnabled true so
+          // re-selecting an interval brings the cron back immediately.
+          syncEnabled: true,
+        }),
+      );
+      this.fintsStore.reload();
+    } catch (err) {
+      this.intervalError.set(
+        (err as { error?: { message?: string } }).error?.message ??
+          'Intervall konnte nicht gespeichert werden',
+      );
+    }
+  }
 
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;

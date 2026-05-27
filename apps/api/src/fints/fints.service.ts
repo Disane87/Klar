@@ -574,6 +574,11 @@ export class FintsService {
       scaExpiresAt: c.scaExpiresAt?.toISOString() ?? null,
       lastSyncAt: c.lastSyncAt?.toISOString() ?? null,
       lastSyncStatus: c.lastSyncStatus,
+      // Phase 8 — per-connection sync schedule. Exposes the cron knobs
+      // the bank-detail page lets the owner edit via PATCH.
+      syncInterval: c.syncInterval,
+      syncEnabled: c.syncEnabled,
+      nextSyncAt: c.nextSyncAt?.toISOString() ?? null,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
       accounts,

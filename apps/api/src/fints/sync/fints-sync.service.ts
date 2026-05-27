@@ -1,6 +1,12 @@
 import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { FintsConnection, FintsSyncRun, FintsSyncTrigger, Prisma } from '@prisma/client';
+import {
+  RULE_EVENT,
+  type FintsSyncEvent,
+  type FintsSyncEventType,
+} from '../../notification-rules/events/rule-events';
 import type { FinTSClient, ClientResponse, Statement, StatementResponse } from 'lib-fints';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImportPipelineService } from '../../import-pipeline/import-pipeline.service';
@@ -102,7 +108,38 @@ export class FintsSyncService {
     private readonly realtime: FintsRealtimeService,
     private readonly standingOrders: StandingOrdersDetection,
     private readonly fixedCosts: FixedCostsService,
+    private readonly events: EventEmitter2,
   ) {}
+
+  /**
+   * Emit a rule-engine FINTS_SYNC_EVENT for the given sync run + type.
+   * Best-effort — failures are swallowed so a notification hiccup never
+   * affects the sync itself.
+   */
+  private emitFintsEvent(
+    syncRun: { id: string; connectionId: string },
+    connection: { bankName: string; ownerId: string; householdId: string } | null,
+    eventType: FintsSyncEventType,
+    errorMessage: string | null = null,
+  ): void {
+    if (!connection) return;
+    try {
+      const payload: FintsSyncEvent = {
+        sourceId: `${syncRun.id}|${eventType}`,
+        householdId: connection.householdId,
+        ownerUserId: connection.ownerId,
+        fields: {
+          eventType,
+          connectionId: syncRun.connectionId,
+          bankName: connection.bankName,
+          errorMessage,
+        },
+      };
+      this.events.emit(RULE_EVENT.FINTS_SYNC_EVENT, payload);
+    } catch (err) {
+      this.logger.warn({ err, syncRunId: syncRun.id }, 'failed to emit FINTS_SYNC_EVENT');
+    }
+  }
 
   /**
    * Tracks the last `tanReference` we emitted on SSE per syncRun so the
@@ -774,6 +811,7 @@ export class FintsSyncService {
       tanChallenge: null,
     });
     this.realtime.emit(finalRun.id, 'ok', { syncRun: finalRun });
+    this.emitFintsEvent(finalRun, connection, 'SYNC_FINISHED');
     this.lastEmittedTanRef.delete(finalRun.id);
     return { syncRun: finalRun };
   }
@@ -1061,6 +1099,10 @@ export class FintsSyncService {
       errorMessage: message.slice(0, 1000),
     });
     this.realtime.emit(finalRun.id, 'failed', { syncRun: finalRun });
+    // Look up the connection so the rules engine has the bankName + owner
+    // for PRIVATE-skip. Best-effort — emitFintsEvent is a no-op on null.
+    const failedConn = await this.connections.findById(finalRun.connectionId).catch(() => null);
+    this.emitFintsEvent(finalRun, failedConn, 'SYNC_FAILED', message.slice(0, 500));
     this.lastEmittedTanRef.delete(finalRun.id);
 
     // Orphan cleanup: when the very first sync of a brand-new connection
