@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { FintsConnection, FintsSyncRun, FintsSyncTrigger, Prisma } from '@prisma/client';
-import type { FinTSClient, ClientResponse } from 'lib-fints';
+import type { FinTSClient, ClientResponse, Statement, StatementResponse } from 'lib-fints';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImportPipelineService } from '../../import-pipeline/import-pipeline.service';
 import { FintsClientService } from '../client/fints-client.service';
@@ -27,6 +27,21 @@ export interface SyncRunResult {
   tanChallenge?: TanChallenge;
 }
 
+/**
+ * Which lib-fints operation raised the TAN demand. Determines which
+ * `*WithTan` resume call {@link FintsSyncService.submitTan} must dispatch:
+ *  - `SYNCHRONIZE` → bank wants TAN before releasing BPD/UPD; resume with
+ *    `synchronizeWithTan` so the dialog can complete and we get the
+ *    account list.
+ *  - `STATEMENTS` → bank wants TAN before releasing HKCAZ/HKKAZ booking
+ *    data (typical Sparkasse `tanRequiredForStatements`); resume with
+ *    `getAccountStatementsWithTan`, otherwise the loop runs `synchronize`
+ *    in circles while statements never get fetched.
+ */
+export type TanOperationContext =
+  | { kind: 'SYNCHRONIZE' }
+  | { kind: 'STATEMENTS'; accountNumber: string };
+
 export interface TanChallenge {
   tanReference: string;
   prompt: string;
@@ -40,6 +55,15 @@ export interface TanChallenge {
    * and shows a "confirm in your banking app" hint instead.
    */
   isDecoupled: boolean;
+  /**
+   * Which lib-fints call raised this TAN demand. Persisted so
+   * {@link FintsSyncService.submitTan} can dispatch to the matching
+   * `*WithTan` resume call instead of always falling back to
+   * `synchronizeWithTan`. Optional for backward compatibility with
+   * challenges persisted before this field existed — those default to
+   * SYNCHRONIZE, which matches the old behaviour.
+   */
+  operation?: TanOperationContext;
 }
 
 /**
@@ -95,6 +119,49 @@ export class FintsSyncService {
   private readonly decoupledPolls = new Set<string>();
   private static readonly DECOUPLED_POLL_INTERVAL_MS = 2_000;
   private static readonly DECOUPLED_POLL_TIMEOUT_MS = 2 * 60 * 1000;
+
+  /**
+   * Hard cap on TAN-resume calls per sync run. The bank's fraud detection
+   * starts locking the online-banking access after a handful of failed
+   * or duplicate PIN/TAN messages — and getting unlocked means calling
+   * the Berater. Bank-side counters typically reject after 3–5 failed
+   * PIN tries, so we stay well below that.
+   *
+   * This guards against TWO failure modes:
+   *   1. A bug like the original SYNCHRONIZE-vs-STATEMENTS-dispatch
+   *      mismatch that turns the decoupled poll into an endless loop.
+   *   2. A bank that legitimately chains many TAN challenges in one
+   *      run (rare, but possible). Five gives us headroom; sixth attempt
+   *      fails the run and forces manual intervention.
+   */
+  private static readonly MAX_TAN_ATTEMPTS = 5;
+
+  /**
+   * Hard cap on consecutive HKCAZ chunks per account. Many banks
+   * (Sparkasse confirmed) silently truncate a single response to a
+   * ~150-day window even when asked for more, so a 15-month sync needs
+   * ~3 chunks. We cap well above the realistic worst case to stop a
+   * misbehaving bank from running us in circles, while still allowing
+   * pulling several years of history when the bank cooperates.
+   */
+  private static readonly MAX_STATEMENT_CHUNKS = 24;
+
+  /**
+   * Bank-side return codes that mean the user's online-banking access
+   * is itself in a broken state — re-trying with the same PIN/TAN will
+   * not help and may push the account further into a lock. When ANY of
+   * these surface, the run fails immediately and the connection is
+   * flipped to REAUTH_REQUIRED so no auto-flow can re-issue PIN.
+   *
+   *   9010 – Initialisierung fehlgeschlagen / PIN/TAN Prüfung fehlgeschlagen
+   *   9050 – Die Nachricht enthält Fehler (oft Begleiter von 9010/9933)
+   *   9931 – PIN/TAN-Verfahren falsch
+   *   9933 – Zugang ist gesperrt (FRAUD-Lockout, Berater anrufen)
+   *   3079 – Account-Kombination ungültig (Login-Identifier falsch)
+   */
+  private static readonly FATAL_AUTH_CODES: ReadonlySet<number> = new Set([
+    9010, 9050, 9931, 9933, 3079,
+  ]);
 
   /**
    * Starts a new sync run for the given connection. Returns immediately
@@ -154,6 +221,10 @@ export class FintsSyncService {
           `availableTanMethods=${fintsClient.config.availableTanMethods?.length ?? 0}, ` +
           `bankAnswers=[${(firstSync.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
       );
+      const firstSyncFatal = this.detectFatalAuthError(firstSync.bankAnswers);
+      if (firstSyncFatal) {
+        return this.failHardOnAuthError(syncRun, connection.id, firstSyncFatal);
+      }
       if (firstSync.requiresTan) {
         // Some banks ask for TAN already on the BPD pass — surface immediately.
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, firstSync);
@@ -187,6 +258,10 @@ export class FintsSyncService {
           `bankAccounts=${fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0}, ` +
           `bankAnswers=[${(secondSync.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
       );
+      const secondSyncFatal = this.detectFatalAuthError(secondSync.bankAnswers);
+      if (secondSyncFatal) {
+        return this.failHardOnAuthError(syncRun, connection.id, secondSyncFatal);
+      }
       if (secondSync.requiresTan) {
         return this.persistTanChallenge(syncRun, connection, fintsClient, state, secondSync);
       }
@@ -281,10 +356,33 @@ export class FintsSyncService {
     const connection = await this.connections.findById(syncRun.connectionId);
     if (!connection) throw new NotFoundException(`Connection ${syncRun.connectionId} not found`);
 
-    const challenge = syncRun.tanChallenge as { tanReference?: string } | null;
+    const challenge = syncRun.tanChallenge as {
+      tanReference?: string;
+      operation?: TanOperationContext;
+    } | null;
     const tanReference = challenge?.tanReference;
     if (!tanReference) {
       throw new BadRequestException('Sync run has no TAN reference — challenge already consumed');
+    }
+    // Pre-existing challenges without `operation` predate this field — fall
+    // back to SYNCHRONIZE, which matches the old (broken-for-STATEMENTS)
+    // behaviour but is correct for the only path that previously worked.
+    const operation: TanOperationContext = challenge.operation ?? { kind: 'SYNCHRONIZE' };
+
+    // Hard cap on bank-issued TAN rounds (not on submitTan calls — the
+    // decoupled poll fires every 2s with the SAME tanReference for code
+    // 3956 keep-alives, which must not count). `tanAttempts` is bumped
+    // by persistTanChallenge only when the bank chains a NEW reference.
+    // Cap exists so a bug that flips the same dialog into a runaway
+    // TAN-chain can never re-trigger the fraud-detection that locked
+    // the online-banking access once. See FATAL_AUTH_CODES above.
+    if (syncRun.tanAttempts >= FintsSyncService.MAX_TAN_ATTEMPTS) {
+      return this.failHardOnAuthError(
+        syncRun,
+        connection.id,
+        `TAN-Rounds überschritten (${syncRun.tanAttempts}/${FintsSyncService.MAX_TAN_ATTEMPTS}). ` +
+          `Verbindung wird gesperrt, bevor die Bank den Zugang sperrt. Bitte manuell neu einrichten.`,
+      );
     }
 
     // Critical: lib-fints' synchronizeWithTan requires the SAME client
@@ -311,19 +409,66 @@ export class FintsSyncService {
         iv: Buffer.from(connection.credentialsIv),
         tag: Buffer.from(connection.credentialsTag),
       });
+
+      if (operation.kind === 'STATEMENTS') {
+        // The TAN was raised by HKCAZ/HKKAZ (typical Sparkasse
+        // `tanRequiredForStatements`). Resume with the matching `*WithTan`
+        // call — using `synchronizeWithTan` here makes the bank refresh
+        // BPD/UPD and report `requiresTan=false`, but the actual statement
+        // fetch never gets the TAN and the next `fetchStatements` raises
+        // TAN again, causing a tight decoupled-poll loop.
+        const stmtResp = await this.client.fetchStatementsWithTan(
+          fintsClient,
+          tanReference,
+          tan || undefined,
+        );
+        this.logger.log(
+          `submitTan[STATEMENTS ${operation.accountNumber}]: ` +
+            `requiresTan=${stmtResp.requiresTan}, ` +
+            `statements=${stmtResp.statements?.length ?? 0}, ` +
+            `bankAnswers=[${(stmtResp.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
+        );
+        const stmtFatal = this.detectFatalAuthError(stmtResp.bankAnswers);
+        if (stmtFatal) {
+          return this.failHardOnAuthError(syncRun, connection.id, stmtFatal);
+        }
+        if (stmtResp.requiresTan) {
+          // Bank chained another TAN for the same statement fetch.
+          return this.persistTanChallenge(syncRun, connection, fintsClient, state, stmtResp, operation);
+        }
+        // Statement TAN cleared — hand the already-fetched statements
+        // directly to the ingest path so we don't re-issue HKCAZ (which
+        // would demand another TAN). Then resume the rest of the linked
+        // accounts via runIngestPhase, which skips the account that just
+        // succeeded.
+        return this.resumeIngestAfterStatementTan(
+          syncRun,
+          connection,
+          fintsClient,
+          state,
+          operation.accountNumber,
+          stmtResp,
+        );
+      }
+
+      // operation.kind === 'SYNCHRONIZE'
       const resp = await this.client.synchronizeWithTan(fintsClient, tanReference, tan || undefined);
       const accountsAfterTan =
         fintsClient.config.bankingInformation.upd?.bankAccounts?.length ?? 0;
       this.logger.log(
-        `submitTan: bankInfoUpdated=${resp.bankingInformationUpdated}, ` +
+        `submitTan[SYNCHRONIZE]: bankInfoUpdated=${resp.bankingInformationUpdated}, ` +
           `requiresTan=${resp.requiresTan}, ` +
           `bankAccounts=${accountsAfterTan}, ` +
           `bankAnswers=[${(resp.bankAnswers ?? []).map(a => `${a.code}:${a.text}`).join(' | ')}]`,
       );
+      const syncFatal = this.detectFatalAuthError(resp.bankAnswers);
+      if (syncFatal) {
+        return this.failHardOnAuthError(syncRun, connection.id, syncFatal);
+      }
       if (resp.requiresTan) {
         // Bank chained another TAN — re-persist with new reference.
         // (rememberForTan is called inside persistTanChallenge.)
-        return this.persistTanChallenge(syncRun, connection, fintsClient, state, resp);
+        return this.persistTanChallenge(syncRun, connection, fintsClient, state, resp, operation);
       }
 
       // For first-time setup the response should bring back UPD with the
@@ -373,6 +518,13 @@ export class FintsSyncService {
     state: FintsSessionState,
     fromDate: Date,
     toDate: Date,
+    /**
+     * Statements already fetched out-of-band for specific accounts — used
+     * by the STATEMENTS-TAN resume path to inject the response from
+     * `fetchStatementsWithTan` so we don't re-issue HKCAZ (which would
+     * demand a fresh TAN in an endless loop).
+     */
+    preloadedStatements: Map<string, StatementResponse> = new Map(),
   ): Promise<SyncRunResult> {
     // syncEnabled=false lets users pause individual sub-accounts (e.g. closed
     // savings accounts the bank still advertises in UPD) without archiving
@@ -435,33 +587,103 @@ export class FintsSyncService {
         );
         continue;
       }
-      const stmts = await this.client.fetchStatements(fintsClient, accountNumber, fromDate, toDate);
-      if (stmts.requiresTan) {
-        return this.persistTanChallenge(syncRun, connection, fintsClient, state, stmts);
+      // Chunking-aware fetch: many German banks (Sparkasse confirmed)
+      // silently cap a single HKCAZ response to a fixed window (~150 days
+      // from `from`), regardless of the `to` value sent. lib-fints'
+      // continuation marker (code 3040) only kicks in when the bank
+      // actively signals "more data available" — Sparkasse just stops
+      // sending. Result: a 15-month request returns only the first ~5
+      // months, no error, no warning.
+      //
+      // We walk the window forward in chunks. After each response, we
+      // find the newest booking-date and re-issue HKCAZ with
+      // `from = lastEntry − 2 days` until either:
+      //   - we reach `toDate − grace`, or
+      //   - the bank returns no new newest-date (stuck — no further data).
+      // 2-day overlap covers value-date/booking-date drift so dedup in
+      // the ingest pipeline (bankTxId + content hash) eats the dupes.
+      const accumulated: Statement[] = [];
+      let chunkFrom = fromDate;
+      let chunkIndex = 0;
+      let lastSeenLatest: string | null = null;
+      const preloaded = preloadedStatements.get(accountNumber);
+      let preloadedStmts: StatementResponse | undefined = preloaded;
+      while (chunkIndex < FintsSyncService.MAX_STATEMENT_CHUNKS) {
+        const stmts: StatementResponse = preloadedStmts
+          ?? await this.client.fetchStatements(fintsClient, accountNumber, chunkFrom, toDate);
+        preloadedStmts = undefined; // only first chunk may be preloaded
+        if (stmts.requiresTan) {
+          return this.persistTanChallenge(syncRun, connection, fintsClient, state, stmts, {
+            kind: 'STATEMENTS',
+            accountNumber,
+          });
+        }
+
+        const stmtCount = stmts.statements?.length ?? 0;
+        const chunkDates: string[] = [];
+        let chunkEntries = 0;
+        for (const s of stmts.statements ?? []) {
+          const txs = s.transactions ?? [];
+          chunkEntries += txs.length;
+          for (const t of txs) {
+            const d = t.entryDate ?? t.valueDate;
+            if (d) chunkDates.push(d.toISOString().slice(0, 10));
+          }
+        }
+        chunkDates.sort();
+        const chunkEarliest = chunkDates[0] ?? '∅';
+        const chunkLatest = chunkDates[chunkDates.length - 1] ?? '∅';
+        this.logger.log(
+          `Account ${accountNumber} chunk ${chunkIndex} ` +
+            `[from=${chunkFrom.toISOString().slice(0, 10)} to=${toDate.toISOString().slice(0, 10)}]: ` +
+            `bank returned ${stmtCount} statement(s) with ${chunkEntries} entries ` +
+            `(booking-date range ${chunkEarliest} … ${chunkLatest})`,
+        );
+
+        accumulated.push(...(stmts.statements ?? []));
+        chunkIndex++;
+
+        // Decide whether to ask for more. If the bank gave us nothing
+        // OR didn't make progress on the date axis, we're done.
+        if (!chunkLatest || chunkLatest === '∅') break;
+        if (lastSeenLatest === chunkLatest) {
+          this.logger.warn(
+            `Account ${accountNumber}: bank stuck on ${chunkLatest} — stopping to avoid infinite loop`,
+          );
+          break;
+        }
+        lastSeenLatest = chunkLatest;
+
+        const latestDate = new Date(chunkLatest + 'T00:00:00Z');
+        // 5-day grace so we don't issue a final 1-chunk for the last few
+        // pending-booking days — the daily cron will pick those up tomorrow.
+        const reachedTarget = latestDate.getTime() >= toDate.getTime() - 5 * 86_400_000;
+        if (reachedTarget) break;
+
+        // Walk forward with a 2-day overlap. Pipeline dedup handles dupes.
+        chunkFrom = new Date(latestDate.getTime() - 2 * 86_400_000);
       }
-      const stmtCount = stmts.statements?.length ?? 0;
-      // Inspect what the bank actually returned: which booking-date range is
-      // covered, how many entries per statement. Lets us tell apart bank-side
-      // truncation from a too-narrow request window.
-      const bookingDates: string[] = [];
-      let totalEntries = 0;
-      for (const s of stmts.statements ?? []) {
-        const entries = (s as { entries?: unknown[] }).entries ?? [];
-        totalEntries += entries.length;
-        for (const e of entries as Array<{ valueDate?: Date; bookingDate?: Date }>) {
-          const d = e.bookingDate ?? e.valueDate;
-          if (d) bookingDates.push(d.toISOString().slice(0, 10));
+      if (chunkIndex >= FintsSyncService.MAX_STATEMENT_CHUNKS) {
+        this.logger.warn(
+          `Account ${accountNumber}: hit MAX_STATEMENT_CHUNKS (${FintsSyncService.MAX_STATEMENT_CHUNKS}) — stopping`,
+        );
+      }
+
+      const totalEntries = accumulated.reduce((n, s) => n + (s.transactions?.length ?? 0), 0);
+      const allDates: string[] = [];
+      for (const s of accumulated) {
+        for (const t of s.transactions ?? []) {
+          const d = t.entryDate ?? t.valueDate;
+          if (d) allDates.push(d.toISOString().slice(0, 10));
         }
       }
-      bookingDates.sort();
-      const earliest = bookingDates[0] ?? '∅';
-      const latest = bookingDates[bookingDates.length - 1] ?? '∅';
+      allDates.sort();
       this.logger.log(
-        `Account ${accountNumber}: bank returned ${stmtCount} statement(s) ` +
-          `with ${totalEntries} entries (booking-date range ${earliest} … ${latest})`,
+        `Account ${accountNumber}: ${chunkIndex} chunk(s), ${accumulated.length} statement(s), ` +
+          `${totalEntries} entries (overall range ${allDates[0] ?? '∅'} … ${allDates[allDates.length - 1] ?? '∅'})`,
       );
 
-      const rawBookings = FintsBookingMapper.toRawBookings(stmts.statements, {
+      const rawBookings = FintsBookingMapper.toRawBookings(accumulated, {
         iban: account.iban ?? accountNumber,
         syncRunId: syncRun.id,
       });
@@ -485,6 +707,35 @@ export class FintsSyncService {
       totalImported += ingest.imported;
       totalSkipped += ingest.skipped;
       if (ingest.imported > 0) touchedHouseholdIds.add(account.householdId);
+
+      // Persist the latest closing balance the bank shipped — without this
+      // the UI falls back to summing all imported transactions, which is
+      // the NET DELTA over the synced window, not the actual current
+      // balance. lib-fints CAMT statements always include
+      // `closingBalance.value` in major units (Euro); pick the latest by
+      // balance date across all chunks.
+      let latestClosing: { date: Date; cents: number } | null = null;
+      for (const s of accumulated) {
+        const cb = s.closingBalance;
+        if (!cb || typeof cb.value !== 'number' || !cb.date) continue;
+        const cents = Math.round(cb.value * 100);
+        if (!latestClosing || cb.date.getTime() > latestClosing.date.getTime()) {
+          latestClosing = { date: cb.date, cents };
+        }
+      }
+      if (latestClosing) {
+        await this.prisma.account.update({
+          where: { id: account.id },
+          data: {
+            lastKnownBalanceCents: latestClosing.cents,
+            lastBalanceAt: latestClosing.date,
+          },
+        });
+        this.logger.log(
+          `Account ${accountNumber}: persisted closingBalance ${(latestClosing.cents / 100).toFixed(2)}€ ` +
+            `as of ${latestClosing.date.toISOString().slice(0, 10)}`,
+        );
+      }
 
       try {
         await this.standingOrders.runForAccount({
@@ -527,12 +778,45 @@ export class FintsSyncService {
     return { syncRun: finalRun };
   }
 
+  /**
+   * Continuation point after the user (or decoupled poll) cleared a TAN
+   * that was raised by HKCAZ/HKKAZ. The `stmtResp` already contains the
+   * just-released bookings for `accountNumber`; we feed them into the
+   * standard ingest path through `runIngestPhase` so the rest of the
+   * connection's accounts still get synced after.
+   */
+  private async resumeIngestAfterStatementTan(
+    syncRun: FintsSyncRun,
+    connection: FintsConnection,
+    fintsClient: FinTSClient,
+    state: FintsSessionState,
+    accountNumber: string,
+    stmtResp: StatementResponse,
+  ): Promise<SyncRunResult> {
+    // Re-enter runIngestPhase with the just-fetched statements pre-loaded
+    // for this account — that loop skips the fetchStatements call when it
+    // finds a preloaded entry, so no fresh HKCAZ goes out (which would
+    // immediately demand another TAN).
+    const preload = new Map<string, StatementResponse>();
+    preload.set(accountNumber, stmtResp);
+    return this.runIngestPhase(
+      syncRun,
+      connection,
+      fintsClient,
+      state,
+      syncRun.fromDate ?? this.computeFromDate(connection),
+      syncRun.toDate ?? new Date(),
+      preload,
+    );
+  }
+
   private async persistTanChallenge(
     syncRun: FintsSyncRun,
     connection: FintsConnection,
     fintsClient: FinTSClient,
     state: FintsSessionState,
     resp: ClientResponse,
+    operation: TanOperationContext = { kind: 'SYNCHRONIZE' },
   ): Promise<SyncRunResult> {
     const challenge: TanChallenge = {
       tanReference: resp.tanReference ?? '',
@@ -543,7 +827,28 @@ export class FintsSyncService {
         : undefined,
       mediaMimeType: resp.tanPhoto?.mimeType,
       isDecoupled: this.client.isSelectedMethodDecoupled(fintsClient),
+      operation,
     };
+    // Bump the round counter only when the bank actually changed its
+    // challenge. The decoupled poll repeatedly funnels the SAME
+    // tanReference back through here (code 3956 keep-alive) — those are
+    // not new TAN rounds at the bank and must not eat into the cap.
+    const previousChallengeRef = (syncRun.tanChallenge as { tanReference?: string } | null)
+      ?.tanReference;
+    const isNewChallenge = previousChallengeRef !== challenge.tanReference;
+    const nextTanAttempts = isNewChallenge ? syncRun.tanAttempts + 1 : syncRun.tanAttempts;
+    if (isNewChallenge && nextTanAttempts > FintsSyncService.MAX_TAN_ATTEMPTS) {
+      // Bank is chaining TAN demands beyond the cap — bail out before
+      // we approach the fraud-lockout threshold. (Real worst-case: a
+      // bank legitimately needs >5 rounds; user must re-run setup.)
+      return this.failHardOnAuthError(
+        syncRun,
+        connection.id,
+        `Bank fordert zu viele TAN-Rounds (${nextTanAttempts}/${FintsSyncService.MAX_TAN_ATTEMPTS}). ` +
+          `Verbindung wird gesperrt, bevor die Bank den Zugang sperrt.`,
+      );
+    }
+
     // Best-effort: persist BPD changes that may have happened during the
     // partial dialog so a crash before TAN entry doesn't lose them.
     await this.persistSessionState(connection, fintsClient, state);
@@ -555,6 +860,7 @@ export class FintsSyncService {
     const updated = await this.syncRuns.update(syncRun.id, {
       status: 'TAN_REQUIRED',
       tanChallenge: challenge as unknown as Prisma.InputJsonValue,
+      tanAttempts: nextTanAttempts,
     });
 
     // Emit on SSE only when the challenge actually changed: lib-fints
@@ -698,6 +1004,51 @@ export class FintsSyncService {
         scaExpiresAt: new Date(now.getTime() + scaWindow * 86_400_000),
       },
     });
+  }
+
+  /**
+   * Inspects bank answers for codes that indicate auth itself is in a
+   * broken state. Returns a human-readable summary when one is found;
+   * null otherwise. Used by {@link guardFatalAuthOrThrow} to decide
+   * whether to fail-hard a sync run.
+   */
+  private detectFatalAuthError(
+    answers: ReadonlyArray<{ code: number; text: string }> | undefined,
+  ): string | null {
+    if (!answers || answers.length === 0) return null;
+    const fatal = answers.filter(a => FintsSyncService.FATAL_AUTH_CODES.has(a.code));
+    if (fatal.length === 0) return null;
+    return fatal.map(a => `${a.code} ${a.text}`).join(' | ');
+  }
+
+  /**
+   * Centralised fatal-auth abort path. Locks the connection out of all
+   * future auto-flows (cron + manual button refuse REAUTH_REQUIRED in
+   * {@link FintsService.triggerSync}) and forgets the cached client so
+   * no in-flight TAN can be replayed. The user must explicitly re-auth
+   * via the setup wizard before another PIN goes to the bank.
+   */
+  private async failHardOnAuthError(
+    syncRun: FintsSyncRun,
+    connectionId: string,
+    reason: string,
+  ): Promise<SyncRunResult> {
+    this.logger.error(
+      `Fatal auth error on connection ${connectionId} — locking REAUTH_REQUIRED: ${reason}`,
+    );
+    this.client.forget(connectionId);
+    await this.connections.setStatus(connectionId, 'REAUTH_REQUIRED').catch(err => {
+      this.logger.warn(
+        `Could not flip connection ${connectionId} to REAUTH_REQUIRED: ${(err as Error).message}`,
+      );
+    });
+    return this.failRun(
+      syncRun,
+      new Error(
+        `Bank-Auth abgelehnt — Verbindung gesperrt, manuelle Re-Authentifizierung nötig. ` +
+          `Antworten: ${reason}`,
+      ),
+    );
   }
 
   private async failRun(syncRun: FintsSyncRun, err: unknown): Promise<SyncRunResult> {

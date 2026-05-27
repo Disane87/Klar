@@ -364,12 +364,7 @@ interface AccountSelection {
             @for (preset of availableRangePresets(); track preset.days) {
               <button
                 type="button"
-                class="px-3 py-2 rounded-md border text-[13px] min-h-11 transition-colors"
-                [class.border-\\(--accent\\)]="selectedRangeDays() === preset.days"
-                [class.bg-\\(--accent\\)\\/10]="selectedRangeDays() === preset.days"
-                [class.text-\\(--accent\\)]="selectedRangeDays() === preset.days"
-                [class.border-\\(--line\\)]="selectedRangeDays() !== preset.days"
-                [class.text-\\(--fg\\)]="selectedRangeDays() !== preset.days"
+                [class]="rangePresetCls(preset.days)"
                 (click)="setRangeDays(preset.days)"
               >
                 {{ preset.label }}
@@ -500,12 +495,28 @@ export class FintsSetupWizardComponent implements OnInit {
   protected readonly rangeSubmitting = signal(false);
   protected readonly rangeError = signal<string | null>(null);
   protected readonly capabilities = signal<FintsCapabilities | null>(null);
-  /** Visible presets bounded by the bank's advertised `maxLookbackDays`. */
+  /**
+   * Visible presets bounded by the bank's advertised `maxLookbackDays`,
+   * plus a trailing "Alle" entry that maxes out the bank's window (or
+   * a generous 5-year fallback when the bank doesn't advertise a limit)
+   * so users can pull every available booking in one click.
+   */
   protected readonly availableRangePresets = computed<readonly RangePreset[]>(() => {
     const max = this.capabilities()?.maxLookbackDays;
-    if (!max || max <= 0) return RANGE_PRESETS;
-    return RANGE_PRESETS.filter(p => p.days <= max);
+    const base = !max || max <= 0
+      ? RANGE_PRESETS
+      : RANGE_PRESETS.filter(p => p.days <= max);
+    const maxDays = max && max > 0 ? max : 5 * 365;
+    const maxLabel = max && max > 0 ? `Alle (${max} Tage)` : 'Alle';
+    return [...base, { days: maxDays, label: maxLabel }];
   });
+
+  protected rangePresetCls(days: number): string {
+    const base = 'px-3 py-2 rounded-md border text-[13px] min-h-11 transition-colors cursor-pointer';
+    const active = 'border-(--accent) bg-(--accent)/10 text-(--accent)';
+    const idle = 'border-(--line) text-(--fg) hover:bg-(--bg-2)';
+    return `${base} ${this.selectedRangeDays() === days ? active : idle}`;
+  }
   protected readonly rangeWarning = computed<string | null>(() => {
     const caps = this.capabilities();
     if (!caps) return null;

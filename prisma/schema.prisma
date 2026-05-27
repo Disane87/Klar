@@ -477,6 +477,13 @@ model FintsSyncRun {
    * TAN-Challenge-Payload — { method, prompt, mediaBase64? }. Wird nach Verbrauch gelöscht.
    */
   tanChallenge      Json?
+  /**
+   * How many TAN-resume attempts this run has consumed — counted per
+   * `submitTan` call. Capped at a small number to prevent runaway
+   * decoupled-poll loops from spamming the bank with PIN/TAN messages
+   * and tripping fraud-detection that locks the user's online banking.
+   */
+  tanAttempts       Int              @default(0)
   errorCode         String?
   errorMessage      String?
 
