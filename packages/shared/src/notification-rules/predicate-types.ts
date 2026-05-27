@@ -66,8 +66,18 @@ const accountBalanceAggregation = z.object({
   accountId: z.string().min(1),
 });
 
-const sumOrCountAggregation = z.object({
-  type: z.union([z.literal('sumAmount'), z.literal('countTransactions')]),
+const sumAmountAggregation = z.object({
+  type: z.literal('sumAmount'),
+  window: z.enum(AGGREGATION_WINDOWS),
+  days: z.number().int().positive().max(3650).optional(),
+  categoryIds: z.array(z.string().min(1)).optional(),
+  projectIds: z.array(z.string().min(1)).optional(),
+  counterpartyMatch: z.string().min(1).optional(),
+  kind: z.enum(AGGREGATION_KINDS).optional(),
+});
+
+const countTransactionsAggregation = z.object({
+  type: z.literal('countTransactions'),
   window: z.enum(AGGREGATION_WINDOWS),
   days: z.number().int().positive().max(3650).optional(),
   categoryIds: z.array(z.string().min(1)).optional(),
@@ -94,7 +104,8 @@ const upcomingStandingOrdersCountAggregation = z.object({
 
 export const aggregationSpecSchema = z.union([
   accountBalanceAggregation,
-  sumOrCountAggregation,
+  sumAmountAggregation,
+  countTransactionsAggregation,
   budgetUsedPctAggregation,
   upcomingStandingOrdersSumAggregation,
   upcomingStandingOrdersCountAggregation,

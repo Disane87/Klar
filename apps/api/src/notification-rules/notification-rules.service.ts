@@ -21,6 +21,8 @@ import type { RequestContext } from '../common/types/request-context.type';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationRulesRepository } from './notification-rules.repository';
 import { RulesEngineService } from './rules-engine.service';
+import { ScheduledRuleService } from './producers/scheduled-rule.service';
+import { AggregationsService } from './aggregations/aggregations.service';
 import type { CreateNotificationRuleDto } from './dto/create-notification-rule.dto';
 import type { UpdateNotificationRuleDto } from './dto/update-notification-rule.dto';
 import type { PreviewNotificationRuleDto } from './dto/preview-notification-rule.dto';
@@ -45,6 +47,8 @@ export class NotificationRulesService {
     private readonly repo: NotificationRulesRepository,
     private readonly engine: RulesEngineService,
     private readonly prisma: PrismaService,
+    private readonly scheduled: ScheduledRuleService,
+    private readonly aggregations: AggregationsService,
   ) {}
 
   list(ctx: RequestContext): Promise<NotificationRule[]> {
@@ -67,7 +71,7 @@ export class NotificationRulesService {
     this.assertChannels(dto.channels);
     const schedule = this.assertSchedule(dto.trigger, dto.schedule);
 
-    return this.repo.create({
+    const rule = await this.repo.create({
       householdId: ctx.householdId,
       userId: ctx.userId,
       name: dto.name,
@@ -82,6 +86,8 @@ export class NotificationRulesService {
       maxPerHour: dto.maxPerHour ?? null,
       maxPerDay: dto.maxPerDay ?? null,
     });
+    if (rule.trigger === 'SCHEDULED' && rule.enabled) this.scheduled.register(rule);
+    return rule;
   }
 
   async update(
@@ -121,6 +127,13 @@ export class NotificationRulesService {
     if (!updated) {
       throw new NotFoundException(`NotificationRule ${id} nicht gefunden`);
     }
+    // Re-register: scheduled rules may have changed cron expression or been
+    // toggled enabled/disabled.
+    if (updated.trigger === 'SCHEDULED' && updated.enabled) {
+      this.scheduled.register(updated);
+    } else {
+      this.scheduled.unregister(updated.id);
+    }
     return updated;
   }
 
@@ -128,6 +141,7 @@ export class NotificationRulesService {
     await this.findOne(ctx, id);
     const ok = await this.repo.delete(id, ctx.householdId);
     if (!ok) throw new NotFoundException(`NotificationRule ${id} nicht gefunden`);
+    this.scheduled.unregister(id);
   }
 
   /**
@@ -166,11 +180,16 @@ export class NotificationRulesService {
     });
 
     const matches: Array<{ at: string; title: string; amountCents: number }> = [];
+    const resolveAggregation = this.aggregations.makeResolver({
+      householdId: ctx.householdId,
+      userId: ctx.userId,
+    });
     for (const tx of rows) {
       const fields = this.txToFields(tx);
       const isMatch = await evaluatePredicate(
         dto.predicate,
         fields as unknown as Record<string, unknown>,
+        { resolveAggregation },
       ).catch(() => false);
       if (isMatch) {
         matches.push({

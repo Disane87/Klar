@@ -8,6 +8,7 @@ import {
   type Predicate,
 } from '@klar/shared';
 import { NotificationRulesRepository } from './notification-rules.repository';
+import { AggregationsService } from './aggregations/aggregations.service';
 import { InAppDispatcher } from './dispatchers/in-app.dispatcher';
 import { WebPushDispatcher } from './dispatchers/web-push.dispatcher';
 import { EmailDispatcher } from './dispatchers/email.dispatcher';
@@ -46,6 +47,7 @@ export class RulesEngineService {
     private readonly webPush: WebPushDispatcher,
     private readonly email: EmailDispatcher,
     private readonly digestQueue: DigestQueueRepository,
+    private readonly aggregations: AggregationsService,
   ) {}
 
   @OnEvent(RULE_EVENT.TRANSACTION_CREATED)
@@ -170,7 +172,12 @@ export class RulesEngineService {
    * field whitelist + supply a sourceId for idempotency.
    */
   private async evaluateGenericEvent(input: {
-    trigger: 'TRANSACTION_CREATED' | 'STANDING_ORDER_DUE' | 'BUDGET_THRESHOLD' | 'FINTS_SYNC_EVENT';
+    trigger:
+      | 'TRANSACTION_CREATED'
+      | 'STANDING_ORDER_DUE'
+      | 'BUDGET_THRESHOLD'
+      | 'FINTS_SYNC_EVENT'
+      | 'SCHEDULED';
     sourceKind: string;
     sourceId: string;
     householdId: string;
@@ -191,7 +198,6 @@ export class RulesEngineService {
 
     const ctx = input.fields;
     const now = new Date();
-    const aggregationResolver = this.makeUnsupportedAggregationResolver();
 
     for (const rule of rules) {
       if (
@@ -212,7 +218,12 @@ export class RulesEngineService {
         matched = await evaluatePredicate(
           rule.predicateJson as unknown as Predicate,
           ctx,
-          { resolveAggregation: aggregationResolver },
+          {
+            resolveAggregation: this.aggregations.makeResolver({
+              householdId: input.householdId,
+              userId: rule.userId,
+            }),
+          },
         );
       } catch (err) {
         this.logger.warn(
@@ -377,15 +388,26 @@ export class RulesEngineService {
     );
   }
 
-  /**
-   * Phase 2 has no aggregation providers yet — any predicate referencing
-   * one is rejected at validation time, so this should be unreachable.
-   * Throws explicitly to surface bugs if it ever runs.
-   */
-  private makeUnsupportedAggregationResolver(): (spec: unknown) => Promise<never> {
-    return async () => {
-      throw new Error('Aggregations not implemented in this phase');
-    };
+  @OnEvent('rule.scheduled.tick')
+  async onScheduledTick(event: {
+    sourceId: string;
+    ruleId: string;
+    householdId: string;
+  }): Promise<void> {
+    const rule = await this.rules.findByIdAny(event.ruleId);
+    if (!rule || !rule.enabled) return;
+    await this.evaluateGenericEvent({
+      trigger: 'SCHEDULED',
+      sourceKind: 'scheduled',
+      sourceId: event.sourceId,
+      householdId: event.householdId,
+      ownerUserId: rule.userId,
+      visibility: 'SHARED',
+      fields: {}, // SCHEDULED has no event-context fields — predicate uses aggregations
+      formatBody: () => 'Geplante Auswertung ausgelöst.',
+      deepLinkUrl: '/app/settings/notifications',
+      prefetched: [rule],
+    });
   }
 
   private isUniqueViolation(err: unknown): boolean {

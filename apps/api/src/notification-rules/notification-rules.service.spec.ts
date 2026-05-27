@@ -45,8 +45,15 @@ function buildService() {
   const prisma = {
     transaction: { findMany: vi.fn().mockResolvedValue([]) },
   } as unknown as PrismaService;
-  const service = new NotificationRulesService(repo, engine, prisma);
-  return { service, repo, engine, prisma };
+  const scheduled = {
+    register: vi.fn(),
+    unregister: vi.fn(),
+  } as never;
+  const aggregations = {
+    makeResolver: vi.fn(() => async () => 0),
+  } as never;
+  const service = new NotificationRulesService(repo, engine, prisma, scheduled, aggregations);
+  return { service, repo, engine, prisma, scheduled, aggregations };
 }
 
 const ctx: RequestContext = { householdId: 'hh_1', userId: 'usr_1', source: 'web' };

@@ -74,13 +74,17 @@ function buildEngine() {
   const digestQueue = {
     enqueue: vi.fn().mockResolvedValue({}),
   } as unknown as DigestQueueRepository;
+  const aggregations = {
+    makeResolver: vi.fn(() => async () => 0),
+  } as never;
   return {
-    engine: new RulesEngineService(repo, inApp, webPush, email, digestQueue),
+    engine: new RulesEngineService(repo, inApp, webPush, email, digestQueue, aggregations),
     repo,
     inApp,
     webPush,
     email,
     digestQueue,
+    aggregations,
   };
 }
 
