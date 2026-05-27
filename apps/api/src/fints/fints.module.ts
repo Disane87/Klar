@@ -14,12 +14,13 @@ import { ReauthWatcherScheduler } from './reauth/reauth-watcher.scheduler';
 import { FintsClientService } from './client/fints-client.service';
 import { FintsRealtimeService } from './realtime/fints-realtime.service';
 import { FintsSyncRunRepository } from './sync/fints-sync-run.repository';
+import { FintsSyncScheduler } from './sync/fints-sync.scheduler';
 import { FintsSyncService } from './sync/fints-sync.service';
 import { FintsService } from './fints.service';
 import { FintsController } from './fints.controller';
 
 /**
- * FinTS module (Phases 14a.3 + 14a.4 + 14a.7-partial).
+ * FinTS module (Phases 14a.3 + 14a.4 + 14a.5 + 14a.6 + 14a.7).
  *
  * Provides:
  *   - FintsCryptoService — AES-256-GCM for connection credentials
@@ -28,11 +29,13 @@ import { FintsController } from './fints.controller';
  *   - BlzRefreshScheduler — daily 03:30 cron, refreshes BLZ registry
  *   - ReauthWatcherScheduler — daily 08:00 cron, 7-day SCA pre-warning
  *     plus REAUTH_REQUIRED state transition for expired connections
+ *   - FintsClientService — lib-fints wrapper
+ *   - FintsSyncService — sync runner (manual + cron + setup)
+ *   - FintsSyncScheduler — automatic sync cron, interval configurable
+ *     via FINTS_SYNC_INTERVAL_MINUTES (default 60, min 5);
+ *     disable via FINTS_SYNC_DISABLED=true
  *
- * Subsequent phases add (in order):
- *   14a.5 — client/* (lib-fints wrapper) and mapper/* (FinTS booking → RawBooking)
- *   14a.6 — fints.controller, setup wizard endpoints
- *   14a.7 — sync/* (runner + scheduler) — final sync cron piece
+ * Subsequent phases:
  *   14a.8 — lockout UI integration (frontend-side)
  */
 @Module({
@@ -55,6 +58,7 @@ import { FintsController } from './fints.controller';
     FintsRealtimeService,
     FintsSyncRunRepository,
     FintsSyncService,
+    FintsSyncScheduler,
     FintsService,
   ],
   controllers: [FintsController],
@@ -65,6 +69,7 @@ import { FintsController } from './fints.controller';
     FintsClientService,
     FintsSyncService,
     FintsSyncRunRepository,
+    FintsSyncScheduler,
   ],
 })
 export class FintsModule {}

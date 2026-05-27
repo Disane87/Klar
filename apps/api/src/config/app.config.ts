@@ -60,6 +60,13 @@ export const fintsConfig = registerAs('fints', () => ({
   masterKeyHex: process.env['FINTS_MASTER_KEY'] ?? '',
   /** PSD2 Strong-Customer-Authentication-Window in Tagen (default 89). */
   scaWindowDays: Number(process.env['FINTS_SCA_WINDOW_DAYS'] ?? 89),
+  /**
+   * Interval in minutes between automatic FinTS sync ticks. Default 60.
+   * Floored to a minimum of 5 minutes to avoid hammering the bank.
+   * Set FINTS_SYNC_DISABLED=true to disable the cron entirely.
+   */
+  syncIntervalMinutes: Number(process.env['FINTS_SYNC_INTERVAL_MINUTES'] ?? 60),
+  syncDisabled: process.env['FINTS_SYNC_DISABLED'] === 'true',
   /** Zusätzliche BLZ-Datenquellen (komma-separiert) für Phase 14a.4. */
   blzSourceUrls: (process.env['FINTS_BLZ_SOURCES'] ??
     'https://raw.githubusercontent.com/hbci4j/hbci4java/master/src/main/resources/blz.properties')

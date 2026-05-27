@@ -23,6 +23,7 @@ export interface UpdateSyncRunData {
   bookingsSkipped?: number;
   balanceDriftCents?: number | null;
   tanChallenge?: Prisma.InputJsonValue | null;
+  tanAttempts?: number;
   errorCode?: string | null;
   errorMessage?: string | null;
 }
@@ -55,6 +56,18 @@ export class FintsSyncRunRepository {
   findActiveTanRequired(connectionId: string): Promise<FintsSyncRun | null> {
     return this.prisma.fintsSyncRun.findFirst({
       where: { connectionId, status: 'TAN_REQUIRED' },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Any run that is still claiming the connection — RUNNING or
+   * TAN_REQUIRED. Used by the sync scheduler to skip connections that
+   * have an in-flight run so cron ticks don't stack on top of each other.
+   */
+  findRunning(connectionId: string): Promise<FintsSyncRun | null> {
+    return this.prisma.fintsSyncRun.findFirst({
+      where: { connectionId, status: { in: ['RUNNING', 'TAN_REQUIRED'] } },
       orderBy: { startedAt: 'desc' },
     });
   }

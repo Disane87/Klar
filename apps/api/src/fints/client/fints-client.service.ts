@@ -56,9 +56,13 @@ interface CachedClient {
 
 @Injectable()
 export class FintsClientService {
-  /** Klar's product registration data. ZKA-issued IDs go in env when we apply. */
+  /**
+   * Klar's ZKA-registered FinTS product ID, issued by Die Deutsche Kreditwirtschaft
+   * for product "Klar - OSS Haltshaltsbuch". Override via FINTS_PRODUCT_ID
+   * (e.g. for staging registrations) — production builds use the registered ID.
+   */
   private static readonly PRODUCT_ID =
-    process.env['FINTS_PRODUCT_ID'] ?? 'klar-dev';
+    process.env['FINTS_PRODUCT_ID'] ?? 'E001E2506EB32B1966CF77F4F';
   // ZKA FinTS field "Produktversion" is AN..5 — `1.20.2` would overflow.
   // Strip dots and clamp so the value stays valid across all releases.
   private static readonly PRODUCT_VERSION = APP_VERSION.replace(/\./g, '').slice(0, 5);

@@ -1,5 +1,6 @@
 import * as os from 'node:os';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LiveLogBuffer, type LiveLogEntry } from './live-log.buffer';
 import {
@@ -76,6 +77,7 @@ export class AdminHealthServiceImpl implements OnApplicationBootstrap {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config?: ConfigService,
     private readonly collector?: MetricsCollectorService,
     private readonly liveLog?: LiveLogBuffer,
   ) {}
@@ -224,15 +226,43 @@ export class AdminHealthServiceImpl implements OnApplicationBootstrap {
 
   async getJobs(): Promise<AdminHealthJobsResponse> {
     // Hard-list known scheduled jobs — see CLAUDE.md / plan.
-    // Only OAuth-Cleanup is currently wired; others remain on the roadmap.
     const jobs: AdminHealthJob[] = [
       {
         name: 'OAuth-Cleanup',
         cron: '*/15 * * * *',
         state: 'ok',
       },
+      {
+        name: 'BLZ-Registry-Refresh',
+        cron: '30 3 * * *',
+        state: 'ok',
+      },
+      {
+        name: 'FinTS-Reauth-Watcher',
+        cron: '0 8 * * *',
+        state: 'ok',
+      },
+      {
+        name: 'FinTS-Sync',
+        cron: this.describeFintsSyncInterval(),
+        state: 'ok',
+      },
     ];
     return { jobs };
+  }
+
+  /**
+   * Human-readable interval for the FinTS sync job. The job uses
+   * SchedulerRegistry.addInterval() rather than a cron expression, so
+   * we render the configured minute interval as text.
+   */
+  private describeFintsSyncInterval(): string {
+    if (this.config?.get<boolean>('fints.syncDisabled') === true) {
+      return 'disabled';
+    }
+    const raw = Number(this.config?.get<number>('fints.syncIntervalMinutes') ?? 60);
+    const minutes = Number.isFinite(raw) && raw > 0 ? Math.max(5, Math.floor(raw)) : 60;
+    return `every ${minutes} min`;
   }
 
   // ── Probes / queries ─────────────────────────────────────────────────────
