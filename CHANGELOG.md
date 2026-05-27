@@ -1,3 +1,11 @@
+# [1.28.0](https://github.com/Disane87/Klar/compare/v1.27.0...v1.28.0) (2026-05-27)
+
+
+### Features
+
+* **fints:** sync interval UI + FINTS_SYNC_EVENT producer hook ([a8dcf81](https://github.com/Disane87/Klar/commit/a8dcf81cfae99061085ed2b7228f97ee3688f463))
+* **notifications:** advanced JSON mode for AND/OR/NOT predicates ([a8fd501](https://github.com/Disane87/Klar/commit/a8fd501ee9de778e363d3c94dd1f5c4e30a7a04e))
+
 # [1.27.0](https://github.com/Disane87/Klar/compare/v1.26.0...v1.27.0) (2026-05-27)
 
 
