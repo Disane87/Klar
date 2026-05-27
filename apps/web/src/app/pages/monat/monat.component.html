@@ -10,59 +10,116 @@
 >
   <ng-template klarLoading>
     <div class="p-(--s-6) flex flex-col gap-(--s-4)">
+      <klar-skeleton height="220px" />
+      <klar-skeleton height="120px" />
       <klar-skeleton height="180px" />
-      <klar-skeleton height="240px" />
     </div>
   </ng-template>
 
   <div class="p-(--s-6) pb-16 flex flex-col gap-(--s-6)">
 
-    <klar-hero
-      [eyebrow]="heroEyebrow()"
-      [title]="surplusPositive() ? 'Im Plus' : 'Im Minus'"
-      [sub]="surplusPositive()
-        ? 'Mehr Einnahmen als Ausgaben in diesem Monat — die Bilanz zeigt was übrig bleibt.'
-        : 'Mehr Ausgaben als Einnahmen in diesem Monat — die Bilanz zeigt die Lücke.'"
-    >
-      <div heroActions class="flex flex-col items-end gap-1">
-        <span
-          class="text-[32px] leading-none mono"
-          [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass"
-        >{{ store.cashflow()!.surplusCents | klarMoney }}</span>
-        <div class="flex gap-(--s-3) text-[12px] mono">
-          <span class="text-(--success)">+ {{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
-          <span class="text-(--fg-3)">→</span>
-          <span class="text-(--danger)">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
+    <!-- ═══ Liquidity-Forecast — die zentrale Antwort ═══════════════════ -->
+    @if (liquidity(); as lq) {
+      <section
+        class="rounded-lg border px-5 py-5 flex flex-col gap-4"
+        [class.border-(--danger)]="lq.comfortZone === 'red'"
+        [class.bg-(--danger)/5]="lq.comfortZone === 'red'"
+        [class.border-(--warn)]="lq.comfortZone === 'yellow'"
+        [class.bg-(--warn)/5]="lq.comfortZone === 'yellow'"
+        [class.border-(--success)]="lq.comfortZone === 'green'"
+        [class.bg-(--success)/5]="lq.comfortZone === 'green'"
+      >
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-widest text-(--fg-2)">
+              Bis {{ eomLabel() }} voraussichtlich verfügbar
+            </span>
+            <div class="flex items-baseline gap-3 mt-1">
+              <span
+                class="text-[40px] leading-none mono font-medium"
+                [class.text-(--danger)]="lq.comfortZone === 'red'"
+                [class.text-(--warn)]="lq.comfortZone === 'yellow'"
+                [class.text-(--success)]="lq.comfortZone === 'green'"
+              >
+                {{ lq.forecastEomCents | klarMoney }}
+              </span>
+              <span class="text-[12px] uppercase tracking-widest"
+                [class.text-(--danger)]="lq.comfortZone === 'red'"
+                [class.text-(--warn)]="lq.comfortZone === 'yellow'"
+                [class.text-(--success)]="lq.comfortZone === 'green'"
+              >
+                @if (lq.comfortZone === 'red') { Eng } @else if (lq.comfortZone === 'yellow') { Knapp } @else { Komfort }
+              </span>
+            </div>
+            <span class="text-[12px] text-(--fg-2) mt-1">
+              {{ lq.daysRemaining }} {{ lq.daysRemaining === 1 ? 'Tag' : 'Tage' }} Restmonat ·
+              {{ lq.accountsWithBalance }} / {{ lq.accountsTotal }} Konten mit Saldo
+            </span>
+          </div>
+          <klar-icon
+            [name]="lq.comfortZone === 'red' ? 'alert-triangle' : (lq.comfortZone === 'yellow' ? 'alert-circle' : 'check-circle')"
+            [size]="32"
+            [class.text-(--danger)]="lq.comfortZone === 'red'"
+            [class.text-(--warn)]="lq.comfortZone === 'yellow'"
+            [class.text-(--success)]="lq.comfortZone === 'green'"
+          />
         </div>
-      </div>
-    </klar-hero>
 
-    <!-- Soll vs. Ist (per category) — budget meter -->
-    @if (budgetStore.rows().length > 0) {
+        <!-- Forecast-Komponenten -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3 border-t border-(--line-soft)">
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-widest text-(--fg-2)">Jetzt vorhanden</span>
+            <span class="mono text-[14px]" [ngClass]="lq.currentLiquidityCents | klarMoneyClass">
+              {{ lq.currentLiquidityCents | klarMoney }}
+            </span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-widest text-(--fg-2)">+ Einnahmen erwartet</span>
+            <span class="mono text-[14px] text-(--success)">
+              + {{ lq.expectedIncomeRemainingCents | klarMoney }}
+            </span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-widest text-(--fg-2)">− Fixkosten ausstehend</span>
+            <span class="mono text-[14px] text-(--danger)">
+              − {{ lq.pendingFixedCostsCents | klarMoney }}
+            </span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase tracking-widest text-(--fg-2)">
+              − Variable ({{ (lq.variableDailyAvgCents / 100).toFixed(0) }} €/Tag × {{ lq.daysRemaining }})
+            </span>
+            <span class="mono text-[14px] text-(--danger)">
+              − {{ lq.variableForecastCents | klarMoney }}
+            </span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ═══ Was kommt diese Woche ════════════════════════════════════════ -->
+    @if (liquidity()?.upcomingItems?.length) {
       <section class="flex flex-col gap-(--s-3)">
         <div class="section-head">
-          <span>Soll vs. Ist</span>
-          <span class="mono text-(--fg-2)">{{ budgetStore.rows().length }} Kategorien</span>
+          <span>Diese Woche fällig</span>
+          <span class="mono text-(--fg-2)">{{ liquidity()!.upcomingItems.length }} Posten</span>
         </div>
         <div class="card">
-          @for (row of budgetStore.rows(); track row.categoryId) {
-            <div class="row" [style.border-left-color]="categoryColor(row.categoryId)">
-              <div class="lhs flex-1 min-w-0">
-                <span class="name truncate">{{ categoryName(row.categoryId) }}</span>
-                <div class="flex items-center gap-(--s-3) mt-1">
-                  <div class="relative h-1 rounded-full overflow-hidden bg-(--line-soft) flex-1">
-                    <span class="absolute inset-y-0 left-0 rounded-full"
-                          [style.width.%]="Math.min(100, row.pct * 100)"
-                          [style.background]="categoryColor(row.categoryId)"></span>
-                  </div>
-                  <span class="text-[11px] mono shrink-0"
-                        [style.color]="row.state === 'over' ? 'var(--danger)' : (row.state === 'warn' ? 'var(--warn)' : 'var(--fg-2)')">
-                    {{ row.deltaCents >= 0 ? '+ ' : '− ' }}{{ Math.abs(row.deltaCents) | klarMoney }}
-                  </span>
-                </div>
+          @for (item of liquidity()!.upcomingItems; track item.date + item.label) {
+            <div class="row">
+              <div class="lhs flex items-center gap-3 flex-1 min-w-0">
+                <span class="text-[11px] mono uppercase tracking-widest text-(--fg-3) shrink-0 w-12">
+                  {{ formatTxDate(item.date) }}
+                </span>
+                <klar-icon
+                  [name]="item.kind === 'fixed-cost' ? 'lock' : 'repeat'"
+                  [size]="12"
+                  class="shrink-0 text-(--fg-3)"
+                />
+                <span class="name truncate">{{ item.label }}</span>
               </div>
-              <span class="amt mono text-(--fg-2)">
-                <span class="text-(--fg)">{{ row.istCents | klarMoney }}</span> / {{ row.sollCents | klarMoney }}
+              <span class="amt mono" [ngClass]="item.amountCents | klarMoneyClass">
+                {{ item.amountCents > 0 ? '+ ' : '' }}{{ item.amountCents | klarMoney }}
               </span>
             </div>
           }
@@ -70,48 +127,121 @@
       </section>
     }
 
-    <!-- Einnahmen / Ausgaben Aufschlüsselung — bundle .card + .row pattern -->
-    <div>
+    <!-- ═══ Diagnose-Sektion (sekundär, was war diesen Monat) ═══════════ -->
+    <section class="flex flex-col gap-(--s-3)">
       <div class="section-head">
-        <span>Einnahmen</span>
-        <span class="mono text-(--success)">+ {{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
+        <span>Diagnose · {{ heroEyebrow() }}</span>
+        <span class="mono text-(--fg-2)" [ngClass]="store.cashflow()!.surplusCents | klarMoneyClass">
+          {{ store.cashflow()!.surplusCents | klarMoney }}
+        </span>
       </div>
-      <div class="card">
-        <div class="row">
-          <div class="lhs"><span class="name">Fixe Einnahmen</span></div>
-          <span class="amt mono pos">+ {{ store.cashflow()!.recurringIncomeCents | klarMoney }}</span>
-        </div>
-        <div class="row">
-          <div class="lhs"><span class="name">Buchungen</span></div>
-          <span class="amt mono pos">+ {{ store.cashflow()!.transactionIncomeCents | klarMoney }}</span>
-        </div>
-        <div class="row subtotal">
-          <div class="lhs"><span class="name">Gesamt Einnahmen</span></div>
-          <span class="amt mono pos">{{ store.cashflow()!.totalIncomeCents | klarMoney }}</span>
-        </div>
-      </div>
-    </div>
 
-    <div>
-      <div class="section-head">
-        <span>Ausgaben</span>
-        <span class="mono text-(--fg-2)">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
-      </div>
-      <div class="card">
-        <div class="row">
-          <div class="lhs"><span class="name">Fixkosten</span></div>
-          <span class="amt mono">{{ store.cashflow()!.recurringExpensesCents | klarMoney }}</span>
+      @if (insights().length > 0) {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-(--s-3)">
+          @for (insight of insights(); track insight.kind) {
+            <div
+              class="rounded-md border px-4 py-3 flex items-start gap-3"
+              [class.border-(--accent)]="insightTone(insight.kind) === 'info'"
+              [class.bg-(--accent)/5]="insightTone(insight.kind) === 'info'"
+              [class.border-(--warn)]="insightTone(insight.kind) === 'warn'"
+              [class.bg-(--warn)/5]="insightTone(insight.kind) === 'warn'"
+              [class.border-(--success)]="insightTone(insight.kind) === 'success'"
+              [class.bg-(--success)/5]="insightTone(insight.kind) === 'success'"
+            >
+              <klar-icon
+                [name]="insightIcon(insight.kind)"
+                [size]="16"
+                class="shrink-0 mt-0.5"
+                [class.text-(--accent)]="insightTone(insight.kind) === 'info'"
+                [class.text-(--warn)]="insightTone(insight.kind) === 'warn'"
+                [class.text-(--success)]="insightTone(insight.kind) === 'success'"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-medium text-(--fg)">{{ insight.label }}</div>
+                <div class="text-[12px] text-(--fg-2) mt-0.5 leading-snug">{{ insight.detail }}</div>
+              </div>
+            </div>
+          }
         </div>
-        <div class="row">
-          <div class="lhs"><span class="name">Buchungen</span></div>
-          <span class="amt mono">{{ store.cashflow()!.transactionExpensesCents | klarMoney }}</span>
+      }
+
+      @if (topExpenses().length > 0 || topIncome().length > 0) {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-(--s-4)">
+          @if (topExpenses().length > 0) {
+            <div>
+              <div class="section-head">
+                <span>Größte Ausgaben</span>
+                <span class="mono text-(--fg-2)">Top {{ topExpenses().length }}</span>
+              </div>
+              <div class="card">
+                @for (tx of topExpenses(); track tx.id) {
+                  <div class="row">
+                    <div class="lhs flex-1 min-w-0">
+                      <span class="name truncate">{{ truncate(tx.counterparty ?? tx.description, 40) }}</span>
+                      <div class="text-[11px] text-(--fg-3) mono mt-0.5">{{ formatTxDate(tx.date) }}</div>
+                    </div>
+                    <span class="amt mono text-(--danger)">{{ tx.amountCents | klarMoney }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (topIncome().length > 0) {
+            <div>
+              <div class="section-head">
+                <span>Größte Einnahmen</span>
+                <span class="mono text-(--fg-2)">Top {{ topIncome().length }}</span>
+              </div>
+              <div class="card">
+                @for (tx of topIncome(); track tx.id) {
+                  <div class="row">
+                    <div class="lhs flex-1 min-w-0">
+                      <span class="name truncate">{{ truncate(tx.counterparty ?? tx.description, 40) }}</span>
+                      <div class="text-[11px] text-(--fg-3) mono mt-0.5">{{ formatTxDate(tx.date) }}</div>
+                    </div>
+                    <span class="amt mono text-(--success)">+ {{ tx.amountCents | klarMoney }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
-        <div class="row subtotal">
-          <div class="lhs"><span class="name">Gesamt Ausgaben</span></div>
-          <span class="amt mono">{{ store.cashflow()!.totalExpensesCents | klarMoney }}</span>
+      }
+    </section>
+
+    <!-- ═══ Budget Soll vs Ist (collapsible) ═══════════════════════════ -->
+    @if (budgetStore.rows().length > 0) {
+      <details class="rounded-md border border-(--line-soft) bg-(--bg-1)">
+        <summary class="cursor-pointer select-none px-4 py-3 text-[12px] uppercase tracking-widest text-(--fg-2)">
+          Soll vs. Ist · {{ budgetStore.rows().length }} Kategorien
+        </summary>
+        <div class="border-t border-(--line-soft)">
+          <div class="card rounded-none! border-0!">
+            @for (row of budgetStore.rows(); track row.categoryId) {
+              <div class="row" [style.border-left-color]="categoryColor(row.categoryId)">
+                <div class="lhs flex-1 min-w-0">
+                  <span class="name truncate">{{ categoryName(row.categoryId) }}</span>
+                  <div class="flex items-center gap-(--s-3) mt-1">
+                    <div class="relative h-1 rounded-full overflow-hidden bg-(--line-soft) flex-1">
+                      <span class="absolute inset-y-0 left-0 rounded-full"
+                            [style.width.%]="Math.min(100, row.pct * 100)"
+                            [style.background]="categoryColor(row.categoryId)"></span>
+                    </div>
+                    <span class="text-[11px] mono shrink-0"
+                          [style.color]="row.state === 'over' ? 'var(--danger)' : (row.state === 'warn' ? 'var(--warn)' : 'var(--fg-2)')">
+                      {{ row.deltaCents >= 0 ? '+ ' : '− ' }}{{ Math.abs(row.deltaCents) | klarMoney }}
+                    </span>
+                  </div>
+                </div>
+                <span class="amt mono text-(--fg-2)">
+                  <span class="text-(--fg)">{{ row.istCents | klarMoney }}</span> / {{ row.sollCents | klarMoney }}
+                </span>
+              </div>
+            }
+          </div>
         </div>
-      </div>
-    </div>
+      </details>
+    }
   </div>
 
 </klar-async-state>

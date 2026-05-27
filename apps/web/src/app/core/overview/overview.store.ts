@@ -3,7 +3,11 @@ import { firstValueFrom } from 'rxjs';
 import { currentYearMonth } from '@klar/shared';
 import { HouseholdStore } from '../household/household.store';
 import { OverviewService } from './overview.service';
-import type { FixedCostsOverview, CashflowOverview } from './overview.service';
+import type {
+  FixedCostsOverview,
+  CashflowOverview,
+  LiquidityForecast,
+} from './overview.service';
 
 @Injectable({ providedIn: 'root' })
 export class OverviewStore {
@@ -40,16 +44,34 @@ export class OverviewStore {
     },
   });
 
+  // ── Liquidity-Forecast resource — always for the current month ──────────────
+  private liquidityResource = resource<LiquidityForecast | undefined, { householdId: string | null }>({
+    params: () => ({ householdId: this.householdStore.activeId() }),
+    loader: ({ params }) => {
+      if (!params.householdId) return Promise.resolve(undefined);
+      return firstValueFrom(
+        this.overviewService.getLiquidityForecast(params.householdId),
+      );
+    },
+  });
+
   // ── Public signals ────────────────────────────────────────────────────────────
   readonly fixedCosts = this.fixedCostsResource.value;
   readonly cashflow   = this.cashflowResource.value;
+  readonly liquidity  = this.liquidityResource.value;
 
   readonly loading = computed(
-    () => this.fixedCostsResource.isLoading() || this.cashflowResource.isLoading(),
+    () =>
+      this.fixedCostsResource.isLoading() ||
+      this.cashflowResource.isLoading() ||
+      this.liquidityResource.isLoading(),
   );
 
   readonly error = computed(
-    () => this.fixedCostsResource.error() ?? this.cashflowResource.error(),
+    () =>
+      this.fixedCostsResource.error() ??
+      this.cashflowResource.error() ??
+      this.liquidityResource.error(),
   );
 
   // ── Actions ───────────────────────────────────────────────────────────────────
@@ -60,5 +82,6 @@ export class OverviewStore {
   reload(): void {
     this.fixedCostsResource.reload();
     this.cashflowResource.reload();
+    this.liquidityResource.reload();
   }
 }

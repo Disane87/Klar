@@ -5,7 +5,7 @@ import { KlarMoneyPipe } from '../../shared/pipes/klar-money.pipe';
 import { KlarMoneyClassPipe } from '../../shared/pipes/klar-money-class.pipe';
 import { KlarAsyncStateComponent, KlarLoadingTplDirective } from '../../shared/ui/klar-async-state.component';
 import { KlarSkeletonComponent } from '../../shared/ui/klar-skeleton.component';
-import { KlarHeroComponent } from '../../shared/ui/klar-hero.component';
+import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { OverviewStore } from '../../core/overview/overview.store';
 import { BudgetVsActualsStore } from '../../core/overview/budgets-vs-actuals.store';
 import { CategoriesStore } from '../../core/categories/categories.store';
@@ -23,7 +23,7 @@ import { PageHeaderService } from '../../core/page-header/page-header.service';
     KlarAsyncStateComponent,
     KlarLoadingTplDirective,
     KlarSkeletonComponent,
-    KlarHeroComponent,
+    KlarIconComponent,
   ],
   templateUrl: './monat.component.html',
   styleUrl: './monat.component.css',
@@ -114,4 +114,60 @@ export class MonatPageComponent {
     const base = this.surplusPositive() ? 'Überschuss' : 'Defizit';
     return this.isCurrentMonth() ? `${base} · ${this.statusDate()}` : base;
   });
+
+  // ── Liquidity-Forecast (zentrale Antwort: komme ich bis Monatsende hin?) ──
+
+  protected readonly liquidity = computed(() => this.store.liquidity());
+
+  /** Pretty-formatted last-day-of-current-month for the Hero headline. */
+  protected readonly eomLabel = computed(() => {
+    const now = new Date();
+    const eom = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return eom.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+  });
+
+  // ── Diagnose-Sektion (sekundär) ──────────────────────────────────────────
+
+  protected readonly projection = computed(() => this.store.cashflow()?.projectedSurplusCents ?? null);
+  protected readonly insights   = computed(() => this.store.cashflow()?.insights ?? []);
+  protected readonly topExpenses = computed(() => this.store.cashflow()?.topExpenses ?? []);
+  protected readonly topIncome   = computed(() => this.store.cashflow()?.topIncome ?? []);
+  protected readonly prevDelta   = computed(() => this.store.cashflow()?.surplusDeltaPrevMonthCents ?? null);
+
+  protected readonly pacingPercent = computed(() => {
+    const cf = this.store.cashflow();
+    if (!cf || cf.daysInMonth === 0) return 0;
+    return Math.round((cf.dayOfMonth / cf.daysInMonth) * 100);
+  });
+
+  /** Quick lookup: which icon to show next to an insight card by kind. */
+  protected insightIcon(kind: string): string {
+    switch (kind) {
+      case 'transfer-excluded':       return 'arrow-left-right';
+      case 'folgelastschrift-spike':  return 'alert-triangle';
+      case 'pace-warn':               return 'trending-down';
+      case 'pace-ok':                 return 'trending-up';
+      default:                        return 'info';
+    }
+  }
+
+  /** Tone (Tailwind variable) for the insight card border + icon. */
+  protected insightTone(kind: string): 'info' | 'warn' | 'success' {
+    switch (kind) {
+      case 'pace-warn':
+      case 'folgelastschrift-spike': return 'warn';
+      case 'pace-ok':                return 'success';
+      default:                       return 'info';
+    }
+  }
+
+  protected formatTxDate(iso: string): string {
+    const [, m, d] = iso.split('-');
+    return `${parseInt(d, 10)}.${parseInt(m, 10)}.`;
+  }
+
+  protected truncate(s: string | null, max = 60): string {
+    if (!s) return '—';
+    return s.length > max ? s.slice(0, max - 1) + '…' : s;
+  }
 }

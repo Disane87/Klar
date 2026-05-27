@@ -15,6 +15,7 @@ import { OverviewService } from './overview.service';
 import {
   FixedCostsResponse,
   CashflowResponse,
+  LiquidityForecastResponse,
   ProjectsOverviewResponse,
   BudgetsVsActualsResponse,
 } from './dto/responses/overview.response';
@@ -67,6 +68,17 @@ export class OverviewController {
     @Query('month') month?: string,
   ) {
     return this.service.getCashflow(ctx, month);
+  }
+
+  @Get('liquidity')
+  @ApiOperation({
+    summary: 'Get liquidity forecast for the current month',
+    description:
+      'Single-question liquidity dashboard: "Komme ich bis Monatsende hin?". Aggregates current account balances, recurring income still expected this month, pending CONFIRMED fixed costs (with nextRenewalAt in [today, EOM]), and a 30-day-avg variable-spend pace forecast. Bottom line = current + expected-income − pending-fixed − variable-pace. Returns a comfort-zone tone (red/yellow/green) and a 7-day calendar of upcoming items. PRIVATE entries of other household members are excluded. Read-only.',
+  })
+  @ApiResponse({ status: 200, type: LiquidityForecastResponse })
+  async getLiquidityForecast(@ReqContext() ctx: RequestContext) {
+    return this.service.getLiquidityForecast(ctx);
   }
 
   @Get('budgets-vs-actuals')

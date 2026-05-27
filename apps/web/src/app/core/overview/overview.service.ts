@@ -47,6 +47,50 @@ export interface FixedCostsOverview {
   groups: FixedCostGroup[];
 }
 
+export interface LiquidityUpcomingItem {
+  date: string;
+  label: string;
+  amountCents: number;
+  kind: 'fixed-cost' | 'recurring';
+}
+
+export interface LiquidityForecast {
+  daysRemaining: number;
+  currentLiquidityCents: number;
+  accountsWithBalance: number;
+  accountsTotal: number;
+  expectedIncomeRemainingCents: number;
+  pendingFixedCostsCents: number;
+  variableDailyAvgCents: number;
+  variableForecastCents: number;
+  forecastEomCents: number;
+  comfortZone: 'red' | 'yellow' | 'green';
+  upcomingItems: LiquidityUpcomingItem[];
+}
+
+export interface CashflowTopMove {
+  id: string;
+  date: string;
+  amountCents: number;
+  counterparty: string | null;
+  description: string | null;
+  transactionKind: string | null;
+}
+
+export type CashflowInsightKind =
+  | 'transfer-excluded'
+  | 'folgelastschrift-spike'
+  | 'pace-warn'
+  | 'pace-ok';
+
+export interface CashflowInsight {
+  kind: CashflowInsightKind;
+  label: string;
+  detail: string;
+  count: number | null;
+  amountCents: number | null;
+}
+
 export interface CashflowOverview {
   month: string;
   recurringIncomeCents: number;
@@ -56,6 +100,26 @@ export interface CashflowOverview {
   totalIncomeCents: number;
   totalExpensesCents: number;
   surplusCents: number;
+  /**
+   * Day-of-month for the projection anchor — 1..28/29/30/31 for the
+   * current month, full daysInMonth value for past months (projection
+   * unused there).
+   */
+  dayOfMonth: number;
+  daysInMonth: number;
+  /**
+   * Linear extrapolation of `surplusCents` to month-end based on the
+   * current pace. `null` for past or future months.
+   */
+  projectedSurplusCents: number | null;
+  /** Surplus delta vs. previous month. `null` when there's no prior data. */
+  surplusDeltaPrevMonthCents: number | null;
+  /** Top 5 most-negative expense rows of the month (TRANSFER excluded). */
+  topExpenses: CashflowTopMove[];
+  /** Top 3 most-positive income rows of the month (TRANSFER excluded). */
+  topIncome: CashflowTopMove[];
+  /** Contextual hint cards rendered on the Cashflow page. */
+  insights: CashflowInsight[];
 }
 
 export interface ProjectOverviewItem {
@@ -122,5 +186,9 @@ export class OverviewService {
     const params: Record<string, string> = {};
     if (status) params['status'] = status;
     return this.http.get<ProjectsOverview>(`${this.base(householdId)}/projects`, { params });
+  }
+
+  getLiquidityForecast(householdId: string): Observable<LiquidityForecast> {
+    return this.http.get<LiquidityForecast>(`${this.base(householdId)}/liquidity`);
   }
 }

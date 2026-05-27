@@ -1,15 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import type { Category, Project, RecurringTransaction, Transaction } from '@prisma/client';
-import { ProjectStatus, Visibility } from '@prisma/client';
+import { FixedCostStatus, ProjectStatus, Visibility } from '@prisma/client';
 import type { BudgetVsActualRow, RecurringFrequency } from '@klar/shared';
 import {
   budgetsVsActuals,
   calculateMonthlyOverview,
   currentYearMonth,
+  safeDayOfMonth,
   toMonthlyEquivalent,
 } from '@klar/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import type { RequestContext } from '../common/types/request-context.type';
+
+/**
+ * Pretty-printed signed-Euro string for embedding inside insight detail
+ * strings (UI doesn't have a money pipe in plain text — backend formats).
+ */
+function formatSignedEuro(cents: number): string {
+  const sign = cents > 0 ? '+' : cents < 0 ? '−' : '';
+  const abs = Math.abs(cents) / 100;
+  return `${sign}${abs.toFixed(2).replace('.', ',')} €`;
+}
+
+/** Midnight UTC of the given Date — used as a stable "today" anchor. */
+function startOfUtcDay(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+/** 23:59:59.999 UTC of the last day of `anchor`'s month. */
+function endOfCurrentUtcMonth(anchor: Date): Date {
+  return new Date(Date.UTC(
+    anchor.getUTCFullYear(),
+    anchor.getUTCMonth() + 1,
+    0, 23, 59, 59, 999,
+  ));
+}
 
 // ─── Response types ───────────────────────────────────────────────────────────
 
@@ -56,6 +81,58 @@ export interface FixedCostsResponse {
   groups: FixedCostsGroupResponse[];
 }
 
+export interface CashflowTopMove {
+  id: string;
+  date: string;
+  amountCents: number;
+  counterparty: string | null;
+  description: string | null;
+  transactionKind: string | null;
+}
+
+export interface CashflowInsight {
+  kind: 'transfer-excluded' | 'folgelastschrift-spike' | 'pace-warn' | 'pace-ok';
+  label: string;
+  detail: string;
+  count: number | null;
+  amountCents: number | null;
+}
+
+export interface LiquidityUpcomingItem {
+  date: string;
+  label: string;
+  amountCents: number;
+  kind: 'fixed-cost' | 'recurring';
+}
+
+export interface LiquidityForecast {
+  /** Days from "today" (inclusive) to the end of the current month. */
+  daysRemaining: number;
+  /** Sum of `lastKnownBalanceCents` across accessible accounts. */
+  currentLiquidityCents: number;
+  /** How many accounts contributed an actual balance vs. were skipped (null balance). */
+  accountsWithBalance: number;
+  /** Total accessible accounts (including those without balance). */
+  accountsTotal: number;
+  /** Sum of recurring income items whose next due-date is in (today, EOM]. */
+  expectedIncomeRemainingCents: number;
+  /** Sum of `CONFIRMED` fixed costs whose nextRenewalAt is in (today, EOM]. Positive cents. */
+  pendingFixedCostsCents: number;
+  /** Average daily variable spend over the last 30 days, in positive cents. */
+  variableDailyAvgCents: number;
+  /** `variableDailyAvgCents × daysRemaining`, rounded. Positive cents. */
+  variableForecastCents: number;
+  /**
+   * The bottom line: currentLiquidity + expectedIncome − pendingFixed −
+   * variableForecast. Signed cents — can go negative.
+   */
+  forecastEomCents: number;
+  /** UI tone: red <0, yellow <500€, green ≥500€. */
+  comfortZone: 'red' | 'yellow' | 'green';
+  /** Anything fällig in the next 7 days. */
+  upcomingItems: LiquidityUpcomingItem[];
+}
+
 export interface CashflowResponse {
   month: string;
   recurringIncomeCents: number;
@@ -65,6 +142,13 @@ export interface CashflowResponse {
   totalIncomeCents: number;
   totalExpensesCents: number;
   surplusCents: number;
+  dayOfMonth: number;
+  daysInMonth: number;
+  projectedSurplusCents: number | null;
+  surplusDeltaPrevMonthCents: number | null;
+  topExpenses: CashflowTopMove[];
+  topIncome: CashflowTopMove[];
+  insights: CashflowInsight[];
 }
 
 export interface ProjectOverviewItem {
@@ -275,11 +359,14 @@ export class OverviewService {
         createdByUserId: rt.createdByUserId,
       }));
 
-    // Build TransactionEntry list
+    // Build TransactionEntry list. `transactionKind` flows through so
+    // own-account transfers (kind = TRANSFER) drop out of cashflow totals
+    // in calculateMonthlyOverview.
     const transactionEntries = txs.map((tx) => ({
       amountCents: tx.amountCents,
       visibility: tx.visibility,
       createdByUserId: tx.createdByUserId,
+      transactionKind: tx.transactionKind,
     }));
 
     const result = calculateMonthlyOverview({
@@ -288,7 +375,385 @@ export class OverviewService {
       requestingUserId: ctx.userId,
     });
 
-    return { month: ym, ...result };
+    // ── Insights (Phase 2 of cashflow redesign) ───────────────────────────
+    const insights = await this.computeCashflowInsights({
+      ctx,
+      ym,
+      firstDay,
+      lastDay,
+      txs,
+      surplusCents: result.surplusCents,
+    });
+
+    return { month: ym, ...result, ...insights };
+  }
+
+  /**
+   * Computes month-pacing projection, prev-month delta, top moves and
+   * contextual hint cards for the Cashflow page redesign. Pure-ish — pulls
+   * only the prev-month surplus and previous-month Folgelastschrift count
+   * for comparisons, otherwise works off `txs` already loaded above.
+   */
+  private async computeCashflowInsights(args: {
+    ctx: RequestContext;
+    ym: string;
+    firstDay: Date;
+    lastDay: Date;
+    txs: Array<{
+      id: string;
+      date: Date;
+      amountCents: number;
+      counterparty: string | null;
+      description: string | null;
+      transactionKind: string | null;
+      visibility: 'PRIVATE' | 'SHARED';
+      createdByUserId: string | null;
+    }>;
+    surplusCents: number;
+  }): Promise<{
+    dayOfMonth: number;
+    daysInMonth: number;
+    projectedSurplusCents: number | null;
+    surplusDeltaPrevMonthCents: number | null;
+    topExpenses: CashflowTopMove[];
+    topIncome: CashflowTopMove[];
+    insights: CashflowInsight[];
+  }> {
+    const { ctx, ym, firstDay, lastDay, txs, surplusCents } = args;
+    const daysInMonth = lastDay.getUTCDate();
+    const today = new Date();
+    const isCurrentMonth =
+      today.getUTCFullYear() === firstDay.getUTCFullYear() &&
+      today.getUTCMonth() === firstDay.getUTCMonth();
+    const dayOfMonth = isCurrentMonth ? today.getUTCDate() : daysInMonth;
+
+    // Linear projection: scale the current surplus to the full month.
+    // Only meaningful for the current month — past months are already final;
+    // future months have no data to extrapolate from.
+    const projectedSurplusCents =
+      isCurrentMonth && dayOfMonth > 0
+        ? Math.round((surplusCents * daysInMonth) / dayOfMonth)
+        : null;
+
+    // Privacy filter mirrors calculateMonthlyOverview: PRIVATE rows from
+    // other users never enter cashflow numbers or move-list either.
+    const isVisible = (tx: { visibility: 'PRIVATE' | 'SHARED'; createdByUserId: string | null }) =>
+      tx.visibility === 'SHARED' || tx.createdByUserId === ctx.userId;
+
+    const cashflowTxs = txs.filter(
+      t => isVisible(t) && t.transactionKind !== 'TRANSFER',
+    );
+
+    const toMove = (t: typeof cashflowTxs[number]): CashflowTopMove => ({
+      id: t.id,
+      date: t.date.toISOString().slice(0, 10),
+      amountCents: t.amountCents,
+      counterparty: t.counterparty,
+      description: t.description,
+      transactionKind: t.transactionKind,
+    });
+
+    const topExpenses = cashflowTxs
+      .filter(t => t.amountCents < 0)
+      .sort((a, b) => a.amountCents - b.amountCents) // most negative first
+      .slice(0, 5)
+      .map(toMove);
+
+    const topIncome = cashflowTxs
+      .filter(t => t.amountCents > 0)
+      .sort((a, b) => b.amountCents - a.amountCents) // most positive first
+      .slice(0, 3)
+      .map(toMove);
+
+    // Prev-month surplus for the delta hint. Reuse the same scoping
+    // (PRIVATE filter, TRANSFER exclusion) so the comparison is fair.
+    const prevFirstDay = new Date(Date.UTC(
+      firstDay.getUTCFullYear(),
+      firstDay.getUTCMonth() - 1,
+      1,
+    ));
+    const prevLastDay = new Date(Date.UTC(
+      firstDay.getUTCFullYear(),
+      firstDay.getUTCMonth(),
+      0, // last day of previous month
+      23, 59, 59,
+    ));
+    const prevTxs = await this.prisma.transaction.findMany({
+      where: {
+        householdId: ctx.householdId,
+        date: { gte: prevFirstDay, lte: prevLastDay },
+        isPlanned: false,
+      },
+      select: {
+        amountCents: true,
+        visibility: true,
+        createdByUserId: true,
+        transactionKind: true,
+        description: true,
+      },
+    });
+    const prevSurplusCents = prevTxs
+      .filter(t => isVisible(t) && t.transactionKind !== 'TRANSFER')
+      .reduce((s, t) => s + t.amountCents, 0);
+    const surplusDeltaPrevMonthCents =
+      prevTxs.length === 0 ? null : surplusCents - prevSurplusCents;
+
+    // ── Insight cards ───────────────────────────────────────────────────
+    const insights: CashflowInsight[] = [];
+
+    // 1. TRANSFER-exclusion: did we drop bookings out of the cashflow?
+    const transferTxs = txs.filter(t => isVisible(t) && t.transactionKind === 'TRANSFER');
+    const transferIncomeCents = transferTxs
+      .filter(t => t.amountCents > 0)
+      .reduce((s, t) => s + t.amountCents, 0);
+    const transferExpenseCents = transferTxs
+      .filter(t => t.amountCents < 0)
+      .reduce((s, t) => s + t.amountCents, 0);
+    if (transferTxs.length > 0) {
+      const sign = transferIncomeCents + transferExpenseCents;
+      insights.push({
+        kind: 'transfer-excluded',
+        label: 'Eigene Überträge',
+        detail:
+          `${transferTxs.length} ${transferTxs.length === 1 ? 'Buchung' : 'Buchungen'} ` +
+          `mit „Übertrag" wurden aus dem Cashflow ausgenommen ` +
+          `(Netto ${formatSignedEuro(sign)}).`,
+        count: transferTxs.length,
+        amountCents: sign,
+      });
+    }
+
+    // 2. Folgelastschrift-spike: count vs. prev month. Folgelastschriften
+    // are retried direct-debits — a sudden spike indicates payment issues
+    // (failed cards, insufficient funds the first time round).
+    const isFolgelast = (desc: string | null) =>
+      !!desc && /folgelastschrift/i.test(desc);
+    const flCount = cashflowTxs.filter(t => isFolgelast(t.description)).length;
+    const prevFlCount = prevTxs.filter(
+      t => isVisible(t) && t.transactionKind !== 'TRANSFER' && isFolgelast(t.description),
+    ).length;
+    if (flCount >= 3 && flCount >= prevFlCount * 2) {
+      insights.push({
+        kind: 'folgelastschrift-spike',
+        label: 'Folgelastschriften häufen sich',
+        detail:
+          `${flCount} Folgelastschriften in diesem Monat ` +
+          (prevFlCount > 0 ? `(Vormonat: ${prevFlCount}). ` : '(keine im Vormonat). ') +
+          'Eine Folgelastschrift ist eine wiederholt eingereichte Lastschrift — ' +
+          'die erste ist meist mangels Deckung oder durch Widerruf gescheitert.',
+        count: flCount,
+        amountCents: null,
+      });
+    }
+
+    // 3. Pacing-Warning vs. -OK based on projection. Only fires when
+    // we have a projection (current month) and it's measurably different
+    // from a flat "first-day surplus" extrapolation.
+    if (projectedSurplusCents !== null && dayOfMonth >= 3) {
+      const pacingDelta = projectedSurplusCents - surplusCents;
+      // Only warn when projection points clearly negative AND the gap to
+      // today is substantial (>500€ further into the red).
+      if (projectedSurplusCents < -50_00 && pacingDelta < -50000) {
+        insights.push({
+          kind: 'pace-warn',
+          label: 'Hochrechnung warnt',
+          detail:
+            `Bei aktuellem Tempo schließt der Monat bei ${formatSignedEuro(projectedSurplusCents)} ` +
+            `(${formatSignedEuro(pacingDelta)} weiter ins Minus als heute).`,
+          count: null,
+          amountCents: projectedSurplusCents,
+        });
+      } else if (projectedSurplusCents >= 0 && surplusCents < 0) {
+        insights.push({
+          kind: 'pace-ok',
+          label: 'Hochrechnung im Plus',
+          detail: `Bei aktuellem Tempo dreht der Monat noch auf ${formatSignedEuro(projectedSurplusCents)}.`,
+          count: null,
+          amountCents: projectedSurplusCents,
+        });
+      }
+    }
+
+    void ym; // silence unused for now — kept for future month-name labels
+
+    return {
+      dayOfMonth,
+      daysInMonth,
+      projectedSurplusCents,
+      surplusDeltaPrevMonthCents,
+      topExpenses,
+      topIncome,
+      insights,
+    };
+  }
+
+  // ── 2b. Liquidity forecast ─────────────────────────────────────────────────
+
+  /**
+   * "Komme ich bis Monatsende hin?" — single-question dashboard for the
+   * Cashflow page. Aggregates current account balances, recurring income
+   * still expected this month, pending fixed costs and a pace-based
+   * variable-spend forecast into one bottom-line number.
+   *
+   * Privacy: includes SHARED accounts/recurring + the requesting user's
+   * own PRIVATE ones. Other household members' PRIVATE rows never enter.
+   */
+  async getLiquidityForecast(ctx: RequestContext): Promise<LiquidityForecast> {
+    const today = startOfUtcDay(new Date());
+    const eom = endOfCurrentUtcMonth(today);
+    // Inclusive day count: today and EOM both contribute one full day
+    // each to the projection (typical "Ende des Monats reichts noch X
+    // Tage Ausgaben" intuition).
+    const daysRemaining = Math.max(
+      1,
+      Math.round((eom.getTime() - today.getTime()) / 86_400_000) + 1,
+    );
+
+    // 1. Current liquidity ---------------------------------------------------
+    const accounts = await this.prisma.account.findMany({
+      where: {
+        householdId: ctx.householdId,
+        archivedAt: null,
+        OR: [
+          { visibility: Visibility.SHARED },
+          { visibility: Visibility.PRIVATE, ownerId: ctx.userId },
+        ],
+      },
+      select: { id: true, lastKnownBalanceCents: true },
+    });
+    const accountsWithBalance = accounts.filter(
+      a => a.lastKnownBalanceCents !== null,
+    ).length;
+    const currentLiquidityCents = accounts.reduce(
+      (s, a) => s + (a.lastKnownBalanceCents ?? 0),
+      0,
+    );
+
+    // 2. Recurring contribution remaining ------------------------------------
+    const rts = await this.prisma.recurringTransaction.findMany({
+      where: {
+        householdId: ctx.householdId,
+        isActive: true,
+        OR: [
+          { visibility: Visibility.SHARED },
+          { visibility: Visibility.PRIVATE, createdByUserId: ctx.userId },
+        ],
+      },
+    });
+    let expectedIncomeRemainingCents = 0;
+    for (const rt of rts) {
+      if (rt.amountCents <= 0) continue;
+      if (rt.frequency !== 'MONTHLY') continue; // v1: monthly income only
+      const dom = rt.dayOfMonth ?? 1;
+      const due = safeDayOfMonth(today.getUTCFullYear(), today.getUTCMonth() + 1, dom);
+      if (due >= today.getUTCDate()) expectedIncomeRemainingCents += rt.amountCents;
+    }
+
+    // 3. Pending fixed costs in [today, EOM] ---------------------------------
+    const fixedCosts = await this.prisma.fixedCost.findMany({
+      where: {
+        householdId: ctx.householdId,
+        status: FixedCostStatus.CONFIRMED,
+        nextRenewalAt: { gte: today, lte: eom },
+      },
+    });
+    const pendingFixedCostsCents = fixedCosts.reduce(
+      (s, fc) => s + Math.abs(fc.amountCents),
+      0,
+    );
+
+    // 4. Variable spend forecast --------------------------------------------
+    // Last 30 days of ad-hoc, expense-side, non-TRANSFER, non-recurring-
+    // linked transactions. Excluding `recurringTransactionId != null` so
+    // we don't double-count recurring items already in the income/fixed
+    // sides of the forecast.
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 86_400_000);
+    const variableTxs = await this.prisma.transaction.findMany({
+      where: {
+        householdId: ctx.householdId,
+        date: { gte: thirtyDaysAgo, lte: today },
+        isPlanned: false,
+        amountCents: { lt: 0 },
+        recurringTransactionId: null,
+        NOT: { transactionKind: 'TRANSFER' },
+        OR: [
+          { visibility: Visibility.SHARED },
+          { visibility: Visibility.PRIVATE, createdByUserId: ctx.userId },
+        ],
+      },
+      select: { amountCents: true },
+    });
+    const variableSpent30dCents = variableTxs.reduce(
+      (s, t) => s + Math.abs(t.amountCents),
+      0,
+    );
+    const variableDailyAvgCents = Math.round(variableSpent30dCents / 30);
+    const variableForecastCents = Math.round(variableDailyAvgCents * daysRemaining);
+
+    // 5. Bottom line --------------------------------------------------------
+    const forecastEomCents =
+      currentLiquidityCents +
+      expectedIncomeRemainingCents -
+      pendingFixedCostsCents -
+      variableForecastCents;
+
+    let comfortZone: 'red' | 'yellow' | 'green';
+    if (forecastEomCents < 0) comfortZone = 'red';
+    else if (forecastEomCents < 50000) comfortZone = 'yellow';
+    else comfortZone = 'green';
+
+    // 6. Upcoming 7 days ----------------------------------------------------
+    const sevenDaysOut = new Date(today.getTime() + 7 * 86_400_000);
+    const upcomingItems: LiquidityUpcomingItem[] = [];
+    for (const fc of fixedCosts) {
+      if (!fc.nextRenewalAt) continue;
+      if (fc.nextRenewalAt.getTime() > sevenDaysOut.getTime()) continue;
+      upcomingItems.push({
+        date: fc.nextRenewalAt.toISOString().slice(0, 10),
+        label: fc.name,
+        amountCents: -Math.abs(fc.amountCents),
+        kind: 'fixed-cost',
+      });
+    }
+    for (const rt of rts) {
+      if (rt.frequency !== 'MONTHLY' || rt.dayOfMonth === null) continue;
+      const day = safeDayOfMonth(
+        today.getUTCFullYear(),
+        today.getUTCMonth() + 1,
+        rt.dayOfMonth,
+      );
+      const dueDate = new Date(
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), day),
+      );
+      if (
+        dueDate.getTime() >= today.getTime() &&
+        dueDate.getTime() <= sevenDaysOut.getTime()
+      ) {
+        upcomingItems.push({
+          date: dueDate.toISOString().slice(0, 10),
+          label: rt.name,
+          amountCents: rt.amountCents,
+          kind: 'recurring',
+        });
+      }
+    }
+    upcomingItems.sort((a, b) =>
+      a.date < b.date ? -1 : a.date > b.date ? 1 : a.label.localeCompare(b.label),
+    );
+
+    return {
+      daysRemaining,
+      currentLiquidityCents,
+      accountsWithBalance,
+      accountsTotal: accounts.length,
+      expectedIncomeRemainingCents,
+      pendingFixedCostsCents,
+      variableDailyAvgCents,
+      variableForecastCents,
+      forecastEomCents,
+      comfortZone,
+      upcomingItems,
+    };
   }
 
   // ── 3. Projects overview ────────────────────────────────────────────────────

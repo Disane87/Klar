@@ -279,9 +279,11 @@ export class PdfReportService {
 
   private frequencyLabel(freq: string): string {
     switch (freq) {
-      case 'MONTHLY':    return 'Monatl.';
-      case 'QUARTERLY':  return 'Quartal';
-      case 'YEARLY':     return 'Jährlich';
+      case 'WEEKLY':      return 'Wöchentl.';
+      case 'MONTHLY':     return 'Monatl.';
+      case 'QUARTERLY':   return 'Quartal';
+      case 'HALF_YEARLY': return 'Halbj.';
+      case 'YEARLY':      return 'Jährlich';
       case 'CUSTOM_DAYS': return 'Individuell';
       default:            return freq;
     }

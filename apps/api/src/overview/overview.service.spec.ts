@@ -92,6 +92,8 @@ function buildService(): { service: OverviewService; prisma: PrismaService } {
     category: { findMany: vi.fn().mockResolvedValue([]) },
     project: { findMany: vi.fn().mockResolvedValue([]) },
     budget: { findMany: vi.fn().mockResolvedValue([]) },
+    account: { findMany: vi.fn().mockResolvedValue([]) },
+    fixedCost: { findMany: vi.fn().mockResolvedValue([]) },
   } as unknown as PrismaService;
 
   const service = new OverviewService(prisma);
@@ -369,6 +371,189 @@ describe('OverviewService', () => {
 
       // Only the shared one counts
       expect(result.rows[0].istCents).toBe(-3000);
+    });
+  });
+
+  describe('getLiquidityForecast', () => {
+    /**
+     * Anchors the forecast clock so day-of-month-dependent branches are
+     * stable. With today = 2026-05-15, daysRemaining = 18 (today + the
+     * 16 remaining days + EOM, rounded inclusively).
+     */
+    const FIXED_NOW = new Date('2026-05-15T10:00:00.000Z');
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(FIXED_NOW);
+    });
+
+    const makeAccount = (overrides: Record<string, unknown> = {}) => ({
+      id: 'acc-1',
+      lastKnownBalanceCents: 200_000,
+      ...overrides,
+    });
+
+    const makeFixedCost = (overrides: Record<string, unknown> = {}) => ({
+      id: 'fc-1',
+      name: 'Miete',
+      amountCents: -125_000,
+      nextRenewalAt: new Date('2026-05-20T00:00:00.000Z'),
+      ...overrides,
+    });
+
+    it('classifies the forecast as green when the buffer beats 500€', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 300_000 }),
+      ] as never);
+      // No recurring income, no fixed costs, no variable spend → forecast = balance.
+      const result = await service.getLiquidityForecast(ctx);
+      expect(result.forecastEomCents).toBe(300_000);
+      expect(result.comfortZone).toBe('green');
+      expect(result.daysRemaining).toBe(18);
+      expect(result.accountsTotal).toBe(1);
+      expect(result.accountsWithBalance).toBe(1);
+    });
+
+    it('classifies the forecast as yellow between 0 and 50000 cents', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 20_000 }),
+      ] as never);
+      const result = await service.getLiquidityForecast(ctx);
+      expect(result.comfortZone).toBe('yellow');
+    });
+
+    it('classifies the forecast as red when the bottom line is negative', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 50_000 }),
+      ] as never);
+      vi.mocked(prisma.fixedCost.findMany).mockResolvedValue([
+        makeFixedCost({ amountCents: -200_000 }),
+      ] as never);
+      const result = await service.getLiquidityForecast(ctx);
+      expect(result.pendingFixedCostsCents).toBe(200_000);
+      expect(result.forecastEomCents).toBeLessThan(0);
+      expect(result.comfortZone).toBe('red');
+    });
+
+    it('counts MONTHLY recurring income only if the due day has not passed yet', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 100_000 }),
+      ] as never);
+      vi.mocked(prisma.recurringTransaction.findMany).mockResolvedValue([
+        // Salary: dayOfMonth 25 → still upcoming on the 15th, counts.
+        makeRt({ id: 'rt-salary', amountCents: 250_000, dayOfMonth: 25 }),
+        // Already-paid salary on the 1st → must not count.
+        makeRt({ id: 'rt-past', amountCents: 80_000, dayOfMonth: 1 }),
+        // Expenses don't add income.
+        makeRt({ id: 'rt-expense', amountCents: -30_000, dayOfMonth: 25 }),
+        // Non-MONTHLY frequency is excluded from income in v1.
+        makeRt({
+          id: 'rt-quarterly',
+          amountCents: 100_000,
+          dayOfMonth: 25,
+          frequency: 'QUARTERLY' as RecurringFrequency,
+        }),
+      ] as never);
+      const result = await service.getLiquidityForecast(ctx);
+      expect(result.expectedIncomeRemainingCents).toBe(250_000);
+    });
+
+    it('projects 30-day variable spend forward by daysRemaining', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 500_000 }),
+      ] as never);
+      // 30 days × 100€ → 3000€ total → 100€/day average.
+      const variableTxs = Array.from({ length: 30 }, (_, i) => ({
+        amountCents: -10_000,
+        _key: i, // unused but keeps the objects distinct for clarity
+      }));
+      vi.mocked(prisma.transaction.findMany).mockResolvedValue(variableTxs as never);
+
+      const result = await service.getLiquidityForecast(ctx);
+
+      expect(result.variableDailyAvgCents).toBe(10_000);
+      expect(result.variableForecastCents).toBe(10_000 * result.daysRemaining);
+    });
+
+    it('returns upcoming fixed-cost and recurring items within the 7-day window, sorted by date', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ lastKnownBalanceCents: 500_000 }),
+      ] as never);
+      vi.mocked(prisma.fixedCost.findMany).mockResolvedValue([
+        // In window (today + 5 days).
+        makeFixedCost({ id: 'fc-in', name: 'Streaming', nextRenewalAt: new Date('2026-05-20T00:00:00.000Z') }),
+        // Outside the 7-day window (today + 10 days) — still in the EOM
+        // pendingFixedCosts total, but NOT in upcomingItems.
+        makeFixedCost({ id: 'fc-out', name: 'Versicherung', nextRenewalAt: new Date('2026-05-25T00:00:00.000Z') }),
+      ] as never);
+      vi.mocked(prisma.recurringTransaction.findMany).mockResolvedValue([
+        // Recurring income on the 18th (today + 3 days) → in window.
+        makeRt({ id: 'rt-near', name: 'Gehalt', amountCents: 250_000, dayOfMonth: 18 }),
+      ] as never);
+
+      const result = await service.getLiquidityForecast(ctx);
+
+      expect(result.upcomingItems).toHaveLength(2);
+      // Sorted by ISO date string — 2026-05-18 (Gehalt) before 2026-05-20 (Streaming).
+      expect(result.upcomingItems[0].label).toBe('Gehalt');
+      expect(result.upcomingItems[0].kind).toBe('recurring');
+      expect(result.upcomingItems[0].amountCents).toBe(250_000);
+      expect(result.upcomingItems[1].label).toBe('Streaming');
+      expect(result.upcomingItems[1].kind).toBe('fixed-cost');
+      expect(result.upcomingItems[1].amountCents).toBe(-125_000);
+    });
+
+    it('scopes all queries to SHARED plus the requesting user’s PRIVATE entries', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([] as never);
+
+      await service.getLiquidityForecast(ctx);
+
+      // Accounts query must include the PRIVATE+ownerId OR shape.
+      expect(prisma.account.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            householdId: 'hh1',
+            archivedAt: null,
+            OR: expect.arrayContaining([
+              { visibility: Visibility.SHARED },
+              { visibility: Visibility.PRIVATE, ownerId: 'u1' },
+            ]),
+          }),
+        }),
+      );
+
+      // Variable-spend transactions: TRANSFERs are excluded.
+      expect(prisma.transaction.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            householdId: 'hh1',
+            isPlanned: false,
+            recurringTransactionId: null,
+            NOT: { transactionKind: 'TRANSFER' },
+          }),
+        }),
+      );
+    });
+
+    it('handles accounts without a last-known balance without falling over', async () => {
+      const { service, prisma } = buildService();
+      vi.mocked(prisma.account.findMany).mockResolvedValue([
+        makeAccount({ id: 'acc-known', lastKnownBalanceCents: 150_000 }),
+        makeAccount({ id: 'acc-unknown', lastKnownBalanceCents: null }),
+      ] as never);
+
+      const result = await service.getLiquidityForecast(ctx);
+
+      expect(result.currentLiquidityCents).toBe(150_000);
+      expect(result.accountsTotal).toBe(2);
+      expect(result.accountsWithBalance).toBe(1);
     });
   });
 });
