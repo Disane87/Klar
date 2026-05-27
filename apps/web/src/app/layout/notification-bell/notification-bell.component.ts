@@ -8,6 +8,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { KlarIconComponent } from '../../shared/icons/klar-icon.component';
 import { NotificationStore } from '../../core/notifications/notifications.store';
 import type { NotificationDto } from '../../core/notifications/notifications.service';
@@ -21,7 +22,7 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
 @Component({
   selector: 'klar-notification-bell',
   standalone: true,
-  imports: [KlarIconComponent, DatePipe],
+  imports: [KlarIconComponent, DatePipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'relative inline-flex' },
   template: `
@@ -67,7 +68,7 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
             <div class="text-[12px] text-(--fg-2)">Keine Benachrichtigungen.</div>
           </div>
         } @else {
-          <ul class="max-h-[60vh] overflow-y-auto">
+          <ul class="max-h-[55vh] overflow-y-auto">
             @for (n of store.items(); track n.id) {
               <li
                 class="px-4 py-3 border-b border-(--line-soft) last:border-b-0 cursor-pointer hover:bg-(--bg-2) transition-colors"
@@ -106,6 +107,19 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
             }
           </ul>
         }
+
+        <footer class="px-4 py-2.5 border-t border-(--line-soft) flex items-center justify-between text-[11px]">
+          <span class="text-(--fg-3)">
+            Benachrichtigungen folgen deinen Regeln.
+          </span>
+          <a
+            routerLink="/app/settings/notifications"
+            class="text-(--accent) hover:opacity-80"
+            (click)="close()"
+          >
+            Regeln verwalten →
+          </a>
+        </footer>
       </div>
     }
   `,
@@ -126,7 +140,7 @@ export class KlarNotificationBellComponent {
     this.open.update(v => !v);
   }
 
-  protected close(): void {
+  close(): void {
     this.open.set(false);
   }
 

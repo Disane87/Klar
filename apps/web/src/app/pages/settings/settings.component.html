@@ -120,6 +120,17 @@
       </klar-list-group>
     </section>
 
+    <!-- ── BENACHRICHTIGUNGEN ──────────────────────────────── -->
+    <section>
+      <klar-list-group label="Benachrichtigungen">
+        <klar-list-item icon="bell"
+                        label="Regeln"
+                        sublabel="Wann Klar dich informiert — Gehaltseingang, große Buchungen, Budgets"
+                        [navigable]="true"
+                        (itemClick)="router.navigate(['/app/settings/notifications'])" />
+      </klar-list-group>
+    </section>
+
     <!-- ── HAUSHALT ────────────────────────────────────────── -->
     <section>
       <klar-list-group label="Haushalt">
