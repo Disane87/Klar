@@ -45,8 +45,10 @@ import type { NotificationDto } from '../../core/notifications/notifications.ser
 
     @if (open()) {
       <div
-        class="klar-pop absolute right-0 mt-2 w-[360px] max-w-[92vw] z-50 rounded-lg border border-(--line) overflow-hidden"
-        style="background: var(--bg-1); box-shadow: var(--shadow-modal); top: 100%;"
+        class="klar-pop fixed w-[360px] max-w-[92vw] z-50 rounded-lg border border-(--line) overflow-hidden"
+        [style.top.px]="popoverTop()"
+        [style.right.px]="popoverRight()"
+        style="background: var(--bg-1); box-shadow: var(--shadow-modal);"
         role="dialog"
         aria-label="Benachrichtigungen"
       >
@@ -129,6 +131,11 @@ export class KlarNotificationBellComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly router = inject(Router);
   protected readonly open = signal(false);
+  // Popover uses position: fixed (escapes the top-bar's overflow-x-auto
+  // clip) — coordinates are computed from the bell's bounding rect on
+  // every toggle and on viewport resize while open.
+  protected readonly popoverTop = signal(56);
+  protected readonly popoverRight = signal(16);
 
   protected readonly ariaLabel = computed(() => {
     const n = this.store.unreadCount();
@@ -138,7 +145,26 @@ export class KlarNotificationBellComponent {
   });
 
   toggle(): void {
-    this.open.update(v => !v);
+    const next = !this.open();
+    if (next) this.recomputePopoverPosition();
+    this.open.set(next);
+  }
+
+  private recomputePopoverPosition(): void {
+    const button = this.host.nativeElement.querySelector('button');
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    // 8px gap below the button (mirrors the old mt-2). Right edge of the
+    // popover aligns with the right edge of the button.
+    this.popoverTop.set(Math.round(rect.bottom + 8));
+    this.popoverRight.set(
+      Math.max(8, Math.round(window.innerWidth - rect.right)),
+    );
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.open()) this.recomputePopoverPosition();
   }
 
   close(): void {
