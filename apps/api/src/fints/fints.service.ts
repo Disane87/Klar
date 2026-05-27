@@ -488,6 +488,30 @@ export class FintsService {
     return { accounts: accountIds.length, transactions, standingOrders };
   }
 
+  /**
+   * Update per-connection sync settings (Phase 8). Only the owner may
+   * change them. Recomputes nextSyncAt from the new interval so the
+   * change takes effect on the next master tick.
+   */
+  async updateSyncSettings(
+    ctx: RequestContext,
+    id: string,
+    update: {
+      syncInterval?: 'MANUAL' | 'H4' | 'H6' | 'H12' | 'H24' | 'H48' | 'H168';
+      syncEnabled?: boolean;
+    },
+  ): Promise<FintsConnection> {
+    const connection = await this.findOne(ctx, id);
+    if (connection.ownerId !== ctx.userId) {
+      throw new ForbiddenException('Only the owner can change sync settings');
+    }
+    return this.connections.setSyncInterval(
+      id,
+      update.syncInterval ?? connection.syncInterval,
+      update.syncEnabled ?? connection.syncEnabled,
+    );
+  }
+
   async remove(ctx: RequestContext, id: string): Promise<void> {
     const connection = await this.findOne(ctx, id);
     if (connection.ownerId !== ctx.userId) {

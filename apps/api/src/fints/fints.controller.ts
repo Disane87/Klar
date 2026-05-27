@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   HttpCode,
@@ -32,6 +33,7 @@ import {
   type PickAccountsInput,
 } from './fints.service';
 import { TriggerSyncDto } from './dto/trigger-sync.dto';
+import { UpdateFintsConnectionDto } from './dto/update-fints-connection.dto';
 import {
   FintsBankLookupResponse,
   FintsCapabilitiesResponse,
@@ -349,6 +351,31 @@ export class FintsController {
     @Param('id') id: string,
   ): Promise<{ accounts: number; transactions: number; standingOrders: number }> {
     return this.service.getDeleteImpact(ctx, id);
+  }
+
+  @Patch('connections/:id')
+  @ApiOperation({
+    summary: 'Update FinTS sync settings',
+    description:
+      'Updates the per-connection sync interval and/or the syncEnabled kill-switch. Owner-only. Recomputes nextSyncAt from the new interval so the next master tick honours the change.',
+  })
+  @ApiParam({ name: 'id', description: 'FinTS connection ID.', example: 'fc_8a2d-...' })
+  @ApiBody({ type: UpdateFintsConnectionDto })
+  @ApiResponse({ status: 200, description: 'Connection updated.' })
+  @ApiResponse({ status: 403, description: 'Not the connection owner.' })
+  @ApiResponse({ status: 404, description: 'Connection not found.' })
+  async updateConnection(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: string,
+    @Body() body: UpdateFintsConnectionDto,
+  ) {
+    const updated = await this.service.updateSyncSettings(ctx, id, body);
+    return {
+      id: updated.id,
+      syncInterval: updated.syncInterval,
+      syncEnabled: updated.syncEnabled,
+      nextSyncAt: updated.nextSyncAt?.toISOString() ?? null,
+    };
   }
 
   @Delete('connections/:id')

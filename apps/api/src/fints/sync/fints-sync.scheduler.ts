@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { FintsConnectionRepository } from '../connection/fints-connection.repository';
+import {
+  FintsConnectionRepository,
+  fintsSyncIntervalHours,
+} from '../connection/fints-connection.repository';
 import { FintsSyncRunRepository } from './fints-sync-run.repository';
 import { FintsSyncService } from './fints-sync.service';
 
@@ -91,7 +94,11 @@ export class FintsSyncScheduler
     }
     this.inFlight = true;
     try {
-      const connections = await this.connections.findAllActive();
+      // Phase 8: pick connections whose per-row schedule is due. The old
+      // global-interval cron is gone — `findDueForCronSync` reads
+      // syncEnabled + syncInterval + nextSyncAt on each row.
+      const now = new Date();
+      const connections = await this.connections.findDueForCronSync(now);
       let started = 0;
       let skipped = 0;
       let failed = 0;
@@ -107,6 +114,11 @@ export class FintsSyncScheduler
             triggeredById: null,
           });
           started++;
+          // Stamp lastSync/nextSync from the connection's configured cadence.
+          const hours = fintsSyncIntervalHours(c.syncInterval);
+          if (hours > 0) {
+            await this.connections.stampSync(c.id, now, hours);
+          }
         } catch (err) {
           failed++;
           this.logger.warn(

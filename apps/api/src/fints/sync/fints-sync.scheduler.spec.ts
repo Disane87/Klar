@@ -24,6 +24,9 @@ const makeConn = (overrides: Partial<FintsConnection> = {}): FintsConnection => 
   lastSyncAt: null,
   lastSyncStatus: null,
   capabilitiesJson: null,
+  syncInterval: 'H24',
+  syncEnabled: true,
+  nextSyncAt: null,
   createdAt: new Date('2026-02-01'),
   updatedAt: new Date('2026-02-01'),
   ...overrides,
@@ -46,7 +49,8 @@ function buildDeps(configValues: Record<string, unknown> = {}): Deps {
     get: vi.fn((key: string) => configValues[key]),
   } as unknown as ConfigService;
   const connections = {
-    findAllActive: vi.fn().mockResolvedValue([]),
+    findDueForCronSync: vi.fn().mockResolvedValue([]),
+    stampSync: vi.fn().mockResolvedValue(undefined),
   } as unknown as FintsConnectionRepository;
   const syncRuns = {
     findRunning: vi.fn().mockResolvedValue(null),
@@ -98,7 +102,7 @@ describe('FintsSyncScheduler', () => {
 
   it('triggers CRON sync for every ACTIVE connection without a blocking run', async () => {
     const deps = buildDeps();
-    vi.mocked(deps.connections.findAllActive).mockResolvedValue([
+    vi.mocked(deps.connections.findDueForCronSync).mockResolvedValue([
       makeConn({ id: 'c1' }),
       makeConn({ id: 'c2' }),
     ]);
@@ -120,7 +124,7 @@ describe('FintsSyncScheduler', () => {
 
   it('skips connections that still have a RUNNING or TAN_REQUIRED run', async () => {
     const deps = buildDeps();
-    vi.mocked(deps.connections.findAllActive).mockResolvedValue([
+    vi.mocked(deps.connections.findDueForCronSync).mockResolvedValue([
       makeConn({ id: 'c1' }),
       makeConn({ id: 'c2' }),
     ]);
@@ -138,7 +142,7 @@ describe('FintsSyncScheduler', () => {
 
   it('records a per-connection failure but continues with the remaining connections', async () => {
     const deps = buildDeps();
-    vi.mocked(deps.connections.findAllActive).mockResolvedValue([
+    vi.mocked(deps.connections.findDueForCronSync).mockResolvedValue([
       makeConn({ id: 'c1' }),
       makeConn({ id: 'c2' }),
     ]);
@@ -156,12 +160,12 @@ describe('FintsSyncScheduler', () => {
 
   it('is re-entrant safe — a tick that fires while one is still running is a no-op', async () => {
     const deps = buildDeps();
-    vi.mocked(deps.connections.findAllActive).mockImplementation(
+    vi.mocked(deps.connections.findDueForCronSync).mockImplementation(
       () => new Promise<FintsConnection[]>(() => { /* never resolves */ }),
     );
     const scheduler = buildScheduler(deps);
 
-    // Kick off the first tick — it suspends inside findAllActive and
+    // Kick off the first tick — it suspends inside findDueForCronSync and
     // never returns, keeping inFlight=true for the rest of the test.
     void scheduler.tick();
 
