@@ -77,7 +77,12 @@
       "Bash(git stash *)",
       "Bash(pnpm --filter @klar/api exec tsc --noEmit -p tsconfig.json)",
       "Bash(git reset *)",
-      "Bash(pnpm --filter @klar/api test)"
+      "Bash(pnpm --filter @klar/api test)",
+      "Bash(git restore *)",
+      "Bash(gh api *)",
+      "Bash(gh workflow *)",
+      "Bash(git log *)",
+      "Bash(pnpm --filter @klar/api exec vitest run src/overview/overview.service.spec.ts)"
     ],
     "additionalDirectories": [
       "C:\\Workspace\\Klar",
