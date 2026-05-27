@@ -102,17 +102,19 @@
                   <div class="lhs">
                     <span class="name">{{ item.name }}</span>
                     <span class="meta">
-                      <span class="mono">{{ formatFreqShort(item) }}</span>
                       @if (item.dayOfMonth) {
-                        <span aria-hidden="true">·</span>
                         <span class="mono">
                           {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : formatDay(item.dayOfMonth) }}
                         </span>
                       }
+                      @if (item.frequency !== 'MONTHLY') {
+                        @if (item.dayOfMonth) { <span aria-hidden="true">·</span> }
+                        <span class="mono">{{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}</span>
+                      }
                       @if (item.createdBy) { <span aria-hidden="true">·</span> {{ item.createdBy }} }
                     </span>
                   </div>
-                  <span class="amt mono pos">{{ item.amountCents > 0 ? '+ ' : '' }}{{ item.amountCents | klarMoney }}</span>
+                  <span class="amt mono pos">{{ item.monthlyEquivalentCents > 0 ? '+ ' : '' }}{{ item.monthlyEquivalentCents | klarMoney }}</span>
                 </div>
                 @for (split of itemSplits(item); track split.id) {
                   <div class="row sub">
@@ -158,12 +160,14 @@
                         <span class="mono">
                           {{ isWeeklyFreq(item) ? weekdayAbbr(item.dayOfMonth) : formatDay(item.dayOfMonth) }}
                         </span>
-                        <span aria-hidden="true">·</span>
                       }
-                      <span>{{ formatItemSublabel(item) }}</span>
+                      @if (item.frequency !== 'MONTHLY') {
+                        @if (item.dayOfMonth) { <span aria-hidden="true">·</span> }
+                        <span class="mono">{{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}</span>
+                      }
                     </span>
                   </div>
-                  <span class="amt mono">{{ item.amountCents | klarMoney }}{{ shortFreq(item.frequency) }}</span>
+                  <span class="amt mono">{{ item.monthlyEquivalentCents | klarMoney }}</span>
                 </div>
               }
               <div class="row subtotal">

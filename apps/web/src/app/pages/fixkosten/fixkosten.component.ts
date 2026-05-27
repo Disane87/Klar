@@ -26,6 +26,7 @@ import { RecurringCreateDialogComponent } from './recurring-create-dialog.compon
 import { PdfExportDialogComponent, type PdfDialogInputData } from './pdf-export-dialog.component';
 import type { FixedCostItem } from '../../core/overview/overview.service';
 import type { RecurringFrequency } from '@klar/shared';
+import { isIncomeCategoryType } from '@klar/shared';
 
 @Component({
   selector: 'app-fixkosten',
@@ -307,15 +308,6 @@ export class FixkostenPageComponent {
     }
   }
 
-  formatItemSublabel(item: FixedCostItem): string {
-    const parts: string[] = [this.freqLabel(item.frequency)];
-    if (item.dayOfMonth) {
-      if (item.frequency === 'WEEKLY') parts.push(this.weekdayName(item.dayOfMonth));
-      else                             parts.push('Tag ' + item.dayOfMonth);
-    }
-    return parts.join(' · ');
-  }
-
   weekdayName(d: number): string {
     return ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'][d - 1] ?? '';
   }
@@ -398,14 +390,15 @@ grouped.set(key, {
 
   // ── Summary computed ─────────────────────────────────────────────────────────
 
-  /** Income groups (positive total) — rendered under the EINNAHMEN section. */
+  /** Income groups — purely category-type driven, so a single positive amount on
+   *  an expense category cannot accidentally promote it to the EINNAHMEN section. */
   readonly incomeGroups = computed(() =>
-    this.enrichedGroups().filter(g => g.totalCents >= 0 || g.categoryType === 'INCOME'),
+    this.enrichedGroups().filter(g => isIncomeCategoryType(g.categoryType)),
   );
 
-  /** Expense groups (negative total) — rendered under the AUSGABEN section. */
+  /** Expense groups — everything that is not income (FIXED_EXPENSE, VARIABLE_EXPENSE, SAVINGS, legacy EXPENSE). */
   readonly expenseGroups = computed(() =>
-    this.enrichedGroups().filter(g => g.totalCents < 0 && g.categoryType !== 'INCOME'),
+    this.enrichedGroups().filter(g => !isIncomeCategoryType(g.categoryType)),
   );
 
   readonly incomeTotalCents = computed(() =>
@@ -599,19 +592,7 @@ grouped.set(key, {
     }
   }
 
-  /** German short-form frequency label for the meta line of an income row. */
-  formatFreqShort(item: FixedCostItem): string {
-    switch (item.frequency) {
-      case 'WEEKLY':      return 'wöchentl.';
-      case 'QUARTERLY':   return 'quart.';
-      case 'HALF_YEARLY': return 'halbjährl.';
-      case 'YEARLY':      return 'jährl.';
-      case 'CUSTOM_DAYS': return 'individ.';
-      default:            return 'monatl.';
-    }
-  }
-
-  /**
+/**
    * Returns the splits for a row that should render as `.row.sub` lines
    * under the parent (e.g. Festgehalt Netto → Brutto + Provision Brutto).
    * Wired to FixedCostItem.splits which is populated by the overview API
