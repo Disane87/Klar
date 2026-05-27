@@ -99,10 +99,43 @@ function parseLocaleNumber(raw: string): number | null {
           ariaLabel="Auslöser"
         />
         <span class="text-[11px] text-(--fg-3)">
-          Phase 2: nur Buchung-Erstellung. Weitere Auslöser kommen später.
+          Triggert die Auswertung. Bedingungen nutzen die Felder dieses Auslösers.
         </span>
       </div>
 
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[11px] uppercase tracking-widest text-(--fg-2)">
+          {{ advancedMode() ? 'Erweitert (JSON)' : 'Bedingungen (alle müssen zutreffen)' }}
+        </span>
+        <button
+          type="button"
+          class="text-[11px] text-(--accent) hover:opacity-80"
+          (click)="toggleAdvanced()"
+        >
+          {{ advancedMode() ? '← Einfacher Modus' : 'Erweitert (AND / OR / NOT) →' }}
+        </button>
+      </div>
+
+      @if (advancedMode()) {
+        <fieldset class="flex flex-col gap-2 border border-(--line-soft) rounded-md p-3">
+          <textarea
+            class="hlm-input min-h-[160px] mono text-[12px]"
+            [ngModel]="advancedJson()"
+            (ngModelChange)="advancedJson.set($event)"
+            name="predicate-json"
+            spellcheck="false"
+            placeholder='{"op":"or","clauses":[{"op":"cmp","field":"amountCents","operator":">","value":100000},{"op":"and","clauses":[{"op":"cmp","field":"isIncome","operator":"=","value":true},{"op":"not","clause":{"op":"cmp","field":"counterparty","operator":"contains","value":"test"}}]}]}'
+          ></textarea>
+          @if (advancedError()) {
+            <span class="text-[11px] text-(--danger)">{{ advancedError() }}</span>
+          } @else {
+            <span class="text-[11px] text-(--fg-3)">
+              Roh-Predicate als JSON — erlaubt AND/OR/NOT-Verschachtelung. Wird beim
+              Speichern serverseitig gegen die Trigger-Whitelist validiert.
+            </span>
+          }
+        </fieldset>
+      } @else {
       <fieldset class="flex flex-col gap-2 border border-(--line-soft) rounded-md p-3">
         <legend class="text-[11px] uppercase tracking-widest text-(--fg-2) px-1">
           Bedingungen (alle müssen zutreffen)
@@ -152,6 +185,7 @@ function parseLocaleNumber(raw: string): number | null {
           + Bedingung
         </button>
       </fieldset>
+      }
 
       <div class="flex flex-col gap-2">
         <span class="text-[11px] uppercase tracking-widest text-(--fg-2)">Kanäle</span>
@@ -296,6 +330,12 @@ export class NotificationRuleDialogComponent {
   // Live-preview result.
   protected readonly previewing = signal(false);
   protected readonly previewResult = signal<{ count: number; sample: string[] } | null>(null);
+  // Erweitert-Mode: raw JSON predicate (for AND/OR/NOT trees the flat
+  // builder can't express). Backend validates the schema; the textarea
+  // only does shape parsing locally.
+  protected readonly advancedMode = signal(false);
+  protected readonly advancedJson = signal('');
+  protected readonly advancedError = signal<string | null>(null);
 
   private readonly api = inject(NotificationRulesApi);
   private readonly householdStore = inject(HouseholdStore);
@@ -331,6 +371,46 @@ export class NotificationRuleDialogComponent {
     { value: '0', label: 'So' },
   ];
 
+  protected toggleAdvanced(): void {
+    const next = !this.advancedMode();
+    if (next) {
+      // Going INTO advanced: serialize the current flat predicate so the
+      // textarea starts from where the user already was.
+      this.advancedJson.set(
+        JSON.stringify(this.rowsToPredicate(this.conditions()), null, 2),
+      );
+      this.advancedError.set(null);
+    } else {
+      // Going BACK to simple: try to reduce the JSON back to a flat-AND.
+      // If it's actually a recursive tree, refuse and stay in advanced.
+      const parsed = this.tryParseAdvancedJson();
+      if (parsed && this.isFlatAndPredicate(parsed)) {
+        this.conditions.set(this.predicateToRows(parsed));
+      } else if (parsed) {
+        this.advancedError.set(
+          'Bedingung enthält OR / NOT — nicht im einfachen Modus darstellbar',
+        );
+        return;
+      }
+    }
+    this.advancedMode.set(next);
+  }
+
+  private tryParseAdvancedJson(): Predicate | null {
+    try {
+      return JSON.parse(this.advancedJson()) as Predicate;
+    } catch {
+      this.advancedError.set('JSON ist nicht valide');
+      return null;
+    }
+  }
+
+  private isFlatAndPredicate(p: Predicate): boolean {
+    if (p.op === 'cmp') return true;
+    if (p.op === 'and') return p.clauses.every(c => c.op === 'cmp');
+    return false;
+  }
+
   protected setScheduleType(value: string): void {
     if (value === 'daily' || value === 'weekly' || value === 'monthly') {
       this.scheduleType.set(value);
@@ -343,8 +423,12 @@ export class NotificationRuleDialogComponent {
 
   protected readonly canSave = computed(() => {
     if (!this.name().trim()) return false;
-    if (this.conditions().length === 0) return false;
-    if (this.conditions().some(c => !c.value && c.field !== 'isIncome')) return false;
+    if (this.advancedMode()) {
+      if (!this.advancedJson().trim()) return false;
+    } else {
+      if (this.conditions().length === 0) return false;
+      if (this.conditions().some(c => !c.value && c.field !== 'isIncome')) return false;
+    }
     if (!this.ch_inApp() && !this.ch_webPush() && !this.ch_email()) return false;
     return true;
   });
@@ -362,7 +446,12 @@ export class NotificationRuleDialogComponent {
     this.ch_webPush.set(e.channels.includes('WEB_PUSH'));
     this.ch_email.set(e.channels.includes('EMAIL'));
     this.digestMode.set(e.digestMode);
-    this.conditions.set(this.predicateToRows(e.predicate));
+    if (this.isFlatAndPredicate(e.predicate)) {
+      this.conditions.set(this.predicateToRows(e.predicate));
+    } else {
+      this.advancedMode.set(true);
+      this.advancedJson.set(JSON.stringify(e.predicate, null, 2));
+    }
     if (e.schedule) {
       this.scheduleType.set(e.schedule.type);
       this.scheduleTime.set(e.schedule.time);
@@ -451,7 +540,17 @@ export class NotificationRuleDialogComponent {
       if (this.ch_inApp()) channels.push('IN_APP');
       if (this.ch_webPush()) channels.push('WEB_PUSH');
       if (this.ch_email()) channels.push('EMAIL');
-      const predicate = this.rowsToPredicate(this.conditions());
+      let predicate: Predicate;
+      if (this.advancedMode()) {
+        const parsed = this.tryParseAdvancedJson();
+        if (!parsed) {
+          this.errorMessage.set('JSON-Predicate ist nicht valide');
+          return;
+        }
+        predicate = parsed;
+      } else {
+        predicate = this.rowsToPredicate(this.conditions());
+      }
       const payload: CreateNotificationRuleInput = {
         name: this.name().trim(),
         trigger: this.trigger(),
