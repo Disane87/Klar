@@ -1,6 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
+
+export interface PurgeTransactionsResponse {
+  deletedTransactions: number;
+  deletedStandingOrders: number;
+}
 
 export interface AccountResponse {
   id: string;
@@ -43,5 +48,16 @@ export class AccountsService {
     patch: UpdateAccountInput,
   ): Observable<AccountResponse> {
     return this.http.patch<AccountResponse>(`${this.baseUrl(householdId)}/${id}`, patch);
+  }
+
+  purgeTransactions(
+    householdId: string,
+    id: string,
+  ): Promise<PurgeTransactionsResponse> {
+    return firstValueFrom(
+      this.http.delete<PurgeTransactionsResponse>(
+        `${this.baseUrl(householdId)}/${id}/transactions`,
+      ),
+    );
   }
 }

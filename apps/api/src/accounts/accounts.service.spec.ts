@@ -33,6 +33,7 @@ function buildService() {
     findDefaultCsvAccount: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    purgeTransactionsForAccount: vi.fn(),
   } as unknown as AccountsRepository;
   const service = new AccountsService(repo);
   return { service, repo };
@@ -214,6 +215,39 @@ describe('AccountsService', () => {
       await expect(
         service.update(ctxFor('u1', 'hh1'), 'acc-1', { name: 'X' }),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('purgeTransactions', () => {
+    const ctx: RequestContext = { userId: 'owner-1', householdId: 'hh1', source: 'web' };
+
+    it('forwards the purge for a csv_only account regardless of caller', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeAccount({ id: 'acc-1', type: 'csv_only', ownerId: 'someone-else' }),
+      );
+      vi.mocked(repo.purgeTransactionsForAccount).mockResolvedValue({
+        deletedTransactions: 7,
+        deletedStandingOrders: 2,
+      });
+      const result = await service.purgeTransactions(ctx, 'acc-1');
+      expect(result).toEqual({ deletedTransactions: 7, deletedStandingOrders: 2 });
+      expect(repo.purgeTransactionsForAccount).toHaveBeenCalledWith('acc-1', 'hh1');
+    });
+
+    it('rejects FinTS purge from non-owner with ForbiddenException', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(
+        makeAccount({ id: 'acc-1', type: 'fints', ownerId: 'someone-else' }),
+      );
+      await expect(service.purgeTransactions(ctx, 'acc-1')).rejects.toThrow(ForbiddenException);
+      expect(repo.purgeTransactionsForAccount).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when account is missing', async () => {
+      const { service, repo } = buildService();
+      vi.mocked(repo.findById).mockResolvedValue(null);
+      await expect(service.purgeTransactions(ctx, 'missing')).rejects.toThrow(NotFoundException);
     });
   });
 

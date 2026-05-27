@@ -61,4 +61,33 @@ export class AccountsRepository {
     }
     return this.prisma.account.findUnique({ where: { id } });
   }
+
+  /**
+   * Wipes every transaction belonging to the account, drops any FinTS-derived
+   * standing-order detections, and resets the cached HKSAL balance so the next
+   * sync can re-establish ground truth. Manual StandingOrders survive because
+   * the bank cannot regenerate them. Returns the counts removed so the caller
+   * can surface them in a toast.
+   */
+  async purgeTransactionsForAccount(
+    accountId: string,
+    householdId: string,
+  ): Promise<{ deletedTransactions: number; deletedStandingOrders: number }> {
+    return this.prisma.$transaction(async (tx) => {
+      const transactions = await tx.transaction.deleteMany({
+        where: { accountId, householdId },
+      });
+      const standingOrders = await tx.standingOrder.deleteMany({
+        where: { accountId, householdId, source: 'FINTS_DERIVED' },
+      });
+      await tx.account.updateMany({
+        where: { id: accountId, householdId },
+        data: { lastKnownBalanceCents: null, lastBalanceAt: null },
+      });
+      return {
+        deletedTransactions: transactions.count,
+        deletedStandingOrders: standingOrders.count,
+      };
+    });
+  }
 }

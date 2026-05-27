@@ -9,10 +9,12 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionsStore } from '../../core/transactions/transactions.store';
 import { TransactionsService } from '../../core/transactions/transactions.service';
+import { AccountsService } from '../../core/accounts/accounts.service';
 import { FintsStore } from '../../core/fints/fints.store';
 import { HouseholdStore } from '../../core/household/household.store';
 import { PageHeaderService } from '../../core/page-header/page-header.service';
 import { KlarDialogService } from '../../shared/ui/klar-dialog.service';
+import { KlarConfirmService } from '../../shared/ui/klar-confirm.service';
 import { KlarToastService } from '../../shared/ui/klar-toast.service';
 import { TransactionDialogComponent } from '../buchungen/transaction-dialog.component';
 import type { BulkVisibilityChange } from '../../shared/transactions/klar-transactions-table.component';
@@ -97,6 +99,16 @@ import { KlarTransactionsTableComponent } from '../../shared/transactions/klar-t
             >
               {{ fintsStore.syncing() === connectionId() ? 'Synchronisiere …' : 'Synchronisieren' }}
             </klar-button>
+            <klar-button
+              tone="danger"
+              size="sm"
+              icon="trash"
+              [disabled]="purging() || !!fintsStore.syncing() || store.sortedItems().length === 0"
+              title="Löscht alle Buchungen dieses Kontos. Der nächste Sync zieht sie wieder."
+              (click)="onPurge()"
+            >
+              {{ purging() ? 'Lösche …' : 'Buchungen löschen' }}
+            </klar-button>
           </div>
         </div>
 
@@ -131,7 +143,9 @@ export class BankenAccountDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly pageHeader = inject(PageHeaderService);
   private readonly dialog = inject(KlarDialogService);
+  private readonly confirm = inject(KlarConfirmService);
   private readonly transactionsService = inject(TransactionsService);
+  private readonly accountsService = inject(AccountsService);
   private readonly householdStore = inject(HouseholdStore);
   private readonly toast = inject(KlarToastService);
   protected readonly store = inject(TransactionsStore);
@@ -139,6 +153,7 @@ export class BankenAccountDetailComponent implements OnInit {
 
   protected readonly connectionId = signal('');
   protected readonly accountId = signal('');
+  protected readonly purging = signal(false);
 
   protected readonly connection = computed<FintsConnectionResponse | undefined>(() => {
     const id = this.connectionId();
@@ -227,6 +242,36 @@ export class BankenAccountDetailComponent implements OnInit {
 
   goBack(): void {
     void this.router.navigate(['/app/banken']);
+  }
+
+  async onPurge(): Promise<void> {
+    const householdId = this.householdStore.activeId();
+    const accountId = this.accountId();
+    if (!householdId || !accountId) return;
+    const count = this.store.sortedItems().length;
+    const ok = await this.confirm.ask({
+      title: 'Alle Buchungen löschen?',
+      message: `${count} Buchung${count === 1 ? '' : 'en'} dieses Kontos werden entfernt.`,
+      detail:
+        'Daueraufträge aus FinTS-Erkennung werden ebenfalls zurückgesetzt. Der nächste Sync importiert die Buchungen frisch — Reste aus alten Versionen sind danach weg.',
+      confirmLabel: 'Löschen',
+      cancelLabel: 'Abbrechen',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    this.purging.set(true);
+    try {
+      const result = await this.accountsService.purgeTransactions(householdId, accountId);
+      this.store.reload();
+      this.fintsStore.reload();
+      this.toast.success(
+        `${result.deletedTransactions} Buchung${result.deletedTransactions === 1 ? '' : 'en'} gelöscht`,
+      );
+    } catch {
+      this.toast.error('Buchungen konnten nicht gelöscht werden');
+    } finally {
+      this.purging.set(false);
+    }
   }
 
   async onSync(): Promise<void> {

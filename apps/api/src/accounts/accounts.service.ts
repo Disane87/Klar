@@ -93,6 +93,26 @@ export class AccountsService {
     return updated;
   }
 
+  /**
+   * Hard-resets a bank account's booking history. FinTS-typed accounts may
+   * only be wiped by their owner (PIN-tied data). The next sync replays
+   * everything from the connection's `lastSyncAt` window, so users running
+   * this should expect the same booking set to reappear minutes later —
+   * minus whatever was orphaned by past bugs.
+   */
+  async purgeTransactions(
+    ctx: RequestContext,
+    accountId: string,
+  ): Promise<{ deletedTransactions: number; deletedStandingOrders: number }> {
+    const account = await this.findById(accountId, ctx.householdId);
+    if (account.type === 'fints' && account.ownerId !== ctx.userId) {
+      throw new ForbiddenException(
+        'Nur der Inhaber dieses FinTS-Kontos darf seine Buchungen löschen.',
+      );
+    }
+    return this.repo.purgeTransactionsForAccount(accountId, ctx.householdId);
+  }
+
   toResponse(account: Account) {
     return {
       id: account.id,
