@@ -795,3 +795,9 @@ MIT — see [LICENSE](https://github.com/Disane87/klar/blob/main/LICENSE) for de
 ## 🙏 Thanks
 
 If Klar is useful for you, give it a ⭐ on GitHub — it really helps! 🙌
+
+---
+
+<p align="center">
+  Made by me at <a href="https://subthiel.eu/softwareentwicklung">Subthiel</a> — software development &amp; 3D printing
+</p>
