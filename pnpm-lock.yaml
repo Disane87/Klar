@@ -302,7 +302,7 @@ importers:
         version: 6.43.15
       '@iconify-json/simple-icons':
         specifier: ^1.2.80
-        version: 1.2.94
+        version: 1.2.103
       '@iconify/utils':
         specifier: ^3.1.1
         version: 3.1.4
@@ -1328,8 +1328,8 @@ packages:
     peerDependencies:
       hono: ^4.12.18
 
-  '@iconify-json/simple-icons@1.2.94':
-    resolution: {integrity: sha512-l8UWzVxKaqZd9ABsE/M/9p6NyGkQnmCnOoZyhQmjlXCtY5PuL2rcWxOFk2l9pk7ux3ERMPkTLE4jl6kQpTkwxA==}
+  '@iconify-json/simple-icons@1.2.103':
+    resolution: {integrity: sha512-FMn+aVTsqQdYOwf5reCXXtfWapb+4ijI6WrU8ej1spWXWfA+d41TBXcKagHFwiHZyqt7kP7F04AiG1dYj2R06w==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -7865,7 +7865,7 @@ snapshots:
     dependencies:
       hono: 4.13.18
 
-  '@iconify-json/simple-icons@1.2.94':
+  '@iconify-json/simple-icons@1.2.103':
     dependencies:
       '@iconify/types': 2.0.0
 
